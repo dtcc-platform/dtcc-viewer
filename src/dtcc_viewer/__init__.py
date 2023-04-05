@@ -1,1 +1,3 @@
-# Import C++ code (bindings)
+from .citymodel import view as view_citymodel
+
+

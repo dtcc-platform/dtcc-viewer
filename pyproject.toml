@@ -1,6 +1,6 @@
 [build-system]
-requires = ["scikit-build-core", "pybind11==2.10.*"]
-build-backend = "scikit_build_core.build"
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "dtcc-viewer"
@@ -29,6 +29,3 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
-
-[tool.scikit-build]
-wheel.expand-macos-universal-tags = true
