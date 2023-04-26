@@ -17,12 +17,14 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License"
 ]
+
 dependencies = [
   "jupyter",
   "ipywidgets",
   "numpy",
   "folium",
   "pyglet",
+  "trimesh",
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop"
 ]

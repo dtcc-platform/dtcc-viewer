@@ -1,3 +1,4 @@
+
 import folium
 import tempfile
 import dtcc_io as io
@@ -49,6 +50,5 @@ def view(citymodel_pb, return_html=False, show_in_browser=False):
         else:
             show_folium_in_browser(m)
         
-
 
 
