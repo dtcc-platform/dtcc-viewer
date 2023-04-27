@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 echo "Running Python tests"
 echo "===================="
-python -m unittest discover python
+pytest python/test_colors.py python/test_viewer.py
