@@ -1,7 +1,6 @@
 # Copyright (C) 2023 Anders Logg
 # Licensed under the MIT License
 
-import sys
 import os
 from pprint import pp
 from dtcc_viewer import * 
@@ -13,10 +12,9 @@ import dtcc_viewer.mesh as mesh
 
 import trimesh
 import numpy as np
-import copy
 
 
-class TestViewer():
+class ViewerExamples():
 
     file_name:str   
     city_mesh:trimesh
@@ -25,20 +23,20 @@ class TestViewer():
         self.file_name = '../../../data/models/CitySurfaceL.stl'
         self.city_mesh = trimesh.load_mesh(self.file_name)
 
-    def test_simplest(self):        
+    def example_simplest(self):        
         viewer = Viewer()
         mesh.view(viewer, self.city_mesh)
         viewer.show()
 
-    def test_simple(self):
+    def example_simple(self):
         n_faces = len(self.city_mesh.faces)
         values = np.arange(n_faces) / n_faces 
 
         viewer = Viewer()
-        mesh.view(viewer, self.city_mesh, values, "mono")
+        mesh.view(viewer, self.city_mesh, values, "rainbow")
         viewer.show()
         
-    def test_color_by_height(self):
+    def example_color_by_height(self):
         
         face_mid_pts = utils.calc_face_mid_points(self.city_mesh)
         [meshes, values] = utils.split_mesh_in_quadrants(self.city_mesh, face_mid_pts)
@@ -52,7 +50,7 @@ class TestViewer():
 
         assert True  
 
-    def test_color_by_distance_to_centre(self):
+    def example_color_by_distance_to_centre(self):
         
         face_mid_pts = utils.calc_face_mid_points(self.city_mesh)
         [meshes, values] = utils.split_mesh_in_quadrants(self.city_mesh, face_mid_pts)
@@ -77,10 +75,9 @@ if __name__ == '__main__':
     os.system('clear')
     print("-------- View test started from main function -------")
 
-    test = TestViewer()
-    test.test_simplest()
-    test.test_color_by_height()
-    test.test_color_by_distance_to_centre()
-    #test.test_viewer()
-
-    pass
+    test = ViewerExamples()
+    test.example_simplest()
+    test.example_simple()
+    test.example_color_by_height()
+    test.example_color_by_distance_to_centre()
+    

@@ -2,22 +2,9 @@ import numpy as np
 from typing import List, Iterable
 
 
-def get_min_max(values: Iterable[float], min:float, max:float):
-    if(min == None):    
-        min_value = np.min(values)
-    else:
-        min_value = min
-
-    if(max == None):    
-        max_value = np.max(values)
-    else:
-        max_value = max
-
-    return min_value, max_value    
-
 def calc_colors_rainbow(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []
-    [min_value, max_value] = get_min_max(values, min, max)     
+    [min_value, max_value] = _get_min_max(values, min, max)     
     for i in range(0, len(values)):
         c = _get_blended_color(min_value, max_value, values[i]) 
         colors.append(c)
@@ -25,7 +12,7 @@ def calc_colors_rainbow(values:Iterable[float], min:float, max:float) -> List[Li
 
 def calc_colors_warm(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []    
-    [min_value, max_value] = get_min_max(values, min, max)
+    [min_value, max_value] = _get_min_max(values, min, max)
     for i in range(0, len(values)):
         c = _get_blended_color_yellow_red(min_value, max_value, values[i]) 
         colors.append(c)
@@ -33,22 +20,20 @@ def calc_colors_warm(values:Iterable[float], min:float, max:float) -> List[List[
 
 def calc_colors_cold(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []    
-    [min_value, max_value] = get_min_max(values, min, max)
+    [min_value, max_value] = _get_min_max(values, min, max)
     for i in range(0, len(values)):
         c = _get_blended_color_cyan_blue(min_value, max_value, values[i]) 
         colors.append(c)
     return colors 
 
-# Calculate bleded color in a monochrome scale
 def calc_colors_mono(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []    
-    [min_value, max_value] = get_min_max(values, min, max)
+    [min_value, max_value] = _get_min_max(values, min, max)
     for i in range(0, len(values)):
         fColor = _get_blended_color_mono(min_value, max_value, values[i]) 
         colors.append(fColor)
     return colors    
 
-# Calculate bleded color in a monochrome scale
 def calc_colors_arctic(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []
     for i in range(0, len(values)):
@@ -123,6 +108,19 @@ def _get_blended_color_yellow_red(min, max, value):
 def _get_blended_color_cyan_blue(min, max, value):
     frac = _get_normalised_value_with_cap(min, max, value)
     return [0.0, (frac * 1.0), 1.0, 1.0]
+
+def _get_min_max(values: Iterable[float], min:float, max:float):
+    if(min == None):    
+        min_value = np.min(values)
+    else:
+        min_value = min
+
+    if(max == None):    
+        max_value = np.max(values)
+    else:
+        max_value = max
+
+    return min_value, max_value    
 
 def _get_normalised_value_with_cap(min, max, value):
     diff = max - min

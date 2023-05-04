@@ -8,6 +8,14 @@ from pprint import pp
 
 
 class Viewer:
+    """
+    Viewer is a simple tool for visualising mesh geometry. 
+
+    User instructions:
+
+    Press W to toggle between wireframe mode and shaded mode.
+
+    """
 
     scene : trimesh.Scene
     
@@ -29,8 +37,8 @@ class Viewer:
         with the list of corner points as an argument.
         """    
         bb_corners = []
-        for geom in self.scene.geometry:
-            obj = self.scene.geometry[geom]
+        for key in self.scene.geometry:
+            obj = self.scene.geometry[key]
             bb = trimesh.bounds.corners(obj.bounding_box.bounds)
             for pt in bb:
                 bb_corners.append(pt)    
@@ -52,6 +60,9 @@ class Viewer:
         added to the scene.
         """
         self.scene.show()   
+
+    def add_light(self):
+        pass
 
 def view(viewer: Viewer, mesh: trimesh, values: Iterable[float] = None, color_map_key: str = "arctic", min_val = None, max_val = None):
 
