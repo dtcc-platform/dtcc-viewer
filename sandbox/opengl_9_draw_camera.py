@@ -32,7 +32,6 @@ def key_input_callback(window, key, scancode, action, mode):
         glfw.set_window_should_close(window, True)
 
 def scroll_input_callback(window, xoffset, yoffset):
-    print("Scroll!")
     camera.distance_to_target += yoffset
     camera.process_mouse_movement(xoffset, yoffset) 
     pass
@@ -41,10 +40,8 @@ def mouse_input_callback(window, button, action, mod):
     global left_mbtn_pressed
     global first_mouse
     if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
-        print("Left click!")
         left_mbtn_pressed = True
     elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
-        print("Left release!")
         left_mbtn_pressed = False
         first_mouse = True
     
@@ -54,7 +51,6 @@ def mouse_look_callback(window, xpos, ypos):
     global first_mouse
 
     if(left_mbtn_pressed):
- 
         if first_mouse:
             last_x = xpos
             last_y = ypos
@@ -62,10 +58,8 @@ def mouse_look_callback(window, xpos, ypos):
 
         xoffset = xpos - last_x
         yoffset = last_y - ypos
-
         last_x = xpos
         last_y = ypos
-
         camera.process_mouse_movement(xoffset, yoffset)
 
 
@@ -120,15 +114,10 @@ if not window:
     raise Exception("glfw window can not be created!")
     
 glfw.set_window_pos(window, 400, 200)
-
 glfw.set_window_size_callback(window, window_resize)
-
 glfw.set_cursor_pos_callback(window, mouse_look_callback)
-
 glfw.set_key_callback(window, key_input_callback)
-
 glfw.set_mouse_button_callback(window, mouse_input_callback)
-
 glfw.set_scroll_callback(window, scroll_input_callback)
 
 # Calls can be made after the contex is made current
@@ -150,7 +139,6 @@ glBufferData(GL_ARRAY_BUFFER, len(vertices) * 4, vertices, GL_STATIC_DRAW) # Sec
 EBO = glGenBuffers(1)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
 glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(face_indices)* 4, face_indices, GL_STATIC_DRAW)
-
 
 shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
 
