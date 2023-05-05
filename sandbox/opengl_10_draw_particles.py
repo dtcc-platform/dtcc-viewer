@@ -68,7 +68,7 @@ vertex_src = """
 
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_color;
-layout(location = 2) in vec3 a_normal;
+layout(location = 2) in vec3 a_offset;
 
 uniform mat4 model;
 uniform mat4 project;
@@ -76,8 +76,9 @@ uniform mat4 view;
 
 out vec3 v_color;
 void main()
-{
-    gl_Position = project * model * view * vec4(a_position, 1.0);
+{   
+    vec3 final_pos = a_position + a_offset;
+    gl_Position = project * model * view * vec4(final_pos, 1.0);
     v_color = a_color;
 }
 """
@@ -98,6 +99,21 @@ def window_resize(window, width, height):
     camera.aspect_ratio = width / height
     proj = camera.get_perspective_matrix()
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
+    
+
+def fps_calculations(prev_time, time_acum, fps):
+    new_time = glfw.get_time()
+    time_passed = new_time - prev_time
+    prev_time = new_time
+    time_acum += time_passed
+    fps += 1
+
+    if(time_acum > 1):
+        time_acum = 0
+        print("FPS:" + str(fps))
+        fps = 0
+
+    return prev_time, time_acum, fps    
     
 
 if not glfw.init():
@@ -124,7 +140,29 @@ glfw.set_scroll_callback(window, scroll_input_callback)
 glfw.make_context_current(window)
 
 #[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_2_color.obj")
-[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_dense.obj")
+#[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_dense.obj")
+
+cube_size = 0.1
+
+vertices = [ -cube_size, -cube_size,  cube_size, 1.0, 0.0, 1.0, 
+              cube_size, -cube_size,  cube_size, 0.0, 1.0, 0.0, 
+              cube_size,  cube_size,  cube_size, 0.0, 0.0, 1.0,
+             -cube_size,  cube_size,  cube_size, 1.0, 1.0, 1.0,
+
+             -cube_size, -cube_size, -cube_size, 1.0, 0.0, 1.0, 
+              cube_size, -cube_size, -cube_size, 0.0, 1.0, 0.0, 
+              cube_size,  cube_size, -cube_size, 0.0, 0.0, 1.0,
+             -cube_size,  cube_size, -cube_size, 1.0, 1.0, 1.0]
+
+face_indices = [0, 1, 2, 2, 3, 0,
+                4, 5, 6, 6, 7, 4,
+                4, 5, 1, 1, 0, 4,
+                6, 7, 3, 3, 2, 6,
+                5, 6, 2, 2, 1, 5,
+                7, 4, 0, 0, 3, 7]
+
+vertices = np.array(vertices, dtype=np.float32)
+face_indices = np.array(face_indices, dtype=np.uint32)       
 
 # Generating VAO. Any subsequent vertex attribute calls will be stored in the VAO if it is bound.
 VAO = glGenVertexArrays(1)
@@ -148,8 +186,34 @@ glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
 glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
+# Instance VBO
+instance_array = []
+offset = 0.05
+size = 100
+
+for z in range(-size, size, 2):
+    for y in range(-size, size, 2):
+        for x in range(-size, size, 2):
+            trans = pyrr.Vector3([0.0, 0.0, 0.0])
+            trans.x = x + offset
+            trans.y = y + offset
+            trans.z = z + offset
+            instance_array.append(trans)
+
+n_instances = len(instance_array)
+instance_array = np.array(instance_array, np.float32).flatten() 
+print("Number of instances: " +str(n_instances))           
+
+instance_VBO = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, instance_VBO)
+glBufferData(GL_ARRAY_BUFFER, instance_array.nbytes, instance_array, GL_STATIC_DRAW)
+
+glEnableVertexAttribArray(2)
+glVertexAttribPointer(2,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+glVertexAttribDivisor(2,1) # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
+
 glUseProgram(shader)
-glClearColor(1, 1, 1, 1)
+glClearColor(0.1, 0.1, 0.1, 1)
 glEnable(GL_DEPTH_TEST)
 
 proj = camera.get_perspective_matrix()
@@ -162,8 +226,13 @@ view_loc = glGetUniformLocation(shader, "view")
 glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
 glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
 
+time = 0.0
+time_acum = 0.0
+fps = 0
+
 # Main application loop
 while not glfw.window_should_close(window):
+    
     glfw.poll_events()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -173,8 +242,13 @@ while not glfw.window_should_close(window):
     view = camera.get_view_matrix()
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
 
-    glDrawElements(GL_TRIANGLES, len(face_indices), GL_UNSIGNED_INT, None)
+    glDrawElementsInstanced(GL_TRIANGLES, len(face_indices), GL_UNSIGNED_INT, None, n_instances)
+
+    [time, time_acum, fps] = fps_calculations(time, time_acum, fps)
+    
     glfw.swap_buffers(window)
+
+
 
 
 glfw.terminate()    

@@ -16,7 +16,7 @@ class Camera:
 
         self.aspect_ratio = aspect_ratio
         self.near_plane = 0.1
-        self.far_plane = 100
+        self.far_plane = 1000
         self.fov = 45
         self.mouse_sensitivity = -0.25
         self.jaw = -90
