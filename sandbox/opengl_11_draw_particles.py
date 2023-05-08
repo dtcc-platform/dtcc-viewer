@@ -95,10 +95,6 @@ void main()
 """
 
 
-#vec3 final_pos = a_position + a_offset;
-#gl_Position = project * view * model * vec4(final_pos, 1.0);
-#v_color = a_color;
-
 # glfw callback function
 def window_resize(window, width, height):
     glViewport(0, 0, width, height)
@@ -135,6 +131,31 @@ def get_billborad_transform():
 
     return model_transform
 
+def create_circular_disc(radius, n):
+    center = [0.0, 0.0, 0.0]
+    center_color = [1.0, 1.0, 1.0]          # White
+    edge_color = [0.0, 0.0, 0.0]          # Magenta
+    angle_between_points = 2 * math.pi / n
+    vertices = []
+    vertices.extend(center)
+    vertices.extend(center_color)
+    face_indices = []
+    # Iterate over each angle and calculate the corresponding point on the circle
+    for i in range(n):
+        angle = i * angle_between_points
+        x = center[0]
+        y = center[1] + radius * math.cos(angle)
+        z = center[2] + radius * math.sin(angle)
+        vertices.extend([x, y, z])
+        vertices.extend(edge_color)
+        if i > 0 and i < n:
+            face_indices.extend([0, i+1, i])
+        if i == n-1:
+            face_indices.extend([0, 1, i+1])
+
+    return vertices, face_indices
+
+
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
     
@@ -163,13 +184,14 @@ glfw.make_context_current(window)
 
 square_size = 0.1
 
+"""
 vertices = [ 0, -square_size,  -square_size, 1.0, 0.0, 1.0, 
              0, -square_size,   square_size, 0.0, 1.0, 0.0, 
              0,  square_size,   square_size, 0.0, 0.0, 1.0,
              0,  square_size,  -square_size, 1.0, 1.0, 1.0]
 
 face_indices = [0, 1, 2, 2, 3, 0]
-
+"""
 """
 vertices = [ -cube_size, -cube_size,  cube_size, 1.0, 0.0, 1.0, 
               cube_size, -cube_size,  cube_size, 0.0, 1.0, 0.0, 
@@ -188,6 +210,8 @@ face_indices = [0, 1, 2, 2, 3, 0,
                 5, 6, 2, 2, 1, 5,
                 7, 4, 0, 0, 3, 7]
 """
+
+[vertices, face_indices] = create_circular_disc(square_size, 12)
 
 vertices = np.array(vertices, dtype=np.float32)
 face_indices = np.array(face_indices, dtype=np.uint32)       
@@ -217,7 +241,7 @@ glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 # Instance VBO
 instance_array = []
 offset = 0.05
-size = 100
+size = 10
 
 for z in range(-size, size+1, 1):
     for y in range(-size, size+1, 1):
@@ -241,7 +265,7 @@ glVertexAttribPointer(2,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
 glVertexAttribDivisor(2,1) # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
 
 glUseProgram(shader)
-glClearColor(0.1, 0.1, 0.1, 1)
+glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
 
 proj = camera.get_perspective_matrix()

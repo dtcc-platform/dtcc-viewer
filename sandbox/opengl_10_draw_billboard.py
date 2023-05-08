@@ -210,15 +210,3 @@ while not glfw.window_should_close(window):
 
 
 glfw.terminate()    
-
-
-
-
-#direrction_from_camera = pyrr.Vector3([0,0,0]) - camera
-#angle1 = np.arctan2(-direrction_from_camera[1], direrction_from_camera[0]) # arctan(dy/dx)
-#dist2d = math.sqrt(direrction_from_camera[0]**2 + direrction_from_camera[1]**2) #sqrt(dx^2 + dy^2)
-#angle2 = np.arctan2(direrction_from_camera[2], dist2d)  # Angle around vertical axis
-
-#model_transform_sq = pyrr.matrix44.create_identity(dtype=np.float32)
-#model_transform_sq = pyrr.matrix44.multiply(model_transform_sq, pyrr.matrix44.create_from_y_rotation(theta=angle2, dtype=np.float32))
-#model_transform_sq = pyrr.matrix44.multiply(model_transform_sq, pyrr.matrix44.create_from_z_rotation(theta=angle1, dtype=np.float32))
