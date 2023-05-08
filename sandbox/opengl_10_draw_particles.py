@@ -77,8 +77,9 @@ uniform mat4 view;
 out vec3 v_color;
 void main()
 {   
-    vec3 final_pos = a_position + a_offset;
-    gl_Position = project * model * view * vec4(final_pos, 1.0);
+    vec4 bill_pos = model * vec4(a_position, 1.0);
+    vec4 final_pos = bill_pos + vec4(a_offset, 0.0);
+    gl_Position = project * view * final_pos;
     v_color = a_color;
 }
 """
@@ -93,6 +94,11 @@ void main()
 }
 """
 
+
+#vec3 final_pos = a_position + a_offset;
+#gl_Position = project * view * model * vec4(final_pos, 1.0);
+#v_color = a_color;
+
 # glfw callback function
 def window_resize(window, width, height):
     glViewport(0, 0, width, height)
@@ -101,7 +107,7 @@ def window_resize(window, width, height):
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
     
 
-def fps_calculations(prev_time, time_acum, fps):
+def fps_calculations(prev_time, time_acum, fps, print_results = True):
     new_time = glfw.get_time()
     time_passed = new_time - prev_time
     prev_time = new_time
@@ -110,11 +116,24 @@ def fps_calculations(prev_time, time_acum, fps):
 
     if(time_acum > 1):
         time_acum = 0
-        print("FPS:" + str(fps))
+        if(print_results):
+            print("FPS:" + str(fps))
         fps = 0
 
     return prev_time, time_acum, fps    
-    
+
+def get_billborad_transform():
+
+    dir_from_camera = pyrr.Vector3([0,0,0]) - camera.camera_pos
+    angle1 = np.arctan2(-dir_from_camera[1], dir_from_camera[0])        # arctan(dy/dx)
+    dist2d = math.sqrt(dir_from_camera[0]**2 + dir_from_camera[1]**2)   # sqrt(dx^2 + dy^2)
+    angle2 = np.arctan2(dir_from_camera[2], dist2d)                     # angle around vertical axis
+
+    model_transform = pyrr.matrix44.create_identity(dtype=np.float32)
+    model_transform = pyrr.matrix44.multiply(model_transform, pyrr.matrix44.create_from_y_rotation(theta=angle2, dtype=np.float32))
+    model_transform = pyrr.matrix44.multiply(model_transform, pyrr.matrix44.create_from_z_rotation(theta=angle1, dtype=np.float32))
+
+    return model_transform
 
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
@@ -142,8 +161,16 @@ glfw.make_context_current(window)
 #[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_2_color.obj")
 #[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_dense.obj")
 
-cube_size = 0.1
+square_size = 0.1
 
+vertices = [ 0, -square_size,  -square_size, 1.0, 0.0, 1.0, 
+             0, -square_size,   square_size, 0.0, 1.0, 0.0, 
+             0,  square_size,   square_size, 0.0, 0.0, 1.0,
+             0,  square_size,  -square_size, 1.0, 1.0, 1.0]
+
+face_indices = [0, 1, 2, 2, 3, 0]
+
+"""
 vertices = [ -cube_size, -cube_size,  cube_size, 1.0, 0.0, 1.0, 
               cube_size, -cube_size,  cube_size, 0.0, 1.0, 0.0, 
               cube_size,  cube_size,  cube_size, 0.0, 0.0, 1.0,
@@ -160,6 +187,7 @@ face_indices = [0, 1, 2, 2, 3, 0,
                 6, 7, 3, 3, 2, 6,
                 5, 6, 2, 2, 1, 5,
                 7, 4, 0, 0, 3, 7]
+"""
 
 vertices = np.array(vertices, dtype=np.float32)
 face_indices = np.array(face_indices, dtype=np.uint32)       
@@ -191,14 +219,14 @@ instance_array = []
 offset = 0.05
 size = 100
 
-for z in range(-size, size, 2):
-    for y in range(-size, size, 2):
-        for x in range(-size, size, 2):
-            trans = pyrr.Vector3([0.0, 0.0, 0.0])
-            trans.x = x + offset
-            trans.y = y + offset
-            trans.z = z + offset
-            instance_array.append(trans)
+for z in range(-size, size+1, 1):
+    for y in range(-size, size+1, 1):
+        for x in range(-size, size+1, 1):
+            translation = pyrr.Vector3([0.0, 0.0, 0.0])
+            translation.x = x + offset
+            translation.y = y + offset
+            translation.z = z + offset
+            instance_array.append(translation)
 
 n_instances = len(instance_array)
 instance_array = np.array(instance_array, np.float32).flatten() 
@@ -217,14 +245,14 @@ glClearColor(0.1, 0.1, 0.1, 1)
 glEnable(GL_DEPTH_TEST)
 
 proj = camera.get_perspective_matrix()
-trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
 
 model_loc = glGetUniformLocation(shader, "model")
 project_loc = glGetUniformLocation(shader, "project")
 view_loc = glGetUniformLocation(shader, "view")
 
 glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
-glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
+glUniformMatrix4fv(model_loc, 1, GL_FALSE, translation)
 
 time = 0.0
 time_acum = 0.0
@@ -242,13 +270,14 @@ while not glfw.window_should_close(window):
     view = camera.get_view_matrix()
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
 
+    tans = get_billborad_transform()
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, tans)
+
     glDrawElementsInstanced(GL_TRIANGLES, len(face_indices), GL_UNSIGNED_INT, None, n_instances)
 
-    [time, time_acum, fps] = fps_calculations(time, time_acum, fps)
+    [time, time_acum, fps] = fps_calculations(time, time_acum, fps, print_results=True)
     
     glfw.swap_buffers(window)
-
-
 
 
 glfw.terminate()    
