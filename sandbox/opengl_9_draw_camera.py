@@ -77,7 +77,7 @@ uniform mat4 view;
 out vec3 v_color;
 void main()
 {
-    gl_Position = project * model * view * vec4(a_position, 1.0);
+    gl_Position = project * view * vec4(a_position, 1.0);
     v_color = a_color;
 }
 """
@@ -140,13 +140,14 @@ EBO = glGenBuffers(1)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
 glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(face_indices)* 4, face_indices, GL_STATIC_DRAW)
 
-shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
-
 glEnableVertexAttribArray(0) # 0 is the layout location for the vertex shader
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
 
 glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+
+
+shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
 
 glUseProgram(shader)
 glClearColor(1, 1, 1, 1)
@@ -155,12 +156,12 @@ glEnable(GL_DEPTH_TEST)
 proj = camera.get_perspective_matrix()
 trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
 
-model_loc = glGetUniformLocation(shader, "model")
+#model_loc = glGetUniformLocation(shader, "model")
 project_loc = glGetUniformLocation(shader, "project")
 view_loc = glGetUniformLocation(shader, "view")
 
-glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
-glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
+#glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
+#glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
 
 # Main application loop
 while not glfw.window_should_close(window):

@@ -16,9 +16,10 @@ class Camera:
 
         self.aspect_ratio = aspect_ratio
         self.near_plane = 0.1
-        self.far_plane = 1000
+        self.far_plane = 10000
         self.fov = 45
         self.mouse_sensitivity = -0.25
+        self.scroll_sensitivity = -3.5
         self.jaw = -90
         self.pitch = 0
 
@@ -44,6 +45,15 @@ class Camera:
             if self.pitch < -89.99:
                 self.pitch = -89.99    
 
+        self.update_camera_vectors()
+
+    def process_scroll_movement(self, xoffset, yoffset, constrain_pitch = True):
+        
+        self.distance_to_target += self.scroll_sensitivity * yoffset
+        
+        #xoffset *= self.scroll_sensitivity
+        #yoffset *= self.scroll_sensitivity
+        
         self.update_camera_vectors()
 
 

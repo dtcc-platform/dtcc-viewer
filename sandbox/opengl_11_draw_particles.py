@@ -6,7 +6,7 @@ import pyrr
 from pprint import pp
 from enum import Enum
 import math
-from obj_loader import ObjLoader
+from obj_loader import ObjLoader, import_point_cloud_from_txt
 from camera import Camera
 
 class Projection(Enum):
@@ -33,7 +33,7 @@ def key_input_callback(window, key, scancode, action, mode):
 
 def scroll_input_callback(window, xoffset, yoffset):
     camera.distance_to_target += yoffset
-    camera.process_mouse_movement(xoffset, yoffset) 
+    camera.process_scroll_movement(xoffset, yoffset) 
     pass
 
 def mouse_input_callback(window, button, action, mod):  
@@ -69,18 +69,26 @@ vertex_src = """
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_color;
 layout(location = 2) in vec3 a_offset;
+layout(location = 3) in vec3 a_icolor;
 
 uniform mat4 model;
 uniform mat4 project;
 uniform mat4 view;
+uniform int color_by;
 
 out vec3 v_color;
 void main()
 {   
-    vec4 bill_pos = model * vec4(a_position, 1.0);
-    vec4 final_pos = bill_pos + vec4(a_offset, 0.0);
+    vec4 final_pos = (model * vec4(a_position, 1.0)) + vec4(a_offset, 0.0);
     gl_Position = project * view * final_pos;
-    v_color = a_color;
+    if(color_by == 1)
+    {
+        v_color = a_icolor;
+    }
+    else
+    {
+        v_color = a_icolor * a_color;
+    }
 }
 """
 
@@ -155,6 +163,36 @@ def create_circular_disc(radius, n):
 
     return vertices, face_indices
 
+def create_instance_array_cube(n):
+    instance_array = []
+    offset = 0.05
+    size = n
+
+    for z in range(-size, size+1, 1):
+        for y in range(-size, size+1, 1):
+            for x in range(-size, size+1, 1):
+                translation = pyrr.Vector3([0.0, 0.0, 0.0])
+                translation.x = x + offset
+                translation.y = y + offset
+                translation.z = z + offset
+                instance_array.append(translation)
+
+    n_instances = len(instance_array)
+
+    instance_array = np.array(instance_array, np.float32).flatten()
+
+    return instance_array, n_instances 
+
+def create_instance_array_from_file():
+    
+    #filename = 'data/city_point_cloud_69k.txt'
+    filename = 'data/city_point_cloud_1109k.txt'
+    point_cloud = import_point_cloud_from_txt(filename)
+    n_instances = len(point_cloud)
+    instance_array = np.array(point_cloud, np.float32).flatten()
+
+    return instance_array, n_instances 
+
 
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
@@ -179,39 +217,10 @@ glfw.set_scroll_callback(window, scroll_input_callback)
 # Calls can be made after the contex is made current
 glfw.make_context_current(window)
 
-#[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_2_color.obj")
-#[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_dense.obj")
+disc_size = 0.30
+n_sides = 12
 
-square_size = 0.1
-
-"""
-vertices = [ 0, -square_size,  -square_size, 1.0, 0.0, 1.0, 
-             0, -square_size,   square_size, 0.0, 1.0, 0.0, 
-             0,  square_size,   square_size, 0.0, 0.0, 1.0,
-             0,  square_size,  -square_size, 1.0, 1.0, 1.0]
-
-face_indices = [0, 1, 2, 2, 3, 0]
-"""
-"""
-vertices = [ -cube_size, -cube_size,  cube_size, 1.0, 0.0, 1.0, 
-              cube_size, -cube_size,  cube_size, 0.0, 1.0, 0.0, 
-              cube_size,  cube_size,  cube_size, 0.0, 0.0, 1.0,
-             -cube_size,  cube_size,  cube_size, 1.0, 1.0, 1.0,
-
-             -cube_size, -cube_size, -cube_size, 1.0, 0.0, 1.0, 
-              cube_size, -cube_size, -cube_size, 0.0, 1.0, 0.0, 
-              cube_size,  cube_size, -cube_size, 0.0, 0.0, 1.0,
-             -cube_size,  cube_size, -cube_size, 1.0, 1.0, 1.0]
-
-face_indices = [0, 1, 2, 2, 3, 0,
-                4, 5, 6, 6, 7, 4,
-                4, 5, 1, 1, 0, 4,
-                6, 7, 3, 3, 2, 6,
-                5, 6, 2, 2, 1, 5,
-                7, 4, 0, 0, 3, 7]
-"""
-
-[vertices, face_indices] = create_circular_disc(square_size, 12)
+[vertices, face_indices] = create_circular_disc(disc_size, n_sides)
 
 vertices = np.array(vertices, dtype=np.float32)
 face_indices = np.array(face_indices, dtype=np.uint32)       
@@ -230,8 +239,6 @@ EBO = glGenBuffers(1)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
 glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(face_indices)* 4, face_indices, GL_STATIC_DRAW)
 
-shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
-
 glEnableVertexAttribArray(0) # 0 is the layout location for the vertex shader
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
 
@@ -239,21 +246,9 @@ glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
 # Instance VBO
-instance_array = []
-offset = 0.05
-size = 10
 
-for z in range(-size, size+1, 1):
-    for y in range(-size, size+1, 1):
-        for x in range(-size, size+1, 1):
-            translation = pyrr.Vector3([0.0, 0.0, 0.0])
-            translation.x = x + offset
-            translation.y = y + offset
-            translation.z = z + offset
-            instance_array.append(translation)
-
-n_instances = len(instance_array)
-instance_array = np.array(instance_array, np.float32).flatten() 
+#[instance_array, n_instances] = create_instance_array_cube(1)
+[instance_array, n_instances] = create_instance_array_from_file()
 print("Number of instances: " +str(n_instances))           
 
 instance_VBO = glGenBuffers(1)
@@ -264,19 +259,45 @@ glEnableVertexAttribArray(2)
 glVertexAttribPointer(2,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
 glVertexAttribDivisor(2,1) # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
 
+max_coord = np.max(instance_array)
+min_coord = np.min(instance_array)
+norm_max = max_coord - min_coord
+
+color_array = []
+for i in range(0, len(instance_array), 3):
+    x = instance_array[i]
+    y = instance_array[i+1]
+    z = instance_array[i+2]
+    x_norm = x - min_coord
+    a = x_norm / norm_max 
+    color = pyrr.Vector3([1.0-a, 0.0, a])
+    color_array.append(color)
+    
+print(len(color_array))
+color_array = np.array(color_array, np.float32).flatten()
+
+color_VBO = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, color_VBO)
+glBufferData(GL_ARRAY_BUFFER, color_array.nbytes, color_array, GL_STATIC_DRAW)
+
+glEnableVertexAttribArray(3)
+glVertexAttribPointer(3,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+glVertexAttribDivisor(3,1) # 3 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
+
+# Shader
+shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER), compileShader(fragment_src, GL_FRAGMENT_SHADER))
+
 glUseProgram(shader)
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
 
-proj = camera.get_perspective_matrix()
-translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-
 model_loc = glGetUniformLocation(shader, "model")
 project_loc = glGetUniformLocation(shader, "project")
 view_loc = glGetUniformLocation(shader, "view")
+color_by_loc = glGetUniformLocation(shader, "color_by")
 
-glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
-glUniformMatrix4fv(model_loc, 1, GL_FALSE, translation)
+color_by = 0
+glUniform1i(color_by_loc, color_by)
 
 time = 0.0
 time_acum = 0.0

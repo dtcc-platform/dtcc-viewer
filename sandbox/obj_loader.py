@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import math
+import pyrr
 from pprint import pp
 
 
@@ -15,6 +16,22 @@ def convert_to_color(rgb_str):
     if rgb > 0:
         c = 255.0 / rgb
     return c 
+
+def import_point_cloud_from_txt(filename):
+    point_cloud = []
+    with open(filename, 'r') as f:
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            
+            parts = line.split(',')
+            if(len(parts) >= 3):
+                point = pyrr.Vector3([float(parts[0]), float(parts[1]), float(parts[2])])
+                point_cloud.append(point)
+    
+    return point_cloud
+
 
 class ObjLoader:
 
@@ -137,15 +154,15 @@ if __name__ == "__main__":
 
     os.system('clear')
 
-    [face_indices, vert_coords, vert_colors, buffer] = ObjLoader.load_model("./data/simple_city_2_color.obj")
-    #pp(face_indices)
-    #pp(vert_coords)
-    #pp(vert_colors)
-    pp(buffer)
+    filename = 'data/city_point_cloud_69k.txt'
 
-    #print(len(face_indices))
-    #print(len(vert_coords))
-    #print(len(vert_colors))
-    #print(len(buffer))
+    pc = import_point_cloud_from_txt(filename)
+
+    pp(pc)
+
+    #[face_indices, vert_coords, vert_colors, buffer] = ObjLoader.load_model("./data/simple_city_2_color.obj")
+
+    #pp(buffer)
+
 
 
