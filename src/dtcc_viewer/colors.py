@@ -1,6 +1,6 @@
 import numpy as np
-from typing import List, Iterable
-
+from typing import List, Iterable, Any
+from .random_colors import get_random_colors
 
 def calc_colors_rainbow(values:Iterable[float], min:float, max:float) -> List[List[float]]:
     colors = []
@@ -54,6 +54,15 @@ def calc_colors_with_mask(values, mask) -> List[List[float]]:
         colors.append(c)
     return colors    
 
+#assign each distict value a random color
+def calc_colors_random(values: Iterable[Any]) -> List[List[float]]:
+    unique_values = len(set(values))
+    colors = get_random_colors(unique_values, return_int=False)
+    colors = [c.append(1.0) for c in colors]
+    color_map = {}
+    for v,c in zip(set(values), colors):
+        color_map[v] = c
+    return colors
 
 def _get_blended_color(min, max, value):
     diff = max - min
@@ -147,5 +156,6 @@ color_maps = {
         "rainbow" : calc_colors_rainbow,
         "warm" : calc_colors_warm,
         "cold" : calc_colors_cold,
+        "random" : calc_colors_random,
 }
 

@@ -5,32 +5,32 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dtcc-viewer"
 version = "0.0.1"
-description="DTCC Viewer"
+description = "DTCC Viewer"
 readme = "README.md"
-authors = [
-  { name = "Dag Wästberg", email = "dwastberg@gmail.com" },
- 
-]
+authors = [{ name = "Dag Wästberg", email = "dwastberg@gmail.com" }]
 requires-python = ">=3.8"
 classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License"
+  "License :: OSI Approved :: MIT License",
 ]
 
 dependencies = [
   "jupyter",
   "ipywidgets",
+  "matplotlib",
+  "colormap",
+  "easydev",
   "numpy",
   "folium",
   "pyglet",
   "trimesh",
   "pyopengl",
-  "pyglfw"
-  "pyrr"
-  "pillow"
+  "pyglfw",
+  "pyrr",
+  "pillow",
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop"
+  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
 ]
 
 [project.optional-dependencies]
