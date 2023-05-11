@@ -78,7 +78,7 @@ class ObjLoader:
         pass
 
     @staticmethod
-    def load_model(file, sorted = True):
+    def load_model(file):
         vert_coords = [] # Vertex coordinates
         vert_colors = []
         vert_normals = []
@@ -88,6 +88,8 @@ class ObjLoader:
         face_norm_indices = []
         face_texc_indices = []
 
+        edge_vert_indices = []
+        
         with open(file, 'r') as f:
             line = f.readline()
 
@@ -117,10 +119,20 @@ class ObjLoader:
                             vert_texcrd.append(float(values[2]))
                             vert_texcrd.append(float(values[3]))
                     elif values[0] == 'f':
+                        edges = []
                         for value in values[1:]:
                             val = value.split('/')
                             face_vert_indices.append(int(valid_number(val[0]))-1)
                             face_norm_indices.append(int(valid_number(val[2]))-1)
+                            edges.append(int(valid_number(val[0]))-1)
+                        for i in range(len(edges)):
+                            if i < len(edges)-1:
+                                edge_vert_indices.append(edges[i])
+                                edge_vert_indices.append(edges[i+1])
+                            else:
+                                edge_vert_indices.append(edges[i])
+                                edge_vert_indices.append(edges[0])    
+                               
 
                 line = f.readline()
 
@@ -135,8 +147,10 @@ class ObjLoader:
 
         face_vert_indices = np.array(face_vert_indices, dtype='uint32')
         face_norm_indices = np.array(face_norm_indices, dtype='uint32')
+
+        edge_vert_indices = np.array(edge_vert_indices, dtype='uint32')
         
-        return face_vert_indices, vert_coords, vert_colors, buffer  
+        return face_vert_indices, vert_coords, vert_colors, buffer, edge_vert_indices  
     
 def combine_coord_color(vert_coords, vert_colors):
 
@@ -156,13 +170,15 @@ if __name__ == "__main__":
 
     filename = 'data/city_point_cloud_69k.txt'
 
-    pc = import_point_cloud_from_txt(filename)
+    #pc = import_point_cloud_from_txt(filename)
 
-    pp(pc)
+    #pp(pc)
 
-    #[face_indices, vert_coords, vert_colors, buffer] = ObjLoader.load_model("./data/simple_city_2_color.obj")
+    filename_obj = "../data/models/CitySurface.obj"
 
-    #pp(buffer)
+    [face_indices, vert_coords, vert_colors, buffer, edge_indices] = ObjLoader.load_model(filename_obj)
+
+    #pp(edge_indices)
 
 
 

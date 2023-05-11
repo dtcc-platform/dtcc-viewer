@@ -1,6 +1,7 @@
 
+# Vertex shader for the particles
 
-vertex_src = """
+vertex_shader_particle = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
@@ -29,7 +30,9 @@ void main()
 }
 """
 
-fragment_src = """
+# Fragement shader for the particles
+
+fragment_shader_particle = """
 # version 330 core
 in vec3 v_color;
 out vec4 out_color;
@@ -39,7 +42,9 @@ void main()
 }
 """
 
-vertex_src_mesh = """
+# Vertex shader for mesh also works for the mesh edges
+
+vertex_shader_mesh = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
@@ -49,16 +54,68 @@ layout(location = 2) in vec3 a_normal;
 uniform mat4 model;
 uniform mat4 project;
 uniform mat4 view;
+uniform int color_by;
+
+out vec3 v_color;
+void main()
+{
+    gl_Position = project * view * vec4(a_position, 1.0);
+    if(color_by == 0)
+    {
+        v_color = vec3(1.0, 1.0, 1.0);
+    }
+    else if(color_by == 1)
+    {
+        v_color = a_color;
+    }
+}
+"""
+
+# Fragment shader for mesh also works for the mesh edges
+
+fragment_shader_mesh = """
+# version 330 core
+in vec3 v_color;
+out vec4 out_color;
+void main()
+{
+    out_color = vec4(v_color, 1.0);
+}
+"""
+
+# Vertex shader for mesh also works for the mesh edges
+
+vertex_shader_edge = """
+# version 330 core
+
+layout(location = 0) in vec3 a_position; 
+layout(location = 1) in vec3 a_color;
+
+uniform mat4 model;
+uniform mat4 project;
+uniform mat4 view;
+uniform int color_by;
 
 out vec3 v_color;
 void main()
 {
     gl_Position = project * view * vec4(a_position, 1.0);
     v_color = a_color;
+
+    if(color_by == 0)
+    {
+        v_color = vec3(1.0, 1.0, 1.0);
+    }
+    else if(color_by == 1)
+    {
+        v_color = a_color;
+    }
 }
 """
 
-fragment_src_mesh = """
+# Fragment shader for mesh also works for the mesh edges
+
+fragment_shader_edge = """
 # version 330 core
 in vec3 v_color;
 out vec4 out_color;

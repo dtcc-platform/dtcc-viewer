@@ -17,13 +17,11 @@ class Camera:
         self.aspect_ratio = aspect_ratio
         self.near_plane = 0.1
         self.far_plane = 10000
-        self.fov = 45
+        self.fov = 25
         self.mouse_sensitivity = -0.25
         self.scroll_sensitivity = -3.5
         self.jaw = -90
         self.pitch = 0
-
-        print(aspect_ratio)
     
 
     def get_view_matrix(self):
