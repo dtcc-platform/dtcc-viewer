@@ -40,8 +40,8 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render_particles(self):
-        self.particles = Particle(0.3, 12)
+    def render_particles(self, filename:str):
+        self.particles = Particle(0.3, 12, filename)
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
 
@@ -54,8 +54,8 @@ class Window:
 
         glfw.terminate()       
     
-    def render_mesh(self): 
-        self.mesh = Mesh()
+    def render_mesh(self, filename:str): 
+        self.mesh = Mesh(filename)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
 
@@ -71,9 +71,9 @@ class Window:
             self._fps_calculations()
             glfw.swap_buffers(self.window)
     
-    def render_particles_and_mesh(self):
-        self.particles = Particle(0.3, 12)        
-        self.mesh = Mesh()
+    def render_particles_and_mesh(self, filename_particles:str, filename_mesh:str):
+        self.particles = Particle(0.3, 12, filename_particles)        
+        self.mesh = Mesh(filename_mesh)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
 

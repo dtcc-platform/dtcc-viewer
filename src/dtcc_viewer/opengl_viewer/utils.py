@@ -36,9 +36,7 @@ def create_instance_transforms_cube(n):
 
     return instance_array, n_instances 
 
-def create_instance_transforms_from_file():
-    #filename = 'data/city_point_cloud_69k.txt'
-    filename = '../../../data/models/CitySurface_pc1109k.txt'
+def create_instance_transforms_from_file(filename):
     point_cloud = import_point_cloud_from_txt(filename)
     n_instances = len(point_cloud)
     instance_array = np.array(point_cloud, np.float32).flatten()

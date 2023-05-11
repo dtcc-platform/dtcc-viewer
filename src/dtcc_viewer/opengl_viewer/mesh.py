@@ -11,17 +11,16 @@ from loader import ObjLoader
 
 class Mesh:
     
-    def __init__(self):
-        self._load_mesh()
+    def __init__(self, filename:str):
+        self._load_mesh(filename)
         self._create_triangels()
         self._create_lines()
         self._create_shader_triangels()
         self._create_shader_lines()
 
-    def _load_mesh(self):
-        #[face_indices, vert_coord, vert_color, vertices] = ObjLoader.load_model("./data/simple_city_2_color.obj")
-        #[self.face_indices, vert_coord, vert_color, self.vertices] = ObjLoader.load_model("./data/simple_city_dense.obj")
-        [self.face_indices, vert_coord, vert_color, self.vertices, self.edge_indices] = ObjLoader.load_model("../../../data/models/CitySurface.obj")
+    def _load_mesh(self, filename:str):
+        [self.face_indices, vert_coord, vert_color, self.vertices, self.edge_indices] = ObjLoader.load_model(filename)
+
 
     def _create_triangels(self):
         

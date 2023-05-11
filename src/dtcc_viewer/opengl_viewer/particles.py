@@ -12,9 +12,9 @@ from shaders import vertex_shader_particle, fragment_shader_particle
 
 class Particle:
 
-    def __init__(self, disc_size:float, n_sides:int):
+    def __init__(self, disc_size:float, n_sides:int, filename:str):
         self._create_single_instance(disc_size, n_sides)
-        self._create_multiple_instances()    
+        self._create_multiple_instances(filename)    
         self._create_shader()    
 
     def render(self, interaction: Interaction):
@@ -65,10 +65,10 @@ class Particle:
         glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
-    def _create_multiple_instances(self):
+    def _create_multiple_instances(self, filename:str):
         
-        #[instance_transforms, n_instances] = create_instance_transforms_cube(100)
-        [self.instance_transforms, self.n_instances] = create_instance_transforms_from_file()
+        #[self.instance_transforms, self.n_instances] = create_instance_transforms_cube(100)
+        [self.instance_transforms, self.n_instances] = create_instance_transforms_from_file(filename)
         print("Number of instances created: " +str(self.n_instances))           
 
         self.transforms_VBO = glGenBuffers(1)

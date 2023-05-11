@@ -12,14 +12,14 @@ class Camera:
         self.camera_right = Vector3([1.0, 0.0, 0.0])
         self.camera_target = Vector3([0.0, 0.0, 0.0]) 
         self.camera_direction = Vector3([0.0, 0.0, 0.0])
-        self.distance_to_target = 10.0
+        self.distance_to_target = 100.0
 
         self.aspect_ratio = aspect_ratio
         self.near_plane = 0.1
         self.far_plane = 10000
         self.fov = 25
         self.mouse_sensitivity = -0.25
-        self.scroll_sensitivity = -3.5
+        self.scroll_sensitivity = -0.1
         self.jaw = -90
         self.pitch = 0
     
@@ -49,7 +49,7 @@ class Camera:
         
         self.distance_to_target += self.scroll_sensitivity * yoffset
 
-        self.scroll_sensitivity = -3.5 - 0.01 * self.distance_to_target    
+        self.scroll_sensitivity = -0.1 - 0.02 * self.distance_to_target    
 
         self.update_camera_vectors()
 
