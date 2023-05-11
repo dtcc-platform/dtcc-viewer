@@ -6,7 +6,6 @@ import pyrr
 from pprint import pp
 from enum import Enum
 import math
-from obj_loader import ObjLoader
 
 class Projection(Enum):
     Pespective = 1
