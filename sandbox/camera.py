@@ -48,10 +48,9 @@ class Camera:
     def process_scroll_movement(self, xoffset, yoffset, constrain_pitch = True):
         
         self.distance_to_target += self.scroll_sensitivity * yoffset
-        
-        #xoffset *= self.scroll_sensitivity
-        #yoffset *= self.scroll_sensitivity
-        
+
+        self.scroll_sensitivity = -3.5 - 0.01 * self.distance_to_target    
+
         self.update_camera_vectors()
 
 
