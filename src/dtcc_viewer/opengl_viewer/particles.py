@@ -4,17 +4,17 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
-from interaction import Interaction
-from utils import create_instance_transforms_from_file, calc_blended_color
-from utils import create_instance_transforms_cube
-from shaders import vertex_shader_particle, fragment_shader_particle
+from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.utils import create_instance_transforms_from_file, calc_blended_color
+from dtcc_viewer.opengl_viewer.utils import create_instance_transforms_cube, create_instance_transforms_from_points
+from dtcc_viewer.opengl_viewer.shaders import vertex_shader_particle, fragment_shader_particle
 
 
 class Particle:
 
-    def __init__(self, disc_size:float, n_sides:int, filename:str):
+    def __init__(self, disc_size:float, n_sides:int, points:np.ndarray):
         self._create_single_instance(disc_size, n_sides)
-        self._create_multiple_instances(filename)    
+        self._create_multiple_instances(points)    
         self._create_shader()    
 
     def render(self, interaction: Interaction):
@@ -65,10 +65,14 @@ class Particle:
         glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
-    def _create_multiple_instances(self, filename:str):
+    def _create_multiple_instances(self, points:np.ndarray):
         
-        #[self.instance_transforms, self.n_instances] = create_instance_transforms_cube(100)
-        [self.instance_transforms, self.n_instances] = create_instance_transforms_from_file(filename)
+        if not points is None:
+            self.n_instances = int(points.size / 3.0)
+            self.instance_transforms = points
+        else:
+            [self.instance_transforms, self.n_instances] = create_instance_transforms_cube(10)
+        
         print("Number of instances created: " +str(self.n_instances))           
 
         self.transforms_VBO = glGenBuffers(1)
@@ -78,10 +82,6 @@ class Particle:
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(2,1) # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
-
-        max_coord_x = np.max(self.instance_transforms)
-        min_coord_x = np.min(self.instance_transforms)
-        norm_max_x = max_coord_x - min_coord_x
         
         max_coord_z = np.max(self.instance_transforms[2::3])
         min_coord_z = np.min(self.instance_transforms[2::3])
@@ -89,8 +89,6 @@ class Particle:
 
         color_array = []
         for i in range(0, len(self.instance_transforms), 3):
-            x = self.instance_transforms[i]
-            y = self.instance_transforms[i+1]
             z = self.instance_transforms[i+2]
             z_norm = z - min_coord_z
             color_blend = calc_blended_color(0.0, norm_max_z, z_norm)

@@ -1,5 +1,7 @@
 build/
 
+*.las
+
 .idea/
 .vscode/
 cmake-build-debug/

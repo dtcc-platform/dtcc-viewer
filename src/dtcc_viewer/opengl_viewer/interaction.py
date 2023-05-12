@@ -1,7 +1,7 @@
 
 import glfw
-from camera import Camera
-from utils import Coloring, Shading
+from dtcc_viewer.opengl_viewer.camera import Camera
+from dtcc_viewer.opengl_viewer.utils import Coloring, Shading
 
 class Interaction:
 

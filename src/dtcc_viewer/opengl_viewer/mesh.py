@@ -5,21 +5,22 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
-from interaction import Interaction
-from shaders import vertex_shader_lines, vertex_shader_triangels, fragment_shader_lines, fragment_shader_triangels
-from loader import ObjLoader
+from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.shaders import vertex_shader_lines, vertex_shader_triangels, fragment_shader_lines, fragment_shader_triangels
+from dtcc_viewer.opengl_viewer.loader import ObjLoader
 
 class Mesh:
     
-    def __init__(self, filename:str):
-        self._load_mesh(filename)
+    def __init__(self, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray):
+        
+        self.vertices = vertices
+        self.face_indices = faces
+        self.edge_indices = edges
+
         self._create_triangels()
         self._create_lines()
         self._create_shader_triangels()
         self._create_shader_lines()
-
-    def _load_mesh(self, filename:str):
-        [self.face_indices, vert_coord, vert_color, self.vertices, self.edge_indices] = ObjLoader.load_model(filename)
 
 
     def _create_triangels(self):

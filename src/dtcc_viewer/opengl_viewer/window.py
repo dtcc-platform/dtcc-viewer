@@ -2,11 +2,10 @@ import glfw
 import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-import pyrr
-from interaction import Interaction
-from particles import Particle
-from mesh import Mesh
-from utils import Shading, Coloring
+from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.particles import Particle
+from dtcc_viewer.opengl_viewer.mesh import Mesh
+from dtcc_viewer.opengl_viewer.utils import Shading
 
 class Window:
 
@@ -29,6 +28,8 @@ class Window:
             raise Exception("glfw window can not be created!")
 
         glfw.set_window_pos(self.window, 400, 200)
+
+        # Register callback functions to enable mouse and keyboard interaction
         glfw.set_window_size_callback(self.window, self._window_resize_callback)
         glfw.set_cursor_pos_callback(self.window, self.interaction.mouse_look_callback)
         glfw.set_key_callback(self.window, self.interaction.key_input_callback)
@@ -40,8 +41,8 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render_particles(self, filename:str):
-        self.particles = Particle(0.3, 12, filename)
+    def render_particles(self, points:np.ndarray):
+        self.particles = Particle(0.1, 10, points)
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
 
@@ -54,8 +55,8 @@ class Window:
 
         glfw.terminate()       
     
-    def render_mesh(self, filename:str): 
-        self.mesh = Mesh(filename)
+    def render_mesh(self, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None): 
+        self.mesh = Mesh(vertices, faces, edges)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
 

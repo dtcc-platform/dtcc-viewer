@@ -5,10 +5,14 @@ import os
 from pprint import pp
 from dtcc_viewer import * 
 from dtcc_viewer.colors import color_maps
-from dtcc_viewer.mesh import Viewer
+from dtcc_viewer.mesh_pyglet import Viewer
 from typing import List, Iterable
 from dtcc_viewer import utils
-import dtcc_viewer.mesh as mesh
+import dtcc_viewer.mesh_pyglet as mesh_pyglet
+
+from dtcc_io import pointcloud as pc
+
+from dtcc_viewer import pointcloud_opengl
 
 import trimesh
 import numpy as np
@@ -25,7 +29,7 @@ class ViewerExamples():
 
     def example_simplest(self):        
         viewer = Viewer()
-        mesh.view(viewer, self.city_mesh)
+        mesh_pyglet.view(viewer, self.city_mesh)
         viewer.show()
 
     def example_simple(self):
@@ -33,7 +37,7 @@ class ViewerExamples():
         values = np.arange(n_faces) / n_faces 
 
         viewer = Viewer()
-        mesh.view(viewer, self.city_mesh, values, "rainbow")
+        mesh_pyglet.view(viewer, self.city_mesh, values, "rainbow")
         viewer.show()
         
     def example_color_by_height(self):
@@ -42,10 +46,10 @@ class ViewerExamples():
         [meshes, values] = utils.split_mesh_in_quadrants(self.city_mesh, face_mid_pts)
 
         viewer = Viewer()
-        mesh.view(viewer, meshes[0], values[0], "rainbow")
-        mesh.view(viewer, meshes[1], values[1], "warm")
-        mesh.view(viewer, meshes[2], values[2], "mono")
-        mesh.view(viewer, meshes[3], values[3], "cold")
+        mesh_pyglet.view(viewer, meshes[0], values[0], "rainbow")
+        mesh_pyglet.view(viewer, meshes[1], values[1], "warm")
+        mesh_pyglet.view(viewer, meshes[2], values[2], "mono")
+        mesh_pyglet.view(viewer, meshes[3], values[3], "cold")
         viewer.show()
 
         assert True  
@@ -62,10 +66,10 @@ class ViewerExamples():
             all_dist.append(distance_to_centre)
         
         viewer = Viewer()
-        mesh.view(viewer, meshes[0], all_dist[0], "rainbow", min_val= 0, max_val= 100)
-        mesh.view(viewer, meshes[1], all_dist[1], "rainbow", min_val= 0, max_val= 200)
-        mesh.view(viewer, meshes[2], all_dist[2], "rainbow", min_val= 0, max_val= 300)
-        mesh.view(viewer, meshes[3], all_dist[3], "rainbow", min_val= 0, max_val= 400)
+        mesh_pyglet.view(viewer, meshes[0], all_dist[0], "rainbow", min_val= 0, max_val= 100)
+        mesh_pyglet.view(viewer, meshes[1], all_dist[1], "rainbow", min_val= 0, max_val= 200)
+        mesh_pyglet.view(viewer, meshes[2], all_dist[2], "rainbow", min_val= 0, max_val= 300)
+        mesh_pyglet.view(viewer, meshes[3], all_dist[3], "rainbow", min_val= 0, max_val= 400)
         viewer.show()
 
 
@@ -76,8 +80,9 @@ if __name__ == '__main__':
     print("-------- View test started from main function -------")
 
     test = ViewerExamples()
-    test.example_simplest()
-    test.example_simple()
-    test.example_color_by_height()
+    #test.example_simplest()
+    #test.example_simple()
+    #test.example_color_by_height()
     test.example_color_by_distance_to_centre()
+
     
