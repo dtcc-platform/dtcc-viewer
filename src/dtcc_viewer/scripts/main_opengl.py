@@ -11,7 +11,7 @@ from typing import List, Iterable
 from dtcc_viewer import utils
 from dtcc_io import pointcloud as pc
 from dtcc_io import meshes as ms
-from dtcc_viewer import pointcloud_opengl, mesh_opengl
+from dtcc_viewer import pointcloud_opengl, mesh_opengl, mesh_fancy_opengl
 
 
 def pointcloud_example():
@@ -28,13 +28,20 @@ def mesh_example():
     mesh_opengl.view(loaded_mesh)
 
 
+def mesh_fancy_example():
+
+    filename_obj = '../../../data/models/CitySurface.obj'
+    loaded_mesh = ms.load_mesh(filename_obj)
+    mesh_fancy_opengl.view(loaded_mesh)
+
+
 if __name__ == '__main__':
 
     os.system('clear')
     print("-------- View test started from main function -------")
 
-    pointcloud_example()
-
+    #pointcloud_example()
     #mesh_example()
+    mesh_fancy_example()
 
     
