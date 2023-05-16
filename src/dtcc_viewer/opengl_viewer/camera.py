@@ -21,6 +21,8 @@ class Camera:
         self.scroll_sensitivity = -0.1
         self.jaw = -90
         self.pitch = 0
+
+        self.update_camera_vectors()
     
 
     def get_view_matrix(self):

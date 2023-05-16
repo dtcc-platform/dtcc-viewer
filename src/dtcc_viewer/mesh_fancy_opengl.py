@@ -44,9 +44,6 @@ def restructure_mesh(mesh:Mesh):
         f_normal = np.cross(v2[0:3]-v1[0:3], v3[0:3]-v1[0:3])
         f_normal = f_normal / np.linalg.norm(f_normal)
 
-        #print(f_normal)
-        #f_normal = np.array([0,0,1])
-
         v1 = np.concatenate((v1, f_normal), axis=0)
         v2 = np.concatenate((v2, f_normal), axis=0)
         v3 = np.concatenate((v3, f_normal), axis=0)

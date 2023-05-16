@@ -103,7 +103,15 @@ glfw.set_window_size_callback(window, window_resize)
 # Calls can be made after the contex is made current
 glfw.make_context_current(window)
 
-vertices = [   -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
+vertices = [    -3, -3, -1, 1, 1, 1, 0, 0, 1,
+                 3, -3, -1, 1, 1, 1, 0, 0, 1,
+                -3,  3, -1, 1, 1, 1, 0, 0, 1,
+
+                 3, -3, -1, 1, 1, 1, 0, 0, 1,
+                -3,  3, -1, 1, 1, 1, 0, 0, 1,
+                 3,  3, -1, 1, 1, 1, 0, 0, 1,
+    
+               -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
                 -0.5,-0.5,-0.5,1,0.1490196078,0,0,0,-1,
                 0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
                 -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
@@ -141,8 +149,9 @@ vertices = [   -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
                 -0.5,-0.5,-0.5,1,0.1490196078,0,0,-1,0]
 
 
-indices = [0,1,2,
+indices = [ 0,1,2,
             3,4,5,
+            
             6,7,8,
             9,10,11,
             12,13,14,
@@ -152,7 +161,9 @@ indices = [0,1,2,
             24,25,26,
             27,28,29,
             30,31,32,
-            33,34,35]
+            33,34,35,
+            36,37,38,
+            39,40,41]
 
 
 vertices = np.array(vertices, dtype=np.float32)
@@ -231,8 +242,8 @@ while not glfw.window_should_close(window):
     
 
     # Varying campera position
-    cam_x = 4.0 #math.sin(glfw.get_time()) * 4.0
-    cam_y = 4.0 #math.cos(glfw.get_time()) * 4.0 
+    cam_x = math.sin(glfw.get_time()) * 4.0
+    cam_y = math.cos(glfw.get_time()) * 4.0 
     cam_z = 2.0
     view = pyrr.matrix44.create_look_at(pyrr.Vector3([cam_x, cam_y, cam_z]), pyrr.Vector3([0.0, 0.0, 0.0]), pyrr.Vector3([0.0, 0.0, 1.0]))
     glUniform3f(view_position_loc, cam_x, cam_y, cam_z)

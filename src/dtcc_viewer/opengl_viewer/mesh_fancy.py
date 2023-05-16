@@ -92,7 +92,7 @@ class MeshFancy:
         self.model_loc_triangels = glGetUniformLocation(self.shader_triangels, "model")
         self.project_loc_triangels = glGetUniformLocation(self.shader_triangels, "project")
         self.view_loc_triangels = glGetUniformLocation(self.shader_triangels, "view")
-        #self.color_by_loc_triangels = glGetUniformLocation(self.shader_triangels, "color_by")
+        self.color_by_loc_triangels = glGetUniformLocation(self.shader_triangels, "color_by")
 
         self.object_color_loc = glGetUniformLocation(self.shader_triangels, "object_color")
         self.light_color_loc = glGetUniformLocation(self.shader_triangels, "light_color")
@@ -100,7 +100,6 @@ class MeshFancy:
         self.view_position_loc = glGetUniformLocation(self.shader_triangels, "view_position")
 
         translate = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-
         glUniformMatrix4fv(self.model_loc_triangels, 1, GL_FALSE, translate)
 
         glUniform3f(self.object_color_loc, 1.0, 0.5, 0.31)
@@ -129,8 +128,8 @@ class MeshFancy:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.view_loc_triangels, 1, GL_FALSE, view)
 
-        #color_by = int(interaction.coloring)
-        #glUniform1i(self.color_by_loc_triangels, color_by)
+        color_by = int(interaction.coloring)
+        glUniform1i(self.color_by_loc_triangels, color_by)
 
         view_pos = interaction.camera.camera_pos
         glUniform3f(self.view_position_loc, view_pos[0], view_pos[1], view_pos[2])
