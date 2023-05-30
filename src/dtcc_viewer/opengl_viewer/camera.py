@@ -23,7 +23,9 @@ class Camera:
         self.pitch = 0
 
         self.update_camera_vectors()
-    
+
+    def set_aspect_ratio(self, aspect_ratio):
+        self.aspect_ratio = aspect_ratio
 
     def get_view_matrix(self):
         return matrix44.create_look_at(self.camera_pos, self.camera_target, self.camera_up)

@@ -25,7 +25,7 @@ def view(mesh:Mesh):
     face_indices = np.array(face_indices, dtype= "uint32").flatten()
     edge_indices = np.array(edge_indices, dtype= "uint32").flatten()
 
-    window.render_fancy_mesh(vertices, face_indices, edge_indices)
+    window.render_fancy_shadows_mesh(vertices, face_indices, edge_indices)
 
 def restructure_mesh(mesh:Mesh):
     
@@ -80,6 +80,10 @@ def move_to_origin(origin:np.ndarray, vertices:np.ndarray):
     x_avrg = (xmin + xmax)/2.0
     y_avrg = (ymin + ymax)/2.0
     z_avrg = (zmin + zmax)/2.0
+
+    print('Size of bounding box')
+    print('xmin: ' + str(xmin) + ', xmax: ' + str(xmax))
+    print('ymin: ' + str(ymin) + ', ymax: ' + str(ymax))
     
     # x, y, z, r, g, b, nx, ny ,nz
     origin = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])

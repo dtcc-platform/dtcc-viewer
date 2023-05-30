@@ -10,6 +10,9 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 window_w = 1200
 window_h = 800
 
+
+action = Interaction(window_w, window_h)
+
 vertex_shader_fancy = """
 # version 330 core
 
@@ -163,8 +166,14 @@ void main()
 
 # glfw callback function
 def window_resize(window, width, height):
+    global window_w
+    global window_h
+    window_w = width
+    window_h = height
     glViewport(0, 0, width, height)
-    project = pyrr.matrix44.create_perspective_projection(45,width / height, 0.1, 100)
+    global action
+    action.camera.set_aspect_ratio(width/height)
+    project = pyrr.matrix44.create_perspective_projection(45,window_w / window_h, 0.1, 100)
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, project)
     
 
@@ -183,7 +192,6 @@ if not window:
     
 glfw.set_window_pos(window, 400, 200)
 
-action = Interaction(window_w, window_h)
 
 glfw.set_cursor_pos_callback(window, action.mouse_look_callback)
 glfw.set_key_callback(window, action.key_input_callback)
@@ -198,12 +206,15 @@ glfw.make_context_current(window)
 floor_size = 30
 floor_z = -2.0
 
-debug_vertices = [ -floor_size, -floor_size, 0, 0, 0,
-                    floor_size, -floor_size, 0, 1, 0,
-                   -floor_size,  floor_size, 0, 0, 1,
-                    floor_size, -floor_size, 0, 1, 0,
-                   -floor_size,  floor_size, 0, 0, 1,
-                    floor_size,  floor_size, 0, 1, 1]
+tex_min = 0
+tex_max = 1
+
+debug_vertices = [ -floor_size, -floor_size, 0, tex_min, tex_min,
+                    floor_size, -floor_size, 0, tex_max, tex_min,
+                   -floor_size,  floor_size, 0, tex_min, tex_max,
+                    floor_size, -floor_size, 0, tex_max, tex_min,
+                   -floor_size,  floor_size, 0, tex_min, tex_max,
+                    floor_size,  floor_size, 0, tex_max, tex_max]
 
 debug_indices = [0,1,2,
                  3,4,5,]
@@ -487,22 +498,8 @@ light_position_loc = glGetUniformLocation(shader_fancy, "light_position")
 view_position_loc = glGetUniformLocation(shader_fancy, "view_position")
 light_space_matrix_loc = glGetUniformLocation(shader_fancy, "light_space_matrix")
 
-project = pyrr.matrix44.create_perspective_projection(45, window_w / window_h, 0.1, 100)
-model = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-
-glUniformMatrix4fv(project_loc, 1, GL_FALSE, project)
-glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
-
-light_position = [10.0, 10.0, 10.0]
-light_position = np.array(light_position, dtype=np.float32)
-
-light_color = [1.0, 1.0, 1.0]
-light_color = np.array(light_color, dtype=np.float32)
-
-glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
-glUniform3f(light_position_loc, light_position[0], light_position[1], light_position[2])
-glUniform3f(view_position_loc, action.camera.camera_pos[0], action.camera.camera_pos[1], action.camera.camera_pos[2])
-
+light_position = 3.0 * np.array([10.0, 10.0, 10.0], dtype=np.float32)
+light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 
 # ---------------- DEBUG SHADER ---------------------#
 
@@ -534,12 +531,16 @@ glDrawBuffer(GL_NONE)   #Disable drawing to the color attachements since we only
 glReadBuffer(GL_NONE)   #We don't want to read color attachements either
 glBindFramebuffer(GL_FRAMEBUFFER, 0) 
 
+
+# ---------------- SHADOW MAP SHADER ---------------------#
+
 shader_shadow = compileProgram(compileShader(vertex_shader_shadow, GL_VERTEX_SHADER), compileShader(fragment_shader_shadow, GL_FRAGMENT_SHADER))
 
 glUseProgram(shader_shadow)
 
 light_space_matrix_loc = glGetUniformLocation(shader_shadow, "light_space_matrix")
 model_loc = glGetUniformLocation(shader_shadow, "model")
+
 
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
@@ -579,6 +580,12 @@ def render_scene(time):
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_4)
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
+    model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
+    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([7, 7, 11]))
+    model_cube_5 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_5)
+    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+
     glBindVertexArray(VAO_icosa)
     model_icosa = pyrr.matrix44.create_from_translation(pyrr.Vector3(light_position))
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_icosa)
@@ -597,7 +604,8 @@ while not glfw.window_should_close(window):
     glfw.poll_events()
 
     #first pass: Capture shadow map
-    light_projection = pyrr.matrix44.create_orthogonal_projection(-20, 20, -20, 20, 1.0, 40.0, dtype=np.float32)   
+    op_size = 20
+    light_projection = pyrr.matrix44.create_orthogonal_projection(-op_size, op_size, -op_size, op_size, 1.0, 100.0, dtype=np.float32)   
     look_target = np.array([0, 0, 0], dtype=np.float32)
     global_up = np.array([0, 0, 1], dtype= np.float32)
     light_view = pyrr.matrix44.create_look_at(light_position, look_target, global_up, dtype= np.float32)
@@ -615,6 +623,8 @@ while not glfw.window_should_close(window):
     #debug pass: Draw shadow map on a quad for visual debugging
     if debug:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        #frameBufferSize = glfw.get_framebuffer_size(window)
+        #glViewport(0,0,frameBufferSize[0], frameBufferSize[1])
         glViewport(0,0,window_w, window_h)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -625,9 +635,9 @@ while not glfw.window_should_close(window):
     else:
         #second pass: Rendering 3D
         glBindFramebuffer(GL_FRAMEBUFFER, 0)        #Setting default buffer
-        frameBufferSize = glfw.get_framebuffer_size(window)
-        print(frameBufferSize[0])
-        glViewport(0,0,frameBufferSize[0], frameBufferSize[1])
+        #frameBufferSize = glfw.get_framebuffer_size(window)
+        #glViewport(0,0,frameBufferSize[0], frameBufferSize[1])
+        glViewport(0,0,window_w, window_h)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glUseProgram(shader_fancy)
         light_space_matrix_loc = glGetUniformLocation(shader_fancy, "light_space_matrix")
