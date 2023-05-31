@@ -7,9 +7,9 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 
-from dtcc_viewer.opengl_viewer.shaders_shadow_map import vertex_shader_fancy, fragment_shader_fancy
-from dtcc_viewer.opengl_viewer.shaders_shadow_map import vertex_shader_shadow, fragment_shader_shadow
-from dtcc_viewer.opengl_viewer.shaders_shadow_map import vertex_shader_debug, fragment_shader_debug
+from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import vertex_shader_fancy_shadow, fragment_shader_fancy_shadow
+from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import vertex_shader_shadow_map, fragment_shader_shadow_map
+from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import vertex_shader_debug, fragment_shader_debug
 
 class MeshShadow:
     
@@ -22,7 +22,7 @@ class MeshShadow:
         self._calc_model_scale()
         self._create_triangels()
         self._create_shadow_map()
-        self._create_shader_fancy()
+        self._create_shader_fancy_shadow()
         self._create_shader_shadow()
         self._set_constats()
 
@@ -93,10 +93,10 @@ class MeshShadow:
         glReadBuffer(GL_NONE)   #We don't want to read color attachements either
         glBindFramebuffer(GL_FRAMEBUFFER, 0) 
 
-    def _create_shader_fancy(self):
+    def _create_shader_fancy_shadow(self):
         self._bind_vao_triangels()
-        self.shader_fancy = compileProgram(compileShader(vertex_shader_fancy, GL_VERTEX_SHADER), 
-                                               compileShader(fragment_shader_fancy, GL_FRAGMENT_SHADER))
+        self.shader_fancy = compileProgram(compileShader(vertex_shader_fancy_shadow, GL_VERTEX_SHADER), 
+                                               compileShader(fragment_shader_fancy_shadow, GL_FRAGMENT_SHADER))
 
         glUseProgram(self.shader_fancy)
 
@@ -110,8 +110,8 @@ class MeshShadow:
         self.light_space_matrix_loc = glGetUniformLocation(self.shader_fancy, "light_space_matrix")
 
     def _create_shader_shadow(self):
-        self.shader_shadow = compileProgram(compileShader(vertex_shader_shadow, GL_VERTEX_SHADER), 
-                                            compileShader(fragment_shader_shadow, GL_FRAGMENT_SHADER))
+        self.shader_shadow = compileProgram(compileShader(vertex_shader_shadow_map, GL_VERTEX_SHADER), 
+                                            compileShader(fragment_shader_shadow_map, GL_FRAGMENT_SHADER))
         
         glUseProgram(self.shader_shadow)
         

@@ -1,4 +1,4 @@
-vertex_shader_fancy = """
+vertex_shader_fancy_shadow = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
@@ -27,7 +27,7 @@ void main()
 }
 """
 
-fragment_shader_fancy = """ 
+fragment_shader_fancy_shadow = """ 
 # version 330 core
 
 in vec3 v_frag_pos;
@@ -97,7 +97,7 @@ void main()
 }
 """
 
-vertex_shader_shadow = """
+vertex_shader_shadow_map = """
 #version 330 core
 layout (location = 0) in vec3 a_pos;
 
@@ -110,7 +110,7 @@ void main()
 } 
 """
 
-fragment_shader_shadow = """
+fragment_shader_shadow_map = """
 #version 330 core
 
 void main()

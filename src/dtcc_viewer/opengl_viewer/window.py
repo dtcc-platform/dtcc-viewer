@@ -6,7 +6,7 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.particles import Particle
 from dtcc_viewer.opengl_viewer.mesh import Mesh
 from dtcc_viewer.opengl_viewer.mesh_fancy import MeshFancy
-from dtcc_viewer.opengl_viewer.mesh_shadow import MeshShadow
+from dtcc_viewer.opengl_viewer.mesh_fancy_shadows import MeshShadow
 from dtcc_viewer.opengl_viewer.utils import Shading
 
 class Window:

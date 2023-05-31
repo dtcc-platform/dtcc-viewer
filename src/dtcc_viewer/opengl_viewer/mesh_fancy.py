@@ -6,9 +6,8 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.shaders import vertex_shader_lines, fragment_shader_lines
-from dtcc_viewer.opengl_viewer.shaders import vertex_shader_triangels_fancy, fragment_shader_triangels_fancy
-from dtcc_viewer.opengl_viewer.shaders import vertex_shader_triangels_fancy_2, fragment_shader_triangels_fancy_2
+from dtcc_viewer.opengl_viewer.shaders_mesh import vertex_shader_lines, fragment_shader_lines
+from dtcc_viewer.opengl_viewer.shaders_mesh_fancy import vertex_shader_fancy, fragment_shader_fancy
 
 from dtcc_viewer.opengl_viewer.loader import ObjLoader
 
@@ -85,8 +84,8 @@ class MeshFancy:
     
     def _create_shader_triangels(self):
         self._bind_vao_triangels()
-        self.shader_triangels = compileProgram(compileShader(vertex_shader_triangels_fancy_2, GL_VERTEX_SHADER), 
-                                               compileShader(fragment_shader_triangels_fancy_2, GL_FRAGMENT_SHADER))
+        self.shader_triangels = compileProgram(compileShader(vertex_shader_fancy, GL_VERTEX_SHADER), 
+                                               compileShader(fragment_shader_fancy, GL_FRAGMENT_SHADER))
         glUseProgram(self.shader_triangels)
 
         self.model_loc_triangels = glGetUniformLocation(self.shader_triangels, "model")
