@@ -19,12 +19,24 @@ class MeshShadow:
         self.face_indices = faces
         self.edge_indices = edges
 
+        self._calc_model_scale()
         self._create_triangels()
         self._create_shadow_map()
         self._create_shader_fancy()
         self._create_shader_shadow()
         self._set_constats()
 
+    def _calc_model_scale(self):
+        xmin = self.vertices[0::3].min()
+        xmax = self.vertices[0::3].max()
+        ymin = self.vertices[1::3].min()
+        ymax = self.vertices[1::3].max()
+
+        xdom = xmax - xmin
+        ydom = ymax - ymin
+        
+        self.diameter_xy = math.sqrt(xdom * xdom + ydom * ydom)
+        self.radius_xy = self.diameter_xy / 2.0
 
     def _create_triangels(self):
         
@@ -111,7 +123,6 @@ class MeshShadow:
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 
 
-
     def _render_first_pass(self):
         self._bind_vao_triangels()
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
@@ -124,10 +135,10 @@ class MeshShadow:
         
     def render_shadow_map(self, time):    
         #first pass: Capture shadow map
-        self.light_position = np.array([math.sin(time) * 500.0, math.cos(time) * 500.0, abs(math.sin(time/2.0)) * 400.0], dtype=np.float32)
+        rad = self.radius_xy
+        self.light_position = np.array([math.sin(time) * rad, math.cos(time) * rad, abs(math.sin(time/2.0)) * 0.7 * rad], dtype=np.float32)
         
-        size = 700
-        light_projection = pyrr.matrix44.create_orthogonal_projection(-size, size, -size, size, 0.1, 1500, dtype=np.float32)   
+        light_projection = pyrr.matrix44.create_orthogonal_projection(-rad, rad, -rad, rad, 0.1, self.diameter_xy, dtype=np.float32)   
         look_target = np.array([0, 0, 0], dtype=np.float32)
         global_up = np.array([0, 0, 1], dtype= np.float32)
         light_view = pyrr.matrix44.create_look_at(self.light_position, look_target, global_up, dtype= np.float32)
