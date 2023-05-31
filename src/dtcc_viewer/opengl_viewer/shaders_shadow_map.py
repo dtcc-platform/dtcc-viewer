@@ -57,7 +57,7 @@ float shadow_calc(float dot_light_normal)
 
     //Surfaces with normal perpendicular to the ligth source (i.e. dot_light_normal = 0) gives a larger bias. 
     //Surfaces looking at the light source get a smaller bias of minimum 0.005. 
-    float bias = max(0.05 * (1.0 - dot_light_normal), 0.0005);   
+    float bias = max(0.001 * (1.0 - dot_light_normal), 0.00005);   
     
     float shadow = 0.0;
     vec2 texel_size = 1.0 / textureSize(shadow_map, 0);

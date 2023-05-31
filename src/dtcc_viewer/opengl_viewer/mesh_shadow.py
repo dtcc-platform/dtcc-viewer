@@ -66,7 +66,7 @@ class MeshShadow:
         # Creating a texture which will be used as the framebuffers depth buffer
         self.depth_map = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
-        self.shadow_map_resolution = 1024 * 2
+        self.shadow_map_resolution = 1024 * 6
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_resolution, self.shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
@@ -107,7 +107,7 @@ class MeshShadow:
         self.model_loc_shadow = glGetUniformLocation(self.shader_shadow, "model")
 
     def _set_constats(self):
-        self.light_position = np.array([50.0, 50.0, 50.0], dtype=np.float32)
+        self.light_position = np.array([500.0, 500.0, 400.0], dtype=np.float32)
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 
 
@@ -122,11 +122,12 @@ class MeshShadow:
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
         self._unbind_vao()    
         
-    def render_shadow_map(self):
-            
+    def render_shadow_map(self, time):    
         #first pass: Capture shadow map
-        size = 100
-        light_projection = pyrr.matrix44.create_orthogonal_projection(-size, size, -size, size, 0.1, 100, dtype=np.float32)   
+        self.light_position = np.array([math.sin(time) * 500.0, math.cos(time) * 500.0, abs(math.sin(time/2.0)) * 400.0], dtype=np.float32)
+        
+        size = 700
+        light_projection = pyrr.matrix44.create_orthogonal_projection(-size, size, -size, size, 0.1, 1500, dtype=np.float32)   
         look_target = np.array([0, 0, 0], dtype=np.float32)
         global_up = np.array([0, 0, 1], dtype= np.float32)
         light_view = pyrr.matrix44.create_look_at(self.light_position, look_target, global_up, dtype= np.float32)

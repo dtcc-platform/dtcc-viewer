@@ -100,7 +100,7 @@ class Window:
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             
-            self.mesh.render_shadow_map()
+            self.mesh.render_shadow_map(glfw.get_time())
             self.mesh.render_model_with_shadows(self.interaction)
             
             self._fps_calculations()
