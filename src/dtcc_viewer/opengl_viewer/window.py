@@ -7,7 +7,7 @@ from dtcc_viewer.opengl_viewer.particles import Particle
 from dtcc_viewer.opengl_viewer.mesh import Mesh
 from dtcc_viewer.opengl_viewer.mesh_fancy import MeshFancy
 from dtcc_viewer.opengl_viewer.mesh_fancy_shadows import MeshShadow
-from dtcc_viewer.opengl_viewer.utils import Shading
+from dtcc_viewer.opengl_viewer.utils import Shading, Style
 
 class Window:
 
@@ -100,9 +100,17 @@ class Window:
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             
-            self.mesh.render_shadow_map(glfw.get_time())
-            self.mesh.render_model_with_shadows(self.interaction)
-            
+            if self.interaction.shading == Shading.shaded:
+                if self.interaction.style == Style.basic:
+                    self.mesh.render_basic(glfw.get_time(), self.interaction)
+                elif self.interaction.style == Style.fancy:
+                    self.mesh.render_fancy(glfw.get_time(), self.interaction)
+                elif self.interaction.style == Style.shadows:
+                    self.mesh.render_fancy_shadows(glfw.get_time(), self.interaction)
+            elif self.interaction.shading == Shading.wireframe:
+                self.mesh.render_lines(glfw.get_time(), self.interaction)
+                         
+
             self._fps_calculations()
             glfw.swap_buffers(self.window)        
     

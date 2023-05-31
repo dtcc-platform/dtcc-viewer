@@ -16,6 +16,11 @@ class Coloring(IntEnum):
     color = 1
     white = 2
 
+class Style(IntEnum):
+    basic = 1
+    fancy = 2
+    shadows = 3    
+
 def create_instance_transforms_cube(n):
     instance_array = []
     offset = 0.05

@@ -1,7 +1,7 @@
 
 import glfw
 from dtcc_viewer.opengl_viewer.camera import Camera
-from dtcc_viewer.opengl_viewer.utils import Coloring, Shading
+from dtcc_viewer.opengl_viewer.utils import Coloring, Shading, Style
 
 class Interaction:
 
@@ -15,6 +15,7 @@ class Interaction:
         self.left_mbtn_pressed = False
         self.coloring = Coloring.color
         self.shading = Shading.shaded
+        self.style = Style.fancy
 
     def key_input_callback(self, window, key, scancode, action, mode):
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
@@ -30,7 +31,20 @@ class Interaction:
             if(self.coloring == Coloring.color):
                 self.coloring = Coloring.white
             elif(self.coloring == Coloring.white):
-                self.coloring = Coloring.color 
+                self.coloring = Coloring.color
+
+        if key == glfw.KEY_E and action == glfw.PRESS:
+            print("key pressed")
+            print("old style: " + str(self.style))
+            style_int = int(self.style)
+            style_int += 1
+
+            if(style_int > 3):
+                style_int = 1
+
+            self.style = style_int
+            print("new style: " + str(self.style))
+                       
         
     def scroll_input_callback(self, window, xoffset, yoffset):
         self.camera.process_scroll_movement(xoffset, yoffset) 

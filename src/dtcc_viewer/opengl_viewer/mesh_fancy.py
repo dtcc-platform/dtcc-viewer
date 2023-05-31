@@ -6,7 +6,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.shaders_mesh import vertex_shader_lines, fragment_shader_lines
+from dtcc_viewer.opengl_viewer.shaders_lines import vertex_shader_lines, fragment_shader_lines
 from dtcc_viewer.opengl_viewer.shaders_mesh_fancy import vertex_shader_fancy, fragment_shader_fancy
 
 from dtcc_viewer.opengl_viewer.loader import ObjLoader

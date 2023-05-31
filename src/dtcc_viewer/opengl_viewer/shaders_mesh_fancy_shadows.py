@@ -6,22 +6,32 @@ layout(location = 1) in vec3 a_color;
 layout(location = 2) in vec3 a_normal;
 
 out vec3 v_frag_pos;
-out vec3 v_normal;
 out vec3 v_color;
+out vec3 v_normal;
 out vec4 v_frag_pos_light_space;
 
-uniform mat4 light_space_matrix;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
-
+uniform int color_by;
+uniform mat4 light_space_matrix;
 
 void main()
 {   
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = transpose(inverse(mat3(model))) * a_normal;
     v_frag_pos_light_space = light_space_matrix * vec4(v_frag_pos, 1.0);
-    v_color = a_color;
+    //v_color = a_color;
+    if(color_by == 1)
+    {
+        v_color = a_color;
+    }
+    else if(color_by == 2)
+    {
+        v_color = vec3(1.0, 1.0, 1.0);
+    }
+
+
     gl_Position = project * view * vec4(v_frag_pos, 1.0);
 
 }
@@ -31,14 +41,15 @@ fragment_shader_fancy_shadow = """
 # version 330 core
 
 in vec3 v_frag_pos;
-in vec3 v_normal;
 in vec3 v_color;
+in vec3 v_normal;
 in vec4 v_frag_pos_light_space;
 
 out vec4 out_frag_color;
 
 uniform sampler2D shadow_map;
 
+uniform vec3 object_color;
 uniform vec3 light_color;
 uniform vec3 light_position;
 uniform vec3 view_position;
