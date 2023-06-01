@@ -15,7 +15,8 @@ class Interaction:
         self.left_mbtn_pressed = False
         self.coloring = Coloring.color
         self.shading = Shading.shaded
-        self.style = Style.fancy
+        self.style = Style.basic
+        self.rotate = False 
 
     def key_input_callback(self, window, key, scancode, action, mode):
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
@@ -34,16 +35,16 @@ class Interaction:
                 self.coloring = Coloring.color
 
         if key == glfw.KEY_E and action == glfw.PRESS:
-            print("key pressed")
-            print("old style: " + str(self.style))
             style_int = int(self.style)
             style_int += 1
-
             if(style_int > 3):
                 style_int = 1
-
             self.style = style_int
-            print("new style: " + str(self.style))
+
+        if key == glfw.KEY_R and action == glfw.PRESS:
+            self.rotate = not self.rotate
+                
+
                        
         
     def scroll_input_callback(self, window, xoffset, yoffset):
