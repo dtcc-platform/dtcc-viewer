@@ -5,7 +5,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.particles import Particle
 from dtcc_viewer.opengl_viewer.mesh import MeshShadow
-from dtcc_viewer.opengl_viewer.utils import Shading, Style
+from dtcc_viewer.opengl_viewer.utils import MeshShading
 
 class Window:
 
@@ -85,19 +85,20 @@ class Window:
 
 
     def _render_particles(self):
-        self.particles.render(self.interaction)    
+        if self.interaction.particles_draw:    
+            self.particles.render(self.interaction)    
             
     def _render_mesh(self):
-        if self.interaction.shading == Shading.shaded:
-            if self.interaction.style == Style.basic:
+        if self.interaction.mesh_draw:    
+            if self.interaction.mesh_shading == MeshShading.wireframe:
+                self.mesh.render_lines(self.interaction)
+            elif self.interaction.mesh_shading == MeshShading.shaded_basic:
                 self.mesh.render_basic(self.interaction)
-            elif self.interaction.style == Style.fancy:
-                self.mesh.render_fancy(self.interaction)
-            elif self.interaction.style == Style.shadows:
-                self.mesh.render_fancy_shadows(self.interaction)
-        elif self.interaction.shading == Shading.wireframe:
-            self.mesh.render_lines(self.interaction)
-
+            elif self.interaction.mesh_shading == MeshShading.shaded_fancy:
+                    self.mesh.render_fancy(self.interaction)
+            elif self.interaction.mesh_shading == MeshShading.shaded_shadows:
+                    self.mesh.render_fancy_shadows(self.interaction)
+        
     def _fps_calculations(self, print_results = True):
         new_time = glfw.get_time()
         time_passed = new_time - self.time

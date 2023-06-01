@@ -26,7 +26,7 @@ def mesh_example():
     loaded_mesh = ms.load_mesh(filename_obj)
     mesh_opengl.view(loaded_mesh)
 
-def mesh_point_cloude_example():
+def mesh_point_cloud_example():
     filename_obj = '../../../data/models/CitySurface.obj'
     filename_csv = '../../../data/models/PointCloud_HQ.csv'
     loaded_pc = pc.load(filename_csv)
@@ -42,6 +42,6 @@ if __name__ == '__main__':
     print("-------- View test started from main function -------")
 
     #pointcloud_example()
-    mesh_example()
-    #mesh_point_cloude_example()
+    #mesh_example()
+    mesh_point_cloud_example()
     

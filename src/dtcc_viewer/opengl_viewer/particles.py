@@ -31,10 +31,10 @@ class Particle:
         tans = self._get_billborad_transform(interaction.camera.camera_pos)
         glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
 
-        color_by = interaction.coloring
+        color_by = interaction.particle_color
         glUniform1i(self.color_by_loc, color_by)
 
-        scale_factor = interaction.scale_factor
+        scale_factor = interaction.particles_scale
         scale = pyrr.matrix44.create_from_scale([scale_factor, scale_factor, scale_factor], dtype=np.float32)
         glUniformMatrix4fv(self.scale_loc, 1, GL_FALSE,scale)
     

@@ -204,7 +204,7 @@ class MeshShadow:
     def _render_shadow_map(self, interaction:Interaction):    
         #first pass: Capture shadow map
         rad = self.radius_xy
-        if interaction.rotate:
+        if interaction.mesh_rotate:
             self.loop_counter += 1
             
         rot_step = self.loop_counter / 120.0    
@@ -246,7 +246,7 @@ class MeshShadow:
         glUniformMatrix4fv(self.ploc_fancy_shadows, 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.vloc_fancy_shadows, 1, GL_FALSE, view)
 
-        color_by = int(interaction.coloring)
+        color_by = int(interaction.mesh_color)
         glUniform1i(self.cb_loc_fancy, color_by)
 
         #Set light uniforms
@@ -276,7 +276,7 @@ class MeshShadow:
 
         rad = self.radius_xy
         
-        if interaction.rotate:
+        if interaction.mesh_rotate:
             self.loop_counter += 1
             
         rot_step = self.loop_counter / 120.0    
@@ -291,7 +291,7 @@ class MeshShadow:
         projection = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.ploc_fancy, 1, GL_FALSE, projection)
 
-        color_by = int(interaction.coloring)
+        color_by = int(interaction.mesh_color)
         glUniform1i(self.cb_loc_fancy, color_by)
 
         view_pos = interaction.camera.camera_pos
@@ -320,7 +320,7 @@ class MeshShadow:
         projection = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.ploc_basic, 1, GL_FALSE, projection)
 
-        color_by = int(interaction.coloring)
+        color_by = int(interaction.mesh_color)
         glUniform1i(self.cb_loc_basic, color_by)
 
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
@@ -339,7 +339,7 @@ class MeshShadow:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
 
-        color_by = int(interaction.coloring)
+        color_by = int(interaction.mesh_color)
         glUniform1i(self.cb_loc_lines, color_by)
 
         glDrawElements(GL_LINES, len(self.edge_indices), GL_UNSIGNED_INT, None)
