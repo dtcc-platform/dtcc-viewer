@@ -17,6 +17,7 @@ from dtcc_viewer import mesh_opengl
 
 def pointcloud_example():
     filename_las = '../../../data/models/PointCloud2.las'
+    filename_csv = '../../../data/models/PointCloud_HQ.csv'
     loaded_pc = pc.load(filename_las)
     pointcloud_opengl.view(loaded_pc)
 
@@ -25,7 +26,16 @@ def mesh_example():
     loaded_mesh = ms.load_mesh(filename_obj)
     mesh_opengl.view(loaded_mesh)
 
+def mesh_point_cloude_example():
+    filename_obj = '../../../data/models/CitySurface.obj'
+    filename_csv = '../../../data/models/PointCloud_HQ.csv'
+    loaded_pc = pc.load(filename_csv)
+    loaded_mesh = ms.load_mesh(filename_obj)
+    mesh_opengl.view(loaded_mesh, loaded_pc)
+    
+    pp(loaded_pc)
 
+ 
 if __name__ == '__main__':
 
     os.system('clear')
@@ -33,5 +43,5 @@ if __name__ == '__main__':
 
     #pointcloud_example()
     mesh_example()
-
+    #mesh_point_cloude_example()
     

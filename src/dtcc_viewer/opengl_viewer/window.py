@@ -49,7 +49,7 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self.particles.render(self.interaction)
+            self._render_particles()
             self._fps_calculations()
             glfw.swap_buffers(self.window)
 
@@ -64,41 +64,40 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            
-            if self.interaction.shading == Shading.shaded:
-                if self.interaction.style == Style.basic:
-                    self.mesh.render_basic(glfw.get_time(), self.interaction)
-                elif self.interaction.style == Style.fancy:
-                    self.mesh.render_fancy(glfw.get_time(), self.interaction)
-                elif self.interaction.style == Style.shadows:
-                    self.mesh.render_fancy_shadows(glfw.get_time(), self.interaction)
-            elif self.interaction.shading == Shading.wireframe:
-                self.mesh.render_lines(glfw.get_time(), self.interaction)
-
-
+            self._render_mesh()
             self._fps_calculations()
             glfw.swap_buffers(self.window)        
     
 
-    def render_particles_and_mesh(self, filename_particles:str, filename_mesh:str):
-        self.particles = Particle(0.3, 12, filename_particles)        
-        self.mesh = MeshShadow(filename_mesh)
+    def render_particles_and_mesh(self, points:np.ndarray, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None ):
+        self.particles = Particle(0.2, 10, points)        
+        self.mesh = MeshShadow(vertices, faces, edges)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
 
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-            if self.interaction.shading == Shading.shaded:
-                self.mesh.render_triangels(self.interaction)
-            elif self.interaction.shading == Shading.wireframe:    
-                self.mesh.render_lines(self.interaction)
-
-            self.particles.render(self.interaction)    
+            self._render_mesh()
+            self._render_particles()
             self._fps_calculations()
             glfw.swap_buffers(self.window)
-        
+
+
+    def _render_particles(self):
+        self.particles.render(self.interaction)    
+            
+    def _render_mesh(self):
+        if self.interaction.shading == Shading.shaded:
+            if self.interaction.style == Style.basic:
+                self.mesh.render_basic(self.interaction)
+            elif self.interaction.style == Style.fancy:
+                self.mesh.render_fancy(self.interaction)
+            elif self.interaction.style == Style.shadows:
+                self.mesh.render_fancy_shadows(self.interaction)
+        elif self.interaction.shading == Shading.wireframe:
+            self.mesh.render_lines(self.interaction)
+
     def _fps_calculations(self, print_results = True):
         new_time = glfw.get_time()
         time_passed = new_time - self.time

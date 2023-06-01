@@ -49,6 +49,7 @@ class MeshShadow:
     def _set_constats(self):
         self.light_position = np.array([500.0, 500.0, 400.0], dtype=np.float32)
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+        self.loop_counter = 120
 
     # Setup geometry
     def _create_triangels(self):
@@ -116,7 +117,7 @@ class MeshShadow:
         # Creating a texture which will be used as the framebuffers depth buffer
         self.depth_map = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
-        self.shadow_map_resolution = 1024 * 6
+        self.shadow_map_resolution = 1024 * 8
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_resolution, self.shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
@@ -200,13 +201,14 @@ class MeshShadow:
         self.lsm_loc_shadow_map = glGetUniformLocation(self.shader_shadow_map, "light_space_matrix")
         
     # Private render functions    
-    def _render_shadow_map(self, time, interaction:Interaction):    
+    def _render_shadow_map(self, interaction:Interaction):    
         #first pass: Capture shadow map
         rad = self.radius_xy
         if interaction.rotate:
-            self.light_position = np.array([math.sin(time) * rad, math.cos(time) * rad, abs(math.sin(time/2.0)) * 0.7 * rad], dtype=np.float32)
-        else:
-            self.light_position = np.array([rad, rad, 0.7 * rad], dtype=np.float32)
+            self.loop_counter += 1
+            
+        rot_step = self.loop_counter / 120.0    
+        self.light_position = np.array([math.sin(rot_step) * rad, math.cos(rot_step) * rad, abs(math.sin(rot_step/2.0)) * 0.7 * rad], dtype=np.float32)
         
         light_projection = pyrr.matrix44.create_orthogonal_projection(-rad, rad, -rad, rad, 0.1, 1.25 * self.diameter_xy, dtype=np.float32)   
         look_target = np.array([0, 0, 0], dtype=np.float32)
@@ -263,21 +265,22 @@ class MeshShadow:
         self._unbind_vao()
 
     # Render mesh fancy shadows
-    def render_fancy_shadows(self, time, interaction:Interaction):
-        self._render_shadow_map(time, interaction)
+    def render_fancy_shadows(self, interaction:Interaction):
+        self._render_shadow_map(interaction)
         self._render_model_with_shadows(interaction) 
 
     # Render mesh fancy
-    def render_fancy(self, time, interaction:Interaction):
+    def render_fancy(self, interaction:Interaction):
         self._bind_vao_triangels()
         self._bind_shader_fancy()
 
         rad = self.radius_xy
         
         if interaction.rotate:
-            self.light_position = np.array([math.sin(time) * rad, math.cos(time) * rad, abs(math.sin(time/2.0)) * 0.7 * rad], dtype=np.float32)
-        else:
-            self.light_position = np.array([rad, rad, 0.7 * rad], dtype=np.float32)
+            self.loop_counter += 1
+            
+        rot_step = self.loop_counter / 120.0    
+        self.light_position = np.array([math.sin(rot_step) * rad, math.cos(rot_step) * rad, abs(math.sin(rot_step/2.0)) * 0.7 * rad], dtype=np.float32)
         
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         glUniformMatrix4fv(self.mloc_fancy, 1, GL_FALSE, move)
@@ -304,7 +307,7 @@ class MeshShadow:
         self._unbind_shader()
 
     # Render mesh basic
-    def render_basic(self, time, interaction:Interaction):
+    def render_basic(self, interaction:Interaction):
         self._bind_vao_triangels()
         self._bind_shader_basic()
 
@@ -326,7 +329,7 @@ class MeshShadow:
         self._unbind_shader()
 
     # Render mesh lines    
-    def render_lines(self, time, interaction:Interaction):
+    def render_lines(self, interaction:Interaction):
         self._bind_vao_lines()
         self._bind_shader_lines()
 

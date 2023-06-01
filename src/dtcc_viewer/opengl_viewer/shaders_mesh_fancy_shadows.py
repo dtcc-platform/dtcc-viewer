@@ -21,7 +21,7 @@ void main()
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = transpose(inverse(mat3(model))) * a_normal;
     v_frag_pos_light_space = light_space_matrix * vec4(v_frag_pos, 1.0);
-    //v_color = a_color;
+
     if(color_by == 1)
     {
         v_color = a_color;
@@ -31,9 +31,7 @@ void main()
         v_color = vec3(1.0, 1.0, 1.0);
     }
 
-
     gl_Position = project * view * vec4(v_frag_pos, 1.0);
-
 }
 """
 
@@ -68,7 +66,7 @@ float shadow_calc(float dot_light_normal)
 
     //Surfaces with normal perpendicular to the ligth source (i.e. dot_light_normal = 0) gives a larger bias. 
     //Surfaces looking at the light source get a smaller bias of minimum 0.005. 
-    float bias = max(0.001 * (1.0 - dot_light_normal), 0.00005);   
+    float bias = max(0.0011 * (1.0 - dot_light_normal), 0.00005);   
     
     float shadow = 0.0;
     vec2 texel_size = 1.0 / textureSize(shadow_map, 0);

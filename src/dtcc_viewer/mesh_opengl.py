@@ -1,10 +1,11 @@
 import glfw
 import numpy as np
 from dtcc_model import Mesh
+from dtcc_model import PointCloud, Bounds
 from dtcc_viewer.opengl_viewer.window import Window
 from pprint import pp
 
-def view(mesh:Mesh):
+def view(mesh:Mesh, pointcloud:PointCloud = None):
     
     origin = np.array([0.0, 0.0, 0.0])
 
@@ -15,18 +16,18 @@ def view(mesh:Mesh):
 
     vertices = normalise_colors(vertices)
 
-    vertices = move_to_origin(origin, vertices)
+    [vertices, points] = move_to_origin(origin, vertices, pointcloud)
     
-    print("Num vertices:" + str(len(vertices)))
-    print("Num faces:" + str(len(face_indices)))
-    print("Num edges:" + str(len(edge_indices)))
-
     # Making sure the datatypes are aligned with opengl implementation
     vertices = np.array(vertices, dtype= "float32").flatten()
     face_indices = np.array(face_indices, dtype= "uint32").flatten()
     edge_indices = np.array(edge_indices, dtype= "uint32").flatten()
 
-    window.render_mesh(vertices, face_indices, edge_indices)
+    if(not pointcloud):
+        window.render_mesh(vertices, face_indices, edge_indices)
+    else:
+        points = np.array(points, dtype='float32').flatten()
+        window.render_particles_and_mesh(points, vertices, face_indices, edge_indices)    
 
 def restructure_mesh(mesh:Mesh):
     
@@ -69,7 +70,7 @@ def normalise_colors(vertices:np.ndarray):
     
     return vertices
 
-def move_to_origin(origin:np.ndarray, vertices:np.ndarray):
+def move_to_origin(origin:np.ndarray, vertices:np.ndarray, pc:PointCloud = None):
 
     xmin = vertices[:, 0].min()
     xmax = vertices[:, 0].max()
@@ -87,8 +88,15 @@ def move_to_origin(origin:np.ndarray, vertices:np.ndarray):
     print('ymin: ' + str(ymin) + ', ymax: ' + str(ymax))
     
     # x, y, z, r, g, b, nx, ny ,nz
-    origin = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])
-    move_vec = origin - np.array([x_avrg, y_avrg, z_avrg, 0, 0, 0, 0, 0, 0])
+    origin_extended = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])
+    move_vec = origin_extended - np.array([x_avrg, y_avrg, z_avrg, 0, 0, 0, 0, 0, 0])
     vertices += move_vec
 
-    return vertices
+    # Move the pc with the same vector.
+    points = None
+    if(pc):
+        move_vec = origin - np.array([x_avrg, y_avrg, z_avrg])
+        points = pc.points
+        points += move_vec
+
+    return vertices, points

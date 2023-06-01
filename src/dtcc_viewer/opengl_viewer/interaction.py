@@ -17,6 +17,7 @@ class Interaction:
         self.shading = Shading.shaded
         self.style = Style.basic
         self.rotate = False 
+        self.scale_factor = 1.0
 
     def key_input_callback(self, window, key, scancode, action, mode):
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
@@ -43,7 +44,12 @@ class Interaction:
 
         if key == glfw.KEY_R and action == glfw.PRESS:
             self.rotate = not self.rotate
-                
+
+        if key == glfw.KEY_S and action == glfw.PRESS:
+            self.scale_factor += 0.2 * self.scale_factor
+        
+        if key == glfw.KEY_A and action == glfw.PRESS:
+            self.scale_factor -= 0.2 * self.scale_factor             
 
                        
         

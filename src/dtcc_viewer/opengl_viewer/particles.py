@@ -33,6 +33,10 @@ class Particle:
 
         color_by = interaction.coloring
         glUniform1i(self.color_by_loc, color_by)
+
+        scale_factor = interaction.scale_factor
+        scale = pyrr.matrix44.create_from_scale([scale_factor, scale_factor, scale_factor], dtype=np.float32)
+        glUniformMatrix4fv(self.scale_loc, 1, GL_FALSE,scale)
     
         glDrawElementsInstanced(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None, self.n_instances)
 
@@ -119,6 +123,8 @@ class Particle:
         self.project_loc = glGetUniformLocation(self.shader, "project")
         self.view_loc = glGetUniformLocation(self.shader, "view")
         self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
+        self.scale_loc = glGetUniformLocation(self.shader, "scale")
+        
 
     def _bind_shader(self):
         glUseProgram(self.shader)
