@@ -28,7 +28,7 @@ class Particle:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.view_loc, 1, GL_FALSE, view)
 
-        tans = self._get_billborad_transform(interaction.camera.camera_pos)
+        tans = self._get_billborad_transform(interaction.camera.camera_pos, interaction.camera.camera_target)
         glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
 
         color_by = interaction.particle_color
@@ -132,9 +132,9 @@ class Particle:
     def _unbind_shader(self):
         glUseProgram(0)
 
-    def _get_billborad_transform(self, camera_position):
+    def _get_billborad_transform(self, camera_position, camera_target):
 
-        dir_from_camera = pyrr.Vector3([0,0,0]) - camera_position
+        dir_from_camera = camera_target - camera_position
         angle1 = np.arctan2(-dir_from_camera[1], dir_from_camera[0])        # arctan(dy/dx)
         dist2d = math.sqrt(dir_from_camera[0]**2 + dir_from_camera[1]**2)   # sqrt(dx^2 + dy^2)
         angle2 = np.arctan2(dir_from_camera[2], dist2d)                     # angle around vertical axis

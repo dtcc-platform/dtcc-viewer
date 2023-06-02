@@ -32,8 +32,6 @@ def mesh_point_cloud_example():
     loaded_pc = pc.load(filename_csv)
     loaded_mesh = ms.load_mesh(filename_obj)
     mesh_opengl.view(loaded_mesh, loaded_pc)
-    
-    pp(loaded_pc)
 
  
 if __name__ == '__main__':

@@ -10,9 +10,11 @@ class Interaction:
         self.height = height
         self.last_x = self.width/2.0 
         self.last_y = self.height/2.0
-        self.first_mouse = True
-        self.camera = Camera(float(self.width)/float(self.height))
+        self.camera = Camera(self.width, self.height)
+        self.left_first_mouse = True
         self.left_mbtn_pressed = False
+        self.right_first_mouse = True 
+        self.right_mbtn_pressed = False
 
         self.mesh_draw = True
         self.mesh_color = MeshColor.color
@@ -22,6 +24,11 @@ class Interaction:
         self.particles_draw = True
         self.particle_color = ParticleColor.color
         self.particles_scale = 1.0
+
+    def update_window_size(self, width, height):
+        self.width = width
+        self.height = height
+        self.camera.update_window_size(width, height)
 
     def key_input_callback(self, window, key, scancode, action, mode):
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
@@ -49,7 +56,6 @@ class Interaction:
         if key == glfw.KEY_R and action == glfw.PRESS:
             self.mesh_rotate = not self.mesh_rotate
 
-
         if key == glfw.KEY_A and action == glfw.PRESS:                   
             self.particles_draw = not self.particles_draw     
                        
@@ -66,11 +72,6 @@ class Interaction:
             self.particles_scale += 0.2 * self.particles_scale
 
 
-        
-
-            
-
-
     def scroll_input_callback(self, window, xoffset, yoffset):
         self.camera.process_scroll_movement(xoffset, yoffset) 
         
@@ -79,17 +80,39 @@ class Interaction:
             self.left_mbtn_pressed = True
         elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
             self.left_mbtn_pressed = False
-            self.first_mouse = True
+            self.left_first_mouse = True
+        elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS:
+            self.right_mbtn_pressed = True
+        elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.RELEASE:
+            self.right_mbtn_pressed = False
+            self.right_first_mouse = True    
+            
     
     def mouse_look_callback(self, window, xpos, ypos):        
         if(self.left_mbtn_pressed):
-            if self.first_mouse:
+            if self.left_first_mouse:
                 self.last_x = xpos
                 self.last_y = ypos
-                self.first_mouse = False
+                self.left_first_mouse = False
 
             xoffset = xpos - self.last_x
             yoffset = self.last_y - ypos
             self.last_x = xpos
             self.last_y = ypos
-            self.camera.process_mouse_movement(xoffset, yoffset)
+            self.camera.process_mouse_rotation(xoffset, yoffset)
+
+        elif(self.right_mbtn_pressed):
+            if self.right_first_mouse:
+                self.last_x = xpos
+                self.last_y = ypos
+                self.right_first_mouse = False
+
+            xoffset = -(xpos - self.last_x)
+            yoffset = (ypos - self.last_y)
+            
+            self.camera.process_mouse_panning(xoffset, yoffset)
+
+            if not self.right_first_mouse:
+                self.last_x = xpos
+                self.last_y = ypos
+                

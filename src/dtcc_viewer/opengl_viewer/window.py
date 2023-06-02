@@ -117,6 +117,5 @@ class Window:
         width = fb_size[0]
         height = fb_size[1]
         glViewport(0, 0, width, height)
-        self.interaction.width = width
-        self.interaction.height = height
-        self.interaction.camera.aspect_ratio = width / height 
+        self.interaction.update_window_size(width, height)
+         

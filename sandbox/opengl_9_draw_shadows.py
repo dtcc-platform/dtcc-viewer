@@ -172,7 +172,7 @@ def window_resize(window, width, height):
     window_h = height
     glViewport(0, 0, width, height)
     global action
-    action.camera.set_aspect_ratio(width/height)
+    action.update_window_size(width, height)
     project = pyrr.matrix44.create_perspective_projection(45,window_w / window_h, 0.1, 100)
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, project)
     
