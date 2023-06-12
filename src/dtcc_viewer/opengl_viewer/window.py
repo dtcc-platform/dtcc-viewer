@@ -45,6 +45,7 @@ class Window:
         self.particles = Particle(0.1, 10, points)
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
 
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
@@ -60,6 +61,7 @@ class Window:
         self.mesh = MeshShadow(vertices, faces, edges)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
 
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
@@ -74,6 +76,8 @@ class Window:
         self.mesh = MeshShadow(vertices, faces, edges)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
 
         while not glfw.window_should_close(self.window):
             glfw.poll_events()

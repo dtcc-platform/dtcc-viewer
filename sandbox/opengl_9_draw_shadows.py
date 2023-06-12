@@ -513,11 +513,12 @@ glUseProgram(shader_debug)
 FBO = glGenFramebuffers(1)
 glGenTextures(1, FBO)
 
+
 # Creating a texture which will be used as the framebuffers depth buffer
 depth_map = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, depth_map)
 shadow_map_resolution = 1024
-glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_map_resolution, shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_map_resolution, shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER) 

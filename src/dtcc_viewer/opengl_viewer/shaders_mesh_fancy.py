@@ -1,6 +1,4 @@
 
-# -------- Shader from previous implementation ---------
-
 vertex_shader_fancy = """
 # version 330 core
 
