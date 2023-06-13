@@ -1,11 +1,19 @@
 
 from pprint import pp
 from dtcc_viewer import * 
+from dtcc_model import Mesh
 from typing import List, Iterable
 import trimesh
 import numpy as np
 import copy
+from enum import Enum
 
+class ColorBy(Enum):
+    vertex_colors = 2
+    vertex_data = 1
+    face_colors = 3
+    face_data = 4
+    vertex_height = 5
 
 def calc_face_mid_points(mesh:trimesh):
     faceVertexIndex1 = mesh.faces[:,0]

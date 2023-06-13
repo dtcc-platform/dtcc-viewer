@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Iterable, Any
 from .random_colors import get_random_colors
 
-def calc_colors_rainbow(values:Iterable[float], min:float, max:float) -> List[List[float]]:
+def calc_colors_rainbow(values:Iterable[float], min:float = None, max:float = None) -> List[List[float]]:
     colors = []
     [min_value, max_value] = _get_min_max(values, min, max)     
     for i in range(0, len(values)):
@@ -118,7 +118,7 @@ def _get_blended_color_cyan_blue(min, max, value):
     frac = _get_normalised_value_with_cap(min, max, value)
     return [0.0, (frac * 1.0), 1.0, 1.0]
 
-def _get_min_max(values: Iterable[float], min:float, max:float):
+def _get_min_max(values: Iterable[float], min:float = None, max:float = None):
     if(min == None):    
         min_value = np.min(values)
     else:

@@ -645,16 +645,16 @@ while not glfw.window_should_close(window):
     glBindFramebuffer(GL_FRAMEBUFFER, opaqueFBO)
 
     # Use composite shader
-    glUseProgram(compo_shader_2)
+    glUseProgram(compo_shader)
 
     # draw screen quad
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, accum_texture)
-    glUniform1i(accum_loc_c_2, 0)
+    glUniform1i(accum_loc_c, 0)
     
     glActiveTexture(GL_TEXTURE1)
     glBindTexture(GL_TEXTURE_2D, reveal_texture)    
-    glUniform1i(reveal_loc_c_2, 1)
+    glUniform1i(reveal_loc_c, 1)
     
     glBindVertexArray(screenVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)

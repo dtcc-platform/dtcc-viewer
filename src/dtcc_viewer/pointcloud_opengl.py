@@ -1,12 +1,17 @@
 import glfw
 import numpy as np
-from dtcc_model import PointCloud, Bounds
+from dtcc_model import PointCloud, Bounds, Mesh
 from dtcc_viewer.opengl_viewer.window import Window
 
 
-def view(pc:PointCloud = None):
+def view(pc:PointCloud, mesh:Mesh = None):
     
     window = Window(1200, 800)
+    points = pre_process(pc)
+    window.render_particles(points)
+
+def pre_process(pc:PointCloud):
+
     pc.calculate_bounds()
     points = pc.points
     bounds = pc.bounds.tuple
@@ -15,7 +20,7 @@ def view(pc:PointCloud = None):
     points = move_to_origin(origin, points, bounds)
     points = np.array(points, dtype='float32').flatten()
 
-    window.render_particles(points)
+    return points
 
 
 def move_to_origin(origin:np.ndarray, points: np.ndarray, bounds:Bounds):
