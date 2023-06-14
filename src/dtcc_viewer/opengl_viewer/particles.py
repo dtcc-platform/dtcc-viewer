@@ -12,9 +12,9 @@ from dtcc_viewer.opengl_viewer.shaders_particles import vertex_shader_particle, 
 
 class Particle:
 
-    def __init__(self, disc_size:float, n_sides:int, points:np.ndarray):
+    def __init__(self, disc_size:float, n_sides:int, points:np.ndarray, colors:np.ndarray):
         self._create_single_instance(disc_size, n_sides)
-        self._create_multiple_instances(points)    
+        self._create_multiple_instances(points, colors)    
         self._create_shader()    
 
     def render(self, interaction: Interaction):
@@ -69,13 +69,10 @@ class Particle:
         glEnableVertexAttribArray(1) # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
-    def _create_multiple_instances(self, points:np.ndarray):
+    def _create_multiple_instances(self, points:np.ndarray, colors:np.ndarray):
         
-        if not points is None:
-            self.n_instances = int(points.size / 3.0)
-            self.instance_transforms = points
-        else:
-            [self.instance_transforms, self.n_instances] = create_instance_transforms_cube(10)
+        self.n_instances = int(points.size / 3.0)
+        self.instance_transforms = points
         
         print("Number of instances created: " +str(self.n_instances))           
 
@@ -87,27 +84,13 @@ class Particle:
         glVertexAttribPointer(2,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(2,1) # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).  
         
-        max_coord_z = np.max(self.instance_transforms[2::3])
-        min_coord_z = np.min(self.instance_transforms[2::3])
-        norm_max_z = max_coord_z - min_coord_z
-
-        color_array = []
-        for i in range(0, len(self.instance_transforms), 3):
-            z = self.instance_transforms[i+2]
-            z_norm = z - min_coord_z
-            color_blend = calc_blended_color(0.0, norm_max_z, z_norm)
-            color = pyrr.Vector3(color_blend)
-            color_array.append(color)
-            
-        color_array = np.array(color_array, np.float32).flatten()
-
         self.color_VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
-        glBufferData(GL_ARRAY_BUFFER, color_array.nbytes, color_array, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, colors.nbytes, colors, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3,3,GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
-        glVertexAttribDivisor(3,1) # 3 is layout location, 1 means every instance will have it's own attribute (translation in this case).
+        glVertexAttribDivisor(3,1) # 3 is layout location, 1 means every instance will have it's own attribute (color in this case).
 
     def _bind_vao(self):
         glBindVertexArray(self.VAO)
@@ -168,3 +151,5 @@ class Particle:
                 face_indices.extend([0, 1, i+1])
 
         return vertices, face_indices
+    
+    

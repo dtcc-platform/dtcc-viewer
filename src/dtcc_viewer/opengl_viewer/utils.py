@@ -53,7 +53,6 @@ def create_instance_transforms_from_points(points):
     return instance_array, n_instances 
 
 
-
 def calc_blended_color(min, max, value):
     diff = max - min
     if(diff) <= 0:

@@ -41,8 +41,8 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render_particles(self, points:np.ndarray):
-        self.particles = Particle(0.1, 10, points)
+    def render_particles(self, points:np.ndarray, colors:np.ndarray):
+        self.particles = Particle(0.1, 10, points, colors)
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -71,8 +71,8 @@ class Window:
             glfw.swap_buffers(self.window)        
     
 
-    def render_particles_and_mesh(self, points:np.ndarray, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None ):
-        self.particles = Particle(0.2, 10, points)        
+    def render_particles_and_mesh(self, points:np.ndarray, colors:np.ndarray, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None ):
+        self.particles = Particle(0.2, 10, points, colors)        
         self.mesh = MeshShadow(vertices, faces, edges)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)

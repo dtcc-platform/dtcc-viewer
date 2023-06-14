@@ -14,11 +14,16 @@ from dtcc_io import meshes
 from dtcc_viewer import pointcloud_opengl
 from dtcc_viewer import mesh_opengl
 
-def pointcloud_example():
+def pointcloud_example_1():
     filename_las = '../../../data/models/PointCloud2.las'
     filename_csv = '../../../data/models/PointCloud_HQ.csv'
     pc = pointcloud.load(filename_las)
     pc.view()
+
+def pointcloud_example_2():
+    filename_csv = '../../../data/models/PointCloud_LQ.csv'
+    pc = pointcloud.load(filename_csv)
+    pc.view()    
 
 def mesh_example_1():
     filename_obj = '../../../data/models/CitySurface.obj'
@@ -39,21 +44,30 @@ def mesh_example_3():
     color_data = color_data * color_data
     mesh.view(mesh_data=color_data)
 
-def mesh_point_cloud_example():
+def mesh_point_cloud_example_1():
     filename_obj = '../../../data/models/CitySurface.obj'
     filename_csv = '../../../data/models/PointCloud_HQ.csv'
     pc = pointcloud.load(filename_csv)
     mesh = meshes.load_mesh(filename_obj)
-    mesh.view(pointcloud=pc)
+    mesh.view(pc=pc)
+
+def mesh_point_cloud_example_2():
+    filename_obj = '../../../data/models/CitySurface.obj'
+    filename_csv = '../../../data/models/PointCloud_HQ.csv'
+    pc = pointcloud.load(filename_csv)
+    mesh = meshes.load_mesh(filename_obj)
+    pc.view(mesh=mesh)
  
+
 if __name__ == '__main__':
 
     os.system('clear')
     print("-------- View test started from main function -------")
-
-    #pointcloud_example()
+    #pointcloud_example_1()
+    #pointcloud_example_2()
     #mesh_example_1()
     #mesh_example_2()
     #mesh_example_3()
-    mesh_point_cloud_example()
+    #mesh_point_cloud_example_1()
+    mesh_point_cloud_example_2()
     
