@@ -30,7 +30,7 @@ jobs:
     #- name: cmake install
     #run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
     - name: run tests
-      run: pip install pytest && cd ${{ github.event.repository.name }}/tests && pwd && ls -alt && sh run-tests
+      run: sudo apt-get install python3-opengl && pip install pytest && cd ${{ github.event.repository.name }}/tests && pwd && ls -alt && sh run-tests
     - name: cleanup op
       if: always()
       run : sudo find /Runner/Runner/actions-runner/_work/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
