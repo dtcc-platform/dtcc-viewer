@@ -63,11 +63,11 @@ if __name__ == '__main__':
 
     os.system('clear')
     print("-------- View test started from main function -------")
-    #pointcloud_example_1()
+    pointcloud_example_1()
     #pointcloud_example_2()
     #mesh_example_1()
     #mesh_example_2()
     #mesh_example_3()
     #mesh_point_cloud_example_1()
-    mesh_point_cloud_example_2()
+    #mesh_point_cloud_example_2()
     

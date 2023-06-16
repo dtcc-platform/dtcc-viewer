@@ -13,7 +13,8 @@ from dtcc_viewer.opengl_viewer.shaders_particles import vertex_shader_particle, 
 class Particle:
 
     def __init__(self, disc_size:float, n_sides:int, points:np.ndarray, colors:np.ndarray):
-        self._create_single_instance(disc_size, n_sides)
+        n_points = len(points)/3
+        self._create_single_instance(disc_size, n_points)
         self._create_multiple_instances(points, colors)    
         self._create_shader()    
 
@@ -43,9 +44,11 @@ class Particle:
         self._unbind_vao()
         self._unbind_shader()
 
-    def _create_single_instance(self, disc_size, n_sides):
+    def _create_single_instance(self, disc_size:float, n_points:int):
         
-        [self.vertices, self.face_indices] = self._create_circular_disc(disc_size, n_sides)
+        # Get vertices and face indices for instance. The geometry resolution is set by number of particles. 
+        [self.vertices, self.face_indices] = self._get_instance_geometry(disc_size, n_points)
+            
         self.vertices = np.array(self.vertices, dtype=np.float32)
         self.face_indices = np.array(self.face_indices, dtype=np.uint32)
 
@@ -152,4 +155,55 @@ class Particle:
 
         return vertices, face_indices
     
+    def _create_quad(self, radius):
+        color = [1.0, 1.0, 1.0]          # White
+        dy = radius / 2.0
+        dz = dy
+
+        vertices = []
+        vertices.extend([0, -dy, -dz])
+        vertices.extend(color)
+        vertices.extend([0, -dy,  dz])
+        vertices.extend(color)
+        vertices.extend([0,  dy,  dz])
+        vertices.extend(color)
+        vertices.extend([0,  dy, -dz])
+        vertices.extend(color)
+        
+        face_indices = []
+        face_indices.extend([0,1,2])
+        face_indices.extend([2,3,0])
+            
+        return vertices, face_indices
     
+    def _get_instance_geometry(self, disc_size:float , n_points:int):
+
+        self.low_count = 1000000
+        self.upper_count = 15000000
+        self.low_sides = 5
+        self.upper_sides = 12
+
+        n_sides = self._calc_n_sides(n_points)
+
+        if (n_points > self.upper_count):
+            [self.vertices, self.face_indices] = self._create_quad(disc_size)
+        else:
+            n_sides = self._calc_n_sides(n_points) 
+            [self.vertices, self.face_indices] = self._create_circular_disc(disc_size, n_sides)
+
+        return self.vertices, self.face_indices
+
+    def _calc_n_sides(self, n_points:int):
+
+        count_diff = self.upper_count - self.low_count
+        sides_diff = self.upper_sides - self.low_sides
+
+        if n_points < self.low_count:
+            n_sides = self.upper_sides
+        elif n_points > self.upper_count:
+            n_sides = self.low_sides
+        else:
+            n_sides = self.low_sides + sides_diff * (1 - ((n_points - self.low_count) / count_diff))
+            n_sides = round(n_sides, 0)
+
+        return int(n_sides)
