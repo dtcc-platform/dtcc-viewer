@@ -46,7 +46,7 @@ class Particle:
 
     def _create_single_instance(self, disc_size:float, n_points:int):
         
-        # Get vertices and face indices for instance. The geometry resolution is set by number of particles. 
+        # Get vertices and face indices for one instance. The geometry resolution is related to number of particles. 
         [self.vertices, self.face_indices] = self._get_instance_geometry(disc_size, n_points)
             
         self.vertices = np.array(self.vertices, dtype=np.float32)
@@ -178,18 +178,18 @@ class Particle:
     
     def _get_instance_geometry(self, disc_size:float , n_points:int):
 
-        self.low_count = 1000000
-        self.upper_count = 15000000
-        self.low_sides = 5
-        self.upper_sides = 12
+        self.low_count = 1000000        # Upp to 1M particles -> highest resolution 
+        self.upper_count = 20000000     # More then 20M particles -> lowest resolution  
+        self.low_sides = 5              # Edge count for lowest resolution for discs    
+        self.upper_sides = 15           # Edge count for highest resolution for discs
 
         n_sides = self._calc_n_sides(n_points)
 
         if (n_points > self.upper_count):
-            [self.vertices, self.face_indices] = self._create_quad(disc_size)
+            [self.vertices, self.face_indices] = self._create_quad(disc_size)   # Low res, only 2 triangles
         else:
             n_sides = self._calc_n_sides(n_points) 
-            [self.vertices, self.face_indices] = self._create_circular_disc(disc_size, n_sides)
+            [self.vertices, self.face_indices] = self._create_circular_disc(disc_size, n_sides) # Higher res discs
 
         return self.vertices, self.face_indices
 

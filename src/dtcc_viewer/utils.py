@@ -42,15 +42,21 @@ def generate_mesh_colors(mesh:Mesh, data:np.ndarray = None):
             colors = normalise_colors(mesh.vertex_colors)
         elif n_face_colors == n_faces:
             color_by = ColorBy.face_colors
-            colors = normalise_colors(mesh.face_colors)       
+            colors = normalise_colors(mesh.face_colors)           
+        else:
+            print("WARNING: Provided color data does not match vertex of face count!")
+            print("Default colors are used instead -> i.e. coloring per vertex z-value")
     else: 
         if n_data == n_vertices:                #Generate colors base on provided vertex data
             color_by = ColorBy.vertex_data
             colors = calc_colors_rainbow(data)
         elif n_data == n_faces:                 #Generate colors base on provided face data
             color_by = ColorBy.face_data        
-            colors = calc_colors_rainbow(data) 
-
+            colors = calc_colors_rainbow(data)
+        else:
+            print("WARNING: Provided color data does not match vertex of face count!")
+            print("Default colors are used instead -> i.e. coloring per vertex z-value")
+                 
     return color_by, np.array(colors) 
 
 def normalise_colors(colors:np.ndarray):
@@ -153,9 +159,12 @@ def generate_pc_colors(pc:PointCloud, pc_data:np.ndarray = None):
         if len(pc.points) == len(pc_data):   
             colors = calc_colors_rainbow(pc_data)
         else:
+            print("WARNING: Provided color data does not match the particle count!")
+            print("Default colors are used instead -> i.e. coloring per z-value")
             z = pc.points[:,2]
             colors = calc_colors_rainbow(z)    
     else:
+        print("No data provided -> colors are set based on z-value")
         z = pc.points[:,2]                  # Color by height if no data is provided
         colors = calc_colors_rainbow(z)         
 

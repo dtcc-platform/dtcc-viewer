@@ -9,7 +9,7 @@ def view(mesh:Mesh, mesh_data:np.ndarray = None, pc:PointCloud = None, pc_data:n
     window = Window(1200, 800)
     [color_by, mesh_colors] = generate_mesh_colors(mesh, mesh_data)
     [vertices, face_indices, edge_indices] = restructure_mesh(mesh, color_by, mesh_colors)
-    [vertices, mesh_avrg_pt] = move_mesh_to_origin(vertices, pc)
+    [vertices, mesh_avrg_pt] = move_mesh_to_origin(vertices)
     [vertices, edge_indices, face_indices] = flatten_mesh(vertices, edge_indices, face_indices)
     
     if(pc is None):
