@@ -22,7 +22,7 @@ dependencies = [
   "colormap",
   "easydev",
   "numpy",
-  "folium",
+  "folium >= 0.14.0",
   "pyglet",
   "trimesh",
   "pyopengl",
