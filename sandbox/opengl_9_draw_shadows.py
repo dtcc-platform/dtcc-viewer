@@ -172,7 +172,7 @@ def window_resize(window, width, height):
     window_h = height
     glViewport(0, 0, width, height)
     global action
-    action.camera.set_aspect_ratio(width/height)
+    action.update_window_size(width, height)
     project = pyrr.matrix44.create_perspective_projection(45,window_w / window_h, 0.1, 100)
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, project)
     
@@ -513,11 +513,12 @@ glUseProgram(shader_debug)
 FBO = glGenFramebuffers(1)
 glGenTextures(1, FBO)
 
+
 # Creating a texture which will be used as the framebuffers depth buffer
 depth_map = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, depth_map)
 shadow_map_resolution = 1024
-glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_map_resolution, shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_map_resolution, shadow_map_resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER) 

@@ -3,18 +3,21 @@ import numpy as np
 from enum import IntEnum
 from dtcc_viewer.opengl_viewer.loader import import_point_cloud_from_txt
 
-class VisType(IntEnum):
-    particles = 1
-    mesh = 2
-    all = 3
 
-class Shading(IntEnum):
-    shaded = 1
-    wireframe = 2
+class MeshShading(IntEnum):
+    wireframe = 1
+    shaded_basic = 2
+    shaded_fancy = 3
+    shaded_shadows = 4
 
-class Coloring(IntEnum):
+class MeshColor(IntEnum):
     color = 1
     white = 2
+
+class ParticleColor(IntEnum):
+    color = 1        
+    white = 2
+    
 
 def create_instance_transforms_cube(n):
     instance_array = []
@@ -48,7 +51,6 @@ def create_instance_transforms_from_points(points):
     instance_array = np.array(points, np.float32).flatten()
 
     return instance_array, n_instances 
-
 
 
 def calc_blended_color(min, max, value):

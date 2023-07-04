@@ -29,8 +29,9 @@ dependencies = [
   "pyglfw",
   "pyrr",
   "pillow",
+  "glfw",
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
+  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop"
 ]
 
 [project.optional-dependencies]

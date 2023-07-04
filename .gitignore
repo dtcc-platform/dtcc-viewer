@@ -1,6 +1,7 @@
 build/
 
 *.las
+*.csv
 
 .idea/
 .vscode/

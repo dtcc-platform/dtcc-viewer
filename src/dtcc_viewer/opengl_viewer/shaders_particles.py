@@ -13,11 +13,13 @@ uniform mat4 model;
 uniform mat4 project;
 uniform mat4 view;
 uniform int color_by;
+uniform mat4 scale;
 
 out vec3 v_color;
 void main()
 {   
-    vec4 final_pos = (model * vec4(a_position, 1.0)) + vec4(a_offset, 0.0);
+
+    vec4 final_pos = (model * scale * vec4(a_position, 1.0)) + vec4(a_offset, 0.0);
     gl_Position = project * view * final_pos;
     if(color_by == 1)
     {

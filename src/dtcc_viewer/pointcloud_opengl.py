@@ -1,35 +1,24 @@
-import glfw
 import numpy as np
-from dtcc_model import PointCloud, Bounds
+from dtcc_model import PointCloud, Mesh
+from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.window import Window
 
-
-def view(pc:PointCloud = None):
+def view(pc:PointCloud, mesh:Mesh = None, pc_data:np.ndarray = None, mesh_data:np.ndarray = None):
     
     window = Window(1200, 800)
-    pc.calculate_bounds()
-    points = pc.points
-    bounds = pc.bounds.tuple
 
-    origin = np.array([0.0 ,0.0 ,0.0])
-    points = move_to_origin(origin, points, bounds)
-    points = np.array(points, dtype='float32').flatten()
+    pc_colors = generate_pc_colors(pc, pc_data)
+    [points, pc_colors] = restructure_pc(pc, pc_colors)  
+    [points, pc_avrg_pt] = move_pc_to_origin(points, pc)
+    [points, pc_colors] = flatten_pc(points, pc_colors)
 
-    window.render_particles(points)
-
-
-def move_to_origin(origin:np.ndarray, points: np.ndarray, bounds:Bounds):
-
-    x_avrg = (bounds[0] + bounds[2])/2.0
-    y_avrg = (bounds[1] + bounds[3])/2.0
+    if (mesh is None):
+        window.render_particles(points, pc_colors)
+    else:
+        [color_by, mesh_colors] = generate_mesh_colors(mesh, mesh_data)
+        [vertices, face_indices, edge_indices] = restructure_mesh(mesh, color_by, mesh_colors)
+        [vertices, mesh_avrg_pt] = move_mesh_to_origin(vertices, pc_avrg_pt)
+        [vertices, edge_indices, face_indices] = flatten_mesh(vertices, edge_indices, face_indices)
     
-    origin = np.array([0.0, 0.0, 0.0])
-
-    #Center mesh based on x and y coordinates only
-    centerVec = origin - np.array([x_avrg, y_avrg, 0])
-
-    #Move the mesh to the centre of the model
-    points += centerVec
-
-    return points
+        window.render_particles_and_mesh(points, pc_colors, vertices, face_indices, edge_indices)
 

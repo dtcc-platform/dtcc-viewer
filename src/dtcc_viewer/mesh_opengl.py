@@ -1,61 +1,23 @@
-import glfw
 import numpy as np
 from dtcc_model import Mesh
+from dtcc_model import PointCloud
+from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.window import Window
 
+def view(mesh:Mesh, mesh_data:np.ndarray = None, pc:PointCloud = None, pc_data:np.ndarray = None):
 
-def view(mesh:Mesh):
-    
     window = Window(1200, 800)
-    origin = np.array([0.0, 0.0, 0.0])
-    vertices = move_to_origin(origin, mesh.vertices)
-    vertices = normalise_colors(vertices) 
-    edge_indices = create_edge_vertices(mesh)
-    face_indices = mesh.faces
-
-    # Making sure the datatypes are aligned with opengl implementation
-    vertices = np.array(vertices, dtype= "float32").flatten()
-    face_indices = np.array(face_indices, dtype= "uint32").flatten()
-    edge_indices = np.array(edge_indices, dtype= "uint32").flatten()
-
-    window.render_mesh(vertices, face_indices, edge_indices)
-
-
-def create_edge_vertices(mesh:Mesh):
-    edge_indices = []
-    for face in mesh.faces:
-        edge_indices.append([face[0], face[1], face[2], face[0]])
-
-    edge_indices = np.array(edge_indices, dtype='uint32')
-
-    return edge_indices
-
-
-def move_to_origin(origin:np.ndarray, vertices:np.ndarray):
-
-    xmin = vertices[:, 0].min()
-    xmax = vertices[:, 0].max()
-    ymin = vertices[:, 1].min()
-    ymax = vertices[:, 1].max()
-    zmin = vertices[:, 2].min()
-    zmax = vertices[:, 2].max()
-
-    x_avrg = (xmin + xmax)/2.0
-    y_avrg = (ymin + ymax)/2.0
-    z_avrg = (zmin + zmax)/2.0
+    [color_by, mesh_colors] = generate_mesh_colors(mesh, mesh_data)
+    [vertices, face_indices, edge_indices] = restructure_mesh(mesh, color_by, mesh_colors)
+    [vertices, mesh_avrg_pt] = move_mesh_to_origin(vertices)
+    [vertices, edge_indices, face_indices] = flatten_mesh(vertices, edge_indices, face_indices)
     
-    # x,y,z,r,g,b
-    origin = np.array([origin[0], origin[1], origin[2], 0, 0, 0])
-    move_vec = origin - np.array([x_avrg, y_avrg, z_avrg, 0, 0, 0])
-    vertices += move_vec
+    if(pc is None):
+        window.render_mesh(vertices, face_indices, edge_indices)
+    else:
+        pc_colors = generate_pc_colors(pc, pc_data) 
+        [points, pc_colors] = restructure_pc(pc, pc_colors)
+        [points, pc_avrg_pt] = move_pc_to_origin(points, pc, mesh_avrg_pt)
+        [points, pc_colors] = flatten_pc(points, pc_colors)    
+        window.render_particles_and_mesh(points, pc_colors, vertices, face_indices, edge_indices)    
 
-    return vertices
-
-
-def normalise_colors(vertices:np.ndarray):
-
-    vertices[:,3] /= 255
-    vertices[:,4] /= 255
-    vertices[:,5] /= 255
-    
-    return vertices
