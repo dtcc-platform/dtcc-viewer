@@ -3,8 +3,7 @@ import tempfile
 import dtcc_io as io
 from pathlib import Path
 import tempfile
-from dtcc_io.bounds import bounds_center
-
+from dtcc_model.geometry import Bounds
 from .notebook_functions import is_notebook
 
 
@@ -21,11 +20,9 @@ def view(cm, return_html=False, show_in_browser=False):
     tmp_geojson = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False)
     outpath = Path(tmp_geojson.name)
     cm.save(outpath)
-    bounds = io.citymodel.building_bounds(outpath)
-    data_mid = bounds_center(bounds)
+    bounds = io.city.building_bounds(outpath)
+    data_mid = bounds.center()
     data_mid = [data_mid[1], data_mid[0]]
-    # print(bounds)
-    # print(data_mid)
     m = folium.Map(location=data_mid, min_zoom=5, max_zoom=22, zoom_start=13)
 
     with open(outpath, "r") as f:
