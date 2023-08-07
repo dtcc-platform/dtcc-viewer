@@ -1,6 +1,6 @@
 # DTCC Viewer
 
-DTCC Viewer is light weight visualiser of point coulds and meshes based on GLFW, PyOpenGL and Pyglet.    
+DTCC Viewer is a lightweight visualiser of point clouds and meshes based on GLFW, PyOpenGL and Pyglet.   
 
 This project is part the
 [Digital Twin Platform (DTCC Platform)](https://gitlab.com/dtcc-platform)
