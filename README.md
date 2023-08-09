@@ -1,13 +1,6 @@
-# DTCC Template
+# DTCC Viewer
 
-DTCC Template is a template for creating clean and simple
-Python packages that include C++ code.
-
-Highlights:
-
-* Uses `pyproject.toml` and installable using `pip install`
-* Uses `scikit_build_core` as build backend
-* C++ extensions built via `CMake` and `CMakeLists.txt`
+DTCC Viewer is a lightweight visualiser of point clouds and meshes based on GLFW, PyOpenGL and Pyglet.   
 
 This project is part the
 [Digital Twin Platform (DTCC Platform)](https://gitlab.com/dtcc-platform)
@@ -24,6 +17,8 @@ supported by Sweden’s Innovation Agency Vinnova under Grant No. 2019-421 00041
 
 ## Authors (in order of appearance)
 
+* [Jens Olsson](https://chalmersindustriteknik.se/coworkers/jens-olsson/)
+* [Dag Wästberg](https://chalmersindustriteknik.se/coworkers/dag-wastberg/)
 * [Anders Logg](http://anders.logg.org)
 * [Vasilis Naserentin](https://www.chalmers.se/en/Staff/Pages/vasnas.aspx)
 

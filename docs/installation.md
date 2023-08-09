@@ -1,10 +1,10 @@
 # Installation
 
-DTCC Template can be easily installed using [`pip`](https://pypi.org/project/pip/).
+DTCC Viewer can be easily installed using [`pip`](https://pypi.org/project/pip/).
 
 To install from the Python Package Index (PyPI):
 
-    pip install dtcc-template
+    pip install dtcc-viewer
 
 To install from the source directory:
 

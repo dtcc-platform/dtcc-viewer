@@ -1,3 +1,3 @@
 # Development
 
-Write notes for developers here.
+Notes for developers here.

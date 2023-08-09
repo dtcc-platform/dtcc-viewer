@@ -4,13 +4,8 @@ import tempfile
 import dtcc_io as io
 from pathlib import Path
 import tempfile
-
 from dtcc_model.geometry import Bounds
-
-from dtcc_model import City
-from .colors import color_maps
-from .random_colors import get_random_colors
-
+from dtcc_model.city import City
 from .notebook_functions import is_notebook
 
 
@@ -57,8 +52,6 @@ def view(
     bounds = io.city.building_bounds(outpath)
     data_mid = bounds.center()
     data_mid = [data_mid[1], data_mid[0]]
-    # print(bounds)
-    # print(data_mid)
     m = folium.Map(location=data_mid, min_zoom=5, max_zoom=22, zoom_start=13)
 
     if color_field is not None:
