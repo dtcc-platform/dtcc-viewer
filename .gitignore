@@ -1,4 +1,5 @@
 build/
+scratch/
 
 *.las
 *.csv
