@@ -22,21 +22,21 @@ def _show_folium_in_browser(m):
     webbrowser.open(f"file:///{map_file}")
 
 
-def create_style_function(cm: City, color_field: str, color_map: str):
-    if color_map == "random":
-        try:
-            unique_attributes = set([b[color_field] for b in cm.buildings])
-            num_unique_attrs = len(unique_attributes)
-        except KeyError:
-            logging.warning(f"buildings don't have {color_field} attribute")
-        colors = get_random_colors(num_unique_attrs)
-        color_map = {
-            attr: _rgb_to_hexstring(colors[i])
-            for i, attr in enumerate(unique_attributes)
-        }
-        return lambda x: {"fill_color": color_map[x["properties"][color_field]]}
-    elif color_map in color_maps:
-        pass
+# def create_style_function(cm: City, color_field: str, color_map: str):
+#     if color_map == "random":
+#         try:
+#             unique_attributes = set([b[color_field] for b in cm.buildings])
+#             num_unique_attrs = len(unique_attributes)
+#         except KeyError:
+#             logging.warning(f"buildings don't have {color_field} attribute")
+#         colors = get_random_colors(num_unique_attrs)
+#         color_map = {
+#             attr: _rgb_to_hexstring(colors[i])
+#             for i, attr in enumerate(unique_attributes)
+#         }
+#         return lambda x: {"fill_color": color_map[x["properties"][color_field]]}
+#     elif color_map in color_maps:
+#         pass
 
 
 def view(
