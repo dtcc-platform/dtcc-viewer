@@ -1,4 +1,5 @@
 import glfw
+import imgui
 import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
@@ -7,13 +8,21 @@ from dtcc_viewer.opengl_viewer.particles import Particle
 from dtcc_viewer.opengl_viewer.mesh import MeshShadow
 from dtcc_viewer.opengl_viewer.utils import MeshShading
 
+from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui
+from imgui.integrations.glfw import GlfwRenderer
+
 class Window:
 
     def __init__(self, width:int, height:int):
         self.width = width
         self.height = height
         self.interaction = Interaction(width, height)
-
+        
+        imgui.create_context()
+        self.gui = Gui()
+        self.guip = GuiParameters()
+        self.io = imgui.get_io()
+        
         if not glfw.init():
             raise Exception("glfw can not be initialised!")
             
@@ -28,6 +37,12 @@ class Window:
             raise Exception("glfw window can not be created!")
 
         glfw.set_window_pos(self.window, 400, 200)
+        
+        # Calls can be made after the contex is made current
+        glfw.make_context_current(self.window)
+        
+        # Callback should be called after the impl has been registered
+        self.impl = GlfwRenderer(self.window)
 
         # Register callback functions to enable mouse and keyboard interaction
         glfw.set_window_size_callback(self.window, self._window_resize_callback)
@@ -35,9 +50,6 @@ class Window:
         glfw.set_key_callback(self.window, self.interaction.key_input_callback)
         glfw.set_mouse_button_callback(self.window, self.interaction.mouse_input_callback)
         glfw.set_scroll_callback(self.window, self.interaction.scroll_input_callback)
-
-        # Calls can be made after the contex is made current
-        glfw.make_context_current(self.window)
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
@@ -55,7 +67,6 @@ class Window:
             glfw.swap_buffers(self.window)
 
         glfw.terminate()       
-    
     
     def render_mesh(self, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None): 
         self.mesh = MeshShadow(vertices, faces, edges)
@@ -82,9 +93,19 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+
             self._render_mesh()
             self._render_particles()
             self._fps_calculations()
+
+            self.gui.first_draw(self.impl)
+            self.gui.second_draw(self.guip)
+            self.gui.third_draw(self.impl)
+
+            mouse_on_gui = self.io.want_capture_mouse
+            self.interaction.set_mouse_on_gui(mouse_on_gui)
+
             glfw.swap_buffers(self.window)
 
 
