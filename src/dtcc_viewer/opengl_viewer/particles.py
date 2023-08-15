@@ -5,8 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.utils import create_instance_transforms_from_file, calc_blended_color
-from dtcc_viewer.opengl_viewer.utils import create_instance_transforms_cube, create_instance_transforms_from_points
+from dtcc_viewer.opengl_viewer.utils import calc_blended_color
 from dtcc_viewer.opengl_viewer.shaders_particles import vertex_shader_particle, fragment_shader_particle
 
 
