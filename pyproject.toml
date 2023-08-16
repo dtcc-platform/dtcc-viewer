@@ -33,6 +33,7 @@ dependencies = [
   "pyrr",
   "pillow",
   "glfw",
+  "imgui",
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop"
 ]

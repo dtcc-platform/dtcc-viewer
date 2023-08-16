@@ -1,8 +1,6 @@
 import pyrr
 import numpy as np
 from enum import IntEnum
-from dtcc_viewer.opengl_viewer.loader import import_point_cloud_from_txt
-
 
 class MeshShading(IntEnum):
     wireframe = 1
@@ -18,40 +16,6 @@ class ParticleColor(IntEnum):
     color = 1        
     white = 2
     
-
-def create_instance_transforms_cube(n):
-    instance_array = []
-    offset = 0.05
-    size = n
-
-    for z in range(-size, size+1, 1):
-        for y in range(-size, size+1, 1):
-            for x in range(-size, size+1, 1):
-                translation = pyrr.Vector3([0.0, 0.0, 0.0])
-                translation.x = x + offset
-                translation.y = y + offset
-                translation.z = z + offset
-                instance_array.append(translation)
-
-    n_instances = len(instance_array)
-
-    instance_array = np.array(instance_array, np.float32).flatten()
-
-    return instance_array, n_instances 
-
-def create_instance_transforms_from_file(filename):
-    point_cloud = import_point_cloud_from_txt(filename)
-    n_instances = len(point_cloud)
-    instance_array = np.array(point_cloud, np.float32).flatten()
-
-    return instance_array, n_instances 
-
-def create_instance_transforms_from_points(points):
-    n_instances = len(points)
-    instance_array = np.array(points, np.float32).flatten()
-
-    return instance_array, n_instances 
-
 
 def calc_blended_color(min, max, value):
     diff = max - min
