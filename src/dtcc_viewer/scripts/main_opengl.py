@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #mesh_example_2()
     #mesh_example_3()
     #mesh_point_cloud_example_1()
-    mesh_point_cloud_example_2()
+    #mesh_point_cloud_example_2()
     #mesh_point_cloud_example_3()
-    #multi_geometry_example()
+    multi_geometry_example()
     

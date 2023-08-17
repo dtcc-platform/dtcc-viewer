@@ -1,6 +1,7 @@
 import pyrr
 import numpy as np
 from enum import IntEnum
+from dtcc_model import Mesh, PointCloud
 
 class MeshShading(IntEnum):
     wireframe = 1
@@ -16,6 +17,64 @@ class ParticleColor(IntEnum):
     color = 1        
     white = 2
     
+def calc_recenter_vector(mesh: Mesh = None, pc:PointCloud = None):
+    
+    print(mesh)
+    print(pc)
+
+    all_vertices = np.array([[0,0,0]])
+    
+    if mesh is not None:
+        all_vertices = np.concatenate((all_vertices, mesh.vertices), axis = 0)
+            
+    if pc is not None:
+        all_vertices = np.concatenate((all_vertices, pc.points), axis = 0)
+
+    # Remove the [0,0,0] row that was added to enable concatenate.        
+    all_vertices = np.delete(all_vertices, obj=0, axis = 0)
+
+    xmin = all_vertices[:, 0].min()
+    xmax = all_vertices[:, 0].max()
+    ymin = all_vertices[:, 1].min()
+    ymax = all_vertices[:, 1].max()
+    zmin = all_vertices[:, 2].min()
+    zmax = all_vertices[:, 2].max()
+
+    mid_pt = np.array([(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2])
+    origin = np.array([0,0,0])
+
+    move_vec = origin - mid_pt  
+
+    return move_vec           
+
+def calc_multi_geom_recenter_vector(mesh_list: list[Mesh] = None, pc_list:list[PointCloud] = None):
+    
+    all_vertices = np.array([[0,0,0]])
+    
+    if mesh_list:
+        for mesh in mesh_list:
+            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis = 0)
+            
+    if pc_list:
+        for pc in pc_list:
+            all_vertices = np.concatenate((all_vertices, pc.points), axis = 0)
+
+    # Remove the [0,0,0] row that was added to enable concatenate.        
+    all_vertices = np.delete(all_vertices, obj=0, axis = 0)
+
+    xmin = all_vertices[:, 0].min()
+    xmax = all_vertices[:, 0].max()
+    ymin = all_vertices[:, 1].min()
+    ymax = all_vertices[:, 1].max()
+    zmin = all_vertices[:, 2].min()
+    zmax = all_vertices[:, 2].max()
+
+    mid_pt = np.array([(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2])
+    origin = np.array([0,0,0])
+
+    move_vec = origin - mid_pt  
+
+    return move_vec           
 
 def calc_blended_color(min, max, value):
     diff = max - min
