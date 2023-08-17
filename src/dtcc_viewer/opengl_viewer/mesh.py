@@ -6,6 +6,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.gui import GuiParameters
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import vertex_shader_fancy_shadow, fragment_shader_fancy_shadow
 from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import vertex_shader_shadow_map, fragment_shader_shadow_map
@@ -201,10 +202,10 @@ class MeshShadow:
         self.lsm_loc_shadow_map = glGetUniformLocation(self.shader_shadow_map, "light_space_matrix")
         
     # Private render functions    
-    def _render_shadow_map(self, interaction:Interaction):    
+    def _render_shadow_map(self, interaction:Interaction, guip:GuiParameters):    
         #first pass: Capture shadow map
         rad = self.radius_xy
-        if interaction.mesh_rotate:
+        if guip.animate_light:
             self.loop_counter += 1
             
         rot_step = self.loop_counter / 120.0    
@@ -230,7 +231,7 @@ class MeshShadow:
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
         self._unbind_vao()
             
-    def _render_model_with_shadows(self, interaction:Interaction):
+    def _render_model_with_shadows(self, interaction:Interaction, guip:GuiParameters):
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)        #Setting default buffer
         glViewport(0,0, interaction.width, interaction.height)
@@ -246,7 +247,7 @@ class MeshShadow:
         glUniformMatrix4fv(self.ploc_fancy_shadows, 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.vloc_fancy_shadows, 1, GL_FALSE, view)
 
-        color_by = int(interaction.mesh_color)
+        color_by = int(guip.color_mesh)
         glUniform1i(self.cb_loc_fancy, color_by)
 
         #Set light uniforms
@@ -265,12 +266,12 @@ class MeshShadow:
         self._unbind_vao()
 
     # Render mesh fancy shadows
-    def render_fancy_shadows(self, interaction:Interaction):
-        self._render_shadow_map(interaction)
-        self._render_model_with_shadows(interaction) 
+    def render_fancy_shadows(self, interaction:Interaction,  guip:GuiParameters):
+        self._render_shadow_map(interaction, guip)
+        self._render_model_with_shadows(interaction, guip) 
 
     # Render mesh fancy
-    def render_fancy(self, interaction:Interaction):
+    def render_fancy(self, interaction:Interaction,  guip:GuiParameters):
         self._bind_vao_triangels()
         self._bind_shader_fancy()
 
@@ -291,7 +292,7 @@ class MeshShadow:
         projection = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.ploc_fancy, 1, GL_FALSE, projection)
 
-        color_by = int(interaction.mesh_color)
+        color_by = int(guip.color_mesh)
         glUniform1i(self.cb_loc_fancy, color_by)
 
         view_pos = interaction.camera.camera_pos
@@ -307,7 +308,7 @@ class MeshShadow:
         self._unbind_shader()
 
     # Render mesh basic
-    def render_basic(self, interaction:Interaction):
+    def render_basic(self, interaction:Interaction, guip:GuiParameters):
         self._bind_vao_triangels()
         self._bind_shader_basic()
 
@@ -320,7 +321,7 @@ class MeshShadow:
         projection = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.ploc_basic, 1, GL_FALSE, projection)
 
-        color_by = int(interaction.mesh_color)
+        color_by = int(guip.color_mesh)
         glUniform1i(self.cb_loc_basic, color_by)
 
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
@@ -329,7 +330,7 @@ class MeshShadow:
         self._unbind_shader()
 
     # Render mesh lines    
-    def render_lines(self, interaction:Interaction):
+    def render_lines(self, interaction:Interaction, guip:GuiParameters):
         self._bind_vao_lines()
         self._bind_shader_lines()
 
@@ -339,7 +340,7 @@ class MeshShadow:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
 
-        color_by = int(interaction.mesh_color)
+        color_by = int(guip.color_mesh)                    
         glUniform1i(self.cb_loc_lines, color_by)
 
         glDrawElements(GL_LINES, len(self.edge_indices), GL_UNSIGNED_INT, None)

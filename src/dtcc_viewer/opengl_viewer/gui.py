@@ -1,11 +1,16 @@
 import imgui
+from dtcc_viewer.opengl_viewer.utils import MeshShading 
 from imgui.integrations.glfw import GlfwRenderer
 
 class GuiParameters:
 
     def __init__(self):
-        self.checkbox1 = False
-        self.checkbox2 = False
+        self.show_pc = True
+        self.color_pc = True
+
+        self.show_mesh = True
+        self.color_mesh = True
+        self.animate_light = False
 
         self.year_start = 2023
         self.month_start = 3
@@ -17,6 +22,8 @@ class GuiParameters:
         self.day_end = 4
         self.hour_end = 15
 
+        self.combo_selected_index = 2
+
         self.color = [0.1,0.2,0.5,1]
         self.text_color = [1-self.color[0], 1-self.color[1], 1-self.color[2],1]
         self.gui_width = 310
@@ -24,6 +31,9 @@ class GuiParameters:
         self.single_date = True
         self.period = False
 
+        self.checkbox1 = False
+        self.checkbox2 = False
+        
     def match(self):
         self.year_end = self.year_start
         self.month_end = self.month_start
@@ -36,7 +46,7 @@ class Gui:
     def __init__(self) -> None:
         pass
 
-    def first_draw(self, impl:GlfwRenderer) -> None:
+    def init_draw(self, impl:GlfwRenderer) -> None:
         window_with = impl.io.display_size.x
         gui_width = 312
         margin = 40
@@ -46,19 +56,60 @@ class Gui:
         imgui.begin("DTCC Viewer", flags = imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS)
         imgui.set_window_position_labeled("DTCC Viewer", window_with - (gui_width + margin), margin)
 
-    def second_draw(self, guip:GuiParameters) -> None:
-        self.styles(guip)                
-        self.buttons_example(guip)       
-        self.checkbox_example(guip)      
-        self.add_dates_ui(guip)          
-        self.apperance_settings(guip)     
-
-    
-    def third_draw(self, impl:GlfwRenderer) -> None:
+    def end_draw(self, impl:GlfwRenderer) -> None:
         imgui.end()   
         imgui.render()
         impl.render(imgui.get_draw_data())
         imgui.end_frame()
+
+    # GUI for point clouds
+    def draw_pc_gui(self, guip:GuiParameters):
+        [expanded, visible] = imgui.collapsing_header("Point cloud")
+        if (expanded):
+            imgui.push_id("Show pc")
+            [changed, guip.show_pc] = imgui.checkbox("Show", guip.show_pc)
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("Color pc")    
+            [changed, guip.color_pc] = imgui.checkbox("Color", guip.color_pc)    
+            imgui.pop_id()
+
+    # GUI for mesh 
+    def draw_mesh_gui(self, guip:GuiParameters):
+        [expanded, visible] = imgui.collapsing_header("Mesh")
+        if (expanded):
+            imgui.push_id("Show mesh")
+            [changed, guip.show_mesh] = imgui.checkbox("Show", guip.show_mesh)    
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("Color mesh")
+            [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
+            imgui.pop_id()
+
+            if guip.combo_selected_index == 3:
+                imgui.same_line()
+                [changed, guip.animate_light] = imgui.checkbox("Animate light", guip.animate_light)
+            
+            # Drawing mode
+            items = ["Wireframe", "Shaded ambient", "Shaded diffuse", "Shaded shadow"] 
+            with imgui.begin_combo("combo", items[guip.combo_selected_index]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = (i == guip.combo_selected_index)
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.combo_selected_index = i
+                            
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+
+    def draw_example_gui(self, guip:GuiParameters) -> None:
+        self.styles(guip)                
+        self.buttons_example(guip)       
+        self.checkbox_example(guip)
+        self.combo_example(guip)      
+        self.add_dates_ui(guip)          
+        self.draw_apperance_gui(guip)    
 
     def styles(self, guip:GuiParameters) -> None:
         style = imgui.get_style()
@@ -86,13 +137,29 @@ class Gui:
 
         imgui.spacing()
 
+    def combo_example(self, guip:GuiParameters):
+        [expanded, visible] = imgui.collapsing_header("Combo")
+        if(expanded):
+            items = ["AAAA", "BBBB", "CCCC", "DDDD"] 
+            with imgui.begin_combo("combo", items[guip.combo_selected_index]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = (i == guip.combo_selected_index)
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.combo_selected_index = i
+                            
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+        imgui.spacing()    
+
     def checkbox_example(self, guip:GuiParameters) -> None:
         [expanded, visible] = imgui.collapsing_header("Checkboxes")
         if(expanded):
             # Check box to change settings
-            [changed, guip.checkbox1] = imgui.checkbox("cbx1!", guip.checkbox1)
+            [changed, guip.show_pc] = imgui.checkbox("cbx1!", guip.show_pc)
             imgui.same_line()
-            [changed, guip.checkbox2] = imgui.checkbox("cbx2!", guip.checkbox2)
+            [changed, guip.show_mesh] = imgui.checkbox("cbx2!", guip.show_mesh)
         
         imgui.spacing()
 
@@ -142,7 +209,7 @@ class Gui:
 
         imgui.spacing()
 
-    def apperance_settings(self, guip:GuiParameters) -> None:
+    def draw_apperance_gui(self, guip:GuiParameters) -> None:
         [expanded, visible] = imgui.collapsing_header("Apperance")
         if(expanded):
             [changed, guip.color] = imgui.color_edit4("color", guip.color[0], guip.color[1],guip.color[2], guip.color[3])    

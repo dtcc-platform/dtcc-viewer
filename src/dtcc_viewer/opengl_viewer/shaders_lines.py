@@ -23,7 +23,7 @@ void main()
     {
         v_color = a_color;
     }
-    else if(color_by == 2)
+    else if(color_by == 0)
     {
         v_color = vec3(1.0, 1.0, 1.0);
     }

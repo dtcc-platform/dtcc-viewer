@@ -62,8 +62,17 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self._render_particles()
+            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+
+            self._render_particles(self.guip)
             self._fps_calculations()
+
+            self.gui.init_draw(self.impl)
+            self.gui.draw_pc_gui(self.guip)
+            self.gui.draw_apperance_gui(self.guip)
+            self.gui.end_draw(self.impl)
+
+            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
             glfw.swap_buffers(self.window)
 
         glfw.terminate()       
@@ -77,11 +86,19 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self._render_mesh()
+            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+
+            self._render_mesh(self.guip)
             self._fps_calculations()
+
+            self.gui.init_draw(self.impl)
+            self.gui.draw_mesh_gui(self.guip)
+            self.gui.draw_apperance_gui(self.guip)
+            self.gui.end_draw(self.impl)
+
+            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
             glfw.swap_buffers(self.window)        
     
-
     def render_particles_and_mesh(self, points:np.ndarray, colors:np.ndarray, vertices:np.ndarray, faces:np.ndarray, edges:np.ndarray = None ):
         self.particles = Particle(0.2, 10, points, colors)        
         self.mesh = MeshShadow(vertices, faces, edges)
@@ -95,34 +112,50 @@ class Window:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
 
-            self._render_mesh()
-            self._render_particles()
+            self._render_mesh(self.guip)
+            self._render_particles(self.guip)
             self._fps_calculations()
 
-            self.gui.first_draw(self.impl)
-            self.gui.second_draw(self.guip)
-            self.gui.third_draw(self.impl)
+            self.gui.init_draw(self.impl)
+            self.gui.draw_pc_gui(self.guip)
+            self.gui.draw_mesh_gui(self.guip)
+            self.gui.draw_apperance_gui(self.guip)
+            self.gui.end_draw(self.impl)
 
-            mouse_on_gui = self.io.want_capture_mouse
-            self.interaction.set_mouse_on_gui(mouse_on_gui)
+            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
 
             glfw.swap_buffers(self.window)
 
+    def render_empty(self):
+        glClearColor(0.0, 0.0, 0.0, 1.0)
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
 
-    def _render_particles(self):
-        if self.interaction.particles_draw:    
-            self.particles.render(self.interaction)    
+        while not glfw.window_should_close(self.window):
+            glfw.poll_events()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+        
+            self.gui.init_draw(self.impl)
+            self.gui.draw_example_gui(self.guip)
+            self.gui.end_draw(self.impl)
+
+            glfw.swap_buffers(self.window)      
+
+    def _render_particles(self, guip:GuiParameters):
+        if guip.show_pc:    
+            self.particles.render(self.interaction, guip)    
             
-    def _render_mesh(self):
-        if self.interaction.mesh_draw:    
-            if self.interaction.mesh_shading == MeshShading.wireframe:
-                self.mesh.render_lines(self.interaction)
-            elif self.interaction.mesh_shading == MeshShading.shaded_basic:
-                self.mesh.render_basic(self.interaction)
-            elif self.interaction.mesh_shading == MeshShading.shaded_fancy:
-                    self.mesh.render_fancy(self.interaction)
-            elif self.interaction.mesh_shading == MeshShading.shaded_shadows:
-                    self.mesh.render_fancy_shadows(self.interaction)
+    def _render_mesh(self, guip:GuiParameters):    
+        if guip.show_mesh:
+            if guip.combo_selected_index == 0:
+                self.mesh.render_lines(self.interaction, guip)
+            elif guip.combo_selected_index == 1:
+                self.mesh.render_basic(self.interaction, guip)
+            elif guip.combo_selected_index == 2:
+                    self.mesh.render_fancy(self.interaction, guip)
+            elif guip.combo_selected_index == 3:
+                    self.mesh.render_fancy_shadows(self.interaction, guip)
         
     def _fps_calculations(self, print_results = True):
         new_time = glfw.get_time()

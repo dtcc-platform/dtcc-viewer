@@ -7,6 +7,7 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.utils import calc_blended_color
 from dtcc_viewer.opengl_viewer.shaders_particles import vertex_shader_particle, fragment_shader_particle
+from dtcc_viewer.opengl_viewer.gui import GuiParameters
 
 
 class Particle:
@@ -17,7 +18,7 @@ class Particle:
         self._create_multiple_instances(points, colors)    
         self._create_shader()    
 
-    def render(self, interaction: Interaction):
+    def render(self, interaction: Interaction, guip:GuiParameters):
 
         self._bind_vao()
         self._bind_shader()
@@ -32,6 +33,11 @@ class Particle:
         glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
 
         color_by = interaction.particle_color
+
+        color_by = 0
+        if(guip.color_pc):
+            color_by = 1
+
         glUniform1i(self.color_by_loc, color_by)
 
         scale_factor = interaction.particles_scale
