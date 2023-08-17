@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.3"
+version = "0.7.4"
 name = "dtcc-viewer"
 description = "DTCC Viewer"
 readme = "README.md"

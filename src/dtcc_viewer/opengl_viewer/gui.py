@@ -2,6 +2,7 @@ import imgui
 from dtcc_viewer.opengl_viewer.utils import MeshShading 
 from imgui.integrations.glfw import GlfwRenderer
 
+
 class GuiParameters:
 
     def __init__(self):

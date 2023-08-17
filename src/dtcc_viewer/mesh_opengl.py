@@ -19,5 +19,5 @@ def view(mesh:Mesh, mesh_data:np.ndarray = None, pc:PointCloud = None, pc_data:n
         [points, pc_colors] = restructure_pc(pc, pc_colors)
         [points, pc_avrg_pt] = move_pc_to_origin(points, pc, mesh_avrg_pt)
         [points, pc_colors] = flatten_pc(points, pc_colors)    
-        window.render_particles_and_mesh(points, pc_colors, vertices, face_indices, edge_indices)    
+        window.render_pc_and_mesh(points, pc_colors, vertices, face_indices, edge_indices)    
 

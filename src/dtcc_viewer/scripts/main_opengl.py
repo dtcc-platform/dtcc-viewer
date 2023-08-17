@@ -14,6 +14,8 @@ from dtcc_io import meshes
 from dtcc_viewer import pointcloud_opengl
 from dtcc_viewer import mesh_opengl
 from dtcc_viewer.opengl_viewer.window import Window
+from dtcc_viewer.opengl_viewer.mesh_data import MeshData
+from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
 def window_gui_example():
     window = Window(1200, 800)
@@ -72,6 +74,39 @@ def mesh_point_cloud_example_3():
     mesh_data = mesh.vertices[:,1]
     pc.view(mesh=mesh, pc_data = pc_data, mesh_data = mesh_data)
 
+def multi_geometry_example():
+    
+    window = Window(1200, 800)
+    
+    # Import meshes to be viewed
+    mesh_a = meshes.load_mesh('../../../data/models/CitySurfaceA.obj')
+    mesh_b = meshes.load_mesh('../../../data/models/CitySurfaceB.obj')
+    mesh_data_a = mesh_a.vertices[:,1]
+    mesh_data_b = mesh_b.vertices[:,0]
+    meshes_imported = [mesh_a, mesh_b]
+    
+    # Import point clodus to be viewed
+    pc_a = pointcloud.load('../../../data/models/PointCloud_HQ_A.csv')
+    pc_b = pointcloud.load('../../../data/models/PointCloud_HQ_B.csv')
+    pc_data_a = pc_a.points[:,0]
+    pc_data_b = pc_b.points[:,1]
+    pcs_imported = [pc_a, pc_b]
+
+    # Calculate common recentering vector base of the bounding box of all combined vertices.
+    recenter_vec = utils.calc_multi_geom_recenter_vector(meshes_imported, pcs_imported)
+
+    # Create mesh data classes that are structured for openggl calls
+    mesh_data_obj_a = MeshData('mesh A', mesh_a, mesh_data_a, recenter_vec)
+    mesh_data_obj_b = MeshData('mesh B', mesh_b, mesh_data_b, recenter_vec)
+    mesh_data_list = [mesh_data_obj_a, mesh_data_obj_b]
+    
+    # Create point clode data classes that are structured for opengl calls
+    pc_data_obj_a = PointCloudData('point cloud A', pc_a, pc_data_a, recenter_vec)
+    pc_data_obj_b = PointCloudData('point cloud B', pc_b, pc_data_b, recenter_vec)    
+    pc_data_list = [pc_data_obj_a, pc_data_obj_b]
+
+    window.render_multi(mesh_data_list, pc_data_list)
+    
 
 if __name__ == '__main__':
 
@@ -84,6 +119,7 @@ if __name__ == '__main__':
     #mesh_example_2()
     #mesh_example_3()
     #mesh_point_cloud_example_1()
-    #mesh_point_cloud_example_2()
-    mesh_point_cloud_example_3()
+    mesh_point_cloud_example_2()
+    #mesh_point_cloud_example_3()
+    #multi_geometry_example()
     

@@ -38,25 +38,6 @@ class Interaction:
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
 
-        if key == glfw.KEY_Q and action == glfw.PRESS:
-            self.mesh_draw = not self.mesh_draw
-
-        if key == glfw.KEY_W and action == glfw.PRESS:
-            if(self.mesh_color == MeshColor.color):
-                self.mesh_color = MeshColor.white
-            elif(self.mesh_color == MeshColor.white):
-                self.mesh_color = MeshColor.color
-
-        if key == glfw.KEY_E and action == glfw.PRESS:
-            if(self.mesh_shading == MeshShading.shaded_basic):
-                self.mesh_shading = MeshShading.shaded_fancy
-            elif(self.mesh_shading == MeshShading.shaded_fancy):
-                self.mesh_shading = MeshShading.shaded_shadows
-            elif(self.mesh_shading == MeshShading.shaded_shadows):
-                self.mesh_shading = MeshShading.wireframe
-            elif(self.mesh_shading == MeshShading.wireframe):
-                self.mesh_shading = MeshShading.shaded_basic       
-
         if key == glfw.KEY_R and action == glfw.PRESS:
             self.mesh_rotate = not self.mesh_rotate
 

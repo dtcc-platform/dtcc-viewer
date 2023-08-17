@@ -1,7 +1,7 @@
 
 from pprint import pp
 from dtcc_viewer import * 
-from dtcc_model import Mesh, PointCloud
+from dtcc_model import Mesh, PointCloud, Bounds
 from dtcc_viewer.colors import *
 from typing import List, Iterable
 import trimesh
@@ -119,7 +119,7 @@ def restructure_mesh(mesh:Mesh, color_by:ColorBy, colors:np.ndarray):
 
     return np.array(new_vertices), np.array(new_faces), np.array(new_edges)
 
-def move_mesh_to_origin(vertices:np.ndarray, pc_avrg_pt:np.ndarray = None):
+def move_mesh_to_origin(vertices:np.ndarray, pc_avrg_pt:np.ndarray = None, multi_recenter_vec:np.ndarray = None):
     # x, y, z, r, g, b, nx, ny ,nz    
     origin = np.array([0.0, 0.0, 0.0])
     origin_extended = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])
@@ -141,6 +141,14 @@ def move_mesh_to_origin(vertices:np.ndarray, pc_avrg_pt:np.ndarray = None):
 
     return vertices, mesh_avrg_pt
 
+def move_mesh_to_origin_multi(vertices:np.ndarray, recenter_vec:np.ndarray = None):
+    # x, y, z, r, g, b, nx, ny ,nz
+    if recenter_vec is not None:    
+        recenter_vec = np.concatenate((recenter_vec,[0, 0, 0, 0, 0, 0]), axis=0)
+        vertices += recenter_vec    
+    
+    return vertices
+
 def flatten_mesh(vertices:np.ndarray, face_indices:np.ndarray, edge_indices:np.ndarray):
     # Making sure the datatypes are aligned with opengl implementation
     vertices = np.array(vertices, dtype= "float32").flatten()
@@ -148,6 +156,38 @@ def flatten_mesh(vertices:np.ndarray, face_indices:np.ndarray, edge_indices:np.n
     face_indices = np.array(face_indices, dtype= "uint32").flatten()
 
     return vertices, face_indices, edge_indices
+
+def calc_multi_geom_recenter_vector(mesh_list: list[Mesh] = None, pc_list:list[PointCloud] = None):
+    
+    all_vertices = np.array([[0,0,0]])
+    
+    if mesh_list:
+        for mesh in mesh_list:
+            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis = 0)
+            
+    if pc_list:
+        for pc in pc_list:
+            all_vertices = np.concatenate((all_vertices, pc.points), axis = 0)
+
+    # Remove the [0,0,0] row that was added to enable concatenate.        
+    all_vertices = np.delete(all_vertices, obj=0, axis = 0)
+
+    xmin = all_vertices[:, 0].min()
+    xmax = all_vertices[:, 0].max()
+    ymin = all_vertices[:, 1].min()
+    ymax = all_vertices[:, 1].max()
+    zmin = all_vertices[:, 2].min()
+    zmax = all_vertices[:, 2].max()
+
+    mid_pt = np.array([(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2])
+    origin = np.array([0,0,0])
+
+    move_vec = origin - mid_pt  
+
+    return move_vec       
+
+
+
 
 # -------------------------------- Mesh Conversion Ended -------------------------------------#
 
@@ -201,6 +241,14 @@ def move_pc_to_origin(points: np.ndarray, pc:PointCloud, mesh_avrg_pt:np.ndarray
     points += move_vec
 
     return points, pc_avrg_pt
+
+def move_pc_to_origin_multi(points: np.ndarray, recenter_vec:np.ndarray = None):
+    
+    if recenter_vec is not None:
+        points += recenter_vec
+
+    return points
+
 
 def flatten_pc(points:np.ndarray, colors:np.ndarray):
     points = np.array(points, dtype='float32').flatten()
