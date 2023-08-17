@@ -10,7 +10,7 @@ class PointCloudData:
     name: str
 
     def __init__(self, name:str, pc:PointCloud, pc_data: np.ndarray, recenter_vec: np.ndarray) -> None:
-            
+        self.name = name    
         self.colors = self.generate_pc_colors(pc, pc_data)                            # TODO: Move functions here 
         [self.points, self.colors] = self.restructure_pc(pc, self.colors)  
         self.points = self.move_pc_to_origin_multi(self.points, recenter_vec)

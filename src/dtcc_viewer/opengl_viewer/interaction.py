@@ -50,12 +50,6 @@ class Interaction:
             elif(self.particle_color == ParticleColor.white):
                 self.particle_color = ParticleColor.color
 
-        if key == glfw.KEY_D and action == glfw.PRESS:
-            self.particles_scale -= 0.2 * self.particles_scale
-
-        if key == glfw.KEY_F and action == glfw.PRESS:
-            self.particles_scale += 0.2 * self.particles_scale
-
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         self.camera.process_scroll_movement(xoffset, yoffset) 

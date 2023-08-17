@@ -7,14 +7,14 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.utils import calc_blended_color
 from dtcc_viewer.opengl_viewer.shaders_point_cloud import vertex_shader_pc, fragment_shader_pc
-from dtcc_viewer.opengl_viewer.gui import GuiParameters
+from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersPC
 
 
 class PointCloudGL:
 
-    name: str
     vertices: np.ndarray            # Vertices for one single instance of the particle mesh geometry 
     face_indices: np.ndarray        # Face indices for one singel instance of particle mesh geometry
+    guip: GuiParametersPC
 
     # Settings for calc of particle mesh resolution
     low_count = 1000000        # Upp to 1M particles -> highest resolution 
@@ -23,13 +23,14 @@ class PointCloudGL:
     upper_sides = 15           # Edge count for highest resolution for discs
 
 
-    def __init__(self, disc_size:float, n_sides:int, points:np.ndarray, colors:np.ndarray, name:str = None):
+    def __init__(self, name:str, disc_size:float, n_sides:int, points:np.ndarray, colors:np.ndarray):
+        self.guip = GuiParametersPC(name)
         n_points = len(points)/3
         self._create_single_instance(disc_size, n_points)
         self._create_multiple_instances(points, colors)    
         self._create_shader()    
 
-    def render(self, interaction: Interaction, guip:GuiParameters):
+    def render(self, interaction: Interaction):
 
         self._bind_vao()
         self._bind_shader()
@@ -45,13 +46,10 @@ class PointCloudGL:
 
         color_by = interaction.particle_color
 
-        color_by = 0
-        if(guip.color_pc):
-            color_by = 1
-
+        color_by = int(self.guip.color_pc)
         glUniform1i(self.color_by_loc, color_by)
 
-        scale_factor = interaction.particles_scale
+        scale_factor = self.guip.pc_scale
         scale = pyrr.matrix44.create_from_scale([scale_factor, scale_factor, scale_factor], dtype=np.float32)
         glUniformMatrix4fv(self.scale_loc, 1, GL_FALSE,scale)
     

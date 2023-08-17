@@ -16,6 +16,7 @@ from dtcc_viewer import mesh_opengl
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.utils import *
 
 def window_gui_example():
     window = Window(1200, 800)
@@ -74,7 +75,7 @@ def mesh_point_cloud_example_3():
     mesh_data = mesh.vertices[:,1]
     pc.view(mesh=mesh, pc_data = pc_data, mesh_data = mesh_data)
 
-def multi_geometry_example():
+def multi_geometry_example_1():
     
     window = Window(1200, 800)
     
@@ -93,7 +94,7 @@ def multi_geometry_example():
     pcs_imported = [pc_a, pc_b]
 
     # Calculate common recentering vector base of the bounding box of all combined vertices.
-    recenter_vec = utils.calc_multi_geom_recenter_vector(meshes_imported, pcs_imported)
+    recenter_vec = calc_multi_geom_recenter_vector(meshes_imported, pcs_imported)
 
     # Create mesh data classes that are structured for openggl calls
     mesh_data_obj_a = MeshData('mesh A', mesh_a, mesh_data_a, recenter_vec)
@@ -121,5 +122,5 @@ if __name__ == '__main__':
     #mesh_point_cloud_example_1()
     #mesh_point_cloud_example_2()
     #mesh_point_cloud_example_3()
-    multi_geometry_example()
+    multi_geometry_example_1()
     

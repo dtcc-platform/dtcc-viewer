@@ -13,6 +13,7 @@ class MeshData:
     name: str
     
     def __init__(self, name:str, mesh:Mesh, mesh_data:np.ndarray = None, recenter_vec:np.ndarray = None) -> None:
+        self.name = name
         [self.color_by, self.mesh_colors] = self.generate_mesh_colors(mesh, mesh_data)
         [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(mesh, self.color_by, self.mesh_colors)
         self.vertices = self.move_mesh_to_origin_multi(self.vertices,  recenter_vec)

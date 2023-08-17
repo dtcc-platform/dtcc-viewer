@@ -1,18 +1,35 @@
 import imgui
+import copy
 from dtcc_viewer.opengl_viewer.utils import MeshShading 
 from imgui.integrations.glfw import GlfwRenderer
 
-
 class GuiParameters:
-
     def __init__(self):
-        self.show_pc = True
-        self.color_pc = True
+        self.color = [0.1,0.2,0.5,1]
+        self.text_color = Gui.invert_color(self.color)
+        self.gui_width = 310
+        self.gui_height = 200
+        self.single_date = True
+        self.period = False
 
-        self.show_mesh = True
+class GuiParametersMesh:
+    def __init__(self, name:str) -> None:
+        self.name = name
+        self.show = True
         self.color_mesh = True
         self.animate_light = False
+        self.combo_selected_index = 2
 
+class GuiParametersPC:
+    def __init__(self, name:str) -> None:
+        self.name = name
+        self.show = True
+        self.color_pc = True
+        self.pc_scale = 1.0
+
+class GuiParametersExample:
+
+    def __init__(self) -> None:
         self.year_start = 2023
         self.month_start = 3
         self.day_start = 3
@@ -23,10 +40,8 @@ class GuiParameters:
         self.day_end = 4
         self.hour_end = 15
 
-        self.combo_selected_index = 2
-
         self.color = [0.1,0.2,0.5,1]
-        self.text_color = [1-self.color[0], 1-self.color[1], 1-self.color[2],1]
+        self.text_color = Gui.invert_color(self.color)
         self.gui_width = 310
         self.gui_height = 200
         self.single_date = True
@@ -34,7 +49,10 @@ class GuiParameters:
 
         self.checkbox1 = False
         self.checkbox2 = False
-        
+
+        self.combo_selected_index = 2
+
+     
     def match(self):
         self.year_end = self.year_start
         self.month_end = self.month_start
@@ -64,34 +82,41 @@ class Gui:
         imgui.end_frame()
 
     # GUI for point clouds
-    def draw_pc_gui(self, guip:GuiParameters):
-        [expanded, visible] = imgui.collapsing_header("Point cloud")
+    def draw_pc_gui(self, guip:GuiParametersPC, index:int):
+        [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if (expanded):
-            imgui.push_id("Show pc")
-            [changed, guip.show_pc] = imgui.checkbox("Show", guip.show_pc)
+            imgui.push_id("Show pc " + str(index))
+            [changed, guip.show] = imgui.checkbox("Show", guip.show)
             imgui.pop_id()
             imgui.same_line()
-            imgui.push_id("Color pc")    
+            imgui.push_id("Color pc " + str(index))    
             [changed, guip.color_pc] = imgui.checkbox("Color", guip.color_pc)    
             imgui.pop_id()
-
+            imgui.push_id("Color pc " + str(index))
+            [changed, guip.pc_scale] = imgui.slider_float("Scale factor", guip.pc_scale, 0, 10)
+            imgui.pop_id()    
+           
     # GUI for mesh 
-    def draw_mesh_gui(self, guip:GuiParameters):
-        [expanded, visible] = imgui.collapsing_header("Mesh")
+    def draw_mesh_gui(self, guip:GuiParametersMesh, index:int):
+        
+        [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if (expanded):
-            imgui.push_id("Show mesh")
-            [changed, guip.show_mesh] = imgui.checkbox("Show", guip.show_mesh)    
+            imgui.push_id("Show mesh " + str(index))
+            [changed, guip.show] = imgui.checkbox("Show", guip.show)    
             imgui.pop_id()
             imgui.same_line()
-            imgui.push_id("Color mesh")
+            imgui.push_id("Color mesh " + str(index))
             [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
             imgui.pop_id()
 
             if guip.combo_selected_index == 3:
                 imgui.same_line()
+                imgui.push_id("Animate light " + str(index))
                 [changed, guip.animate_light] = imgui.checkbox("Animate light", guip.animate_light)
-            
+                imgui.pop_id()
+
             # Drawing mode
+            imgui.push_id("Combo " + str(index))
             items = ["Wireframe", "Shaded ambient", "Shaded diffuse", "Shaded shadow"] 
             with imgui.begin_combo("combo", items[guip.combo_selected_index]) as combo:
                 if combo.opened:
@@ -103,16 +128,28 @@ class Gui:
                         # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                         if is_selected:
                             imgui.set_item_default_focus()
+            imgui.pop_id()
 
-    def draw_example_gui(self, guip:GuiParameters) -> None:
+
+    def draw_separator(self) -> None:
+        imgui.spacing()
+        imgui.separator()
+        imgui.spacing()
+
+    def draw_apperance_gui(self, guip:GuiParameters) -> None:
+        [expanded, visible] = imgui.collapsing_header("Apperance")
+        if(expanded):
+            [changed, guip.color] = imgui.color_edit4("color", guip.color[0], guip.color[1],guip.color[2], guip.color[3])    
+
+    def draw_example_gui(self, guip:GuiParametersExample) -> None:
         self.styles(guip)                
         self.buttons_example(guip)       
         self.checkbox_example(guip)
         self.combo_example(guip)      
-        self.add_dates_ui(guip)          
-        self.draw_apperance_gui(guip)    
+        self.add_example_dates(guip)          
+        self.draw_apperance_example(guip)    
 
-    def styles(self, guip:GuiParameters) -> None:
+    def styles(self, guip:GuiParametersExample) -> None:
         style = imgui.get_style()
         style.colors[imgui.COLOR_BORDER] = (0, 0.5, 1, 1)
         style.colors[imgui.COLOR_TITLE_BACKGROUND] = (0.5, 0.5, 0.5, 1)
@@ -121,7 +158,7 @@ class Gui:
         style.colors[imgui.COLOR_WINDOW_BACKGROUND] = (0.2, 0.2, 0.2, 0.3)
         style.colors[imgui.COLOR_TEXT] = (1-guip.color[0], 1-guip.color[1], 1-guip.color[2],1)
 
-    def buttons_example(self, guip:GuiParameters) -> None:
+    def buttons_example(self, guip:GuiParametersExample) -> None:
         [expanded, visible] = imgui.collapsing_header("Buttons")
         if (expanded):       
             # Buttons to trigger action of some sort
@@ -138,7 +175,7 @@ class Gui:
 
         imgui.spacing()
 
-    def combo_example(self, guip:GuiParameters):
+    def combo_example(self, guip:GuiParametersExample):
         [expanded, visible] = imgui.collapsing_header("Combo")
         if(expanded):
             items = ["AAAA", "BBBB", "CCCC", "DDDD"] 
@@ -154,17 +191,17 @@ class Gui:
                             imgui.set_item_default_focus()
         imgui.spacing()    
 
-    def checkbox_example(self, guip:GuiParameters) -> None:
+    def checkbox_example(self, guip:GuiParametersExample) -> None:
         [expanded, visible] = imgui.collapsing_header("Checkboxes")
         if(expanded):
             # Check box to change settings
-            [changed, guip.show_pc] = imgui.checkbox("cbx1!", guip.show_pc)
+            [changed, guip.checkbox1] = imgui.checkbox("cbx1!", guip.checkbox1)
             imgui.same_line()
-            [changed, guip.show_mesh] = imgui.checkbox("cbx2!", guip.show_mesh)
+            [changed, guip.checkbox2] = imgui.checkbox("cbx2!", guip.checkbox2)
         
         imgui.spacing()
 
-    def add_dates_ui(self, guip:GuiParameters) -> None:
+    def add_example_dates(self, guip:GuiParametersExample) -> None:
         [expanded, visible] = imgui.collapsing_header("Date")
 
         if(expanded):
@@ -210,12 +247,12 @@ class Gui:
 
         imgui.spacing()
 
-    def draw_apperance_gui(self, guip:GuiParameters) -> None:
+    def draw_apperance_example(self, guip:GuiParametersExample) -> None:
         [expanded, visible] = imgui.collapsing_header("Apperance")
         if(expanded):
             [changed, guip.color] = imgui.color_edit4("color", guip.color[0], guip.color[1],guip.color[2], guip.color[3])    
 
-    def draw_bar(self, guip:GuiParameters) -> None:
+    def draw_bar(self, guip:GuiParametersExample) -> None:
         imgui.push_style_color(imgui.COLOR_TEXT, guip.text_color[0], guip.text_color[1], guip.text_color[2], 0.5)
         imgui.text("//////////////////////////////////////////")
         imgui.pop_style_color()
@@ -239,4 +276,9 @@ class Gui:
             days_per_month[1] = 29
 
         month_index = month-1
-        return days_per_month[month_index]     
+        return days_per_month[month_index]  
+
+    @staticmethod
+    def invert_color(color):
+        inv_color = [1 - color[0], 1 - color[1], 1 - color[2], 1]
+        return inv_color       

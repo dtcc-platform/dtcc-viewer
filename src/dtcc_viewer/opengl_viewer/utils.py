@@ -18,9 +18,6 @@ class ParticleColor(IntEnum):
     white = 2
     
 def calc_recenter_vector(mesh: Mesh = None, pc:PointCloud = None):
-    
-    print(mesh)
-    print(pc)
 
     all_vertices = np.array([[0,0,0]])
     
