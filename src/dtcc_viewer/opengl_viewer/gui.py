@@ -7,7 +7,7 @@ class GuiParameters:
     def __init__(self):
         self.color = [0.1,0.2,0.5,1]
         self.text_color = Gui.invert_color(self.color)
-        self.gui_width = 310
+        self.gui_width = 320
         self.gui_height = 200
         self.single_date = True
         self.period = False
@@ -67,11 +67,11 @@ class Gui:
 
     def init_draw(self, impl:GlfwRenderer) -> None:
         window_with = impl.io.display_size.x
-        gui_width = 312
+        gui_width = 320
         margin = 40
         impl.process_inputs()
         imgui.new_frame()
-        imgui.set_next_window_size_constraints((gui_width,20), (gui_width, 1000))
+        imgui.set_next_window_size_constraints((gui_width,20), (gui_width, 1200))
         imgui.begin("DTCC Viewer", flags = imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS)
         imgui.set_window_position_labeled("DTCC Viewer", window_with - (gui_width + margin), margin)
 
@@ -137,7 +137,7 @@ class Gui:
         imgui.spacing()
 
     def draw_apperance_gui(self, guip:GuiParameters) -> None:
-        [expanded, visible] = imgui.collapsing_header("Apperance")
+        [expanded, visible] = imgui.collapsing_header("Appearance")
         if(expanded):
             [changed, guip.color] = imgui.color_edit4("color", guip.color[0], guip.color[1],guip.color[2], guip.color[3])    
 
@@ -248,7 +248,7 @@ class Gui:
         imgui.spacing()
 
     def draw_apperance_example(self, guip:GuiParametersExample) -> None:
-        [expanded, visible] = imgui.collapsing_header("Apperance")
+        [expanded, visible] = imgui.collapsing_header("Appearance")
         if(expanded):
             [changed, guip.color] = imgui.color_edit4("color", guip.color[0], guip.color[1],guip.color[2], guip.color[3])    
 

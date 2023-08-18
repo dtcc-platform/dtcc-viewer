@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+import trimesh
 
 from pprint import pp
 from dtcc_viewer import * 
@@ -17,6 +18,7 @@ from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
+from dtcc_viewer.utils import *
 
 def window_gui_example():
     window = Window(1200, 800)
@@ -107,7 +109,66 @@ def multi_geometry_example_1():
     pc_data_list = [pc_data_obj_a, pc_data_obj_b]
 
     window.render_multi(mesh_data_list, pc_data_list)
+        
+def multi_geometry_example_2():
+    filename_csv = '../../../data/models/PointCloud_HQ.csv'
+    pc = pointcloud.load(filename_csv)
+    all_pcs = split_pc_in_stripes(10, pc, Direction.x)
     
+    all_meshes = [] 
+    
+    # Calculate common recentering vector base of the bounding box of all combined vertices.
+    recenter_vec = calc_multi_geom_recenter_vector(all_meshes, all_pcs)
+
+    pc_data_list = []
+    for i, pc_i in enumerate(all_pcs):
+        pc_data = pc_i.points[:, Direction.x]
+        pc_data_list.append(PointCloudData('point cloud ' + str(i), pc_i, pc_data, recenter_vec))
+
+    window = Window(1200, 800)
+    window.render_multi(all_meshes, pc_data_list)
+
+def multi_geometry_example_3():
+
+    filename_obj = '../../../data/models/CitySurface.obj'
+    mesh_tri = trimesh.load_mesh(filename_obj)
+    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
+    meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.x)
+
+    all_meshes = []
+    all_pcs = []
+
+    for i, mesh in enumerate(meshes):
+        data = mesh.vertices[:, Direction.x]
+        mesh_data_obj = MeshData("Mesh " + str(i), mesh, data)
+        all_meshes.append(mesh_data_obj)
+
+    window = Window(1200, 800)
+    window.render_multi(all_meshes, all_pcs)
+
+def multi_geometry_example_4():
+    pc = pointcloud.load('../../../data/models/PointCloud_HQ.csv')
+    all_pcs = split_pc_in_stripes(8, pc, Direction.x)
+
+    mesh_tri = trimesh.load_mesh('../../../data/models/CitySurface.obj')
+    all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, utils.calc_face_mid_points(mesh_tri), Direction.y)
+
+    recenter_vec = calc_multi_geom_recenter_vector(all_meshes, all_pcs)
+
+    pc_data_list = []
+    for i, pc_i in enumerate(all_pcs):
+        pc_data = pc_i.points[:, Direction.x]
+        pc_data_list.append(PointCloudData('point cloud ' + str(i), pc_i, pc_data, recenter_vec))
+
+    mesh_data_list = []
+    for i, mesh in enumerate(all_meshes):
+        data = mesh.vertices[:, Direction.y]
+        mesh_data_list.append(MeshData("Mesh " + str(i), mesh, data, recenter_vec))
+
+    window = Window(1200, 800)
+    window.render_multi(mesh_data_list, pc_data_list)
+
+
 
 if __name__ == '__main__':
 
@@ -122,5 +183,8 @@ if __name__ == '__main__':
     #mesh_point_cloud_example_1()
     #mesh_point_cloud_example_2()
     #mesh_point_cloud_example_3()
-    multi_geometry_example_1()
+    #multi_geometry_example_1()
+    #multi_geometry_example_2()
+    #multi_geometry_example_3()
+    multi_geometry_example_4()
     

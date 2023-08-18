@@ -80,7 +80,7 @@ class Window:
             self.meshes.append(mesh_gl)
         
         for pc in pc_data_list:
-            pc_gl = PointCloudGL(pc.name, 0.1, 10, pc.points, pc.colors)
+            pc_gl = PointCloudGL(pc.name, 0.2, pc.points, pc.colors)
             self.point_clouds.append(pc_gl)
         
         glClearColor(0.0, 0.0, 0.0, 1)
@@ -116,7 +116,7 @@ class Window:
         
 
     def render_point_cloud(self, pc_data_obj: PointCloudData):
-        self.pc = PointCloudGL(pc_data_obj.name, 0.1, 10, pc_data_obj.points, pc_data_obj.colors)
+        self.pc = PointCloudGL(pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors)
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -162,7 +162,7 @@ class Window:
             glfw.swap_buffers(self.window)        
     
     def render_pc_and_mesh(self, pc_data_obj:PointCloudData, mesh_data_obj:MeshData):
-        self.pc = PointCloudGL(pc_data_obj.name, 0.2, 10, pc_data_obj.points, pc_data_obj.colors)        
+        self.pc = PointCloudGL(pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors)        
         self.mesh = MeshGL(mesh_data_obj.name, mesh_data_obj.vertices, mesh_data_obj.face_indices, mesh_data_obj.edge_indices)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)

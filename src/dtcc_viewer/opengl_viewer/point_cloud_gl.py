@@ -23,7 +23,7 @@ class PointCloudGL:
     upper_sides = 15           # Edge count for highest resolution for discs
 
 
-    def __init__(self, name:str, disc_size:float, n_sides:int, points:np.ndarray, colors:np.ndarray):
+    def __init__(self, name:str, disc_size:float, points:np.ndarray, colors:np.ndarray):
         self.guip = GuiParametersPC(name)
         n_points = len(points)/3
         self._create_single_instance(disc_size, n_points)
