@@ -1,7 +1,6 @@
-
 # Vertex shader for mesh also works for the mesh edges
 
-vertex_shader_basic = """
+vertex_shader_ambient = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
@@ -30,7 +29,7 @@ void main()
 
 # Fragment shader for mesh also works for the mesh edges
 
-fragment_shader_basic = """
+fragment_shader_ambient = """
 # version 330 core
 in vec4 v_color;
 out vec4 out_color;
@@ -39,6 +38,3 @@ void main()
     out_color = v_color;
 }
 """
-
-
-

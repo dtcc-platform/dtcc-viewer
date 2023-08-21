@@ -1,5 +1,4 @@
-
-vertex_shader_fancy = """
+vertex_shader_diffuse = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
@@ -32,7 +31,7 @@ void main()
 }
 """
 
-fragment_shader_fancy = """ 
+fragment_shader_diffuse = """ 
 # version 330 core
 
 in vec3 v_frag_pos;

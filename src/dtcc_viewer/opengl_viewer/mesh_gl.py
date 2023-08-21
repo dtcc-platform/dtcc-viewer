@@ -7,21 +7,21 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 
-from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import (
+from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_fancy_shadow,
     fragment_shader_fancy_shadow,
 )
-from dtcc_viewer.opengl_viewer.shaders_mesh_fancy_shadows import (
+from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadow_map,
     fragment_shader_shadow_map,
 )
-from dtcc_viewer.opengl_viewer.shaders_mesh_fancy import (
-    vertex_shader_fancy,
-    fragment_shader_fancy,
+from dtcc_viewer.opengl_viewer.shaders_mesh_diffuse import (
+    vertex_shader_diffuse,
+    fragment_shader_diffuse,
 )
-from dtcc_viewer.opengl_viewer.shaders_mesh_basic import (
-    vertex_shader_basic,
-    fragment_shader_basic,
+from dtcc_viewer.opengl_viewer.shaders_mesh_ambient import (
+    vertex_shader_ambient,
+    fragment_shader_ambient,
 )
 from dtcc_viewer.opengl_viewer.shaders_lines import (
     vertex_shader_lines,
@@ -198,8 +198,8 @@ class MeshGL:
     def _create_shader_basic(self):
         self._bind_vao_triangels()
         self.shader_basic = compileProgram(
-            compileShader(vertex_shader_basic, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_basic, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader_ambient, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_ambient, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_basic)
@@ -212,8 +212,8 @@ class MeshGL:
     def _create_shader_fancy(self):
         self._bind_vao_triangels()
         self.shader_fancy = compileProgram(
-            compileShader(vertex_shader_fancy, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_fancy, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader_diffuse, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_diffuse, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_fancy)

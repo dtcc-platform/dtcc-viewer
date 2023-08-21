@@ -5,12 +5,11 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.utils import calc_blended_color
 from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
     vertex_shader_pc,
     fragment_shader_pc,
 )
-from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersPC
+from dtcc_viewer.opengl_viewer.gui import GuiParametersPC
 
 
 class PointCloudGL:

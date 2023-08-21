@@ -1,4 +1,3 @@
-
 # Vertex shader for the particles
 
 vertex_shader_pc = """
