@@ -4,10 +4,10 @@ from enum import IntEnum
 from dtcc_model import Mesh, PointCloud
 
 class MeshShading(IntEnum):
-    wireframe = 1
-    shaded_basic = 2
-    shaded_fancy = 3
-    shaded_shadows = 4
+    wireframe = 0
+    shaded_ambient = 1
+    shaded_diffuse = 2
+    shaded_shadows = 3
 
 class MeshColor(IntEnum):
     color = 1

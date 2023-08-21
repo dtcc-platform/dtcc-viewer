@@ -1,7 +1,6 @@
 
 import glfw
 from dtcc_viewer.opengl_viewer.camera import Camera
-from dtcc_viewer.opengl_viewer.utils import MeshColor, MeshShading, ParticleColor
 
 class Interaction:
 
@@ -16,16 +15,7 @@ class Interaction:
         self.right_first_mouse = True 
         self.right_mbtn_pressed = False
         self.mouse_on_gui = False
-
-        self.mesh_draw = True
-        self.mesh_color = MeshColor.color
-        self.mesh_shading = MeshShading.shaded_fancy
-        self.mesh_rotate = False
         
-        self.particles_draw = True
-        self.particle_color = ParticleColor.color
-        self.particles_scale = 1.0
-
     def set_mouse_on_gui(self, mouse_on_gui):
         self.mouse_on_gui = mouse_on_gui    
 
@@ -37,18 +27,6 @@ class Interaction:
     def key_input_callback(self, window, key, scancode, action, mode):
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
-
-        if key == glfw.KEY_R and action == glfw.PRESS:
-            self.mesh_rotate = not self.mesh_rotate
-
-        if key == glfw.KEY_A and action == glfw.PRESS:                   
-            self.particles_draw = not self.particles_draw     
-                       
-        if key == glfw.KEY_S and action == glfw.PRESS:
-            if(self.particle_color == ParticleColor.color):
-                self.particle_color = ParticleColor.white
-            elif(self.particle_color == ParticleColor.white):
-                self.particle_color = ParticleColor.color
 
 
     def scroll_input_callback(self, window, xoffset, yoffset):

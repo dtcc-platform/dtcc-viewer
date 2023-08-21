@@ -14,14 +14,14 @@ from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
-class Window:
 
+class Window:
     meshes: list[MeshGL]
     point_clouds: list[PointCloudGL]
     mesh: MeshGL
     pc: PointCloudGL
     gui: Gui
-    guip: GuiParameters                     # Gui parameters common for the whole window
+    guip: GuiParameters  # Gui parameters common for the whole window
     width: int
     height: int
     interaction: Interaction
@@ -30,34 +30,36 @@ class Window:
     time: float
     time_acum: float
 
-    def __init__(self, width:int, height:int):
+    def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
         self.interaction = Interaction(width, height)
-        
+
         imgui.create_context()
         self.gui = Gui()
         self.guip = GuiParameters()
         self.io = imgui.get_io()
-        
+
         if not glfw.init():
             raise Exception("glfw can not be initialised!")
-            
+
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-        self.window = glfw.create_window(self.width, self.height, "OpenGL Window", None, None)      # Create window
+        self.window = glfw.create_window(
+            self.width, self.height, "OpenGL Window", None, None
+        )  # Create window
 
         if not self.window:
             glfw.terminate()
             raise Exception("glfw window can not be created!")
 
         glfw.set_window_pos(self.window, 400, 200)
-        
+
         # Calls can be made after the contex is made current
         glfw.make_context_current(self.window)
-        
+
         # Callback should be called after the impl has been registered
         self.impl = GlfwRenderer(self.window)
 
@@ -65,24 +67,29 @@ class Window:
         glfw.set_window_size_callback(self.window, self._window_resize_callback)
         glfw.set_cursor_pos_callback(self.window, self.interaction.mouse_look_callback)
         glfw.set_key_callback(self.window, self.interaction.key_input_callback)
-        glfw.set_mouse_button_callback(self.window, self.interaction.mouse_input_callback)
+        glfw.set_mouse_button_callback(
+            self.window, self.interaction.mouse_input_callback
+        )
         glfw.set_scroll_callback(self.window, self.interaction.scroll_input_callback)
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render_multi(self, mesh_data_list:list[MeshData], pc_data_list:list[PointCloudData]):
-        
+    def render_multi(
+        self, mesh_data_list: list[MeshData], pc_data_list: list[PointCloudData]
+    ):
         self.meshes = []
         self.point_clouds = []
 
         for mesh in mesh_data_list:
-            mesh_gl = MeshGL(mesh.name, mesh.vertices, mesh.face_indices, mesh.edge_indices)
+            mesh_gl = MeshGL(
+                mesh.name, mesh.vertices, mesh.face_indices, mesh.edge_indices
+            )
             self.meshes.append(mesh_gl)
-        
+
         for pc in pc_data_list:
             pc_gl = PointCloudGL(pc.name, 0.2, pc.points, pc.colors)
             self.point_clouds.append(pc_gl)
-        
+
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -90,7 +97,12 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+            glClearColor(
+                self.guip.color[0],
+                self.guip.color[1],
+                self.guip.color[2],
+                self.guip.color[3],
+            )
 
             self._render_point_clouds()
             self._render_meshes()
@@ -101,22 +113,23 @@ class Window:
             for i, pc in enumerate(self.point_clouds):
                 self.gui.draw_pc_gui(pc.guip, i)
                 self.gui.draw_separator()
-            
+
             for i, mesh in enumerate(self.meshes):
                 self.gui.draw_mesh_gui(mesh.guip, i)
                 self.gui.draw_separator()
-            
+
             self.gui.draw_apperance_gui(self.guip)
             self.gui.end_draw(self.impl)
 
             self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
             glfw.swap_buffers(self.window)
 
-        glfw.terminate()   
-        
+        glfw.terminate()
 
     def render_point_cloud(self, pc_data_obj: PointCloudData):
-        self.pc = PointCloudGL(pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors)
+        self.pc = PointCloudGL(
+            pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
+        )
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -124,7 +137,12 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+            glClearColor(
+                self.guip.color[0],
+                self.guip.color[1],
+                self.guip.color[2],
+                self.guip.color[3],
+            )
 
             self._render_point_cloud()
             self._fps_calculations()
@@ -137,10 +155,15 @@ class Window:
             self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
             glfw.swap_buffers(self.window)
 
-        glfw.terminate()       
-    
-    def render_mesh(self, mesh_data_obj:MeshData): 
-        self.mesh = MeshGL(mesh_data_obj.name, mesh_data_obj.vertices, mesh_data_obj.face_indices, mesh_data_obj.edge_indices)
+        glfw.terminate()
+
+    def render_mesh(self, mesh_data_obj: MeshData):
+        self.mesh = MeshGL(
+            mesh_data_obj.name,
+            mesh_data_obj.vertices,
+            mesh_data_obj.face_indices,
+            mesh_data_obj.edge_indices,
+        )
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -148,7 +171,12 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+            glClearColor(
+                self.guip.color[0],
+                self.guip.color[1],
+                self.guip.color[2],
+                self.guip.color[3],
+            )
 
             self._render_mesh()
             self._fps_calculations()
@@ -159,11 +187,18 @@ class Window:
             self.gui.end_draw(self.impl)
 
             self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
-            glfw.swap_buffers(self.window)        
-    
-    def render_pc_and_mesh(self, pc_data_obj:PointCloudData, mesh_data_obj:MeshData):
-        self.pc = PointCloudGL(pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors)        
-        self.mesh = MeshGL(mesh_data_obj.name, mesh_data_obj.vertices, mesh_data_obj.face_indices, mesh_data_obj.edge_indices)
+            glfw.swap_buffers(self.window)
+
+    def render_pc_and_mesh(self, pc_data_obj: PointCloudData, mesh_data_obj: MeshData):
+        self.pc = PointCloudGL(
+            pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
+        )
+        self.mesh = MeshGL(
+            mesh_data_obj.name,
+            mesh_data_obj.vertices,
+            mesh_data_obj.face_indices,
+            mesh_data_obj.edge_indices,
+        )
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -172,7 +207,12 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(self.guip.color[0], self.guip.color[1], self.guip.color[2], self.guip.color[3])
+            glClearColor(
+                self.guip.color[0],
+                self.guip.color[1],
+                self.guip.color[2],
+                self.guip.color[3],
+            )
 
             self._render_mesh()
             self._render_point_cloud()
@@ -198,65 +238,69 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(guip_example.color[0], guip_example.color[1], guip_example.color[2], guip_example.color[3])
-        
+            glClearColor(
+                guip_example.color[0],
+                guip_example.color[1],
+                guip_example.color[2],
+                guip_example.color[3],
+            )
+
             self.gui.init_draw(self.impl)
             self.gui.draw_example_gui(guip_example)
             self.gui.end_draw(self.impl)
 
-            glfw.swap_buffers(self.window)      
+            glfw.swap_buffers(self.window)
 
     def _render_point_cloud(self):
-        if self.pc.guip.show:    
-            self.pc.render(self.interaction)    
+        if self.pc.guip.show:
+            self.pc.render(self.interaction)
 
     def _render_point_clouds(self):
         for pc in self.point_clouds:
-            if pc.guip.show:    
-                pc.render(self.interaction)    
-        
-    def _render_mesh(self):    
-        mguip = self.mesh.guip 
-        if mguip.show:
-            if mguip.combo_selected_index == 0:
-                self.mesh.render_lines(self.interaction)
-            elif mguip.combo_selected_index == 1:
-                self.mesh.render_basic(self.interaction)
-            elif mguip.combo_selected_index == 2:
-                    self.mesh.render_fancy(self.interaction)
-            elif mguip.combo_selected_index == 3:
-                    self.mesh.render_fancy_shadows(self.interaction)
+            if pc.guip.show:
+                pc.render(self.interaction)
 
-    def _render_meshes(self):    
+    def _render_mesh(self):
+        mguip = self.mesh.guip
+        if mguip.show:
+            if mguip.mesh_shading == 0:
+                self.mesh.render_lines(self.interaction)
+            elif mguip.mesh_shading == 1:
+                self.mesh.render_basic(self.interaction)
+            elif mguip.mesh_shading == 2:
+                self.mesh.render_fancy(self.interaction)
+            elif mguip.mesh_shading == 3:
+                self.mesh.render_fancy_shadows(self.interaction)
+
+    def _render_meshes(self):
         for mesh in self.meshes:
-            mguip = mesh.guip    
+            mguip = mesh.guip
             if mguip.show:
-                if mguip.combo_selected_index == 0:
+                if mguip.mesh_shading == MeshShading.wireframe:
                     mesh.render_lines(self.interaction)
-                elif mguip.combo_selected_index == 1:
+                elif mguip.mesh_shading == MeshShading.shaded_ambient:
                     mesh.render_basic(self.interaction)
-                elif mguip.combo_selected_index == 2:
+                elif mguip.mesh_shading == MeshShading.shaded_diffuse:
                     mesh.render_fancy(self.interaction)
-                elif mguip.combo_selected_index == 3:
+                elif mguip.mesh_shading == MeshShading.shaded_shadows:
                     mesh.render_fancy_shadows(self.interaction)
 
-    def _fps_calculations(self, print_results = True):
+    def _fps_calculations(self, print_results=True):
         new_time = glfw.get_time()
         time_passed = new_time - self.time
         self.time = new_time
         self.time_acum += time_passed
         self.fps += 1
 
-        if(self.time_acum > 1):
+        if self.time_acum > 1:
             self.time_acum = 0
-            if(print_results):
+            if print_results:
                 print("FPS:" + str(self.fps))
             self.fps = 0
-   
+
     def _window_resize_callback(self, window, width, height):
         fb_size = glfw.get_framebuffer_size(self.window)
         width = fb_size[0]
         height = fb_size[1]
         glViewport(0, 0, width, height)
         self.interaction.update_window_size(width, height)
-         

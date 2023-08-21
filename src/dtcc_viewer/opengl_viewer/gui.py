@@ -18,7 +18,7 @@ class GuiParametersMesh:
         self.show = True
         self.color_mesh = True
         self.animate_light = False
-        self.combo_selected_index = 2
+        self.mesh_shading = MeshShading.shaded_diffuse
 
 class GuiParametersPC:
     def __init__(self, name:str) -> None:
@@ -109,7 +109,7 @@ class Gui:
             [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
             imgui.pop_id()
 
-            if guip.combo_selected_index == 3:
+            if guip.mesh_shading == MeshShading.shaded_shadows:
                 imgui.same_line()
                 imgui.push_id("Animate light " + str(index))
                 [changed, guip.animate_light] = imgui.checkbox("Animate light", guip.animate_light)
@@ -118,12 +118,12 @@ class Gui:
             # Drawing mode
             imgui.push_id("Combo " + str(index))
             items = ["Wireframe", "Shaded ambient", "Shaded diffuse", "Shaded shadow"] 
-            with imgui.begin_combo("combo", items[guip.combo_selected_index]) as combo:
+            with imgui.begin_combo("combo", items[guip.mesh_shading]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
-                        is_selected = (i == guip.combo_selected_index)
+                        is_selected = (i == guip.mesh_shading)
                         if imgui.selectable(item, is_selected)[0]:
-                            guip.combo_selected_index = i
+                            guip.mesh_shading = i
                             
                         # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                         if is_selected:
