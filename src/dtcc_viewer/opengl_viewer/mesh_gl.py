@@ -8,8 +8,8 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
-    vertex_shader_fancy_shadow,
-    fragment_shader_fancy_shadow,
+    vertex_shader_shadows,
+    fragment_shader_shadows,
 )
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadow_map,
@@ -231,8 +231,8 @@ class MeshGL:
     def _create_shader_fancy_shadow(self):
         self._bind_vao_triangels()
         self.shader_fancy_shadows = compileProgram(
-            compileShader(vertex_shader_fancy_shadow, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_fancy_shadow, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader_shadows, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_shadows, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_fancy_shadows)
@@ -249,7 +249,6 @@ class MeshGL:
         self.cb_loc_fancy_shadows = glGetUniformLocation(
             self.shader_fancy_shadows, "color_by"
         )
-
         self.oc_loc_fancy_shadows = glGetUniformLocation(
             self.shader_fancy_shadows, "object_color"
         )
