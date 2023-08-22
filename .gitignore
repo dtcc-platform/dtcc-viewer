@@ -3,6 +3,7 @@ scratch/
 
 *.las
 *.csv
+!cube_pc.csv
 
 .idea/
 .vscode/

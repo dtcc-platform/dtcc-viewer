@@ -33,7 +33,7 @@ def pointcloud_example_1():
 
 
 def pointcloud_example_2():
-    filename_las = "../../../data/models/PointCloud2.las"
+    filename_las = "../../../data/models/PointCloud.las"
     pc = pointcloud.load(filename_las)
     color_data = pc.points[:, 0]
     pc.view(pc_data=color_data)
