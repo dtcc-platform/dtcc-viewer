@@ -57,6 +57,7 @@ uniform sampler2D shadow_map;
 uniform vec3 light_color;
 uniform vec3 light_position;
 uniform vec3 view_position;
+uniform int receive_shadow;
 
 
 float shadow_calc(float dot_light_normal)
@@ -103,8 +104,13 @@ void main()
 	float diff = max(dot_light_normal, 0.0);
 	vec3 diffuse = diff * light_color;
 
-    float shadow = shadow_calc(dot_light_normal);
+    float shadow = 1.0;
     
+    if(receive_shadow == 1.0)
+    {
+        shadow = shadow_calc(dot_light_normal);
+    }
+
     vec3 lightning = (shadow * (diffuse) + ambient) * v_color;
 
     out_frag_color = vec4(lightning, 1.0);
@@ -1449,6 +1455,9 @@ light_position_loc = glGetUniformLocation(shader_fancy, "light_position")
 view_position_loc = glGetUniformLocation(shader_fancy, "view_position")
 light_space_matrix_loc = glGetUniformLocation(shader_fancy, "light_space_matrix")
 
+receive_shadow_loc = glGetUniformLocation(shader_fancy, "receive_shadow")
+
+
 light_position = 3.0 * np.array([10.0, 10.0, 10.0], dtype=np.float32)
 light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 
@@ -1515,50 +1524,101 @@ model_loc = glGetUniformLocation(shader_shadow, "model")
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
 
+# Set which objects will be casting shadows
+cast_shadows_mask = [False, True, True, True, False, True, True]  # Casting shadows
 
-def render_scene(time):
+receive_shadows_mask = [1, 1, 1, 1, 1, 1, 1]  # Receiving shadows
+
+
+def is_visible(cast_shadows, is_first_pass):
+    if is_first_pass and cast_shadows:
+        return True
+    elif not is_first_pass:
+        return True
+    elif is_first_pass and not cast_shadows:
+        return False
+
+
+def render_scene(time, cast_shadows, receive_shadows, is_first_pass):
     # Floor
-    model_floor = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_floor)
-    glBindVertexArray(VAO_floor)
-    glDrawElements(GL_TRIANGLES, len(floor_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[0], is_first_pass):
+        model_floor = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_floor)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[0])
+        glBindVertexArray(VAO_floor)
+        glDrawElements(GL_TRIANGLES, len(floor_indices), GL_UNSIGNED_INT, None)
 
     # Cubes
-    model_cube_rotat = pyrr.matrix44.create_from_z_rotation(time)
-    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([7, -7, 2]))
-    model_cube_1 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_1)
-    glBindVertexArray(VAO_cube)
-    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[1], is_first_pass):
+        model_cube_rotat = pyrr.matrix44.create_from_z_rotation(time)
+        model_cube_trans = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3([7, -7, 2])
+        )
+        model_cube_1 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_1)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[1])
+        glBindVertexArray(VAO_cube)
+        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    model_cube_rotat = pyrr.matrix44.create_from_y_rotation(time)
-    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([7, 7, 2]))
-    model_cube_2 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_2)
-    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[2], is_first_pass):
+        model_cube_rotat = pyrr.matrix44.create_from_y_rotation(time)
+        model_cube_trans = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3([7, 7, 2])
+        )
+        model_cube_2 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_2)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[2])
+        glBindVertexArray(VAO_cube)
+        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
-    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([-7, 7, 2]))
-    model_cube_3 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_3)
-    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[3], is_first_pass):
+        model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
+        model_cube_trans = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3([-7, 7, 2])
+        )
+        model_cube_3 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_3)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[3])
+        glBindVertexArray(VAO_cube)
+        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
-    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([-7, -7, 2]))
-    model_cube_4 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_4)
-    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[4], is_first_pass):
+        model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
+        model_cube_trans = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3([-7, -7, 2])
+        )
+        model_cube_4 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_4)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[4])
+        glBindVertexArray(VAO_cube)
+        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
-    model_cube_trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([7, 7, 11]))
-    model_cube_5 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_5)
-    glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[5], is_first_pass):
+        model_cube_rotat = pyrr.matrix44.create_from_x_rotation(time)
+        model_cube_trans = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3([7, 7, 11])
+        )
+        model_cube_5 = pyrr.matrix44.multiply(model_cube_rotat, model_cube_trans)
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_cube_5)
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[5])
+        glBindVertexArray(VAO_cube)
+        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    glBindVertexArray(VAO_icosa)
-    model_icosa = pyrr.matrix44.create_from_translation(pyrr.Vector3(light_position))
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_icosa)
-    glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
+    if is_visible(cast_shadows[6], is_first_pass):
+        glBindVertexArray(VAO_icosa)
+        model_icosa = pyrr.matrix44.create_from_translation(
+            pyrr.Vector3(light_position)
+        )
+        if not is_first_pass:
+            glUniform1i(receive_shadow_loc, receive_shadows[6])
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_icosa)
+        glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
 
 def render_debug():
@@ -1595,7 +1655,7 @@ while not glfw.window_should_close(window):
     glClear(
         GL_DEPTH_BUFFER_BIT
     )  # Only clearing depth buffer since there is no color attachement
-    render_scene(glfw.get_time())
+    render_scene(glfw.get_time(), cast_shadows_mask, receive_shadows_mask, True)
 
     # debug pass: Draw shadow map on a quad for visual debugging
     if debug:
@@ -1641,10 +1701,13 @@ while not glfw.window_should_close(window):
         )
         glUniformMatrix4fv(light_space_matrix_loc, 1, GL_FALSE, light_space_matrix)
 
+        glUniform1i(receive_shadow_loc, 0)  # Set default uniform to 0
+
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, depth_map)
 
-        render_scene(glfw.get_time())
+        # Render with shadows
+        render_scene(glfw.get_time(), cast_shadows_mask, receive_shadows_mask, False)
 
     glfw.swap_buffers(window)
 
