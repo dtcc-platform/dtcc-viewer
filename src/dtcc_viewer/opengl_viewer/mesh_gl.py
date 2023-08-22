@@ -51,7 +51,7 @@ class MeshGL:
         self._create_shader_lines()
         self._create_shader_basic()
         self._create_shader_fancy()
-        self._create_shader_fancy_shadow()
+        self._create_shader_shadows()
         self._create_shader_shadow_map()
         self._set_constats()
 
@@ -197,72 +197,60 @@ class MeshGL:
 
     def _create_shader_basic(self):
         self._bind_vao_triangels()
-        self.shader_basic = compileProgram(
+        self.shader_ambient = compileProgram(
             compileShader(vertex_shader_ambient, GL_VERTEX_SHADER),
             compileShader(fragment_shader_ambient, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_basic)
+        glUseProgram(self.shader_ambient)
 
-        self.mloc_basic = glGetUniformLocation(self.shader_basic, "model")
-        self.ploc_basic = glGetUniformLocation(self.shader_basic, "project")
-        self.vloc_basic = glGetUniformLocation(self.shader_basic, "view")
-        self.cb_loc_basic = glGetUniformLocation(self.shader_basic, "color_by")
+        self.mloc_ambient = glGetUniformLocation(self.shader_ambient, "model")
+        self.ploc_ambient = glGetUniformLocation(self.shader_ambient, "project")
+        self.vloc_ambient = glGetUniformLocation(self.shader_ambient, "view")
+        self.cb_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_by")
 
     def _create_shader_fancy(self):
         self._bind_vao_triangels()
-        self.shader_fancy = compileProgram(
+        self.shader_diffuse = compileProgram(
             compileShader(vertex_shader_diffuse, GL_VERTEX_SHADER),
             compileShader(fragment_shader_diffuse, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_fancy)
+        glUseProgram(self.shader_diffuse)
 
-        self.mloc_fancy = glGetUniformLocation(self.shader_fancy, "model")
-        self.ploc_fancy = glGetUniformLocation(self.shader_fancy, "project")
-        self.vloc_fancy = glGetUniformLocation(self.shader_fancy, "view")
-        self.cb_loc_fancy = glGetUniformLocation(self.shader_fancy, "color_by")
+        self.mloc_diffuse = glGetUniformLocation(self.shader_diffuse, "model")
+        self.ploc_diffuse = glGetUniformLocation(self.shader_diffuse, "project")
+        self.vloc_diffuse = glGetUniformLocation(self.shader_diffuse, "view")
+        self.cb_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "color_by")
 
-        self.oc_loc_fancy = glGetUniformLocation(self.shader_fancy, "object_color")
-        self.lc_loc_fancy = glGetUniformLocation(self.shader_fancy, "light_color")
-        self.lp_loc_fancy = glGetUniformLocation(self.shader_fancy, "light_position")
-        self.vp_loc_fancy = glGetUniformLocation(self.shader_fancy, "view_position")
+        self.oc_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "object_color")
+        self.lc_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "light_color")
+        self.lp_loc_diffuse = glGetUniformLocation(
+            self.shader_diffuse, "light_position"
+        )
+        self.vp_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "view_position")
 
-    def _create_shader_fancy_shadow(self):
+    def _create_shader_shadows(self):
         self._bind_vao_triangels()
-        self.shader_fancy_shadows = compileProgram(
+        self.shader_shadows = compileProgram(
             compileShader(vertex_shader_shadows, GL_VERTEX_SHADER),
             compileShader(fragment_shader_shadows, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_fancy_shadows)
+        glUseProgram(self.shader_shadows)
 
-        self.mloc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "model"
+        self.mloc_shadows = glGetUniformLocation(self.shader_shadows, "model")
+        self.ploc_shadows = glGetUniformLocation(self.shader_shadows, "project")
+        self.vloc_shadows = glGetUniformLocation(self.shader_shadows, "view")
+        self.cb_loc_shadows = glGetUniformLocation(self.shader_shadows, "color_by")
+        self.oc_loc_shadows = glGetUniformLocation(self.shader_shadows, "object_color")
+        self.lc_loc_shadows = glGetUniformLocation(self.shader_shadows, "light_color")
+        self.lp_loc_shadows = glGetUniformLocation(
+            self.shader_shadows, "light_position"
         )
-        self.ploc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "project"
-        )
-        self.vloc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "view"
-        )
-        self.cb_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "color_by"
-        )
-        self.oc_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "object_color"
-        )
-        self.lc_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "light_color"
-        )
-        self.lp_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "light_position"
-        )
-        self.vp_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "view_position"
-        )
-        self.lsm_loc_fancy_shadows = glGetUniformLocation(
-            self.shader_fancy_shadows, "light_space_matrix"
+        self.vp_loc_shadows = glGetUniformLocation(self.shader_shadows, "view_position")
+        self.lsm_loc_shadows = glGetUniformLocation(
+            self.shader_shadows, "light_space_matrix"
         )
 
     def _create_shader_shadow_map(self):
@@ -303,9 +291,7 @@ class MeshGL:
         light_view = pyrr.matrix44.create_look_at(
             self.light_position, look_target, global_up, dtype=np.float32
         )
-        self.light_space_matrix = pyrr.matrix44.multiply(
-            light_view, light_projection
-        )  # Other order?
+        self.light_space_matrix = pyrr.matrix44.multiply(light_view, light_projection)
         glUseProgram(self.shader_shadow_map)
         glUniformMatrix4fv(
             self.lsm_loc_shadow_map, 1, GL_FALSE, self.light_space_matrix
@@ -316,9 +302,9 @@ class MeshGL:
 
         glViewport(0, 0, self.shadow_map_resolution, self.shadow_map_resolution)
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
-        glClear(
-            GL_DEPTH_BUFFER_BIT
-        )  # Only clearing depth buffer since there is no color attachement
+
+        # Only clearing depth buffer since there is no color attachement
+        glClear(GL_DEPTH_BUFFER_BIT)
 
         # Drawcall
         self._bind_vao_triangels()
@@ -326,31 +312,30 @@ class MeshGL:
         self._unbind_vao()
 
     def _render_model_with_shadows(self, interaction: Interaction):
+        # Second pass: Render objects with the shadow map computed in the first pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
         glViewport(0, 0, interaction.width, interaction.height)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(self.shader_fancy_shadows)
+        glUseProgram(self.shader_shadows)
 
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_fancy_shadows, 1, GL_FALSE, translation)
+        glUniformMatrix4fv(self.mloc_shadows, 1, GL_FALSE, translation)
 
         # Camera input
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_fancy_shadows, 1, GL_FALSE, proj)
-        glUniformMatrix4fv(self.vloc_fancy_shadows, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.ploc_shadows, 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.vloc_shadows, 1, GL_FALSE, view)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_fancy, color_by)
+        glUniform1i(self.cb_loc_diffuse, color_by)
 
         # Set light uniforms
-        glUniform3fv(self.lc_loc_fancy_shadows, 1, self.light_color)
-        glUniform3fv(self.vp_loc_fancy_shadows, 1, interaction.camera.camera_pos)
-        glUniform3fv(self.lp_loc_fancy_shadows, 1, self.light_position)
+        glUniform3fv(self.lc_loc_shadows, 1, self.light_color)
+        glUniform3fv(self.vp_loc_shadows, 1, interaction.camera.camera_pos)
+        glUniform3fv(self.lp_loc_shadows, 1, self.light_position)
 
-        glUniformMatrix4fv(
-            self.lsm_loc_fancy_shadows, 1, GL_FALSE, self.light_space_matrix
-        )
+        glUniformMatrix4fv(self.lsm_loc_shadows, 1, GL_FALSE, self.light_space_matrix)
 
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
@@ -361,12 +346,13 @@ class MeshGL:
         self._unbind_vao()
 
     # Render mesh fancy shadows
-    def render_fancy_shadows(self, interaction: Interaction):
+    def render_shadows(self, interaction: Interaction):
         self._render_shadow_map(interaction)
+
         self._render_model_with_shadows(interaction)
 
     # Render mesh fancy
-    def render_fancy(self, interaction: Interaction):
+    def render_diffuse(self, interaction: Interaction):
         self._bind_vao_triangels()
         self._bind_shader_fancy()
 
@@ -386,23 +372,23 @@ class MeshGL:
         )
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_fancy, 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.mloc_diffuse, 1, GL_FALSE, move)
 
         view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.vloc_fancy, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.vloc_diffuse, 1, GL_FALSE, view)
 
         projection = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_fancy, 1, GL_FALSE, projection)
+        glUniformMatrix4fv(self.ploc_diffuse, 1, GL_FALSE, projection)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_fancy, color_by)
+        glUniform1i(self.cb_loc_diffuse, color_by)
 
         view_pos = interaction.camera.camera_pos
-        glUniform3fv(self.vp_loc_fancy_shadows, 1, view_pos)
+        glUniform3fv(self.vp_loc_shadows, 1, view_pos)
 
         # Set light uniforms
-        glUniform3fv(self.lc_loc_fancy, 1, self.light_color)
-        glUniform3fv(self.lp_loc_fancy, 1, self.light_position)
+        glUniform3fv(self.lc_loc_diffuse, 1, self.light_color)
+        glUniform3fv(self.lp_loc_diffuse, 1, self.light_position)
 
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
 
@@ -410,21 +396,21 @@ class MeshGL:
         self._unbind_shader()
 
     # Render mesh basic
-    def render_basic(self, interaction: Interaction):
+    def render_ambient(self, interaction: Interaction):
         self._bind_vao_triangels()
         self._bind_shader_basic()
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_basic, 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.mloc_ambient, 1, GL_FALSE, move)
 
         view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.vloc_basic, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.vloc_ambient, 1, GL_FALSE, view)
 
         projection = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_basic, 1, GL_FALSE, projection)
+        glUniformMatrix4fv(self.ploc_ambient, 1, GL_FALSE, projection)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_basic, color_by)
+        glUniform1i(self.cb_loc_ambient, color_by)
 
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
 
@@ -463,13 +449,13 @@ class MeshGL:
         glUseProgram(self.shader_lines)
 
     def _bind_shader_fancy_shadows(self):
-        glUseProgram(self.shader_fancy_shadows)
+        glUseProgram(self.shader_shadows)
 
     def _bind_shader_fancy(self):
-        glUseProgram(self.shader_fancy)
+        glUseProgram(self.shader_diffuse)
 
     def _bind_shader_basic(self):
-        glUseProgram(self.shader_basic)
+        glUseProgram(self.shader_ambient)
 
     def _bind_shader_shadow_map(self):
         glUseProgram(self.shader_shadow_map)

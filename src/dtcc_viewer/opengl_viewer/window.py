@@ -266,11 +266,11 @@ class Window:
             if mguip.mesh_shading == 0:
                 self.mesh.render_lines(self.interaction)
             elif mguip.mesh_shading == 1:
-                self.mesh.render_basic(self.interaction)
+                self.mesh.render_ambient(self.interaction)
             elif mguip.mesh_shading == 2:
-                self.mesh.render_fancy(self.interaction)
+                self.mesh.render_diffuse(self.interaction)
             elif mguip.mesh_shading == 3:
-                self.mesh.render_fancy_shadows(self.interaction)
+                self.mesh.render_shadows(self.interaction)
 
     def _render_meshes(self):
         for mesh in self.meshes:
@@ -279,11 +279,11 @@ class Window:
                 if mguip.mesh_shading == MeshShading.wireframe:
                     mesh.render_lines(self.interaction)
                 elif mguip.mesh_shading == MeshShading.shaded_ambient:
-                    mesh.render_basic(self.interaction)
+                    mesh.render_ambient(self.interaction)
                 elif mguip.mesh_shading == MeshShading.shaded_diffuse:
-                    mesh.render_fancy(self.interaction)
+                    mesh.render_diffuse(self.interaction)
                 elif mguip.mesh_shading == MeshShading.shaded_shadows:
-                    mesh.render_fancy_shadows(self.interaction)
+                    mesh.render_shadows(self.interaction)
 
     def _fps_calculations(self, print_results=True):
         new_time = glfw.get_time()
