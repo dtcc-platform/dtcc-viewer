@@ -307,7 +307,7 @@ class MeshGL:
 
     # Private render functions
     def _render_shadow_map(self, interaction: Interaction) -> None:
-        """Render the shadow map.
+        """Render the shadow map to the frame buffer which is sampled in the next rendering pass.
 
         Parameters
         ----------
@@ -352,13 +352,10 @@ class MeshGL:
         # Only clearing depth buffer since there is no color attachement
         glClear(GL_DEPTH_BUFFER_BIT)
 
-        # Drawcall
-        self._bind_vao_triangels()
-        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
-        self._unbind_vao()
+        self._triangles_draw_call()
 
     def _render_model_with_shadows(self, interaction: Interaction) -> None:
-        """Render the model with shadows.
+        """Render the model with shadows by sampling the shadow map frame buffer.
 
         Parameters
         ----------
@@ -393,10 +390,8 @@ class MeshGL:
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
 
-        # Drawcall
-        self._bind_vao_triangels()
-        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
-        self._unbind_vao()
+        self._triangles_draw_call()
+        self._unbind_shader()
 
     # Render mesh fancy shadows
     def render_shadows(self, interaction: Interaction) -> None:
@@ -419,7 +414,6 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._bind_vao_triangels()
         self._bind_shader_fancy()
 
         rad = self.radius_xy
@@ -456,9 +450,7 @@ class MeshGL:
         glUniform3fv(self.lc_loc_diffuse, 1, self.light_color)
         glUniform3fv(self.lp_loc_diffuse, 1, self.light_position)
 
-        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
-
-        self._unbind_vao()
+        self._triangles_draw_call()
         self._unbind_shader()
 
     # Render mesh basic
@@ -470,7 +462,6 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._bind_vao_triangels()
         self._bind_shader_basic()
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -485,9 +476,7 @@ class MeshGL:
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_ambient, color_by)
 
-        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
-
-        self._unbind_vao()
+        self._triangles_draw_call()
         self._unbind_shader()
 
     # Render mesh lines
@@ -500,7 +489,6 @@ class MeshGL:
             The Interaction object containing camera and user interaction information.
         """
 
-        self._bind_vao_lines()
         self._bind_shader_lines()
 
         projection = interaction.camera.get_perspective_matrix()
@@ -512,10 +500,20 @@ class MeshGL:
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_lines, color_by)
 
-        glDrawElements(GL_LINES, len(self.edge_indices), GL_UNSIGNED_INT, None)
-
-        self._unbind_vao()
+        self._lines_draw_call()
         self._unbind_shader()
+
+    def _triangles_draw_call(self):
+        """Bind the vertex array object and calling draw function for triangles"""
+        self._bind_vao_triangels()
+        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
+        self._unbind_vao()
+
+    def _lines_draw_call(self):
+        """Bind the vertex array object and calling draw function for lines"""
+        self._bind_vao_lines()
+        glDrawElements(GL_LINES, len(self.edge_indices), GL_UNSIGNED_INT, None)
+        self._unbind_vao()
 
     def _bind_vao_triangels(self) -> None:
         """Bind the vertex array object for triangle rendering."""
