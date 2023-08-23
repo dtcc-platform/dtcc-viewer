@@ -298,7 +298,7 @@ class MeshData:
         np.ndarray
             Moved vertices array.
         """
-        # x, y, z, r, g, b, nx, ny ,nz
+        # [x, y, z, r, g, b, nx, ny ,nz]
         if recenter_vec is not None:
             recenter_vec = np.concatenate((recenter_vec, [0, 0, 0, 0, 0, 0]), axis=0)
             vertices += recenter_vec

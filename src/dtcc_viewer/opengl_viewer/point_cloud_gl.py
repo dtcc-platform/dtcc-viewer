@@ -13,8 +13,7 @@ from dtcc_viewer.opengl_viewer.gui import GuiParametersPC
 
 
 class PointCloudGL:
-    """
-    A class for rendering point cloud data using OpenGL.
+    """A class for rendering point cloud data using OpenGL.
 
     This class handles the rendering of point cloud data using OpenGL.
     It provides methods to set up the rendering environment, bind shaders,
@@ -51,8 +50,7 @@ class PointCloudGL:
     def __init__(
         self, name: str, disc_size: float, points: np.ndarray, colors: np.ndarray
     ):
-        """
-        Initialize the PointCloudGL object and set up rendering.
+        """Initialize the PointCloudGL object and set up rendering.
 
         Parameters
         ----------
@@ -72,8 +70,7 @@ class PointCloudGL:
         self._create_shader()
 
     def render(self, interaction: Interaction) -> None:
-        """
-        Render the point cloud using provided interaction parameters.
+        """Render the point cloud using provided interaction parameters.
 
         Parameters
         ----------
@@ -115,8 +112,7 @@ class PointCloudGL:
         self._unbind_shader()
 
     def _create_single_instance(self, disc_size: float, n_points: int):
-        """
-        Create a single instance of particle mesh geometry.
+        """Create a single instance of particle mesh geometry.
 
         Parameters
         ----------
@@ -161,8 +157,7 @@ class PointCloudGL:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
     def _create_multiple_instances(self, points: np.ndarray, colors: np.ndarray):
-        """
-        Create multiple instances of a particle mesh geometry.
+        """Create multiple instances of a particle mesh geometry.
 
         Parameters
         ----------
@@ -202,21 +197,15 @@ class PointCloudGL:
         glVertexAttribDivisor(3, 1)
 
     def _bind_vao(self) -> None:
-        """
-        Bind the Vertex Array Object (VAO).
-        """
+        """Bind the Vertex Array Object (VAO)."""
         glBindVertexArray(self.VAO)
 
     def _unbind_vao(self) -> None:
-        """
-        Unbind the Vertex Array Object (VAO).
-        """
+        """Unbind the Vertex Array Object (VAO)."""
         glBindVertexArray(0)
 
     def _create_shader(self) -> None:
-        """
-        Create and compile the shader program.
-        """
+        """Create and compile the shader program."""
         self.shader = compileProgram(
             compileShader(vertex_shader_pc, GL_VERTEX_SHADER),
             compileShader(fragment_shader_pc, GL_FRAGMENT_SHADER),
@@ -230,20 +219,15 @@ class PointCloudGL:
         self.scale_loc = glGetUniformLocation(self.shader, "scale")
 
     def _bind_shader(self) -> None:
-        """
-        Bind the shader program.
-        """
+        """Bind the shader program."""
         glUseProgram(self.shader)
 
     def _unbind_shader(self) -> None:
-        """
-        Unbind the shader program.
-        """
+        """Unbind the shader program."""
         glUseProgram(0)
 
     def _get_billborad_transform(self, camera_position, camera_target):
-        """
-        Calculate the transformation matrix for billboarding.
+        """Calculate the transformation matrix for billboarding.
 
         Parameters
         ----------
@@ -277,8 +261,7 @@ class PointCloudGL:
         return model_transform
 
     def _create_circular_disc(self, radius, n):
-        """
-        Create vertices and face indices for a circular disc.
+        """Create vertices and face indices for a circular disc.
 
         Parameters
         ----------
@@ -316,8 +299,7 @@ class PointCloudGL:
         return vertices, face_indices
 
     def _create_quad(self, radius):
-        """
-        Create vertices and face indices for a quad.
+        """Create vertices and face indices for a quad.
 
         Parameters
         ----------
@@ -350,8 +332,7 @@ class PointCloudGL:
         return vertices, face_indices
 
     def _get_instance_geometry(self, disc_size: float, n_points: int):
-        """
-        Get vertices and face indices for a single instance of particle mesh geometry.
+        """Get vertices and face indices for a single instance of particle mesh geometry.
 
         Parameters
         ----------
@@ -380,8 +361,7 @@ class PointCloudGL:
         return self.vertices, self.face_indices
 
     def _calc_n_sides(self, n_points: int):
-        """
-        Calculate the number of sides for particle mesh geometry.
+        """Calculate the number of sides for particle mesh geometry.
 
         Parameters
         ----------

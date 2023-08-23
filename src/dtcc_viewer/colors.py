@@ -6,8 +6,7 @@ from .random_colors import get_random_colors
 def calc_colors_rainbow(
     values: Iterable[float], min: float = None, max: float = None
 ) -> List[List[float]]:
-    """
-    Calculate colors using a rainbow color map.
+    """Calculate colors using a rainbow color map.
 
     Parameters
     ----------
@@ -34,8 +33,7 @@ def calc_colors_rainbow(
 def calc_colors_warm(
     values: Iterable[float], min: float, max: float
 ) -> List[List[float]]:
-    """
-    Calculate colors using a warm color map.
+    """Calculate colors using a warm color map.
 
     Parameters
     ----------
@@ -62,8 +60,7 @@ def calc_colors_warm(
 def calc_colors_cold(
     values: Iterable[float], min: float, max: float
 ) -> List[List[float]]:
-    """
-    Calculate colors using a cold color map.
+    """Calculate colors using a cold color map.
 
     Parameters
     ----------
@@ -90,8 +87,7 @@ def calc_colors_cold(
 def calc_colors_mono(
     values: Iterable[float], min: float, max: float
 ) -> List[List[float]]:
-    """
-    Calculate colors using a monochromatic color map.
+    """Calculate colors using a monochromatic color map.
 
     Parameters
     ----------
@@ -118,8 +114,7 @@ def calc_colors_mono(
 def calc_colors_arctic(
     values: Iterable[float], min: float, max: float
 ) -> List[List[float]]:
-    """
-    Calculate colors using an arctic color map.
+    """Calculate colors using an arctic color map.
 
     Parameters
     ----------
@@ -144,8 +139,7 @@ def calc_colors_arctic(
 
 # Calculate color blend for a range of values where some are excluded using a True-False mask
 def calc_colors_with_mask(values, mask) -> List[List[float]]:
-    """
-    Calculate colors for a range of values with a mask indicating exclusion.
+    """Calculate colors for a range of values with a mask indicating exclusion.
 
     Parameters
     ----------
@@ -173,8 +167,7 @@ def calc_colors_with_mask(values, mask) -> List[List[float]]:
 
 # assign each distict value a random color
 def calc_colors_random(values: Iterable[Any]) -> List[List[float]]:
-    """
-    Assign random colors to distinct values.
+    """Assign random colors to distinct values.
 
     Parameters
     ----------
@@ -196,8 +189,7 @@ def calc_colors_random(values: Iterable[Any]) -> List[List[float]]:
 
 
 def _get_blended_color(min, max, value):
-    """
-    Calculate a blended color based on a value within a range.
+    """Calculate a blended color based on a value within a range.
 
     Parameters
     ----------
@@ -258,8 +250,7 @@ def _get_blended_color(min, max, value):
 
 
 def _get_blended_color_mono(min, max, value):
-    """
-    Calculate a monochromatic color based on a value within a range.
+    """Calculate a monochromatic color based on a value within a range.
 
     Parameters
     ----------
@@ -280,8 +271,7 @@ def _get_blended_color_mono(min, max, value):
 
 
 def _get_blended_color_yellow_red(min, max, value):
-    """
-    Calculate a yellow-to-red color based on a value within a range.
+    """Calculate a yellow-to-red color based on a value within a range.
 
     Parameters
     ----------
@@ -302,8 +292,7 @@ def _get_blended_color_yellow_red(min, max, value):
 
 
 def _get_blended_color_cyan_blue(min, max, value):
-    """
-    Calculate a cyan-to-blue color based on a value within a range.
+    """Calculate a cyan-to-blue color based on a value within a range.
 
     Parameters
     ----------
@@ -324,8 +313,7 @@ def _get_blended_color_cyan_blue(min, max, value):
 
 
 def _get_min_max(values: Iterable[float], min: float = None, max: float = None):
-    """
-    Get the minimum and maximum values considering optional bounds.
+    """Get the minimum and maximum values considering optional bounds.
 
     Parameters
     ----------
@@ -355,8 +343,7 @@ def _get_min_max(values: Iterable[float], min: float = None, max: float = None):
 
 
 def _get_normalised_value_with_cap(min, max, value):
-    """
-    Calculate a normalized value within a range with a cap.
+    """Calculate a normalized value within a range with a cap.
 
     Parameters
     ----------

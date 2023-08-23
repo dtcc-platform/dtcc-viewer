@@ -4,8 +4,7 @@ from math import sin, cos, radians
 
 
 class Camera:
-    """
-    Represents a camera used for view manipulation.
+    """Represents a camera used for view manipulation.
 
     This class defines a camera with various attributes and methods for controlling
     its position, orientation, and view matrix.
@@ -49,8 +48,7 @@ class Camera:
     """
 
     def __init__(self, width, height):
-        """
-        Initialize the Camera object with the provided width and height.
+        """Initialize the Camera object with the provided width and height.
 
         Parameters
         ----------
@@ -82,8 +80,7 @@ class Camera:
         self.update_camera_vectors()
 
     def update_window_size(self, width, height) -> None:
-        """
-        Update the camera's viewport dimensions.
+        """Update the camera's viewport dimensions.
 
         Parameters
         ----------
@@ -97,8 +94,7 @@ class Camera:
         self.aspect_ratio = float(width) / float(height)
 
     def set_aspect_ratio(self, aspect_ratio) -> None:
-        """
-        Set the camera's aspect ratio.
+        """Set the camera's aspect ratio.
 
         Parameters
         ----------
@@ -108,8 +104,7 @@ class Camera:
         self.aspect_ratio = aspect_ratio
 
     def get_view_matrix(self) -> None:
-        """
-        Get the view matrix of the camera.
+        """Get the view matrix of the camera.
 
         Returns
         -------
@@ -121,8 +116,7 @@ class Camera:
         )
 
     def get_perspective_matrix(self) -> np.ndarray[any]:
-        """
-        Get the perspective projection matrix of the camera.
+        """Get the perspective projection matrix of the camera.
 
         Returns
         -------
@@ -136,8 +130,7 @@ class Camera:
     def process_mouse_rotation(
         self, xoffset: float, yoffset: float, constrain_pitch=True
     ) -> None:
-        """
-        Process mouse movement for camera rotation.
+        """Process mouse movement for camera rotation.
 
         Parameters
         ----------
@@ -163,8 +156,7 @@ class Camera:
         self.update_camera_vectors()
 
     def process_mouse_panning(self, xoffset: float, yoffset: float) -> None:
-        """
-        Process mouse movement for camera panning.
+        """Process mouse movement for camera panning.
 
         Parameters
         ----------
@@ -191,8 +183,7 @@ class Camera:
     def process_scroll_movement(
         self, xoffset: float, yoffset: float, constrain_pitch: bool = True
     ) -> None:
-        """
-        Process mouse scroll for adjusting camera distance.
+        """Process mouse scroll for adjusting camera distance.
 
         Parameters
         ----------
@@ -208,8 +199,11 @@ class Camera:
         self.update_camera_vectors()
 
     def update_camera_vectors(self) -> None:
-        """
-        Update the camera's direction and orientation based on angles.
+        """Update the camera's direction and orientation based on angles.
+
+        Returns
+        -------
+        None
         """
         new_direction = Vector3([0.0, 0.0, 0.0])
         new_direction.x = cos(radians(self.jaw)) * cos(radians(self.pitch))

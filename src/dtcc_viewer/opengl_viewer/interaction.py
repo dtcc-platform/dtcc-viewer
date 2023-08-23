@@ -3,8 +3,7 @@ from dtcc_viewer.opengl_viewer.camera import Camera
 
 
 class Interaction:
-    """
-    Handles user interaction with the viewer.
+    """Handles user interaction with the viewer.
 
     This class manages user input, such as keyboard, mouse button clicks, and cursor movement,
     to control the camera's behavior within the viewer window.
@@ -45,8 +44,7 @@ class Interaction:
     mouse_on_gui: bool
 
     def __init__(self, width, height):
-        """
-        Initialize the Interaction object with the provided width and height.
+        """Initialize the Interaction object with the provided width and height.
 
         Parameters
         ----------
@@ -67,8 +65,7 @@ class Interaction:
         self.mouse_on_gui = False
 
     def set_mouse_on_gui(self, mouse_on_gui):
-        """
-        Set the flag indicating whether the mouse cursor is over the graphical user interface (GUI).
+        """Set the flag indicating whether the mouse cursor is over the graphical user interface (GUI).
 
         Parameters
         ----------
@@ -78,8 +75,7 @@ class Interaction:
         self.mouse_on_gui = mouse_on_gui
 
     def update_window_size(self, width, height):
-        """
-        Update the width and height of the viewer window and adjust the camera settings.
+        """Update the width and height of the viewer window and adjust the camera settings.
 
         Parameters
         ----------
@@ -93,8 +89,7 @@ class Interaction:
         self.camera.update_window_size(width, height)
 
     def key_input_callback(self, window, key, scancode, action, mode):
-        """
-        Callback function for handling keyboard input.
+        """Callback function for handling keyboard input.
 
         Parameters
         ----------
@@ -113,8 +108,7 @@ class Interaction:
             glfw.set_window_should_close(window, True)
 
     def scroll_input_callback(self, window, xoffset, yoffset):
-        """
-        Callback function for handling mouse scroll input.
+        """Callback function for handling mouse scroll input.
 
         Parameters
         ----------
@@ -128,8 +122,7 @@ class Interaction:
         self.camera.process_scroll_movement(xoffset, yoffset)
 
     def mouse_input_callback(self, window, button, action, mod):
-        """
-        Callback function for handling mouse button input.
+        """Callback function for handling mouse button input.
 
         Parameters
         ----------
@@ -154,8 +147,7 @@ class Interaction:
             self.right_first_mouse = True
 
     def mouse_look_callback(self, window, xpos, ypos):
-        """
-        Callback function for handling mouse cursor movement to control view rotation and panning.
+        """Callback function for handling mouse cursor movement to control view rotation and panning.
 
         Parameters
         ----------

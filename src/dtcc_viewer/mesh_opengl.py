@@ -14,8 +14,7 @@ def view(
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
 ):
-    """
-    View a mesh in 3D with a GLFW window. This function is added to the Mesh class in dtcc_model.
+    """View a mesh in 3D with a GLFW window. This function is added to the Mesh class in dtcc_model.
 
     Parameters
     ----------
