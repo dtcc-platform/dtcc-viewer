@@ -13,6 +13,31 @@ from dtcc_viewer.opengl_viewer.gui import GuiParametersPC
 
 
 class PointCloudGL:
+    """
+    A class for rendering point cloud data using OpenGL.
+
+    This class handles the rendering of point cloud data using OpenGL.
+    It provides methods to set up the rendering environment, bind shaders,
+    and perform the necessary transformations for visualization.
+
+    Attributes
+    ----------
+    vertices : np.ndarray
+        Vertices for one single instance of the particle mesh geometry.
+    face_indices : np.ndarray
+        Face indices for one single instance of the particle mesh geometry.
+    guip : GuiParametersPC
+        GuiParametersPC object for managing GUI parameters.
+    low_count : int
+        Upper limit for particle count to determine highest resolution.
+    upper_count : int
+        Lower limit for particle count to determine lowest resolution.
+    low_sides : int
+        Edge count for lowest resolution for discs.
+    upper_sides : int
+        Edge count for highest resolution for discs.
+    """
+
     vertices: np.ndarray  # Vertices for one single instance of the particle mesh geometry
     face_indices: np.ndarray  # Face indices for one singel instance of particle mesh geometry
     guip: GuiParametersPC
@@ -26,13 +51,35 @@ class PointCloudGL:
     def __init__(
         self, name: str, disc_size: float, points: np.ndarray, colors: np.ndarray
     ):
+        """
+        Initialize the PointCloudGL object and set up rendering.
+
+        Parameters
+        ----------
+        name : str
+            The name of the point cloud.
+        disc_size : float
+            The size of the circular disc for each point.
+        points : np.ndarray
+            Array containing the 3D coordinates of the points in the point cloud.
+        colors : np.ndarray
+            Array containing the RGB colors corresponding to each point.
+        """
         self.guip = GuiParametersPC(name)
         n_points = len(points) / 3
         self._create_single_instance(disc_size, n_points)
         self._create_multiple_instances(points, colors)
         self._create_shader()
 
-    def render(self, interaction: Interaction):
+    def render(self, interaction: Interaction) -> None:
+        """
+        Render the point cloud using provided interaction parameters.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
         self._bind_vao()
         self._bind_shader()
 
@@ -68,6 +115,16 @@ class PointCloudGL:
         self._unbind_shader()
 
     def _create_single_instance(self, disc_size: float, n_points: int):
+        """
+        Create a single instance of particle mesh geometry.
+
+        Parameters
+        ----------
+        disc_size : float
+            The size of the circular disc for each point.
+        n_points : int
+            The number of points in the point cloud.
+        """
         # Get vertices and face indices for one instance. The geometry resolution is related to number of particles.
         [self.vertices, self.face_indices] = self._get_instance_geometry(
             disc_size, n_points
@@ -104,6 +161,16 @@ class PointCloudGL:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
     def _create_multiple_instances(self, points: np.ndarray, colors: np.ndarray):
+        """
+        Create multiple instances of a particle mesh geometry.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array containing the 3D coordinates of the points in the point cloud.
+        colors : np.ndarray
+            Array containing the RGB colors corresponding to each point.
+        """
         self.n_instances = int(points.size / 3.0)
         self.instance_transforms = points
 
@@ -120,9 +187,9 @@ class PointCloudGL:
 
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
-        glVertexAttribDivisor(
-            2, 1
-        )  # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).
+
+        # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).
+        glVertexAttribDivisor(2, 1)
 
         self.color_VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
@@ -130,17 +197,26 @@ class PointCloudGL:
 
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
-        glVertexAttribDivisor(
-            3, 1
-        )  # 3 is layout location, 1 means every instance will have it's own attribute (color in this case).
 
-    def _bind_vao(self):
+        # 3 is layout location, 1 means every instance will have it's own attribute (color in this case).
+        glVertexAttribDivisor(3, 1)
+
+    def _bind_vao(self) -> None:
+        """
+        Bind the Vertex Array Object (VAO).
+        """
         glBindVertexArray(self.VAO)
 
-    def _unbind_vao(self):
+    def _unbind_vao(self) -> None:
+        """
+        Unbind the Vertex Array Object (VAO).
+        """
         glBindVertexArray(0)
 
-    def _create_shader(self):
+    def _create_shader(self) -> None:
+        """
+        Create and compile the shader program.
+        """
         self.shader = compileProgram(
             compileShader(vertex_shader_pc, GL_VERTEX_SHADER),
             compileShader(fragment_shader_pc, GL_FRAGMENT_SHADER),
@@ -153,13 +229,34 @@ class PointCloudGL:
         self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
         self.scale_loc = glGetUniformLocation(self.shader, "scale")
 
-    def _bind_shader(self):
+    def _bind_shader(self) -> None:
+        """
+        Bind the shader program.
+        """
         glUseProgram(self.shader)
 
-    def _unbind_shader(self):
+    def _unbind_shader(self) -> None:
+        """
+        Unbind the shader program.
+        """
         glUseProgram(0)
 
     def _get_billborad_transform(self, camera_position, camera_target):
+        """
+        Calculate the transformation matrix for billboarding.
+
+        Parameters
+        ----------
+        camera_position : np.ndarray
+            The position of the camera.
+        camera_target : np.ndarray
+            The target point that the camera is looking at.
+
+        Returns
+        -------
+        np.ndarray
+            The transformation matrix for billboarding.
+        """
         dir_from_camera = camera_target - camera_position
         angle1 = np.arctan2(-dir_from_camera[1], dir_from_camera[0])  # arctan(dy/dx)
         dist2d = math.sqrt(
@@ -180,6 +277,21 @@ class PointCloudGL:
         return model_transform
 
     def _create_circular_disc(self, radius, n):
+        """
+        Create vertices and face indices for a circular disc.
+
+        Parameters
+        ----------
+        radius : float
+            The radius of the circular disc.
+        n : int
+            The number of sides of the disc.
+
+        Returns
+        -------
+        Tuple[List[float], List[int]]
+            A tuple containing lists of vertices and face indices.
+        """
         center = [0.0, 0.0, 0.0]
         center_color = [1.0, 1.0, 1.0]  # White
         edge_color = [0.5, 0.5, 0.5]  # Magenta
@@ -204,6 +316,19 @@ class PointCloudGL:
         return vertices, face_indices
 
     def _create_quad(self, radius):
+        """
+        Create vertices and face indices for a quad.
+
+        Parameters
+        ----------
+        radius : float
+            The radius of the quad.
+
+        Returns
+        -------
+        Tuple[List[float], List[int]]
+            A tuple containing lists of vertices and face indices.
+        """
         color = [1.0, 1.0, 1.0]  # White
         dy = radius / 2.0
         dz = dy
@@ -225,6 +350,21 @@ class PointCloudGL:
         return vertices, face_indices
 
     def _get_instance_geometry(self, disc_size: float, n_points: int):
+        """
+        Get vertices and face indices for a single instance of particle mesh geometry.
+
+        Parameters
+        ----------
+        disc_size : float
+            The size of the circular disc for each point.
+        n_points : int
+            The number of points in the point cloud.
+
+        Returns
+        -------
+        Tuple[List[float], List[int]]
+            A tuple containing lists of vertices and face indices.
+        """
         n_sides = self._calc_n_sides(n_points)
 
         if n_points > self.upper_count:
@@ -240,6 +380,19 @@ class PointCloudGL:
         return self.vertices, self.face_indices
 
     def _calc_n_sides(self, n_points: int):
+        """
+        Calculate the number of sides for particle mesh geometry.
+
+        Parameters
+        ----------
+        n_points : int
+            The number of points in the point cloud.
+
+        Returns
+        -------
+        int
+            The calculated number of sides for particle mesh geometry.
+        """
         count_diff = self.upper_count - self.low_count
         sides_diff = self.upper_sides - self.low_sides
 

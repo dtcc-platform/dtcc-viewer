@@ -30,6 +30,20 @@ from dtcc_viewer.opengl_viewer.shaders_lines import (
 
 
 class MeshGL:
+    """Represents a 3D mesh in OpenGL and provides methods for rendering with different shaders.
+
+    Attributes
+    ----------
+    guip : GuiParametersMesh
+        Information used by the GUI.
+    vertices : np.ndarray
+        Array containing vertex information (x, y, z, r, g, b, nx, ny, nz).
+    face_indices : np.ndarray
+        Array containing face indices.
+    edge_indices : np.ndarray
+        Array containing edge indices.
+    """
+
     guip: GuiParametersMesh  # Information used by the Gui
     vertices: np.ndarray  # [n_vertices x 9] each row has (x, y, z, r, g, b, nx, ny, nz)
     face_indices: np.ndarray  # [n_faces x 3] each row has three vertex indices
@@ -38,6 +52,19 @@ class MeshGL:
     def __init__(
         self, name: str, vertices: np.ndarray, faces: np.ndarray, edges: np.ndarray
     ):
+        """Initialize the MeshGL object with vertex, face, and edge information.
+
+        Parameters
+        ----------
+        name : str
+            The name of the mesh.
+        vertices : np.ndarray
+            Array containing vertex information (x, y, z, r, g, b, nx, ny, nz).
+        faces : np.ndarray
+            Array containing face indices.
+        edges : np.ndarray
+            Array containing edge indices.
+        """
         self.guip = GuiParametersMesh(name)
 
         self.vertices = vertices
@@ -50,13 +77,16 @@ class MeshGL:
         self._create_shadow_map()
         self._create_shader_lines()
         self._create_shader_basic()
-        self._create_shader_fancy()
+        self._create_shader_diffuse()
         self._create_shader_shadows()
         self._create_shader_shadow_map()
         self._set_constats()
 
     # Utility functions
-    def _calc_model_scale(self):
+    def _calc_model_scale(self) -> None:
+        """
+        Calculate the model scale from vertex positions.
+        """
         xmin = self.vertices[0::3].min()
         xmax = self.vertices[0::3].max()
         ymin = self.vertices[1::3].min()
@@ -68,13 +98,19 @@ class MeshGL:
         self.diameter_xy = math.sqrt(xdom * xdom + ydom * ydom)
         self.radius_xy = self.diameter_xy / 2.0
 
-    def _set_constats(self):
+    def _set_constats(self) -> None:
+        """
+        Set constant values like light position and color.
+        """
         self.light_position = np.array([500.0, 500.0, 400.0], dtype=np.float32)
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.loop_counter = 120
 
     # Setup geometry
-    def _create_triangels(self):
+    def _create_triangels(self) -> None:
+        """
+        Set up vertex and element buffers for triangle rendering.
+        """
         # ----------------- TRIANGLES for shaded display ------------------#
 
         # Generating VAO. Any subsequent vertex attribute calls will be stored in the VAO if it is bound.
@@ -112,7 +148,10 @@ class MeshGL:
 
         glBindVertexArray(0)
 
-    def _create_lines(self):
+    def _create_lines(self) -> None:
+        """
+        Set up vertex and element buffers for wireframe rendering.
+        """
         # -------------- EDGES for wireframe display ---------------- #
         self.VAO_edge = glGenVertexArrays(1)
         glBindVertexArray(self.VAO_edge)
@@ -144,7 +183,10 @@ class MeshGL:
         glBindVertexArray(0)
 
     # Setup frambuffer for shadow map
-    def _create_shadow_map(self):
+    def _create_shadow_map(self) -> None:
+        """
+        Set up framebuffer and texture for shadow map rendering.
+        """
         # Frambuffer for the shadow map
         self.FBO = glGenFramebuffers(1)
         glGenTextures(1, self.FBO)
@@ -182,7 +224,10 @@ class MeshGL:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     # Setup shaders
-    def _create_shader_lines(self):
+    def _create_shader_lines(self) -> None:
+        """
+        Create shader for wireframe rendering.
+        """
         self._bind_vao_lines()
         self.shader_lines = compileProgram(
             compileShader(vertex_shader_lines, GL_VERTEX_SHADER),
@@ -195,7 +240,10 @@ class MeshGL:
         self.vloc_lines = glGetUniformLocation(self.shader_lines, "view")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
-    def _create_shader_basic(self):
+    def _create_shader_basic(self) -> None:
+        """
+        Create shader for basic shading.
+        """
         self._bind_vao_triangels()
         self.shader_ambient = compileProgram(
             compileShader(vertex_shader_ambient, GL_VERTEX_SHADER),
@@ -209,7 +257,10 @@ class MeshGL:
         self.vloc_ambient = glGetUniformLocation(self.shader_ambient, "view")
         self.cb_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_by")
 
-    def _create_shader_fancy(self):
+    def _create_shader_diffuse(self) -> None:
+        """
+        Create shader for diffuse shading.
+        """
         self._bind_vao_triangels()
         self.shader_diffuse = compileProgram(
             compileShader(vertex_shader_diffuse, GL_VERTEX_SHADER),
@@ -230,7 +281,10 @@ class MeshGL:
         )
         self.vp_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "view_position")
 
-    def _create_shader_shadows(self):
+    def _create_shader_shadows(self) -> None:
+        """
+        Create shader for shading with shadows.
+        """
         self._bind_vao_triangels()
         self.shader_shadows = compileProgram(
             compileShader(vertex_shader_shadows, GL_VERTEX_SHADER),
@@ -253,7 +307,10 @@ class MeshGL:
             self.shader_shadows, "light_space_matrix"
         )
 
-    def _create_shader_shadow_map(self):
+    def _create_shader_shadow_map(self) -> None:
+        """
+        Create shader for rendering shadow map.
+        """
         self.shader_shadow_map = compileProgram(
             compileShader(vertex_shader_shadow_map, GL_VERTEX_SHADER),
             compileShader(fragment_shader_shadow_map, GL_FRAGMENT_SHADER),
@@ -267,7 +324,15 @@ class MeshGL:
         )
 
     # Private render functions
-    def _render_shadow_map(self, interaction: Interaction):
+    def _render_shadow_map(self, interaction: Interaction) -> None:
+        """
+        Render the shadow map.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
         # first pass: Capture shadow map
         rad = self.radius_xy
         if self.guip.animate_light:
@@ -311,7 +376,15 @@ class MeshGL:
         glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
         self._unbind_vao()
 
-    def _render_model_with_shadows(self, interaction: Interaction):
+    def _render_model_with_shadows(self, interaction: Interaction) -> None:
+        """
+        Render the model with shadows.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
         # Second pass: Render objects with the shadow map computed in the first pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
         glViewport(0, 0, interaction.width, interaction.height)
@@ -346,13 +419,28 @@ class MeshGL:
         self._unbind_vao()
 
     # Render mesh fancy shadows
-    def render_shadows(self, interaction: Interaction):
-        self._render_shadow_map(interaction)
+    def render_shadows(self, interaction: Interaction) -> None:
+        """
+        Render the mesh with shadows.
 
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+        self._render_shadow_map(interaction)
         self._render_model_with_shadows(interaction)
 
     # Render mesh fancy
-    def render_diffuse(self, interaction: Interaction):
+    def render_diffuse(self, interaction: Interaction) -> None:
+        """
+        Render the mesh with diffuse shading.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
         self._bind_vao_triangels()
         self._bind_shader_fancy()
 
@@ -396,7 +484,15 @@ class MeshGL:
         self._unbind_shader()
 
     # Render mesh basic
-    def render_ambient(self, interaction: Interaction):
+    def render_ambient(self, interaction: Interaction) -> None:
+        """
+        Render the mesh with ambient shading.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
         self._bind_vao_triangels()
         self._bind_shader_basic()
 
@@ -418,7 +514,16 @@ class MeshGL:
         self._unbind_shader()
 
     # Render mesh lines
-    def render_lines(self, interaction: Interaction):
+    def render_lines(self, interaction: Interaction) -> None:
+        """
+        Render wireframe lines of the mesh.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+
         self._bind_vao_lines()
         self._bind_shader_lines()
 
@@ -436,29 +541,56 @@ class MeshGL:
         self._unbind_vao()
         self._unbind_shader()
 
-    def _bind_vao_triangels(self):
+    def _bind_vao_triangels(self) -> None:
+        """
+        Bind the vertex array object for triangle rendering.
+        """
         glBindVertexArray(self.VAO_triangels)
 
-    def _bind_vao_lines(self):
+    def _bind_vao_lines(self) -> None:
+        """
+        Bind the vertex array object for wireframe rendering.
+        """
         glBindVertexArray(self.VAO_edge)
 
-    def _unbind_vao(self):
+    def _unbind_vao(self) -> None:
+        """
+        Unbind the currently bound vertex array object.
+        """
         glBindVertexArray(0)
 
-    def _bind_shader_lines(self):
+    def _bind_shader_lines(self) -> None:
+        """
+        Bind the shader for wireframe rendering.
+        """
         glUseProgram(self.shader_lines)
 
-    def _bind_shader_fancy_shadows(self):
+    def _bind_shader_fancy_shadows(self) -> None:
+        """
+        Bind the shader for shading with shadows.
+        """
         glUseProgram(self.shader_shadows)
 
-    def _bind_shader_fancy(self):
+    def _bind_shader_fancy(self) -> None:
+        """
+        Bind the shader for diffuse shading.
+        """
         glUseProgram(self.shader_diffuse)
 
-    def _bind_shader_basic(self):
+    def _bind_shader_basic(self) -> None:
+        """
+        Bind the shader for basic shading.
+        """
         glUseProgram(self.shader_ambient)
 
-    def _bind_shader_shadow_map(self):
+    def _bind_shader_shadow_map(self) -> None:
+        """
+        Bind the shader for rendering shadow map.
+        """
         glUseProgram(self.shader_shadow_map)
 
-    def _unbind_shader(self):
+    def _unbind_shader(self) -> None:
+        """
+        Unbind the currently bound shader.
+        """
         glUseProgram(0)

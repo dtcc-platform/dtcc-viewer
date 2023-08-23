@@ -14,6 +14,21 @@ def view(
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
 ):
+    """
+    View a mesh in 3D with a GLFW window. This function is added to the Mesh class in dtcc_model.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        Mesh to be viewed (self).
+    mesh_data : np.ndarray
+        Data for coloring of mesh. Data should match vertex or face count.
+    pc : PointCloud
+        Point cloud to be viewed togheter with the mesh.
+    p_data: np.ndarray
+        Data for coloring of point cloud.
+    """
+
     window = Window(1200, 800)
 
     if pc is None:

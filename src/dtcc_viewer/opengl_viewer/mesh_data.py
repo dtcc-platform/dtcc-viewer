@@ -5,6 +5,39 @@ from dtcc_viewer.colors import *
 
 
 class MeshData:
+    """Mesh Data Representation.
+
+    This class represents mesh data for rendering in an OpenGL window. It encapsulates
+    information about the mesh's vertices, face indices, edge indices, and coloring options.
+
+    Parameters
+    ----------
+    name : str
+        The name of the mesh data.
+    mesh : Mesh
+        The underlying Mesh object from which to generate the mesh data.
+    mesh_data : np.ndarray, optional
+        Additional mesh data for color calculation (default is None).
+    recenter_vec : np.ndarray, optional
+        Vector for recentering the mesh (default is None).
+
+    Attributes
+    ----------
+    color_by : int
+        Color mode based on ColorBy enumeration (e.g., ColorBy.vertex_colors).
+    mesh_colors : np.ndarray
+        Array of vertex colors for the mesh.
+    vertices : np.ndarray
+        Array of flattened vertex data with extended attributes (x, y, z, r, g, b, nx, ny, nz).
+    face_indices : np.ndarray
+        Array of flattened face indices.
+    edge_indices : np.ndarray
+        Array of flattened edge indices.
+    name : str
+        The name of the mesh data.
+
+    """
+
     color_by: int
     mesh_colors: np.ndarray
     vertices: np.ndarray
@@ -19,6 +52,19 @@ class MeshData:
         mesh_data: np.ndarray = None,
         recenter_vec: np.ndarray = None,
     ) -> None:
+        """Initialize the MeshData object.
+
+        Parameters
+        ----------
+        name : str
+            The name of the mesh data.
+        mesh : Mesh
+            The underlying Mesh object from which to generate the mesh data.
+        mesh_data : np.ndarray, optional
+            Additional mesh data for color calculation (default is None).
+        recenter_vec : np.ndarray, optional
+            Vector for recentering the mesh (default is None).
+        """
         self.name = name
         [self.color_by, self.mesh_colors] = self.generate_mesh_colors(mesh, mesh_data)
         [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(
@@ -30,6 +76,23 @@ class MeshData:
         )
 
     def generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
+        """Generate mesh colors based on the provided data.
+
+        Parameters
+        ----------
+        mesh : Mesh
+            The Mesh object from which to generate colors.
+        data : np.ndarray, optional
+            Additional data for color calculation (default is None).
+
+        Returns
+        -------
+        int
+            Color mode based on ColorBy enumeration (e.g., ColorBy.vertex_colors).
+        np.ndarray
+            Array of vertex colors for the mesh.
+        """
+
         n_vertex_colors = len(mesh.vertex_colors)
         n_face_colors = len(mesh.face_colors)
         n_vertices = len(mesh.vertices)
@@ -77,6 +140,18 @@ class MeshData:
         return color_by, np.array(colors)
 
     def normalise_colors(self, colors: np.ndarray):
+        """Normalize colors to the range [0, 1] if necessary.
+
+        Parameters
+        ----------
+        colors : np.ndarray
+            Array of colors to normalize.
+
+        Returns
+        -------
+        np.ndarray
+            Normalized array of colors.
+        """
         # If the max color value is larger then 1 it is assumed that the color range is 0-255
         max = np.max(colors)
         if max > 1.0:
@@ -84,8 +159,29 @@ class MeshData:
         return colors
 
     def restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
+        """Restructure the mesh data for OpenGL rendering.
+
+        Parameters
+        ----------
+        mesh : Mesh
+            The Mesh object to restructure.
+        color_by : ColorBy
+            Color mode based on ColorBy enumeration.
+        colors : np.ndarray
+            Array of vertex colors for the mesh.
+
+        Returns
+        -------
+        np.ndarray
+            Array of flattened vertex data.
+        np.ndarray
+            Array of flattened face indices.
+        np.ndarray
+            Array of flattened edge indices.
+        """
+
         # Vertex format that suits the opengl data structure:
-        # x, y, z, r, g, b, nx, ny ,nz
+        # [x, y, z, r, g, b, nx, ny ,nz]
         new_faces = []
         new_vertices = []
         new_edges = []
@@ -141,9 +237,26 @@ class MeshData:
         self,
         vertices: np.ndarray,
         pc_avrg_pt: np.ndarray = None,
-        multi_recenter_vec: np.ndarray = None,
     ):
-        # x, y, z, r, g, b, nx, ny ,nz
+        """Move the mesh vertices to the origin.
+
+        Parameters
+        ----------
+        vertices : np.ndarray
+            Array of mesh vertices.
+        pc_avrg_pt : np.ndarray, optional
+            Average point for recentering (default is None).
+        multi_recenter_vec : np.ndarray, optional
+            Vector for multi-point recentering (default is None).
+
+        Returns
+        -------
+        np.ndarray
+            Moved vertices array.
+        np.ndarray or None
+            Average point of the mesh after recentering.
+        """
+        # [x, y, z, r, g, b, nx, ny ,nz]
         origin = np.array([0.0, 0.0, 0.0])
         origin_extended = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])
         move_vec = 0
@@ -171,6 +284,20 @@ class MeshData:
     def move_mesh_to_origin_multi(
         self, vertices: np.ndarray, recenter_vec: np.ndarray = None
     ):
+        """Move the mesh vertices to the origin using multiple recenter vectors.
+
+        Parameters
+        ----------
+        vertices : np.ndarray
+            Array of mesh vertices.
+        recenter_vec : np.ndarray, optional
+            Recenter vector for each vertex (default is None).
+
+        Returns
+        -------
+        np.ndarray
+            Moved vertices array.
+        """
         # x, y, z, r, g, b, nx, ny ,nz
         if recenter_vec is not None:
             recenter_vec = np.concatenate((recenter_vec, [0, 0, 0, 0, 0, 0]), axis=0)
@@ -181,6 +308,26 @@ class MeshData:
     def flatten_mesh(
         self, vertices: np.ndarray, face_indices: np.ndarray, edge_indices: np.ndarray
     ):
+        """Flatten the mesh data arrays for OpenGL compatibility.
+
+        Parameters
+        ----------
+        vertices : np.ndarray
+            Array of mesh vertices.
+        face_indices : np.ndarray
+            Array of face indices.
+        edge_indices : np.ndarray
+            Array of edge indices.
+
+        Returns
+        -------
+        np.ndarray
+            Flattened vertex array.
+        np.ndarray
+            Flattened face indices array.
+        np.ndarray
+            Flattened edge indices array.
+        """
         # Making sure the datatypes are aligned with opengl implementation
         vertices = np.array(vertices, dtype="float32").flatten()
         edge_indices = np.array(edge_indices, dtype="uint32").flatten()

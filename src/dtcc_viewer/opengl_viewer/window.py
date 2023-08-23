@@ -16,6 +16,49 @@ from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
 
 class Window:
+    """OpenGL Rendering Window.
+
+    This class represents an OpenGL rendering window with interactive controls
+    for visualizing meshes and point clouds. The window provides methods for
+    rendering various types of data and handling user interactions.
+
+    Parameters
+    ----------
+    width : int
+        The width of the window in pixels.
+    height : int
+        The height of the window in pixels.
+
+    Attributes
+    ----------
+    meshes : list[MeshGL]
+        List of MeshGL objects representing rendered meshes.
+    point_clouds : list[PointCloudGL]
+        List of PointCloudGL objects representing rendered point clouds.
+    mesh : MeshGL
+        The currently displayed MeshGL object.
+    pc : PointCloudGL
+        The currently displayed PointCloudGL object.
+    gui : Gui
+        An instance of the GUI for interacting with the rendering.
+    guip : GuiParameters
+        GUI parameters common for the entire window.
+    width : int
+        The width of the window in pixels.
+    height : int
+        The height of the window in pixels.
+    interaction : Interaction
+        An Interaction object managing user input interactions.
+    impl : GlfwRenderer
+        GlfwRenderer instance for rendering ImGui GUI.
+    fps : int
+        Frames per second for the rendering loop.
+    time : float
+        Current time in seconds.
+    time_acum : float
+        Accumulated time for FPS calculation.
+    """
+
     meshes: list[MeshGL]
     point_clouds: list[PointCloudGL]
     mesh: MeshGL
@@ -31,6 +74,15 @@ class Window:
     time_acum: float
 
     def __init__(self, width: int, height: int):
+        """Initialize the OpenGL rendering window and setting up default parameters.
+
+        Parameters
+        ----------
+        width : int
+            The width of the window in pixels.
+        height : int
+            The height of the window in pixels.
+        """
         self.width = width
         self.height = height
         self.interaction = Interaction(width, height)
@@ -77,6 +129,20 @@ class Window:
     def render_multi(
         self, mesh_data_list: list[MeshData], pc_data_list: list[PointCloudData]
     ):
+        """Render multiple MeshData and PointCloudData objects.
+
+        This method renders multiple meshes and point clouds in the window.
+        It updates the rendering loop, handles user interactions, and displays
+        the GUI elements for each rendered object.
+
+        Parameters
+        ----------
+        mesh_data_list : list[MeshData]
+            List of MeshData objects to render.
+        pc_data_list : list[PointCloudData]
+            List of PointCloudData objects to render.
+        """
+
         self.meshes = []
         self.point_clouds = []
 
@@ -127,6 +193,18 @@ class Window:
         glfw.terminate()
 
     def render_point_cloud(self, pc_data_obj: PointCloudData):
+        """Render a single PointCloudData object.
+
+        This method renders a single point cloud object in the window. It updates
+        the rendering loop, handles user interactions, and displays the GUI elements
+        for the rendered point cloud.
+
+        Parameters
+        ----------
+        pc_data_obj : PointCloudData
+            The PointCloudData object to render.
+        """
+
         self.pc = PointCloudGL(
             pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
         )
@@ -158,6 +236,17 @@ class Window:
         glfw.terminate()
 
     def render_mesh(self, mesh_data_obj: MeshData):
+        """Render a single MeshData object.
+
+        This method renders a single mesh object in the window. It updates the rendering
+        loop, handles user interactions, and displays the GUI elements for the rendered mesh.
+
+        Parameters
+        ----------
+        mesh_data_obj : MeshData
+            The MeshData object to render.
+        """
+
         self.mesh = MeshGL(
             mesh_data_obj.name,
             mesh_data_obj.vertices,
@@ -190,6 +279,19 @@ class Window:
             glfw.swap_buffers(self.window)
 
     def render_pc_and_mesh(self, pc_data_obj: PointCloudData, mesh_data_obj: MeshData):
+        """Render a PointCloudData and a MeshData object.
+
+        This method renders both a point cloud and a mesh object in the window. It updates
+        the rendering loop, handles user interactions, and displays the GUI elements for both
+        the rendered point cloud and mesh.
+
+        Parameters
+        ----------
+        pc_data_obj : PointCloudData
+            The PointCloudData object to render.
+        mesh_data_obj : MeshData
+            The MeshData object to render.
+        """
         self.pc = PointCloudGL(
             pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
         )
@@ -229,6 +331,11 @@ class Window:
             glfw.swap_buffers(self.window)
 
     def render_empty(self):
+        """Render an empty window with an example GUI.
+
+        This method renders an empty window and displays an example GUI for demonstration
+        purposes. It updates the rendering loop and handles user interactions.
+        """
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -252,15 +359,27 @@ class Window:
             glfw.swap_buffers(self.window)
 
     def _render_point_cloud(self):
+        """Render the currently displayed point cloud.
+
+        This method renders the currently displayed point cloud object using OpenGL.
+        """
         if self.pc.guip.show:
             self.pc.render(self.interaction)
 
     def _render_point_clouds(self):
+        """Render all the point clouds in the window.
+
+        This method renders all the point cloud objects in the window using OpenGL.
+        """
         for pc in self.point_clouds:
             if pc.guip.show:
                 pc.render(self.interaction)
 
     def _render_mesh(self):
+        """Render the currently displayed mesh.
+
+        This method renders the currently displayed mesh object using OpenGL.
+        """
         mguip = self.mesh.guip
         if mguip.show:
             if mguip.mesh_shading == 0:
@@ -273,6 +392,10 @@ class Window:
                 self.mesh.render_shadows(self.interaction)
 
     def _render_meshes(self):
+        """Render all the meshes in the window.
+
+        This method renders all the mesh objects in the window using OpenGL.
+        """
         for mesh in self.meshes:
             mguip = mesh.guip
             if mguip.show:
@@ -286,6 +409,17 @@ class Window:
                     mesh.render_shadows(self.interaction)
 
     def _fps_calculations(self, print_results=True):
+        """Perform FPS calculations.
+
+        This method calculates the frames per second (FPS) for the rendering loop.
+        It updates the FPS count and prints the results if specified.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Whether to print the calculated FPS results (default is True).
+        """
+
         new_time = glfw.get_time()
         time_passed = new_time - self.time
         self.time = new_time
@@ -299,6 +433,20 @@ class Window:
             self.fps = 0
 
     def _window_resize_callback(self, window, width, height):
+        """Callback for window resize events.
+
+        This method is a callback function that gets called when the window is resized.
+        It updates the viewport size and interaction parameters.
+
+        Parameters
+        ----------
+        window : int
+            The GLFW window.
+        width : int
+            The new width of the window.
+        height : int
+            The new height of the window.
+        """
         fb_size = glfw.get_framebuffer_size(self.window)
         width = fb_size[0]
         height = fb_size[1]

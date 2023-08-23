@@ -4,6 +4,24 @@ from dtcc_viewer.utils import *
 
 
 class PointCloudData:
+
+    """A class representing point cloud data with associated colors.
+
+    This class is used to store point cloud data along with color information
+    for visualization purposes.
+
+    Attributes
+    ----------
+    points : np.ndarray
+        Array of point coordinates in the format [n_points x 3].
+    colors : np.ndarray
+        Array of colors associated with each point in the format [n_points x 3].
+    pc_avrg_pt : np.ndarray
+        Average point of the point cloud for recentering in the format [1 x 3].
+    name : str
+        Name of the point cloud data.
+    """
+
     points: np.ndarray  # [n_points x 3]
     colors: np.ndarray  # [n_points x 3]
     pc_avrg_pt: np.ndarray  # [1 x 3]
@@ -12,13 +30,47 @@ class PointCloudData:
     def __init__(
         self, name: str, pc: PointCloud, pc_data: np.ndarray, recenter_vec: np.ndarray
     ) -> None:
+        """Initialize a PointCloudData object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the point cloud data.
+        pc : PointCloud
+            The PointCloud object from which to generate data.
+        pc_data : np.ndarray
+            Additional data for color calculation.
+        recenter_vec : np.ndarray
+            Recentering vector for point cloud data.
+
+        Returns
+        -------
+        None
+        """
+
         self.name = name
         self.colors = self.generate_pc_colors(pc, pc_data)  # TODO: Move functions here
-        [self.points, self.colors] = self.restructure_pc(pc, self.colors)
+        self.points = pc.points
         self.points = self.move_pc_to_origin_multi(self.points, recenter_vec)
         [self.points, self.colors] = self.flatten_pc(self.points, self.colors)
 
-    def generate_pc_colors(self, pc: PointCloud, pc_data: np.ndarray = None):
+    def generate_pc_colors(
+        self, pc: PointCloud, pc_data: np.ndarray = None
+    ) -> np.ndarray:
+        """Generate colors for the point cloud based on the provided data.
+
+        Parameters
+        ----------
+        pc : PointCloud
+            The PointCloud object to generate colors for.
+        pc_data : np.ndarray, optional
+            Additional data for color calculation (default is None).
+
+        Returns
+        -------
+        np.ndarray
+            Array of colors for the point cloud.
+        """
         colors = []
         if pc_data is not None:
             if len(pc.points) == len(pc_data):
@@ -37,20 +89,27 @@ class PointCloudData:
         colors = colors[:, 0:3]
         return colors
 
-    def restructure_pc(self, pc: PointCloud, pc_colors: np.ndarray):
-        # Add color to the points
-        # points_with_color = []
-        # for point_index, point in enumerate(pc.points):
-        #    new_point = np.concatenate((point, pc_colors[point_index, 0:3]), axis=0)
-        #    points_with_color.append(new_point)
-        # points_with_color = np.array(points_with_color)
-        # return points_with_color
-        points = pc.points
-        return points, pc_colors
-
     def move_pc_to_origin(
         self, points: np.ndarray, pc: PointCloud, mesh_avrg_pt: np.ndarray = None
-    ):
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Move the point cloud data to the origin.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array of point cloud data.
+        pc : PointCloud
+            The PointCloud object.
+        mesh_avrg_pt : np.ndarray, optional
+            Average point for recentering (default is None).
+
+        Returns
+        -------
+        np.ndarray
+            Moved point cloud data.
+        np.ndarray or None
+            Average point of the point cloud after recentering.
+        """
         origin = np.array([0.0, 0.0, 0.0])
         pc_avrg_pt = None
         if mesh_avrg_pt is None:
@@ -72,12 +131,42 @@ class PointCloudData:
     def move_pc_to_origin_multi(
         self, points: np.ndarray, recenter_vec: np.ndarray = None
     ):
+        """Move the point cloud data to the origin using multiple recenter vectors.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array of point cloud data.
+        recenter_vec : np.ndarray, optional
+            Recenter vector for each point (default is None).
+
+        Returns
+        -------
+        np.ndarray
+            Moved point cloud data.
+        """
         if recenter_vec is not None:
             points += recenter_vec
 
         return points
 
     def flatten_pc(self, points: np.ndarray, colors: np.ndarray):
+        """Flatten the point cloud data arrays for further processing.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array of point cloud data.
+        colors : np.ndarray
+            Array of point cloud colors.
+
+        Returns
+        -------
+        np.ndarray
+            Flattened point cloud data array.
+        np.ndarray
+            Flattened point cloud colors array.
+        """
         points = np.array(points, dtype="float32").flatten()
         colors = np.array(colors, dtype="float32").flatten()
         return points, colors

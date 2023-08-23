@@ -9,10 +9,25 @@ from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
 def view(
     pc: PointCloud,
-    mesh: Mesh = None,
     pc_data: np.ndarray = None,
+    mesh: Mesh = None,
     mesh_data: np.ndarray = None,
 ):
+    """
+    View a point cloud in 3D with a GLFW window. This function is added to the PointCloud class in dtcc_model.
+
+    Parameters
+    ----------
+    pc : PointCloud
+        Point cloud to be viewed (self).
+    pc_data : np.ndarray
+        Data for coloring of point cloud. Data should match point count.
+    mesh : Mesh
+        Mesh to be viewed togheter with the point cloud.
+    mesh_data : np.ndarray
+        Data for coloring of mesh. Data should match vertex or face count.
+    """
+
     window = Window(1200, 800)
 
     if mesh is None:

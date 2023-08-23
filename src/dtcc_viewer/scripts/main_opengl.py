@@ -200,5 +200,5 @@ if __name__ == "__main__":
     # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
-    multi_geometry_example_3()
-    # multi_geometry_example_4()
+    # multi_geometry_example_3()
+    multi_geometry_example_4()

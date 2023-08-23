@@ -3,32 +3,51 @@ import numpy as np
 from enum import IntEnum
 from dtcc_model import Mesh, PointCloud
 
+
 class MeshShading(IntEnum):
     wireframe = 0
     shaded_ambient = 1
     shaded_diffuse = 2
     shaded_shadows = 3
 
+
 class MeshColor(IntEnum):
     color = 1
     white = 2
 
+
 class ParticleColor(IntEnum):
-    color = 1        
+    color = 1
     white = 2
-    
-def calc_recenter_vector(mesh: Mesh = None, pc:PointCloud = None):
 
-    all_vertices = np.array([[0,0,0]])
-    
+
+def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
+    """
+    Calculate a recentering vector based on mesh vertices and point cloud points.
+
+    Parameters
+    ----------
+    mesh : Mesh, optional
+        A Mesh object representing the mesh (default is None).
+    pc : PointCloud, optional
+        A PointCloud object representing the point cloud (default is None).
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy array representing the calculated recentering vector.
+    """
+
+    all_vertices = np.array([[0, 0, 0]])
+
     if mesh is not None:
-        all_vertices = np.concatenate((all_vertices, mesh.vertices), axis = 0)
-            
-    if pc is not None:
-        all_vertices = np.concatenate((all_vertices, pc.points), axis = 0)
+        all_vertices = np.concatenate((all_vertices, mesh.vertices), axis=0)
 
-    # Remove the [0,0,0] row that was added to enable concatenate.        
-    all_vertices = np.delete(all_vertices, obj=0, axis = 0)
+    if pc is not None:
+        all_vertices = np.concatenate((all_vertices, pc.points), axis=0)
+
+    # Remove the [0,0,0] row that was added to enable concatenate.
+    all_vertices = np.delete(all_vertices, obj=0, axis=0)
 
     xmin = all_vertices[:, 0].min()
     xmax = all_vertices[:, 0].max()
@@ -37,27 +56,45 @@ def calc_recenter_vector(mesh: Mesh = None, pc:PointCloud = None):
     zmin = all_vertices[:, 2].min()
     zmax = all_vertices[:, 2].max()
 
-    mid_pt = np.array([(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2])
-    origin = np.array([0,0,0])
+    mid_pt = np.array([(xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2])
+    origin = np.array([0, 0, 0])
 
-    move_vec = origin - mid_pt  
+    move_vec = origin - mid_pt
 
-    return move_vec           
+    return move_vec
 
-def calc_multi_geom_recenter_vector(mesh_list: list[Mesh] = None, pc_list:list[PointCloud] = None):
-    
-    all_vertices = np.array([[0,0,0]])
-    
+
+def calc_multi_geom_recenter_vector(
+    mesh_list: list[Mesh] = None, pc_list: list[PointCloud] = None
+):
+    """
+    Calculate a recentering vector for a list of meshes and point clouds.
+
+    Parameters
+    ----------
+    mesh_list : list of Mesh, optional
+        A list of Mesh objects representing meshes (default is None).
+    pc_list : list of PointCloud, optional
+        A list of PointCloud objects representing point clouds (default is None).
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy array representing the calculated recentering vector.
+    """
+
+    all_vertices = np.array([[0, 0, 0]])
+
     if mesh_list:
         for mesh in mesh_list:
-            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis = 0)
-            
+            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis=0)
+
     if pc_list:
         for pc in pc_list:
-            all_vertices = np.concatenate((all_vertices, pc.points), axis = 0)
+            all_vertices = np.concatenate((all_vertices, pc.points), axis=0)
 
-    # Remove the [0,0,0] row that was added to enable concatenate.        
-    all_vertices = np.delete(all_vertices, obj=0, axis = 0)
+    # Remove the [0,0,0] row that was added to enable concatenate.
+    all_vertices = np.delete(all_vertices, obj=0, axis=0)
 
     xmin = all_vertices[:, 0].min()
     xmax = all_vertices[:, 0].max()
@@ -66,59 +103,78 @@ def calc_multi_geom_recenter_vector(mesh_list: list[Mesh] = None, pc_list:list[P
     zmin = all_vertices[:, 2].min()
     zmax = all_vertices[:, 2].max()
 
-    mid_pt = np.array([(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2])
-    origin = np.array([0,0,0])
+    mid_pt = np.array([(xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2])
+    origin = np.array([0, 0, 0])
 
-    move_vec = origin - mid_pt  
+    move_vec = origin - mid_pt
 
-    return move_vec           
+    return move_vec
+
 
 def calc_blended_color(min, max, value):
+    """
+    Calculate a blended color based on input range and value.
+
+    Parameters
+    ----------
+    min_value : float
+        The minimum value of the range.
+    max_value : float
+        The maximum value of the range.
+    value : float
+        The input value.
+
+    Returns
+    -------
+    list of float
+        A list representing the RGB values of the calculated blended color.
+    """
     diff = max - min
-    if(diff) <= 0:
-        print("Error: Given MAX-MIN range is zero or the MAX value is smaller than given MIN value!")
-        return [1,0,1]    # Error, returning magenta
-    
+    if (diff) <= 0:
+        print(
+            "Error: Given MAX-MIN range is zero or the MAX value is smaller than given MIN value!"
+        )
+        return [1, 0, 1]  # Error, returning magenta
+
     new_min = 0
     new_max = diff
     new_value = value - min
     percentage = 100.0 * (new_value / new_max)
 
-    if(new_value <= new_min or new_value >= new_max):
-        #Returning red [1,0,0]
+    if new_value <= new_min or new_value >= new_max:
+        # Returning red [1,0,0]
         return [1.0, 0.0, 0.0]
     else:
-        if (percentage >= 0.0 and percentage <= 10.0):
-            #Red fading to Magenta [1,0,x], where x is increasing from 0 to 1
+        if percentage >= 0.0 and percentage <= 10.0:
+            # Red fading to Magenta [1,0,x], where x is increasing from 0 to 1
             frac = percentage / 10.0
             return [1.0, 0.0, (frac * 1.0)]
 
-        elif (percentage > 10.0 and percentage <= 30.0):
-            #Magenta fading to blue [x,0,1], where x is decreasing from 1 to 0
+        elif percentage > 10.0 and percentage <= 30.0:
+            # Magenta fading to blue [x,0,1], where x is decreasing from 1 to 0
             frac = 1.0 - abs(percentage - 10.0) / 20.0
             return [(frac * 1.0), 0.0, 1.0]
 
-        elif (percentage > 30.0 and percentage <= 50.0):
-            #Blue fading to cyan [0,1,x], where x is increasing from 0 to 1
+        elif percentage > 30.0 and percentage <= 50.0:
+            # Blue fading to cyan [0,1,x], where x is increasing from 0 to 1
             frac = abs(percentage - 30.0) / 20.0
             return [0.0, (frac * 1.0), 1.0]
 
-        elif (percentage > 50.0 and percentage <= 70.0):
-            #Cyan fading to green [0,1,x], where x is decreasing from 1 to 0
+        elif percentage > 50.0 and percentage <= 70.0:
+            # Cyan fading to green [0,1,x], where x is decreasing from 1 to 0
             frac = 1.0 - abs(percentage - 50.0) / 20.0
             return [0.0, 1.0, (frac * 1.0)]
 
-        elif (percentage > 70.0 and percentage <= 90.0):
-            #Green fading to yellow [x,1,0], where x is increasing from 0 to 1
+        elif percentage > 70.0 and percentage <= 90.0:
+            # Green fading to yellow [x,1,0], where x is increasing from 0 to 1
             frac = abs(percentage - 70.0) / 20.0
             return [(frac * 1.0), 1.0, 0.0]
-        
-        elif (percentage > 90.0 and percentage <= 100.0):
-            #Yellow fading to red [1,x,0], where x is decreasing from 1 to 0
+
+        elif percentage > 90.0 and percentage <= 100.0:
+            # Yellow fading to red [1,x,0], where x is decreasing from 1 to 0
             frac = 1.0 - abs(percentage - 90.0) / 10.0
             return [1.0, (frac * 1.0), 0.0]
 
-        elif (percentage > 100.0):
-            #Returning red if the value overshoots the limit.
+        elif percentage > 100.0:
+            # Returning red if the value overshoots the limit.
             return [1.0, 0.0, 0.0]
-
