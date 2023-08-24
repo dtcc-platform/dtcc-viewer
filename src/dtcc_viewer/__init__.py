@@ -1,4 +1,4 @@
-from .opengl_viewer.camera import Camera
+from .opengl_viewer import *
 from .pointcloud_opengl import view as view_pointcloud
 from .mesh_opengl import view as view_mesh
 from .citymodel import view as view_city
@@ -17,4 +17,15 @@ __all__ = [
     "view_city",
     "view_mesh",
     "Camera",
+    "Window",
+    "PointCloudData",
+    "PointCloudGL",
+    "MeshGL",
+    "MeshData",
+    "Interaction",
+    "Gui",
+    "GuiParameters",
+    "GuiParametersMesh",
+    "GuiParametersPC",
+    "GuiParameters",
 ]
