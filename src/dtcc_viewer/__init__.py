@@ -12,4 +12,20 @@ PointCloud.add_methods(view_pointcloud, "view")
 Mesh.add_methods(view_mesh, "view")
 City.add_methods(view_city, "view")
 
-__all__ = ["view_pointcloud", "view_city", "view_mesh"]
+__all__ = [
+    "view_pointcloud",
+    "view_city",
+    "view_mesh",
+    "Camera",
+    "Window",
+    "PointCloudData",
+    "PointCloudGL",
+    "MeshGL",
+    "MeshData",
+    "Interaction",
+    "Gui",
+    "GuiParameters",
+    "GuiParametersMesh",
+    "GuiParametersPC",
+    "GuiParameters",
+]
