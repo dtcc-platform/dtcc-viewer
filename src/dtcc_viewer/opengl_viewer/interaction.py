@@ -3,10 +3,10 @@ from dtcc_viewer.opengl_viewer.camera import Camera
 
 
 class Interaction:
-    """Handles user interaction with the viewer.
+    """Handles mouse and keyboard interaction with the viewer.
 
-    This class manages user input, such as keyboard, mouse button clicks, and cursor movement,
-    to control the camera's behavior within the viewer window.
+    This class manages user input, such as keyboard, mouse button clicks, and cursor
+    movement, to control the camera's behavior within the viewer window.
 
     Attributes
     ----------
@@ -65,7 +65,7 @@ class Interaction:
         self.mouse_on_gui = False
 
     def set_mouse_on_gui(self, mouse_on_gui):
-        """Set the flag indicating whether the mouse cursor is over the graphical user interface (GUI).
+        """Set the flag indicating whether the mouse cursor is over the GUI window.
 
         Parameters
         ----------
@@ -75,7 +75,7 @@ class Interaction:
         self.mouse_on_gui = mouse_on_gui
 
     def update_window_size(self, width, height):
-        """Update the width and height of the viewer window and adjust the camera settings.
+        """Update width and height of the viewer window and adjust the camera settings.
 
         Parameters
         ----------
@@ -147,7 +147,7 @@ class Interaction:
             self.right_first_mouse = True
 
     def mouse_look_callback(self, window, xpos, ypos):
-        """Callback function for handling mouse cursor movement to control view rotation and panning.
+        """Callback function for mouse cursor movement for view rotation and panning.
 
         Parameters
         ----------

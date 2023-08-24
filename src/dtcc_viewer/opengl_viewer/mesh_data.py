@@ -5,10 +5,12 @@ from dtcc_viewer.colors import *
 
 
 class MeshData:
-    """Mesh Data Representation.
+    """Mesh attributes and associated data structured for the purpous of rendering.
 
     This class represents mesh data for rendering in an OpenGL window. It encapsulates
-    information about the mesh's vertices, face indices, edge indices, and coloring options.
+    information about the mesh's vertices, face indices, edge indices, and coloring options,
+    and provides methods to restructure the data of a Mesh object to a format that fits
+    the OpenGL functions.
 
     Parameters
     ----------
@@ -238,7 +240,7 @@ class MeshData:
         vertices: np.ndarray,
         pc_avrg_pt: np.ndarray = None,
     ):
-        """Move the mesh vertices to the origin.
+        """Move the mesh vertices so that the model i centered around the origin [x = 0, y = 0, z = 0].
 
         Parameters
         ----------

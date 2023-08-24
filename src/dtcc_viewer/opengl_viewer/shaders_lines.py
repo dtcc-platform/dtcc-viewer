@@ -1,5 +1,3 @@
-
-
 # Vertex shader for lines
 
 vertex_shader_lines = """
@@ -16,7 +14,7 @@ uniform int color_by;
 out vec3 v_color;
 void main()
 {
-    gl_Position = project * view * vec4(a_position, 1.0);
+    gl_Position = project * view * model * vec4(a_position, 1.0);
     v_color = a_color;
 
     if(color_by == 1)

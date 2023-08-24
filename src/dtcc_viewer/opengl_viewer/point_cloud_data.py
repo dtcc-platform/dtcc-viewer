@@ -5,10 +5,11 @@ from dtcc_viewer.utils import *
 
 class PointCloudData:
 
-    """A class representing point cloud data with associated colors.
+    """Point cloud attributes and data structured for the purpous of rendering.
 
     This class is used to store point cloud data along with color information
-    for visualization purposes.
+    for visualization purposes. The class also provides methods to restructure
+    the data to a format that fits the OpenGL functions.
 
     Attributes
     ----------

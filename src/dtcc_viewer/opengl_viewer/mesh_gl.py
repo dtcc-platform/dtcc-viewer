@@ -30,9 +30,12 @@ from dtcc_viewer.opengl_viewer.shaders_lines import (
 
 
 class MeshGL:
+    """Represents a 3D mesh in OpenGL and provides methods for rendering.
 
-    """
-    Represents a 3D mesh in OpenGL and provides methods for rendering with different shaders.
+    This class handles the rendering of mesh data using OpenGL. It provides methods to
+    set up the rendering environment, binding and rendering with a range of different
+    shaders, and perform the necessary transformations camera interaction, perspective
+    projection and other features needed for visualization.
 
     Attributes
     ----------
@@ -254,8 +257,36 @@ class MeshGL:
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.loop_counter = 120
 
+    def _create_lines(self) -> None:
+        """Set up vertex and element buffers for wireframe rendering."""
+        # -------------- EDGES for wireframe display ---------------- #
+        self.VAO_edge = glGenVertexArrays(1)
+        glBindVertexArray(self.VAO_edge)
+
+        # Vertex buffer
+        size = len(self.vertices) * 4
+        self.VBO_edge = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.VBO_edge)
+        glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
+
+        # Element buffer
+        size = len(self.edge_indices) * 4
+        self.EBO_edge = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_edge)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.edge_indices, GL_STATIC_DRAW)
+
+        # Position
+        glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+
+        # Color
+        glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+
+        glBindVertexArray(0)
+
     def _create_triangels(self) -> None:
-        """Set up vertex and element buffers for triangle rendering."""
+        """Set up vertex and element buffers for mesh rendering."""
         # ----------------- TRIANGLES for shaded display ------------------#
 
         # Generating VAO. Any subsequent vertex attribute calls will be stored in the VAO if it is bound.
@@ -263,21 +294,16 @@ class MeshGL:
         glBindVertexArray(self.VAO_triangels)
 
         # Vertex buffer
+        size = len(self.vertices) * 4  # Size in bytes
         self.VBO_triangels = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.VBO_triangels)
-        glBufferData(
-            GL_ARRAY_BUFFER, len(self.vertices) * 4, self.vertices, GL_STATIC_DRAW
-        )  # Second argument is nr of bytes
+        glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
 
         # Element buffer
+        size = len(self.face_indices) * 4  # Size in bytes
         self.EBO_triangels = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_triangels)
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            len(self.face_indices) * 4,
-            self.face_indices,
-            GL_STATIC_DRAW,
-        )
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.face_indices, GL_STATIC_DRAW)
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
@@ -290,38 +316,6 @@ class MeshGL:
         # Normals
         glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
-
-        glBindVertexArray(0)
-
-    def _create_lines(self) -> None:
-        """Set up vertex and element buffers for wireframe rendering."""
-        # -------------- EDGES for wireframe display ---------------- #
-        self.VAO_edge = glGenVertexArrays(1)
-        glBindVertexArray(self.VAO_edge)
-
-        # Vertex buffer
-        self.VBO_edge = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self.VBO_edge)
-        glBufferData(
-            GL_ARRAY_BUFFER, len(self.vertices) * 4, self.vertices, GL_STATIC_DRAW
-        )  # Second argument is nr of bytes
-
-        self.EBO_edge = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_edge)
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            len(self.edge_indices) * 4,
-            self.edge_indices,
-            GL_STATIC_DRAW,
-        )
-
-        # Position
-        glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
-
-        # Color
-        glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
         glBindVertexArray(0)
 
@@ -378,7 +372,7 @@ class MeshGL:
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
     def _create_shader_ambient(self) -> None:
-        """Create shader for basic shading."""
+        """Create shader for ambient shading."""
         self._bind_vao_triangels()
         self.shader_ambient = compileProgram(
             compileShader(vertex_shader_ambient, GL_VERTEX_SHADER),
@@ -452,8 +446,101 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
+    def render_lines(self, interaction: Interaction) -> None:
+        """Render wireframe lines of the mesh.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+
+        self._bind_shader_lines()
+
+        # MVP Calculations
+        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        view = interaction.camera.get_view_matrix()
+        proj = interaction.camera.get_perspective_matrix()
+        glUniformMatrix4fv(self.mloc_lines, 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.ploc_lines, 1, GL_FALSE, proj)
+
+        color_by = int(self.guip.color_mesh)
+        glUniform1i(self.cb_loc_lines, color_by)
+
+        self._lines_draw_call()
+        self._unbind_shader()
+
+    def render_ambient(self, interaction: Interaction) -> None:
+        """Render the mesh with ambient shading.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+        self._bind_shader_ambient()
+
+        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        view = interaction.camera.get_view_matrix()
+        proj = interaction.camera.get_perspective_matrix()
+
+        glUniformMatrix4fv(self.mloc_ambient, 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.vloc_ambient, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.ploc_ambient, 1, GL_FALSE, proj)
+
+        color_by = int(self.guip.color_mesh)
+        glUniform1i(self.cb_loc_ambient, color_by)
+
+        self._triangles_draw_call()
+        self._unbind_shader()
+
+    def render_diffuse(self, interaction: Interaction) -> None:
+        """Render the mesh with diffuse shading.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+        self._bind_shader_diffuse()
+        self.light_position = self._calc_light_position()
+
+        # MVP calcs
+        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        view = interaction.camera.get_view_matrix()
+        proj = interaction.camera.get_perspective_matrix()
+        glUniformMatrix4fv(self.mloc_diffuse, 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.vloc_diffuse, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.ploc_diffuse, 1, GL_FALSE, proj)
+
+        color_by = int(self.guip.color_mesh)
+        glUniform1i(self.cb_loc_diffuse, color_by)
+
+        view_pos = interaction.camera.camera_pos
+        glUniform3fv(self.vp_loc_shadows, 1, view_pos)
+
+        # Set light uniforms
+        glUniform3fv(self.lc_loc_diffuse, 1, self.light_color)
+        glUniform3fv(self.lp_loc_diffuse, 1, self.light_position)
+
+        self._triangles_draw_call()
+        self._unbind_shader()
+
+    def render_shadows(self, interaction: Interaction) -> None:
+        """Generates a shadow map and renders the mesh with shadows by sampling that
+        shadow map.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The Interaction object containing camera and user interaction information.
+        """
+        self._render_shadow_map(interaction)
+        self._render_model_with_shadows(interaction)
+
     def _render_shadow_map(self, interaction: Interaction) -> None:
-        """Render the shadow map to the frame buffer which is sampled in the next rendering pass.
+        """Render a shadow map to the frame buffer.
 
         Parameters
         ----------
@@ -462,21 +549,12 @@ class MeshGL:
         """
         # first pass: Capture shadow map
         rad = self.radius_xy
-        if self.guip.animate_light:
-            self.loop_counter += 1
 
-        rot_step = self.loop_counter / 120.0
-        self.light_position = np.array(
-            [
-                math.sin(rot_step) * rad,
-                math.cos(rot_step) * rad,
-                abs(math.sin(rot_step / 2.0)) * 0.7 * rad,
-            ],
-            dtype=np.float32,
-        )
+        self.light_position = self._calc_light_position()
 
+        far = 1.25 * self.diameter_xy
         light_projection = pyrr.matrix44.create_orthogonal_projection(
-            -rad, rad, -rad, rad, 0.1, 1.25 * self.diameter_xy, dtype=np.float32
+            -rad, rad, -rad, rad, 0.1, far, dtype=np.float32
         )
         look_target = np.array([0, 0, 0], dtype=np.float32)
         global_up = np.array([0, 0, 1], dtype=np.float32)
@@ -514,12 +592,11 @@ class MeshGL:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glUseProgram(self.shader_shadows)
 
-        translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_shadows, 1, GL_FALSE, translation)
-
-        # Camera input
+        # MVP Calculations
+        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
+        glUniformMatrix4fv(self.mloc_shadows, 1, GL_FALSE, move)
         glUniformMatrix4fv(self.ploc_shadows, 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.vloc_shadows, 1, GL_FALSE, view)
 
@@ -537,112 +614,6 @@ class MeshGL:
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
 
         self._triangles_draw_call()
-        self._unbind_shader()
-
-    def render_shadows(self, interaction: Interaction) -> None:
-        """Render the mesh with shadows.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
-        self._render_shadow_map(interaction)
-        self._render_model_with_shadows(interaction)
-
-    def render_diffuse(self, interaction: Interaction) -> None:
-        """Render the mesh with diffuse shading.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
-        self._bind_shader_fancy()
-
-        rad = self.radius_xy
-
-        if self.guip.animate_light:
-            self.loop_counter += 1
-
-        rot_step = self.loop_counter / 120.0
-        self.light_position = np.array(
-            [
-                math.sin(rot_step) * rad,
-                math.cos(rot_step) * rad,
-                abs(math.sin(rot_step / 2.0)) * 0.7 * rad,
-            ],
-            dtype=np.float32,
-        )
-
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_diffuse, 1, GL_FALSE, move)
-
-        view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.vloc_diffuse, 1, GL_FALSE, view)
-
-        projection = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_diffuse, 1, GL_FALSE, projection)
-
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_diffuse, color_by)
-
-        view_pos = interaction.camera.camera_pos
-        glUniform3fv(self.vp_loc_shadows, 1, view_pos)
-
-        # Set light uniforms
-        glUniform3fv(self.lc_loc_diffuse, 1, self.light_color)
-        glUniform3fv(self.lp_loc_diffuse, 1, self.light_position)
-
-        self._triangles_draw_call()
-        self._unbind_shader()
-
-    def render_ambient(self, interaction: Interaction) -> None:
-        """Render the mesh with ambient shading.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
-        self._bind_shader_basic()
-
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.mloc_ambient, 1, GL_FALSE, move)
-
-        view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.vloc_ambient, 1, GL_FALSE, view)
-
-        projection = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_ambient, 1, GL_FALSE, projection)
-
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_ambient, color_by)
-
-        self._triangles_draw_call()
-        self._unbind_shader()
-
-    def render_lines(self, interaction: Interaction) -> None:
-        """Render wireframe lines of the mesh.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
-
-        self._bind_shader_lines()
-
-        projection = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.ploc_lines, 1, GL_FALSE, projection)
-
-        view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
-
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_lines, color_by)
-
-        self._lines_draw_call()
         self._unbind_shader()
 
     def _triangles_draw_call(self):
@@ -673,17 +644,17 @@ class MeshGL:
         """Bind the shader for wireframe rendering."""
         glUseProgram(self.shader_lines)
 
-    def _bind_shader_fancy_shadows(self) -> None:
-        """Bind the shader for shading with shadows."""
-        glUseProgram(self.shader_shadows)
+    def _bind_shader_ambient(self) -> None:
+        """Bind the shader for basic shading."""
+        glUseProgram(self.shader_ambient)
 
-    def _bind_shader_fancy(self) -> None:
+    def _bind_shader_diffuse(self) -> None:
         """Bind the shader for diffuse shading."""
         glUseProgram(self.shader_diffuse)
 
-    def _bind_shader_basic(self) -> None:
-        """Bind the shader for basic shading."""
-        glUseProgram(self.shader_ambient)
+    def _bind_shader_shadows(self) -> None:
+        """Bind the shader for shading with shadows."""
+        glUseProgram(self.shader_shadows)
 
     def _bind_shader_shadow_map(self) -> None:
         """Bind the shader for rendering shadow map."""
@@ -692,3 +663,19 @@ class MeshGL:
     def _unbind_shader(self) -> None:
         """Unbind the currently bound shader."""
         glUseProgram(0)
+
+    def _calc_light_position(self) -> np.ndarray:
+        """Calculate position animated position of light source which casts shadows."""
+        if self.guip.animate_light:
+            self.loop_counter += 1
+
+        rot_step = self.loop_counter / 120.0
+        x = math.sin(rot_step) * self.radius_xy
+        y = math.cos(rot_step) * self.radius_xy
+        z = abs(math.sin(rot_step / 2.0)) * 0.7 * self.radius_xy
+        light_position = np.array([x, y, z], dtype=np.float32)
+
+        return light_position
+
+    def _mvp():
+        pass

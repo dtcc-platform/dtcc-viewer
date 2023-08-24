@@ -168,8 +168,10 @@ class GuiParametersExample:
 
 
 class Gui:
-    """
-    This class provides methods for creating and managing graphical user interface (GUI) elements using imgui and GlfwRenderer.
+    """Graphical user interface (GUI) calss built on imgui and GLFW.
+
+    This class has settings and methods for creating a GUI window and components for
+    interacting with Mesh and PointCloud objects.
 
     Attributes
     ----------

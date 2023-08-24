@@ -4,7 +4,7 @@ from math import sin, cos, radians
 
 
 class Camera:
-    """Represents a camera used for view manipulation.
+    """Camera used for viewing geometry and nagivation in a GLFW window.
 
     This class defines a camera with various attributes and methods for controlling
     its position, orientation, and view matrix.
