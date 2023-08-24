@@ -30,10 +30,24 @@ from dtcc_viewer.opengl_viewer.shaders_lines import (
 
 
 class MeshGL:
-    """Represents a 3D mesh in OpenGL and provides methods for rendering with different shaders.
+
+    """
+    Represents a 3D mesh in OpenGL and provides methods for rendering with different shaders.
 
     Attributes
     ----------
+    VAO_triangels : int
+        OpenGL Vertex attribut object for triangles.
+    VBO_triangels : int
+        OpenGL Vertex buffer object for triangles.
+    EBO_triangels : int
+        OpenGL Element buffer object for triangles.
+    VAO_edge : int
+        OpenGL Vertex attribut object for wireframe edges.
+    VBO_edge : int
+        OpenGL Vertex buffer object for wireframe edges.
+    EBO_edge : int
+        OpenGL Element buffer object for wireframe edges.
     guip : GuiParametersMesh
         Information used by the GUI.
     vertices : np.ndarray
@@ -42,12 +56,151 @@ class MeshGL:
         Array containing face indices.
     edge_indices : np.ndarray
         Array containing edge indices.
+    shader_lines : int
+        Shader program for the lines.
+    mloc_lines : int
+        Uniform location for model matrix for lines.
+    vloc_lines : int
+        Uniform location for view matrix for lines.
+    ploc_lines : int
+        Uniform location for projection matrix for lines.
+    cb_loc_lines : int
+        Uniform location for color_by variable for lines.
+    shader_ambient : int
+        Shader program for ambient mesh rendering.
+    mloc_ambient : int
+        Uniform location for model matrix for ambient rendering.
+    ploc_ambient : int
+        Uniform location for projection matrix for ambient rendering.
+    vloc_ambient : int
+        Uniform location for view matrix for ambient rendering.
+    cb_loc_ambient : int
+        Uniform location for color_by variable for ambient rendering.
+    shader_diffuse : int
+        Shader program for diffuse mesh rendering.
+    mloc_diffuse : int
+        Uniform location for model matrix for diffuse rendering.
+    ploc_diffuse : int
+        Uniform location for projection matrix for diffuse rendering.
+    vloc_diffuse : int
+        Uniform location for view matrix for diffuse rendering.
+    cb_loc_diffuse : int
+        Uniform location for color_by variable for diffuse rendering.
+    oc_loc_diffuse : int
+        Uniform location for object color for diffuse rendering.
+    lc_loc_diffuse : int
+        Uniform location for light color for diffuse rendering.
+    lp_loc_diffuse : int
+        Uniform location for light position for diffuse rendering.
+    vp_loc_diffuse : int
+        Uniform location for view position for diffuse rendering.
+    shader_shadows : int
+        Shader program for rendering of diffuse mesh with shadow map.
+    mloc_shadows : int
+        Uniform location for model matrix for diffuse shadow rendering.
+    ploc_shadows : int
+        Uniform location for projection matrix for diffuse shadow rendering.
+    vloc_shadows : int
+        Uniform location for view matrix for diffuse shadow rendering.
+    cb_loc_shadows : int
+        Uniform location for color_by variable for diffuse shadow rendering.
+    oc_loc_shadows : int
+        Uniform location for object color for diffuse shadow rendering.
+    lc_loc_shadows : int
+        Uniform location for light color for diffuse shadow rendering.
+    lp_loc_shadows : int
+        Uniform location for light position for diffuse shadow rendering.
+    vp_loc_shadows : int
+        Uniform location for view position for diffuse shadow rendering.
+    lsm_loc_shadows : int
+        Uniform location for light space matrix for diffuse shadow rendering.
+    shader_shadow_map : int
+        Shader program for rendering of the shadow map to the frame buffer.
+    mloc_shadow_map : int
+        Uniform location for model matrix for shadow map rendering.
+    lsm_loc_shadow_map : int
+        Uniform location for light space matrix for shadow map rendering.
+    diameter_xy : float
+        Size of the model as diameter.
+    radius_xy : float
+        Size of model as radius.
+    light_position : np.ndarray
+        Position of light that casts shadows [1 x 3].
+    light_color : np.ndarray
+        Color of scene light [1 x 3].
+    loop_counter : int
+        Loop counter for animation of scene light source.
+    FBO : int
+        OpenGL Frame Buffer Objects.
+    depth_map : int
+        Depth map identifier.
+    shadow_map_resolution : int
+        Resolution of the shadow map, same in x and y.
+    border_color : np.ndarray
+        Color for the border of the shadow map.
     """
+
+    # Mesh based parameters
+    VAO_triangels: int  # OpenGL Vertex attribut object for triangles
+    VBO_triangels: int  # OpenGL Vertex buffer object for triangles
+    EBO_triangels: int  # OpenGL Element buffer object for triangles
+    VAO_edge: int  # OpenGL Vertex attribut object for wireframe edges
+    VBO_edge: int  # OpenGL Vertex buffer object for wireframe edges
+    EBO_edge: int  # OpenGL Element buffer object for wireframe edges
 
     guip: GuiParametersMesh  # Information used by the Gui
     vertices: np.ndarray  # [n_vertices x 9] each row has (x, y, z, r, g, b, nx, ny, nz)
     face_indices: np.ndarray  # [n_faces x 3] each row has three vertex indices
     edge_indices: np.ndarray  # [n_edges x 2] each row has
+
+    shader_lines: int  # Shader program for the lines
+    mloc_lines: int  # Uniform location for model matrix for lines
+    vloc_lines: int  # Uniform location for view matrix for lines
+    ploc_lines: int  # Uniform location for projection matrix for lines
+    cb_loc_lines: int  # Uniform location for color_by variable for lines
+
+    shader_ambient: int  # Shader program for ambient mesh rendering
+    mloc_ambient: int  # Uniform location for model matrix for ambient rendering
+    ploc_ambient: int  # Uniform location for projection matrix for ambient rendering
+    vloc_ambient: int  # Uniform location for view matrix for ambient rendering
+    cb_loc_ambient: int  # Uniform location for color_by variable for ambient rendering
+
+    shader_diffuse: int  # Shader program for diffuse mesh renderi
+    mloc_diffuse: int  # Uniform location for model matrix for diffuse rendering
+    ploc_diffuse: int  # Uniform location for projection matrix for diffuse rendering
+    vloc_diffuse: int  # Uniform location for view matrix for diffuse rendering
+    cb_loc_diffuse: int  # Uniform location for color_by variable for diffuse rendering
+    oc_loc_diffuse: int  # Uniform location for object color for diffuse rendering
+    lc_loc_diffuse: int  # Uniform location for light color for diffuse rendering
+    lp_loc_diffuse: int  # Uniform location for light position for diffuse rendering
+    vp_loc_diffuse: int  # Uniform location for view position for diffuse rendering
+
+    shader_shadows: int  # Shader program for rendering of diffuse mesh with shadow map
+    mloc_shadows: int  # Uniform location for model matrix for diffuse shadow rendering
+    ploc_shadows: int  # Uniform location for projection matrix for diffuse shadow rendering
+    vloc_shadows: int  # Uniform location for view matrix for diffuse shadow rendering
+    cb_loc_shadows: int  # Uniform location for color_by variable for diffuse shadow rendering
+    oc_loc_shadows: int  # Uniform location for object color for diffuse shadow rendering
+    lc_loc_shadows: int  # Uniform location for light color for diffuse shadow rendering
+    lp_loc_shadows: int  # Uniform location for light position for diffuse shadow rendering
+    vp_loc_shadows: int  # Uniform location for view position for diffuse shadow rendering
+    lsm_loc_shadows: int  # Uniform location for light space matrix for diffuse shadow rendering
+
+    shader_shadow_map: int  # Shader program for rendering of the shadow map to the frame buffer
+    mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
+    lsm_loc_shadow_map: int  # Uniform location for light space matrix for shadow map rendering
+
+    # Scene based parameters
+    diameter_xy: float  # Size of the model as diameter
+    radius_xy: float  # Size of model as radius
+    light_position: np.ndarray  # position of light that casts shadows [1 x 3]
+    light_color: np.ndarray  # color of scene light [1 x 3]
+    loop_counter: int  # loop counter for animation of scene light source
+
+    FBO: int  # OpenGL Frame Buffer Objects
+    depth_map: int  # Depth map identifier
+    shadow_map_resolution: int  # Resolution of the shadow map, same in x and y.
+    border_color: np.ndarray  # color for the border of the shadow map
 
     def __init__(
         self, name: str, vertices: np.ndarray, faces: np.ndarray, edges: np.ndarray
@@ -76,13 +229,12 @@ class MeshGL:
         self._create_triangels()
         self._create_shadow_map()
         self._create_shader_lines()
-        self._create_shader_basic()
+        self._create_shader_ambient()
         self._create_shader_diffuse()
         self._create_shader_shadows()
         self._create_shader_shadow_map()
         self._set_constats()
 
-    # Utility functions
     def _calc_model_scale(self) -> None:
         """Calculate the model scale from vertex positions."""
         xmin = self.vertices[0::3].min()
@@ -102,7 +254,6 @@ class MeshGL:
         self.light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.loop_counter = 120
 
-    # Setup geometry
     def _create_triangels(self) -> None:
         """Set up vertex and element buffers for triangle rendering."""
         # ----------------- TRIANGLES for shaded display ------------------#
@@ -174,7 +325,6 @@ class MeshGL:
 
         glBindVertexArray(0)
 
-    # Setup frambuffer for shadow map
     def _create_shadow_map(self) -> None:
         """Set up framebuffer and texture for shadow map rendering."""
         # Frambuffer for the shadow map
@@ -200,8 +350,8 @@ class MeshGL:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
-        border_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color)
+        self.border_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, self.border_color)
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
         glFramebufferTexture2D(
@@ -213,7 +363,6 @@ class MeshGL:
         glReadBuffer(GL_NONE)  # We don't want to read color attachements either
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-    # Setup shaders
     def _create_shader_lines(self) -> None:
         """Create shader for wireframe rendering."""
         self._bind_vao_lines()
@@ -228,7 +377,7 @@ class MeshGL:
         self.vloc_lines = glGetUniformLocation(self.shader_lines, "view")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
-    def _create_shader_basic(self) -> None:
+    def _create_shader_ambient(self) -> None:
         """Create shader for basic shading."""
         self._bind_vao_triangels()
         self.shader_ambient = compileProgram(
@@ -244,9 +393,7 @@ class MeshGL:
         self.cb_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_by")
 
     def _create_shader_diffuse(self) -> None:
-        """
-        Create shader for diffuse shading.
-        """
+        """Create shader for diffuse shading."""
         self._bind_vao_triangels()
         self.shader_diffuse = compileProgram(
             compileShader(vertex_shader_diffuse, GL_VERTEX_SHADER),
@@ -305,7 +452,6 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
-    # Private render functions
     def _render_shadow_map(self, interaction: Interaction) -> None:
         """Render the shadow map to the frame buffer which is sampled in the next rendering pass.
 
@@ -393,7 +539,6 @@ class MeshGL:
         self._triangles_draw_call()
         self._unbind_shader()
 
-    # Render mesh fancy shadows
     def render_shadows(self, interaction: Interaction) -> None:
         """Render the mesh with shadows.
 
@@ -405,7 +550,6 @@ class MeshGL:
         self._render_shadow_map(interaction)
         self._render_model_with_shadows(interaction)
 
-    # Render mesh fancy
     def render_diffuse(self, interaction: Interaction) -> None:
         """Render the mesh with diffuse shading.
 
@@ -453,7 +597,6 @@ class MeshGL:
         self._triangles_draw_call()
         self._unbind_shader()
 
-    # Render mesh basic
     def render_ambient(self, interaction: Interaction) -> None:
         """Render the mesh with ambient shading.
 
@@ -479,7 +622,6 @@ class MeshGL:
         self._triangles_draw_call()
         self._unbind_shader()
 
-    # Render mesh lines
     def render_lines(self, interaction: Interaction) -> None:
         """Render wireframe lines of the mesh.
 
