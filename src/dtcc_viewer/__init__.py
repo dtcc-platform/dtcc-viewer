@@ -1,4 +1,4 @@
-from .opengl_viewer import Camera
+from .opengl_viewer.camera import Camera
 from .pointcloud_opengl import view as view_pointcloud
 from .mesh_opengl import view as view_mesh
 from .citymodel import view as view_city
