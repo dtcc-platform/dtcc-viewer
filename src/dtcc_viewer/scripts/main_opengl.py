@@ -110,14 +110,14 @@ def multi_geometry_example_1():
     # Create mesh data classes that are structured for openggl calls
     mesh_data_obj_a = MeshData("mesh A", mesh_a, mesh_data_a, recenter_vec)
     mesh_data_obj_b = MeshData("mesh B", mesh_b, mesh_data_b, recenter_vec)
-    mesh_data_list = [mesh_data_obj_a, mesh_data_obj_b]
+    mhs = [mesh_data_obj_a, mesh_data_obj_b]
 
     # Create point clode data classes that are structured for opengl calls
     pc_data_obj_a = PointCloudData("point cloud A", pc_a, pc_data_a, recenter_vec)
     pc_data_obj_b = PointCloudData("point cloud B", pc_b, pc_data_b, recenter_vec)
-    pc_data_list = [pc_data_obj_a, pc_data_obj_b]
+    pcs = [pc_data_obj_a, pc_data_obj_b]
 
-    window.render_multi(mesh_data_list, pc_data_list)
+    window.render(mesh_data_list=mhs, pc_data_list=pcs)
 
 
 def multi_geometry_example_2():
@@ -125,38 +125,35 @@ def multi_geometry_example_2():
     pc = pointcloud.load(filename_csv)
     all_pcs = split_pc_in_stripes(10, pc, Direction.x)
 
-    all_meshes = []
-
     # Calculate common recentering vector base of the bounding box of all combined vertices.
-    recenter_vec = calc_multi_geom_recenter_vector(all_meshes, all_pcs)
+    recenter_vec = calc_multi_geom_recenter_vector(pc_list=all_pcs)
 
-    pc_data_list = []
+    pcs = []
     for i, pc_i in enumerate(all_pcs):
         pc_data = pc_i.points[:, Direction.x]
-        pc_data_list.append(
-            PointCloudData("point cloud " + str(i), pc_i, pc_data, recenter_vec)
-        )
+        pcs.append(PointCloudData("point cloud " + str(i), pc_i, pc_data, recenter_vec))
 
     window = Window(1200, 800)
-    window.render_multi(all_meshes, pc_data_list)
+    window.render(pc_data_list=pcs)
 
 
 def multi_geometry_example_3():
     filename_obj = "../../../data/models/CitySurface.obj"
     mesh_tri = trimesh.load_mesh(filename_obj)
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.x)
+    split_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.x)
 
-    all_meshes = []
-    all_pcs = []
+    # Calculate common recentering vector base of the bounding box of all combined vertices.
+    recenter_vec = calc_multi_geom_recenter_vector(mesh_list=split_meshes)
 
-    for i, mesh in enumerate(meshes):
+    meshes = []
+    for i, mesh in enumerate(split_meshes):
         data = mesh.vertices[:, Direction.x]
-        mesh_data_obj = MeshData("Mesh " + str(i), mesh, data)
-        all_meshes.append(mesh_data_obj)
+        mesh_data_obj = MeshData("Mesh " + str(i), mesh, data, recenter_vec)
+        meshes.append(mesh_data_obj)
 
     window = Window(1200, 800)
-    window.render_multi(all_meshes, all_pcs)
+    window.render(mesh_data_list=meshes)
 
 
 def multi_geometry_example_4():
@@ -164,26 +161,23 @@ def multi_geometry_example_4():
     all_pcs = split_pc_in_stripes(8, pc, Direction.x)
 
     mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
-    all_meshes = utils.split_mesh_in_stripes(
-        8, mesh_tri, utils.calc_face_mid_points(mesh_tri), Direction.y
-    )
+    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
+    all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, face_mid_pts, Direction.y)
 
     recenter_vec = calc_multi_geom_recenter_vector(all_meshes, all_pcs)
 
-    pc_data_list = []
+    pcs = []
     for i, pc_i in enumerate(all_pcs):
         pc_data = pc_i.points[:, Direction.x]
-        pc_data_list.append(
-            PointCloudData("point cloud " + str(i), pc_i, pc_data, recenter_vec)
-        )
+        pcs.append(PointCloudData("point cloud " + str(i), pc_i, pc_data, recenter_vec))
 
-    mesh_data_list = []
+    mhs = []
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
-        mesh_data_list.append(MeshData("Mesh " + str(i), mesh, data, recenter_vec))
+        mhs.append(MeshData("Mesh " + str(i), mesh, data, recenter_vec))
 
     window = Window(1200, 800)
-    window.render_multi(mesh_data_list, pc_data_list)
+    window.render(mesh_data_list=mhs, pc_data_list=pcs)
 
 
 if __name__ == "__main__":
@@ -201,4 +195,4 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
-    # multi_geometry_example_4()
+    multi_geometry_example_4()

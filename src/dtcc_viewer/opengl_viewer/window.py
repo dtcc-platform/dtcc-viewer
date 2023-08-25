@@ -126,10 +126,14 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render_multi(
-        self, mesh_data_list: list[MeshData], pc_data_list: list[PointCloudData]
+    def render(
+        self,
+        mesh_data_list: list[MeshData] = None,
+        mesh_data_obj: MeshData = None,
+        pc_data_list: list[PointCloudData] = None,
+        pc_data_obj: PointCloudData = None,
     ):
-        """Render multiple MeshData and PointCloudData objects.
+        """Render single or multiple MeshData and/or PointCloudData objects.
 
         This method renders multiple meshes and point clouds in the window.
         It updates the rendering loop, handles user interactions, and displays
@@ -139,22 +143,34 @@ class Window:
         ----------
         mesh_data_list : list[MeshData]
             List of MeshData objects to render.
+        mesh_data : MeshData
+            Single instance of MeshData to be rendered
         pc_data_list : list[PointCloudData]
             List of PointCloudData objects to render.
+        pc_data: PointCloudData
+            Single instance of PointCloudData to be rendered
         """
 
         self.meshes = []
         self.point_clouds = []
 
-        for mesh in mesh_data_list:
-            mesh_gl = MeshGL(
-                mesh.name, mesh.vertices, mesh.face_indices, mesh.edge_indices
-            )
-            self.meshes.append(mesh_gl)
+        if mesh_data_list is None:
+            if mesh_data_obj is not None:
+                mesh_gl = MeshGL(mesh_data_obj)
+                self.meshes.append(mesh_gl)
+        else:
+            for mesh_data_obj in mesh_data_list:
+                mesh_gl = MeshGL(mesh_data_obj)
+                self.meshes.append(mesh_gl)
 
-        for pc in pc_data_list:
-            pc_gl = PointCloudGL(pc.name, 0.2, pc.points, pc.colors)
-            self.point_clouds.append(pc_gl)
+        if pc_data_list is None:
+            if pc_data_obj is not None:
+                pc_gl = PointCloudGL(pc_data_obj)
+                self.point_clouds.append(pc_gl)
+        else:
+            for pc_data_obj in pc_data_list:
+                pc_gl = PointCloudGL(pc_data_obj)
+                self.point_clouds.append(pc_gl)
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
@@ -176,8 +192,8 @@ class Window:
 
             self.gui.init_draw(self.impl)
             # add individual ui for each point cloud
-            for i, pc in enumerate(self.point_clouds):
-                self.gui.draw_pc_gui(pc.guip, i)
+            for i, pc_data_obj in enumerate(self.point_clouds):
+                self.gui.draw_pc_gui(pc_data_obj.guip, i)
                 self.gui.draw_separator()
 
             for i, mesh in enumerate(self.meshes):
@@ -191,205 +207,6 @@ class Window:
             glfw.swap_buffers(self.window)
 
         glfw.terminate()
-
-    def render_point_cloud(self, pc_data_obj: PointCloudData):
-        """Render a single PointCloudData object.
-
-        This method renders a single point cloud object in the window. It updates
-        the rendering loop, handles user interactions, and displays the GUI elements
-        for the rendered point cloud.
-
-        Parameters
-        ----------
-        pc_data_obj : PointCloudData
-            The PointCloudData object to render.
-        """
-
-        self.pc = PointCloudGL(
-            pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
-        )
-        glClearColor(0.0, 0.0, 0.0, 1)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-
-        while not glfw.window_should_close(self.window):
-            glfw.poll_events()
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(
-                self.guip.color[0],
-                self.guip.color[1],
-                self.guip.color[2],
-                self.guip.color[3],
-            )
-
-            self._render_point_cloud()
-            self._fps_calculations()
-
-            self.gui.init_draw(self.impl)
-            self.gui.draw_pc_gui(self.pc.guip, 1)
-            self.gui.draw_apperance_gui(self.guip)
-            self.gui.end_draw(self.impl)
-
-            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
-            glfw.swap_buffers(self.window)
-
-        glfw.terminate()
-
-    def render_mesh(self, mesh_data_obj: MeshData):
-        """Render a single MeshData object.
-
-        This method renders a single mesh object in the window. It updates the rendering
-        loop, handles user interactions, and displays the GUI elements for the rendered mesh.
-
-        Parameters
-        ----------
-        mesh_data_obj : MeshData
-            The MeshData object to render.
-        """
-
-        self.mesh = MeshGL(
-            mesh_data_obj.name,
-            mesh_data_obj.vertices,
-            mesh_data_obj.face_indices,
-            mesh_data_obj.edge_indices,
-        )
-        glClearColor(0.0, 0.0, 0.0, 1.0)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-
-        while not glfw.window_should_close(self.window):
-            glfw.poll_events()
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(
-                self.guip.color[0],
-                self.guip.color[1],
-                self.guip.color[2],
-                self.guip.color[3],
-            )
-
-            self._render_mesh()
-            self._fps_calculations()
-
-            self.gui.init_draw(self.impl)
-            self.gui.draw_mesh_gui(self.mesh.guip, 1)
-            self.gui.draw_apperance_gui(self.guip)
-            self.gui.end_draw(self.impl)
-
-            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
-            glfw.swap_buffers(self.window)
-
-    def render_pc_and_mesh(self, pc_data_obj: PointCloudData, mesh_data_obj: MeshData):
-        """Render a PointCloudData and a MeshData object.
-
-        This method renders both a point cloud and a mesh object in the window. It updates
-        the rendering loop, handles user interactions, and displays the GUI elements for both
-        the rendered point cloud and mesh.
-
-        Parameters
-        ----------
-        pc_data_obj : PointCloudData
-            The PointCloudData object to render.
-        mesh_data_obj : MeshData
-            The MeshData object to render.
-        """
-        self.pc = PointCloudGL(
-            pc_data_obj.name, 0.2, pc_data_obj.points, pc_data_obj.colors
-        )
-        self.mesh = MeshGL(
-            mesh_data_obj.name,
-            mesh_data_obj.vertices,
-            mesh_data_obj.face_indices,
-            mesh_data_obj.edge_indices,
-        )
-        glClearColor(0.0, 0.0, 0.0, 1.0)
-        glEnable(GL_DEPTH_TEST)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_BLEND)
-
-        while not glfw.window_should_close(self.window):
-            glfw.poll_events()
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(
-                self.guip.color[0],
-                self.guip.color[1],
-                self.guip.color[2],
-                self.guip.color[3],
-            )
-
-            self._render_mesh()
-            self._render_point_cloud()
-            self._fps_calculations()
-
-            self.gui.init_draw(self.impl)
-            self.gui.draw_pc_gui(self.pc.guip, 1)
-            self.gui.draw_mesh_gui(self.mesh.guip, 1)
-            self.gui.draw_apperance_gui(self.guip)
-            self.gui.end_draw(self.impl)
-
-            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
-
-            glfw.swap_buffers(self.window)
-
-    def render_empty(self):
-        """Render an empty window with an example GUI.
-
-        This method renders an empty window and displays an example GUI for demonstration
-        purposes. It updates the rendering loop and handles user interactions.
-        """
-        glClearColor(0.0, 0.0, 0.0, 1.0)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-
-        guip_example = GuiParametersExample()
-
-        while not glfw.window_should_close(self.window):
-            glfw.poll_events()
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(
-                guip_example.color[0],
-                guip_example.color[1],
-                guip_example.color[2],
-                guip_example.color[3],
-            )
-
-            self.gui.init_draw(self.impl)
-            self.gui.draw_example_gui(guip_example)
-            self.gui.end_draw(self.impl)
-
-            glfw.swap_buffers(self.window)
-
-    def _render_point_cloud(self):
-        """Render the currently displayed point cloud.
-
-        This method renders the currently displayed point cloud object using OpenGL.
-        """
-        if self.pc.guip.show:
-            self.pc.render(self.interaction)
-
-    def _render_point_clouds(self):
-        """Render all the point clouds in the window.
-
-        This method renders all the point cloud objects in the window using OpenGL.
-        """
-        for pc in self.point_clouds:
-            if pc.guip.show:
-                pc.render(self.interaction)
-
-    def _render_mesh(self):
-        """Render the currently displayed mesh.
-
-        This method renders the currently displayed mesh object using OpenGL.
-        """
-        mguip = self.mesh.guip
-        if mguip.show:
-            if mguip.mesh_shading == 0:
-                self.mesh.render_lines(self.interaction)
-            elif mguip.mesh_shading == 1:
-                self.mesh.render_ambient(self.interaction)
-            elif mguip.mesh_shading == 2:
-                self.mesh.render_diffuse(self.interaction)
-            elif mguip.mesh_shading == 3:
-                self.mesh.render_shadows(self.interaction)
 
     def _render_meshes(self):
         """Render all the meshes in the window.
@@ -407,6 +224,15 @@ class Window:
                     mesh.render_diffuse(self.interaction)
                 elif mguip.mesh_shading == MeshShading.shaded_shadows:
                     mesh.render_shadows(self.interaction)
+
+    def _render_point_clouds(self):
+        """Render all the point clouds in the window.
+
+        This method renders all the point cloud objects in the window using OpenGL.
+        """
+        for pc in self.point_clouds:
+            if pc.guip.show:
+                pc.render(self.interaction)
 
     def _fps_calculations(self, print_results=True):
         """Perform FPS calculations.

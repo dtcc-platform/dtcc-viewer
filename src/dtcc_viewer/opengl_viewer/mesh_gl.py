@@ -6,6 +6,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
+from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -89,8 +90,6 @@ class MeshGL:
         Uniform location for view matrix for diffuse rendering.
     cb_loc_diffuse : int
         Uniform location for color_by variable for diffuse rendering.
-    oc_loc_diffuse : int
-        Uniform location for object color for diffuse rendering.
     lc_loc_diffuse : int
         Uniform location for light color for diffuse rendering.
     lp_loc_diffuse : int
@@ -107,8 +106,6 @@ class MeshGL:
         Uniform location for view matrix for diffuse shadow rendering.
     cb_loc_shadows : int
         Uniform location for color_by variable for diffuse shadow rendering.
-    oc_loc_shadows : int
-        Uniform location for object color for diffuse shadow rendering.
     lc_loc_shadows : int
         Uniform location for light color for diffuse shadow rendering.
     lp_loc_shadows : int
@@ -173,7 +170,6 @@ class MeshGL:
     ploc_diffuse: int  # Uniform location for projection matrix for diffuse rendering
     vloc_diffuse: int  # Uniform location for view matrix for diffuse rendering
     cb_loc_diffuse: int  # Uniform location for color_by variable for diffuse rendering
-    oc_loc_diffuse: int  # Uniform location for object color for diffuse rendering
     lc_loc_diffuse: int  # Uniform location for light color for diffuse rendering
     lp_loc_diffuse: int  # Uniform location for light position for diffuse rendering
     vp_loc_diffuse: int  # Uniform location for view position for diffuse rendering
@@ -183,7 +179,6 @@ class MeshGL:
     ploc_shadows: int  # Uniform location for projection matrix for diffuse shadow rendering
     vloc_shadows: int  # Uniform location for view matrix for diffuse shadow rendering
     cb_loc_shadows: int  # Uniform location for color_by variable for diffuse shadow rendering
-    oc_loc_shadows: int  # Uniform location for object color for diffuse shadow rendering
     lc_loc_shadows: int  # Uniform location for light color for diffuse shadow rendering
     lp_loc_shadows: int  # Uniform location for light position for diffuse shadow rendering
     vp_loc_shadows: int  # Uniform location for view position for diffuse shadow rendering
@@ -205,27 +200,20 @@ class MeshGL:
     shadow_map_resolution: int  # Resolution of the shadow map, same in x and y.
     border_color: np.ndarray  # color for the border of the shadow map
 
-    def __init__(
-        self, name: str, vertices: np.ndarray, faces: np.ndarray, edges: np.ndarray
-    ):
+    def __init__(self, mesh_data: MeshData):
         """Initialize the MeshGL object with vertex, face, and edge information.
 
         Parameters
         ----------
-        name : str
-            The name of the mesh.
-        vertices : np.ndarray
-            Array containing vertex information (x, y, z, r, g, b, nx, ny, nz).
-        faces : np.ndarray
-            Array containing face indices.
-        edges : np.ndarray
-            Array containing edge indices.
+        mesh_data : MeshData
+            Instance of the MeshData class with vertices, edge indices, face indices.
         """
-        self.guip = GuiParametersMesh(name)
 
-        self.vertices = vertices
-        self.face_indices = faces
-        self.edge_indices = edges
+        self.guip = GuiParametersMesh(mesh_data.name)
+
+        self.vertices = mesh_data.vertices
+        self.face_indices = mesh_data.face_indices
+        self.edge_indices = mesh_data.edge_indices
 
         self._calc_model_scale()
         self._create_lines()
@@ -367,8 +355,8 @@ class MeshGL:
         glUseProgram(self.shader_lines)
 
         self.mloc_lines = glGetUniformLocation(self.shader_lines, "model")
-        self.ploc_lines = glGetUniformLocation(self.shader_lines, "project")
         self.vloc_lines = glGetUniformLocation(self.shader_lines, "view")
+        self.ploc_lines = glGetUniformLocation(self.shader_lines, "project")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
     def _create_shader_ambient(self) -> None:
@@ -382,8 +370,8 @@ class MeshGL:
         glUseProgram(self.shader_ambient)
 
         self.mloc_ambient = glGetUniformLocation(self.shader_ambient, "model")
-        self.ploc_ambient = glGetUniformLocation(self.shader_ambient, "project")
         self.vloc_ambient = glGetUniformLocation(self.shader_ambient, "view")
+        self.ploc_ambient = glGetUniformLocation(self.shader_ambient, "project")
         self.cb_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_by")
 
     def _create_shader_diffuse(self) -> None:
@@ -397,11 +385,10 @@ class MeshGL:
         glUseProgram(self.shader_diffuse)
 
         self.mloc_diffuse = glGetUniformLocation(self.shader_diffuse, "model")
-        self.ploc_diffuse = glGetUniformLocation(self.shader_diffuse, "project")
         self.vloc_diffuse = glGetUniformLocation(self.shader_diffuse, "view")
+        self.ploc_diffuse = glGetUniformLocation(self.shader_diffuse, "project")
         self.cb_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "color_by")
 
-        self.oc_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "object_color")
         self.lc_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "light_color")
         self.lp_loc_diffuse = glGetUniformLocation(
             self.shader_diffuse, "light_position"
@@ -419,10 +406,9 @@ class MeshGL:
         glUseProgram(self.shader_shadows)
 
         self.mloc_shadows = glGetUniformLocation(self.shader_shadows, "model")
-        self.ploc_shadows = glGetUniformLocation(self.shader_shadows, "project")
         self.vloc_shadows = glGetUniformLocation(self.shader_shadows, "view")
+        self.ploc_shadows = glGetUniformLocation(self.shader_shadows, "project")
         self.cb_loc_shadows = glGetUniformLocation(self.shader_shadows, "color_by")
-        self.oc_loc_shadows = glGetUniformLocation(self.shader_shadows, "object_color")
         self.lc_loc_shadows = glGetUniformLocation(self.shader_shadows, "light_color")
         self.lp_loc_shadows = glGetUniformLocation(
             self.shader_shadows, "light_position"
@@ -507,7 +493,7 @@ class MeshGL:
         self.light_position = self._calc_light_position()
 
         # MVP calcs
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        move = interaction.camera.get_move_matrix()
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.mloc_diffuse, 1, GL_FALSE, move)
@@ -677,5 +663,16 @@ class MeshGL:
 
         return light_position
 
-    def _mvp():
+    def mvpc(self, mloc, vloc, ploc, cloc, color_by: int, interaction: Interaction):
+        """Set move, view, project, color uniforms"""
+
+        move = interaction.camera.get_move_matrix()
+        view = interaction.camera.get_view_matrix()
+        proj = interaction.camera.get_perspective_matrix()
+        glUniformMatrix4fv(mloc, 1, GL_FALSE, move)
+        glUniformMatrix4fv(vloc, 1, GL_FALSE, view)
+        glUniformMatrix4fv(ploc, 1, GL_FALSE, proj)
+
+        glUniform1i(cloc, color_by)
+
         pass

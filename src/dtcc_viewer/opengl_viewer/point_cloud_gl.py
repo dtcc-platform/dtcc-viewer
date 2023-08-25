@@ -5,6 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
     vertex_shader_pc,
     fragment_shader_pc,
@@ -47,26 +48,19 @@ class PointCloudGL:
     low_sides = 5  # Edge count for lowest resolution for discs
     upper_sides = 15  # Edge count for highest resolution for discs
 
-    def __init__(
-        self, name: str, disc_size: float, points: np.ndarray, colors: np.ndarray
-    ):
+    def __init__(self, pc_data_obj: PointCloudData):
         """Initialize the PointCloudGL object and set up rendering.
 
         Parameters
         ----------
-        name : str
-            The name of the point cloud.
-        disc_size : float
-            The size of the circular disc for each point.
-        points : np.ndarray
-            Array containing the 3D coordinates of the points in the point cloud.
-        colors : np.ndarray
-            Array containing the RGB colors corresponding to each point.
+        pc_data_obj : PointCloudData
+            Instance of the PointCloudData calss with points, colors and pc size.
         """
-        self.guip = GuiParametersPC(name)
-        n_points = len(points) / 3
-        self._create_single_instance(disc_size, n_points)
-        self._create_multiple_instances(points, colors)
+
+        self.guip = GuiParametersPC(pc_data_obj.name)
+        n_points = len(pc_data_obj.points) / 3
+        self._create_single_instance(pc_data_obj.pc_size, n_points)
+        self._create_multiple_instances(pc_data_obj.points, pc_data_obj.colors)
         self._create_shader()
 
     def render(self, interaction: Interaction) -> None:

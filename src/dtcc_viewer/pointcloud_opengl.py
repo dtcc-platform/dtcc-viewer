@@ -32,10 +32,10 @@ def view(
 
     if mesh is None:
         recenter_vec = calc_recenter_vector(pc=pc)
-        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec)
-        window.render_point_cloud(pc_data_obj)
+        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec, 0.2)
+        window.render(pc_data_obj=pc_data_obj)
     else:
         recenter_vec = calc_recenter_vector(mesh, pc)
         mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec)
-        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec)
-        window.render_pc_and_mesh(pc_data_obj, mesh_data_obj)
+        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec, 0.2)
+        window.render(pc_data_obj=pc_data_obj, mesh_data_obj=mesh_data_obj)

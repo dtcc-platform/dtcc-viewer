@@ -26,10 +26,16 @@ class PointCloudData:
     points: np.ndarray  # [n_points x 3]
     colors: np.ndarray  # [n_points x 3]
     pc_avrg_pt: np.ndarray  # [1 x 3]
+    pc_size: float
     name: str
 
     def __init__(
-        self, name: str, pc: PointCloud, pc_data: np.ndarray, recenter_vec: np.ndarray
+        self,
+        name: str,
+        pc: PointCloud,
+        pc_data: np.ndarray,
+        recenter_vec: np.ndarray,
+        pc_size: float = 0.2,
     ) -> None:
         """Initialize a PointCloudData object.
 
@@ -50,6 +56,7 @@ class PointCloudData:
         """
 
         self.name = name
+        self.pc_size = pc_size
         self.colors = self.generate_pc_colors(pc, pc_data)  # TODO: Move functions here
         self.points = pc.points
         self.points = self.move_pc_to_origin_multi(self.points, recenter_vec)

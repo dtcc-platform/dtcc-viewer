@@ -127,6 +127,16 @@ class Camera:
             self.fov, self.aspect_ratio, self.near_plane, self.far_plane
         )
 
+    def get_move_matrix(self):
+        """Get the move matrix which positions the object around the origin.
+
+        Returns
+        -------
+        matrix44
+            The move matrix.
+        """
+        return matrix44.create_from_translation(Vector3([0, 0, 0]))
+
     def process_mouse_rotation(
         self, xoffset: float, yoffset: float, constrain_pitch=True
     ) -> None:
