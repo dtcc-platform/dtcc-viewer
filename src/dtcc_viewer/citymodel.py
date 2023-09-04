@@ -22,6 +22,9 @@ def _show_folium_in_browser(m):
     m.save(map_file)
     import webbrowser
 
+    info(
+        f"Opening city model for viewing in your browser. If nothing happens, check your open browser windows."
+    )
     webbrowser.open(f"file:///{map_file}")
 
 
