@@ -1,10 +1,10 @@
 import numpy as np
 from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
+from dtcc_viewer.opengl_viewer.utils import BoundingBox
 
 
 class PointCloudData:
-
     """Point cloud attributes and data structured for the purpous of rendering.
 
     This class is used to store point cloud data along with color information
@@ -28,6 +28,8 @@ class PointCloudData:
     pc_avrg_pt: np.ndarray  # [1 x 3]
     pc_size: float
     name: str
+    bb_local: BoundingBox
+    bb_global: BoundingBox
 
     def __init__(
         self,
@@ -35,7 +37,7 @@ class PointCloudData:
         pc: PointCloud,
         pc_data: np.ndarray,
         recenter_vec: np.ndarray,
-        pc_size: float = 0.2,
+        bb_global: BoundingBox = None,
     ) -> None:
         """Initialize a PointCloudData object.
 
@@ -56,11 +58,18 @@ class PointCloudData:
         """
 
         self.name = name
-        self.pc_size = pc_size
+        self.pc_size = 0.2
+        self.bb_global = bb_global
         self.colors = self.generate_pc_colors(pc, pc_data)  # TODO: Move functions here
         self.points = pc.points
         self.points = self.move_pc_to_origin_multi(self.points, recenter_vec)
+        self.bb_local = self.calculate_boundingbox(self.points)
         [self.points, self.colors] = self.flatten_pc(self.points, self.colors)
+
+    def calculate_boundingbox(self, points: np.ndarray):
+        bb = BoundingBox()
+        bb.calc_bounds(points)
+        return bb
 
     def generate_pc_colors(
         self, pc: PointCloud, pc_data: np.ndarray = None

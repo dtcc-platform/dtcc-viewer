@@ -11,6 +11,7 @@ from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
     fragment_shader_pc,
 )
 from dtcc_viewer.opengl_viewer.gui import GuiParametersPC
+from dtcc_viewer.opengl_viewer.utils import BoundingBox
 
 
 class PointCloudGL:
@@ -47,6 +48,8 @@ class PointCloudGL:
     upper_count = 20000000  # More then 20M particles -> lowest resolution
     low_sides = 5  # Edge count for lowest resolution for discs
     upper_sides = 15  # Edge count for highest resolution for discs
+    bb_local: BoundingBox
+    bb_global: BoundingBox
 
     def __init__(self, pc_data_obj: PointCloudData):
         """Initialize the PointCloudGL object and set up rendering.
@@ -59,6 +62,7 @@ class PointCloudGL:
 
         self.guip = GuiParametersPC(pc_data_obj.name)
         n_points = len(pc_data_obj.points) / 3
+        print(type(pc_data_obj.pc_size))
         self._create_single_instance(pc_data_obj.pc_size, n_points)
         self._create_multiple_instances(pc_data_obj.points, pc_data_obj.colors)
         self._create_shader()

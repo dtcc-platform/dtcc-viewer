@@ -1,7 +1,9 @@
 import numpy as np
 from dtcc_model import Mesh
+from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
+from dtcc_viewer.opengl_viewer.utils import BoundingBox
 
 
 class MeshData:
@@ -46,6 +48,8 @@ class MeshData:
     face_indices: np.ndarray
     edge_indices: np.ndarray
     name: str
+    bb_local: BoundingBox
+    bb_global: BoundingBox = None
 
     def __init__(
         self,
@@ -53,6 +57,7 @@ class MeshData:
         mesh: Mesh,
         mesh_data: np.ndarray = None,
         recenter_vec: np.ndarray = None,
+        bb_global: BoundingBox = None,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -66,16 +71,41 @@ class MeshData:
             Additional mesh data for color calculation (default is None).
         recenter_vec : np.ndarray, optional
             Vector for recentering the mesh (default is None).
+        bb_global : BoundingBox, optional
+            A bounding box for all geometry in a collection (default is None).
         """
         self.name = name
+        self.bb_global = bb_global
+
         [self.color_by, self.mesh_colors] = self.generate_mesh_colors(mesh, mesh_data)
         [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(
             mesh, self.color_by, self.mesh_colors
         )
         self.vertices = self.move_mesh_to_origin_multi(self.vertices, recenter_vec)
+        self.bb_local = self.calculate_boundingbox(self.vertices)
+
         [self.vertices, self.edge_indices, self.face_indices] = self.flatten_mesh(
             self.vertices, self.edge_indices, self.face_indices
         )
+
+    def calculate_boundingbox(self, vertices=np.ndarray):
+        """Calculate local bounding box.
+
+        Parameters
+        ----------
+        vertices : np.ndarray
+            Vertices for the mesh.
+
+        Returns
+        -------
+        BoundingBox
+            BoundingBox for the mesh local mesh instance.
+        """
+
+        bb_local = BoundingBox()
+        bb_local.calc_bounds(vertices)
+
+        return bb_local
 
     def generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
         """Generate mesh colors based on the provided data.

@@ -32,6 +32,10 @@ class GuiParameters:
         self.single_date = True
         self.period = False
 
+        self.clip_bool = [False, False, False]
+        self.clip_dir = [1, 1, 1]
+        self.clip_dist = [1, 1, 1]  # each variable has range [-1, 1]
+
 
 class GuiParametersMesh:
     """Class representing GUI parameters for meshes.
@@ -360,6 +364,36 @@ class Gui:
             [changed, guip.color] = imgui.color_edit4(
                 "color", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
             )
+
+            imgui.push_id("CbxClipX")
+            [changed, guip.clip_bool[0]] = imgui.checkbox("Clip X", guip.clip_bool[0])
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("ClipX")
+            [changed, guip.clip_dist[0]] = imgui.slider_float(
+                "", guip.clip_dist[0], -1.0, 1.0
+            )
+            imgui.pop_id()
+
+            imgui.push_id("CbxClipY")
+            [changed, guip.clip_bool[1]] = imgui.checkbox("Clip Y", guip.clip_bool[1])
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("ClipY")
+            [changed, guip.clip_dist[1]] = imgui.slider_float(
+                "", guip.clip_dist[1], -1.0, 1.0
+            )
+            imgui.pop_id()
+
+            imgui.push_id("CbxClipZ")
+            [changed, guip.clip_bool[2]] = imgui.checkbox("Clip Z", guip.clip_bool[2])
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("ClipZ")
+            [changed, guip.clip_dist[2]] = imgui.slider_float(
+                "", guip.clip_dist[2], -1.0, 1.0
+            )
+            imgui.pop_id()
 
     def draw_example_gui(self, guip: GuiParametersExample) -> None:
         """

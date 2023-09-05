@@ -186,12 +186,17 @@ class Window:
                 self.guip.color[3],
             )
 
+            self._clipping_planes()
+
             self._render_point_clouds()
             self._render_meshes()
             self._fps_calculations()
 
             self.gui.init_draw(self.impl)
-            # add individual ui for each point cloud
+            # Draw common ui for all viewing
+            self.gui.draw_apperance_gui(self.guip)
+            self.gui.draw_separator()
+            # Add individual ui for each point cloud
             for i, pc_data_obj in enumerate(self.point_clouds):
                 self.gui.draw_pc_gui(pc_data_obj.guip, i)
                 self.gui.draw_separator()
@@ -200,7 +205,6 @@ class Window:
                 self.gui.draw_mesh_gui(mesh.guip, i)
                 self.gui.draw_separator()
 
-            self.gui.draw_apperance_gui(self.guip)
             self.gui.end_draw(self.impl)
 
             self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
@@ -219,11 +223,11 @@ class Window:
                 if mguip.mesh_shading == MeshShading.wireframe:
                     mesh.render_lines(self.interaction)
                 elif mguip.mesh_shading == MeshShading.shaded_ambient:
-                    mesh.render_ambient(self.interaction)
+                    mesh.render_ambient(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_diffuse:
-                    mesh.render_diffuse(self.interaction)
+                    mesh.render_diffuse(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_shadows:
-                    mesh.render_shadows(self.interaction)
+                    mesh.render_shadows(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.
@@ -278,3 +282,19 @@ class Window:
         height = fb_size[1]
         glViewport(0, 0, width, height)
         self.interaction.update_window_size(width, height)
+
+    def _clipping_planes(self):
+        if self.guip.clip_bool[0]:
+            glEnable(GL_CLIP_DISTANCE0)
+        else:
+            glDisable(GL_CLIP_DISTANCE0)
+
+        if self.guip.clip_bool[1]:
+            glEnable(GL_CLIP_DISTANCE1)
+        else:
+            glDisable(GL_CLIP_DISTANCE1)
+
+        if self.guip.clip_bool[2]:
+            glEnable(GL_CLIP_DISTANCE2)
+        else:
+            glDisable(GL_CLIP_DISTANCE2)

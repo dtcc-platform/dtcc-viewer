@@ -31,11 +31,11 @@ def view(
     window = Window(1200, 800)
 
     if pc is None:
-        recenter_vec = calc_recenter_vector(mesh=mesh)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec)
+        [recenter_vec, bb] = calc_recenter_vector(mesh=mesh)
+        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec, bb)
         window.render(mesh_data_obj=mesh_data_obj)
     else:
-        recenter_vec = calc_recenter_vector(mesh, pc)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec)
-        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec, 0.2)
+        [recenter_vec, bb] = calc_recenter_vector(mesh, pc)
+        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec, bb)
+        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec, bb)
         window.render(mesh_data_obj=mesh_data_obj, pc_data_obj=pc_data_obj)
