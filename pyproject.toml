@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.5"
+version = "0.7.8"
 name = "dtcc-viewer"
 description = "DTCC Viewer"
 readme = "README.md"
@@ -34,8 +34,10 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-  "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
+  "dtcc-model >= 0.7.5",
+  "dtcc-io >= 0.7.5",
+  #"dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
+  #"dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
 ]
 
 [project.optional-dependencies]
