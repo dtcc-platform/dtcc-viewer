@@ -23,8 +23,8 @@ jobs:
       - uses: actions/setup-python@v3
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
-        #run: python -m pip wheel . -w ./wheelhouse/ && pwd && ls -altR 
+        #uses: pypa/cibuildwheel@v2.15.0
+        run: python -m pip wheel . -w ./wheelhouse/ && pwd && ls -altR 
 
       - uses: actions/upload-artifact@v3
         with:
