@@ -86,6 +86,9 @@ class BoundingBox:
         z = (self.zmax + self.zmin) / 2.0
         self.mid_pt = np.array([x, y, z], dtype="float32")
 
+    def print(self):
+        print([self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax])
+
 
 def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     """

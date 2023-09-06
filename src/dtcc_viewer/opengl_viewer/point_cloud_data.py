@@ -28,8 +28,8 @@ class PointCloudData:
     pc_avrg_pt: np.ndarray  # [1 x 3]
     pc_size: float
     name: str
-    bb_local: BoundingBox
-    bb_global: BoundingBox
+    bb_local: BoundingBox = None
+    bb_global: BoundingBox = None
 
     def __init__(
         self,

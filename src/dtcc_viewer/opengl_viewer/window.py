@@ -221,7 +221,7 @@ class Window:
             mguip = mesh.guip
             if mguip.show:
                 if mguip.mesh_shading == MeshShading.wireframe:
-                    mesh.render_lines(self.interaction)
+                    mesh.render_lines(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_ambient:
                     mesh.render_ambient(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_diffuse:
@@ -236,7 +236,7 @@ class Window:
         """
         for pc in self.point_clouds:
             if pc.guip.show:
-                pc.render(self.interaction)
+                pc.render(self.interaction, self.guip)
 
     def _fps_calculations(self, print_results=True):
         """Perform FPS calculations.

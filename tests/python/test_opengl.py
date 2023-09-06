@@ -78,7 +78,7 @@ class TestOpenGLViewer:
         pc = pointcloud.load("data/models/cube_pc.csv")
         data = pc.points[:, 2]
         recenter_vec = np.array([0, 0, 0])
-        pc_data_obj = PointCloudData("name", pc, data, recenter_vec, 0.2)
+        pc_data_obj = PointCloudData("name", pc, data, recenter_vec)
 
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)

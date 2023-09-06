@@ -361,9 +361,11 @@ class Gui:
         """
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
+            imgui.spacing()
             [changed, guip.color] = imgui.color_edit4(
                 "color", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
             )
+            imgui.spacing()
 
             imgui.push_id("CbxClipX")
             [changed, guip.clip_bool[0]] = imgui.checkbox("Clip X", guip.clip_bool[0])

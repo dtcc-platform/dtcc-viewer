@@ -163,6 +163,7 @@ class MeshGL:
     vloc_lines: int  # Uniform location for view matrix for lines
     ploc_lines: int  # Uniform location for projection matrix for lines
     cb_loc_lines: int  # Uniform location for color_by variable for lines
+    cp_locs_lines: [int]  # Uniform locations for clip plane distance x,y,z
 
     shader_ambient: int  # Shader program for ambient mesh rendering
     mloc_ambient: int  # Uniform location for model matrix for ambient rendering
@@ -223,6 +224,7 @@ class MeshGL:
         self.face_indices = mesh_data.face_indices
         self.edge_indices = mesh_data.edge_indices
 
+        self.cp_locs_lines = [0, 0, 0]
         self.cp_locs_ambient = [0, 0, 0]
         self.cp_locs_diffuse = [0, 0, 0]
         self.cp_locs_shadows = [0, 0, 0]
@@ -374,6 +376,10 @@ class MeshGL:
         self.ploc_lines = glGetUniformLocation(self.shader_lines, "project")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
+        self.cp_locs_lines[0] = glGetUniformLocation(self.shader_lines, "clip_x")
+        self.cp_locs_lines[1] = glGetUniformLocation(self.shader_lines, "clip_y")
+        self.cp_locs_lines[2] = glGetUniformLocation(self.shader_lines, "clip_z")
+
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
         self._bind_vao_triangels()
@@ -458,7 +464,7 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
-    def render_lines(self, interaction: Interaction) -> None:
+    def render_lines(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render wireframe lines of the mesh.
 
         Parameters
@@ -476,6 +482,8 @@ class MeshGL:
         glUniformMatrix4fv(self.mloc_lines, 1, GL_FALSE, move)
         glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_lines, 1, GL_FALSE, proj)
+
+        self.set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_lines, color_by)
@@ -716,7 +724,11 @@ class MeshGL:
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
-        if self.guip.mesh_shading == MeshShading.shaded_ambient:
+        if self.guip.mesh_shading == MeshShading.wireframe:
+            glUniform1f(self.cp_locs_lines[0], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.cp_locs_lines[1], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.cp_locs_lines[2], (zdom * gguip.clip_dist[2]))
+        elif self.guip.mesh_shading == MeshShading.shaded_ambient:
             glUniform1f(self.cp_locs_ambient[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_ambient[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_ambient[2], (zdom * gguip.clip_dist[2]))
