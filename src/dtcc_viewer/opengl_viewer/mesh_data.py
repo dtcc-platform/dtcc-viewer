@@ -56,7 +56,6 @@ class MeshData:
         name: str,
         mesh: Mesh,
         mesh_data: np.ndarray = None,
-        bb_global: BoundingBox = None,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -74,21 +73,22 @@ class MeshData:
             A bounding box for all geometry in a collection (default is None).
         """
         self.name = name
-        self.bb_global = bb_global
 
-        [self.color_by, self.mesh_colors] = self.generate_mesh_colors(mesh, mesh_data)
-        [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(
+        [self.color_by, self.mesh_colors] = self._generate_mesh_colors(mesh, mesh_data)
+        [self.vertices, self.face_indices, self.edge_indices] = self._restructure_mesh(
             mesh, self.color_by, self.mesh_colors
         )
-        self.vertices = self.move_mesh_to_origin_multi(self.vertices, self.bb_global)
 
+    def preprocess_drawing(self, bb_global: BoundingBox):
+        self.bb_global = bb_global
+        self.vertices = self._move_mesh_to_origin_multi(self.vertices, self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
 
-        [self.vertices, self.edge_indices, self.face_indices] = self.flatten_mesh(
+        [self.vertices, self.edge_indices, self.face_indices] = self._flatten_mesh(
             self.vertices, self.edge_indices, self.face_indices
         )
 
-    def generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
+    def _generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
         """Generate mesh colors based on the provided data.
 
         Parameters
@@ -124,10 +124,10 @@ class MeshData:
         if data is None:
             if n_vertex_colors == n_vertices:
                 color_by = ColorBy.vertex_colors
-                colors = self.normalise_colors(mesh.vertex_colors)
+                colors = self._normalise_colors(mesh.vertex_colors)
             elif n_face_colors == n_faces:
                 color_by = ColorBy.face_colors
-                colors = self.normalise_colors(mesh.face_colors)
+                colors = self._normalise_colors(mesh.face_colors)
             else:
                 print(
                     "WARNING: Provided color data for mesh does not match vertex of face count!"
@@ -152,7 +152,7 @@ class MeshData:
 
         return color_by, np.array(colors)
 
-    def normalise_colors(self, colors: np.ndarray):
+    def _normalise_colors(self, colors: np.ndarray):
         """Normalize colors to the range [0, 1] if necessary.
 
         Parameters
@@ -171,7 +171,7 @@ class MeshData:
             colors /= 255.0
         return colors
 
-    def restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
+    def _restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
         """Restructure the mesh data for OpenGL rendering.
 
         Parameters
@@ -246,7 +246,7 @@ class MeshData:
 
         return np.array(new_vertices), np.array(new_faces), np.array(new_edges)
 
-    def move_mesh_to_origin(
+    def _move_mesh_to_origin(
         self,
         vertices: np.ndarray,
         pc_avrg_pt: np.ndarray = None,
@@ -294,7 +294,7 @@ class MeshData:
 
         return vertices, mesh_avrg_pt
 
-    def move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox = None):
+    def _move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox):
         """Move the mesh vertices to the origin using multiple recenter vectors.
 
         Parameters
@@ -310,13 +310,13 @@ class MeshData:
             Moved vertices array.
         """
         # [x, y, z, r, g, b, nx, ny ,nz]
-        if bb is not None:
-            recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
-            vertices += recenter_vec
+        print(bb.center_vec)
+        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+        vertices += recenter_vec
 
         return vertices
 
-    def flatten_mesh(
+    def _flatten_mesh(
         self, vertices: np.ndarray, face_indices: np.ndarray, edge_indices: np.ndarray
     ):
         """Flatten the mesh data arrays for OpenGL compatibility.

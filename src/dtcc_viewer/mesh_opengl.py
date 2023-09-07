@@ -6,6 +6,7 @@ from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.scene import Scene
 
 
 def view(
@@ -29,13 +30,15 @@ def view(
     """
 
     window = Window(1200, 800)
+    scene = Scene()
 
     if pc is None:
-        bb = calc_recenter_vector(mesh=mesh)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, bb_global=bb)
-        window.render(mesh_data_obj=mesh_data_obj)
+        mesh = MeshData("Mesh", mesh, mesh_data)
+        scene.add_mesh(mesh)
+        window.render(scene)
     else:
-        bb = calc_recenter_vector(mesh, pc)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, bb_global=bb)
-        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, bb_global=bb)
-        window.render(mesh_data_obj=mesh_data_obj, pc_data_obj=pc_data_obj)
+        mesh = MeshData("Mesh", mesh, mesh_data)
+        pc = PointCloudData("Point cloud", pc, pc_data)
+        scene.add_mesh(mesh)
+        scene.add_pointcloud(pc)
+        window.render(scene)

@@ -37,7 +37,6 @@ class PointCloudData:
         pc: PointCloud,
         pc_data: np.ndarray = None,
         pc_colors: np.ndarray = None,
-        bb_global: BoundingBox = None,
     ) -> None:
         """Initialize a PointCloudData object.
 
@@ -59,15 +58,16 @@ class PointCloudData:
 
         self.name = name
         self.pc_size = 0.2
-        self.bb_global = bb_global
-        self.colors = self.generate_pc_colors(pc, pc_data)
+        self.colors = self._generate_pc_colors(pc, pc_data)
         self.points = pc.points
 
-        self.points = self.move_pc_to_origin_multi(self.points, self.bb_global)
+    def preprocess_drawing(self, bb_global: BoundingBox):
+        self.bb_global = bb_global
+        self.points = self._move_pc_to_origin_multi(self.points, self.bb_global)
         self.bb_local = BoundingBox(self.points)
-        [self.points, self.colors] = self.flatten_pc(self.points, self.colors)
+        [self.points, self.colors] = self._flatten_pc(self.points, self.colors)
 
-    def generate_pc_colors(
+    def _generate_pc_colors(
         self, pc: PointCloud, pc_data: np.ndarray = None
     ) -> np.ndarray:
         """Generate colors for the point cloud based on the provided data.
@@ -102,46 +102,7 @@ class PointCloudData:
         colors = colors[:, 0:3]
         return colors
 
-    def move_pc_to_origin(
-        self, points: np.ndarray, pc: PointCloud, mesh_avrg_pt: np.ndarray = None
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Move the point cloud data to the origin.
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Array of point cloud data.
-        pc : PointCloud
-            The PointCloud object.
-        mesh_avrg_pt : np.ndarray, optional
-            Average point for recentering (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Moved point cloud data.
-        np.ndarray or None
-            Average point of the point cloud after recentering.
-        """
-        origin = np.array([0.0, 0.0, 0.0])
-        pc_avrg_pt = None
-        if mesh_avrg_pt is None:
-            pc.calculate_bounds()
-            bounds = pc.bounds.tuple
-            x_avrg = (bounds[0] + bounds[2]) / 2.0
-            y_avrg = (bounds[1] + bounds[3]) / 2.0
-            z_avrg = 0
-            pc_avrg_pt = np.array([x_avrg, y_avrg, z_avrg])
-            move_vec = origin - pc_avrg_pt
-        else:
-            move_vec = origin - mesh_avrg_pt
-
-        # Move the mesh to the centre of the model
-        points += move_vec
-
-        return points, pc_avrg_pt
-
-    def move_pc_to_origin_multi(self, points: np.ndarray, bb: BoundingBox = None):
+    def _move_pc_to_origin_multi(self, points: np.ndarray, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors.
 
         Parameters
@@ -161,7 +122,7 @@ class PointCloudData:
 
         return points
 
-    def flatten_pc(self, points: np.ndarray, colors: np.ndarray):
+    def _flatten_pc(self, points: np.ndarray, colors: np.ndarray):
         """Flatten the point cloud data arrays for further processing.
 
         Parameters

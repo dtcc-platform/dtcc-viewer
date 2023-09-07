@@ -14,6 +14,8 @@ from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
+from dtcc_viewer.opengl_viewer.scene import Scene
+
 
 class Window:
     """OpenGL Rendering Window.
@@ -128,10 +130,7 @@ class Window:
 
     def render(
         self,
-        mesh_data_list: list[MeshData] = None,
-        mesh_data_obj: MeshData = None,
-        pc_data_list: list[PointCloudData] = None,
-        pc_data_obj: PointCloudData = None,
+        scene: Scene,
     ):
         """Render single or multiple MeshData and/or PointCloudData objects.
 
@@ -141,36 +140,21 @@ class Window:
 
         Parameters
         ----------
-        mesh_data_list : list[MeshData]
-            List of MeshData objects to render.
-        mesh_data : MeshData
-            Single instance of MeshData to be rendered
-        pc_data_list : list[PointCloudData]
-            List of PointCloudData objects to render.
-        pc_data: PointCloudData
-            Single instance of PointCloudData to be rendered
+            scene: Scene
+                The scene with objects to be rendered.
         """
 
         self.meshes = []
         self.point_clouds = []
+        scene.preprocess_drawing()
 
-        if mesh_data_list is None:
-            if mesh_data_obj is not None:
-                mesh_gl = MeshGL(mesh_data_obj)
-                self.meshes.append(mesh_gl)
-        else:
-            for mesh_data_obj in mesh_data_list:
-                mesh_gl = MeshGL(mesh_data_obj)
-                self.meshes.append(mesh_gl)
+        for mesh in scene.meshes:
+            mesh_gl = MeshGL(mesh)
+            self.meshes.append(mesh_gl)
 
-        if pc_data_list is None:
-            if pc_data_obj is not None:
-                pc_gl = PointCloudGL(pc_data_obj)
-                self.point_clouds.append(pc_gl)
-        else:
-            for pc_data_obj in pc_data_list:
-                pc_gl = PointCloudGL(pc_data_obj)
-                self.point_clouds.append(pc_gl)
+        for pc in scene.pointclouds:
+            pc_gl = PointCloudGL(pc)
+            self.point_clouds.append(pc_gl)
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)

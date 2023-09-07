@@ -18,6 +18,8 @@ from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 
+from dtcc_viewer.opengl_viewer.scene import Scene
+
 
 def window_gui_example():
     window = Window(1200, 800)
@@ -87,35 +89,31 @@ def mesh_point_cloud_example_3():
 
 def multi_geometry_example_1():
     window = Window(1200, 800)
+    scene = Scene()
 
     # Import meshes to be viewed
     mesh_a = meshes.load_mesh("../../../data/models/CitySurfaceA.obj")
     mesh_b = meshes.load_mesh("../../../data/models/CitySurfaceB.obj")
-    mesh_data_a = mesh_a.vertices[:, 1]
-    mesh_data_b = mesh_b.vertices[:, 0]
-    meshes_imported = [mesh_a, mesh_b]
+    data_a = mesh_a.vertices[:, 1]
+    data_b = mesh_b.vertices[:, 0]
+
+    # Combine mesh and coloring data in a MeshData object and add to scene
+    md_a = MeshData("mesh A", mesh_a, data_a)
+    md_b = MeshData("mesh B", mesh_b, data_b)
+    scene.add_meshes([md_a, md_b])
 
     # Import point clodus to be viewed
     pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
     pc_b = pointcloud.load("../../../data/models/PointCloud_HQ_B.csv")
     pc_data_a = pc_a.points[:, 0]
     pc_data_b = pc_b.points[:, 1]
-    pcs_imported = [pc_a, pc_b]
 
-    # Calculate common recentering vector base of the bounding box of all combined vertices.
-    bb = calc_multi_geom_bb(meshes_imported, pcs_imported)
+    # Combine pc and coloring data in a PointCloudData object and add to scene
+    pcd_a = PointCloudData("pc A", pc_a, pc_data_a)
+    pcd_b = PointCloudData("pc B", pc_b, pc_data_b)
+    scene.add_pointclouds([pcd_a, pcd_b])
 
-    # Create mesh data classes that are structured for openggl calls
-    mesh_data_obj_a = MeshData("mesh A", mesh_a, mesh_data_a, bb)
-    mesh_data_obj_b = MeshData("mesh B", mesh_b, mesh_data_b, bb)
-    mhs = [mesh_data_obj_a, mesh_data_obj_b]
-
-    # Create point clode data classes that are structured for opengl calls
-    pc_data_obj_a = PointCloudData("pc A", pc_a, pc_data_a, bb_global=bb)
-    pc_data_obj_b = PointCloudData("pc B", pc_b, pc_data_b, bb_global=bb)
-    pcs = [pc_data_obj_a, pc_data_obj_b]
-
-    window.render(mesh_data_list=mhs, pc_data_list=pcs)
+    window.render(scene)
 
 
 def multi_geometry_example_2():
@@ -123,18 +121,14 @@ def multi_geometry_example_2():
     pc = pointcloud.load(filename_csv)
     all_pcs = split_pc_in_stripes(10, pc, Direction.x)
 
-    # Calculate common recentering vector base of the bounding box of all combined vertices.
-    bb = calc_multi_geom_bb(pc_list=all_pcs)
-
-    pcs = []
-    for i, pc_i in enumerate(all_pcs):
-        pc_data = pc_i.points[:, Direction.x]
-        pcs.append(
-            PointCloudData(name="pc" + str(i), pc=pc_i, pc_data=pc_data, bb_global=bb)
-        )
+    scene = Scene()
+    for i, pc in enumerate(all_pcs):
+        data = pc.points[:, Direction.x]
+        pcd = PointCloudData("pc" + str(i), pc, data)
+        scene.add_pointcloud(pcd)
 
     window = Window(1200, 800)
-    window.render(pc_data_list=pcs)
+    window.render(scene)
 
 
 def multi_geometry_example_3():
@@ -143,17 +137,14 @@ def multi_geometry_example_3():
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
     split_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.x)
 
-    # Calculate common recentering vector base of the bounding box of all combined vertices.
-    bb = calc_multi_geom_bb(mesh_list=split_meshes)
-
-    meshes = []
+    scene = Scene()
     for i, mesh in enumerate(split_meshes):
         data = mesh.vertices[:, Direction.x]
-        mesh_data_obj = MeshData("Mesh " + str(i), mesh, data, bb)
-        meshes.append(mesh_data_obj)
+        md = MeshData("Mesh " + str(i), mesh, data)
+        scene.add_mesh(md)
 
     window = Window(1200, 800)
-    window.render(mesh_data_list=meshes)
+    window.render(scene)
 
 
 def multi_geometry_example_4():
@@ -164,25 +155,20 @@ def multi_geometry_example_4():
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
     all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, face_mid_pts, Direction.y)
 
-    bb = calc_multi_geom_bb(all_meshes, all_pcs)
+    scene = Scene()
 
-    pcs = []
-    for i, pc_i in enumerate(all_pcs):
-        pc_data = pc_i.points[:, Direction.x]
-        pcs.append(
-            PointCloudData(name="pc " + str(i), pc=pc_i, pc_data=pc_data, bb_global=bb)
-        )
+    for i, pc in enumerate(all_pcs):
+        data = pc.points[:, Direction.x]
+        pcd = PointCloudData("pc " + str(i), pc, data)
+        scene.add_pointcloud(pcd)
 
-    mhs = []
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
-        print(i)
-        mhs.append(
-            MeshData(name="Mesh " + str(i), mesh=mesh, mesh_data=data, bb_global=bb)
-        )
+        md = MeshData("Mesh " + str(i), mesh, data)
+        scene.add_mesh(md)
 
     window = Window(1200, 800)
-    window.render(mesh_data_list=mhs, pc_data_list=pcs)
+    window.render(scene)
 
 
 if __name__ == "__main__":

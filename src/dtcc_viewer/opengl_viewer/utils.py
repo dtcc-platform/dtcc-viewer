@@ -144,41 +144,6 @@ def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     return bb
 
 
-def calc_multi_geom_bb(mesh_list: list[Mesh] = None, pc_list: list[PointCloud] = None):
-    """
-    Calculate a recentering vector for a list of meshes and point clouds.
-
-    Parameters
-    ----------
-    mesh_list : list of Mesh, optional
-        A list of Mesh objects representing meshes (default is None).
-    pc_list : list of PointCloud, optional
-        A list of PointCloud objects representing point clouds (default is None).
-
-    Returns
-    -------
-    numpy.ndarray
-        A numpy array representing the calculated recentering vector.
-    """
-
-    all_vertices = np.array([[0, 0, 0]])
-
-    if mesh_list:
-        for mesh in mesh_list:
-            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis=0)
-
-    if pc_list:
-        for pc in pc_list:
-            all_vertices = np.concatenate((all_vertices, pc.points), axis=0)
-
-    # Remove the [0,0,0] row that was added to enable concatenate.
-    all_vertices = np.delete(all_vertices, obj=0, axis=0)
-
-    bb = BoundingBox(all_vertices)
-
-    return bb
-
-
 def calc_blended_color(min, max, value):
     """
     Calculate a blended color based on input range and value.
