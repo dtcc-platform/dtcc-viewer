@@ -52,9 +52,18 @@ class BoundingBox:
     zdom: float
 
     mid_pt: np.ndarray
+    center_vec: np.ndarray
+    origin: np.ndarray
 
-    def __init__(self):
-        pass
+    def __init__(self, vertices: np.ndarray):
+        if np.shape(vertices)[1] == 3 or np.shape(vertices)[1] == 9:
+            self.calc_bounds(vertices)
+        elif len(np.shape(vertices)) == 1:
+            self.calc_bounds_flat(vertices)
+
+        self.origin = np.array([0, 0, 0])
+        self.calc_mid_point()
+        self.calc_center_vec()
 
     def calc_bounds(self, vertices: np.ndarray):
         self.xmin = vertices[:, 0].min()
@@ -63,6 +72,10 @@ class BoundingBox:
         self.ymax = vertices[:, 1].max()
         self.zmin = vertices[:, 2].min()
         self.zmax = vertices[:, 2].max()
+
+        self.xdom = self.xmax - self.xmin
+        self.ydom = self.ymax - self.ymin
+        self.zdom = self.zmax - self.zmin
 
         self.xdom = self.xmax - self.xmin
         self.ydom = self.ymax - self.ymin
@@ -86,8 +99,16 @@ class BoundingBox:
         z = (self.zmax + self.zmin) / 2.0
         self.mid_pt = np.array([x, y, z], dtype="float32")
 
+    def calc_center_vec(self):
+        self.center_vec = self.origin - self.mid_pt
+
     def print(self):
+        print("Bounds: ")
         print([self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax])
+        print("Mid point: ")
+        print(self.mid_pt)
+        print("Center vector: ")
+        print(self.center_vec)
 
 
 def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
@@ -118,18 +139,12 @@ def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     # Remove the [0,0,0] row that was added to enable concatenate.
     all_vertices = np.delete(all_vertices, obj=0, axis=0)
 
-    origin = np.array([0, 0, 0])
-    bb = BoundingBox()
-    bb.calc_bounds(all_vertices)
-    bb.calc_mid_point()
-    move_vec = origin - bb.mid_pt
+    bb = BoundingBox(all_vertices)
 
-    return move_vec, bb
+    return bb
 
 
-def calc_multi_geom_recenter_vector(
-    mesh_list: list[Mesh] = None, pc_list: list[PointCloud] = None
-):
+def calc_multi_geom_bb(mesh_list: list[Mesh] = None, pc_list: list[PointCloud] = None):
     """
     Calculate a recentering vector for a list of meshes and point clouds.
 
@@ -159,13 +174,9 @@ def calc_multi_geom_recenter_vector(
     # Remove the [0,0,0] row that was added to enable concatenate.
     all_vertices = np.delete(all_vertices, obj=0, axis=0)
 
-    origin = np.array([0, 0, 0])
-    bb = BoundingBox()
-    bb.calc_bounds(all_vertices)
-    bb.calc_mid_point()
-    move_vec = origin - bb.mid_pt
+    bb = BoundingBox(all_vertices)
 
-    return move_vec, bb
+    return bb
 
 
 def calc_blended_color(min, max, value):

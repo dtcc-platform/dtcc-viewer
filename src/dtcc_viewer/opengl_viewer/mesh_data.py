@@ -56,7 +56,6 @@ class MeshData:
         name: str,
         mesh: Mesh,
         mesh_data: np.ndarray = None,
-        recenter_vec: np.ndarray = None,
         bb_global: BoundingBox = None,
     ) -> None:
         """Initialize the MeshData object.
@@ -81,31 +80,13 @@ class MeshData:
         [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(
             mesh, self.color_by, self.mesh_colors
         )
-        self.vertices = self.move_mesh_to_origin_multi(self.vertices, recenter_vec)
-        self.bb_local = self.calculate_boundingbox(self.vertices)
+        self.vertices = self.move_mesh_to_origin_multi(self.vertices, self.bb_global)
+
+        self.bb_local = BoundingBox(self.vertices)
 
         [self.vertices, self.edge_indices, self.face_indices] = self.flatten_mesh(
             self.vertices, self.edge_indices, self.face_indices
         )
-
-    def calculate_boundingbox(self, vertices=np.ndarray):
-        """Calculate local bounding box.
-
-        Parameters
-        ----------
-        vertices : np.ndarray
-            Vertices for the mesh.
-
-        Returns
-        -------
-        BoundingBox
-            BoundingBox for the mesh local mesh instance.
-        """
-
-        bb_local = BoundingBox()
-        bb_local.calc_bounds(vertices)
-
-        return bb_local
 
     def generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
         """Generate mesh colors based on the provided data.
@@ -313,9 +294,7 @@ class MeshData:
 
         return vertices, mesh_avrg_pt
 
-    def move_mesh_to_origin_multi(
-        self, vertices: np.ndarray, recenter_vec: np.ndarray = None
-    ):
+    def move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox = None):
         """Move the mesh vertices to the origin using multiple recenter vectors.
 
         Parameters
@@ -331,8 +310,8 @@ class MeshData:
             Moved vertices array.
         """
         # [x, y, z, r, g, b, nx, ny ,nz]
-        if recenter_vec is not None:
-            recenter_vec = np.concatenate((recenter_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+        if bb is not None:
+            recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
             vertices += recenter_vec
 
         return vertices

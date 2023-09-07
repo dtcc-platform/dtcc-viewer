@@ -28,15 +28,15 @@ class PointCloudData:
     pc_avrg_pt: np.ndarray  # [1 x 3]
     pc_size: float
     name: str
-    bb_local: BoundingBox = None
-    bb_global: BoundingBox = None
+    bb_local: BoundingBox
+    bb_global: BoundingBox
 
     def __init__(
         self,
         name: str,
         pc: PointCloud,
-        pc_data: np.ndarray,
-        recenter_vec: np.ndarray,
+        pc_data: np.ndarray = None,
+        pc_colors: np.ndarray = None,
         bb_global: BoundingBox = None,
     ) -> None:
         """Initialize a PointCloudData object.
@@ -60,16 +60,12 @@ class PointCloudData:
         self.name = name
         self.pc_size = 0.2
         self.bb_global = bb_global
-        self.colors = self.generate_pc_colors(pc, pc_data)  # TODO: Move functions here
+        self.colors = self.generate_pc_colors(pc, pc_data)
         self.points = pc.points
-        self.points = self.move_pc_to_origin_multi(self.points, recenter_vec)
-        self.bb_local = self.calculate_boundingbox(self.points)
-        [self.points, self.colors] = self.flatten_pc(self.points, self.colors)
 
-    def calculate_boundingbox(self, points: np.ndarray):
-        bb = BoundingBox()
-        bb.calc_bounds(points)
-        return bb
+        self.points = self.move_pc_to_origin_multi(self.points, self.bb_global)
+        self.bb_local = BoundingBox(self.points)
+        [self.points, self.colors] = self.flatten_pc(self.points, self.colors)
 
     def generate_pc_colors(
         self, pc: PointCloud, pc_data: np.ndarray = None
@@ -145,9 +141,7 @@ class PointCloudData:
 
         return points, pc_avrg_pt
 
-    def move_pc_to_origin_multi(
-        self, points: np.ndarray, recenter_vec: np.ndarray = None
-    ):
+    def move_pc_to_origin_multi(self, points: np.ndarray, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors.
 
         Parameters
@@ -162,8 +156,8 @@ class PointCloudData:
         np.ndarray
             Moved point cloud data.
         """
-        if recenter_vec is not None:
-            points += recenter_vec
+        if bb is not None:
+            points += bb.center_vec
 
         return points
 
