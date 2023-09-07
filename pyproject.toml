@@ -34,10 +34,8 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-  "dtcc-model >= 0.7.5",
-  "dtcc-io >= 0.7.5",
-  #"dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  #"dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
+  "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
+  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
 ]
 
 [project.optional-dependencies]
