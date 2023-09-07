@@ -310,7 +310,6 @@ class MeshData:
             Moved vertices array.
         """
         # [x, y, z, r, g, b, nx, ny ,nz]
-        print(bb.center_vec)
         recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
         vertices += recenter_vec
 
