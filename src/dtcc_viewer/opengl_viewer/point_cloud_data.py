@@ -58,7 +58,8 @@ class PointCloudData:
 
         self.name = name
         self.pc_size = 0.2
-        self.colors = self._generate_pc_colors(pc, pc_data)
+        self.colors = self._generate_pc_colors(pc, pc_data=pc_data, pc_colors=pc_colors)
+        print(self.colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -68,7 +69,10 @@ class PointCloudData:
         [self.points, self.colors] = self._flatten_pc(self.points, self.colors)
 
     def _generate_pc_colors(
-        self, pc: PointCloud, pc_data: np.ndarray = None
+        self,
+        pc: PointCloud,
+        pc_data: np.ndarray = None,
+        pc_colors: np.ndarray = None,
     ) -> np.ndarray:
         """Generate colors for the point cloud based on the provided data.
 
@@ -85,6 +89,18 @@ class PointCloudData:
             Array of colors for the point cloud.
         """
         colors = []
+        n_points = len(pc.points)
+
+        if pc_colors is not None:
+            n_pc_colors = len(pc_colors)
+            if n_pc_colors == n_points:
+                colors = np.array(pc_colors)
+                return colors
+            else:
+                print(
+                    "WARNING: Point cloud colors provided does not match point count!"
+                )
+
         if pc_data is not None:
             if len(pc.points) == len(pc_data):
                 colors = calc_colors_rainbow(pc_data)

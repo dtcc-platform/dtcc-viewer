@@ -30,7 +30,6 @@ class Scene:
 
     def preprocess_drawing(self):
         self._calculate_bb()
-        self.bb.print()
 
         for mesh in self.meshes:
             mesh.preprocess_drawing(self.bb)
