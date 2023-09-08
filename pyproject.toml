@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.5"
+version = "0.7.8"
 name = "dtcc-viewer"
 description = "DTCC Viewer"
 readme = "README.md"
@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: C++",
+  "Programming Language :: C++",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [

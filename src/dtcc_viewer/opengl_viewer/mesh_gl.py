@@ -7,6 +7,7 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
+from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -153,17 +154,23 @@ class MeshGL:
     face_indices: np.ndarray  # [n_faces x 3] each row has three vertex indices
     edge_indices: np.ndarray  # [n_edges x 2] each row has
 
+    bb: np.ndarray  # Bounding box [xmin, xmax, ymin, ymax, zmin, zmax]
+    bb_local: BoundingBox
+    bb_global: BoundingBox
+
     shader_lines: int  # Shader program for the lines
     mloc_lines: int  # Uniform location for model matrix for lines
     vloc_lines: int  # Uniform location for view matrix for lines
     ploc_lines: int  # Uniform location for projection matrix for lines
     cb_loc_lines: int  # Uniform location for color_by variable for lines
+    cp_locs_lines: [int]  # Uniform locations for clip plane distance x,y,z
 
     shader_ambient: int  # Shader program for ambient mesh rendering
     mloc_ambient: int  # Uniform location for model matrix for ambient rendering
     ploc_ambient: int  # Uniform location for projection matrix for ambient rendering
     vloc_ambient: int  # Uniform location for view matrix for ambient rendering
     cb_loc_ambient: int  # Uniform location for color_by variable for ambient rendering
+    cp_locs_ambient: [int]  # Uniform locations for clip plane distance x,y,z
 
     shader_diffuse: int  # Shader program for diffuse mesh renderi
     mloc_diffuse: int  # Uniform location for model matrix for diffuse rendering
@@ -173,6 +180,7 @@ class MeshGL:
     lc_loc_diffuse: int  # Uniform location for light color for diffuse rendering
     lp_loc_diffuse: int  # Uniform location for light position for diffuse rendering
     vp_loc_diffuse: int  # Uniform location for view position for diffuse rendering
+    cp_locs_diffuse: [int]  # Uniform locations for clip plane distance x,y,z
 
     shader_shadows: int  # Shader program for rendering of diffuse mesh with shadow map
     mloc_shadows: int  # Uniform location for model matrix for diffuse shadow rendering
@@ -183,6 +191,7 @@ class MeshGL:
     lp_loc_shadows: int  # Uniform location for light position for diffuse shadow rendering
     vp_loc_shadows: int  # Uniform location for view position for diffuse shadow rendering
     lsm_loc_shadows: int  # Uniform location for light space matrix for diffuse shadow rendering
+    cp_locs_shadows: [int]  # Uniform locations for clip plane distance x,y,z
 
     shader_shadow_map: int  # Shader program for rendering of the shadow map to the frame buffer
     mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
@@ -215,6 +224,14 @@ class MeshGL:
         self.face_indices = mesh_data.face_indices
         self.edge_indices = mesh_data.edge_indices
 
+        self.cp_locs_lines = [0, 0, 0]
+        self.cp_locs_ambient = [0, 0, 0]
+        self.cp_locs_diffuse = [0, 0, 0]
+        self.cp_locs_shadows = [0, 0, 0]
+
+        self.bb_local = mesh_data.bb_local
+        self.bb_global = mesh_data.bb_global
+
         self._calc_model_scale()
         self._create_lines()
         self._create_triangels()
@@ -228,13 +245,13 @@ class MeshGL:
 
     def _calc_model_scale(self) -> None:
         """Calculate the model scale from vertex positions."""
-        xmin = self.vertices[0::3].min()
-        xmax = self.vertices[0::3].max()
-        ymin = self.vertices[1::3].min()
-        ymax = self.vertices[1::3].max()
 
-        xdom = xmax - xmin
-        ydom = ymax - ymin
+        xdom = self.bb_local.xdom
+        ydom = self.bb_local.ydom
+
+        if self.bb_global is not None:
+            xdom = self.bb_global.xdom
+            ydom = self.bb_global.ydom
 
         self.diameter_xy = math.sqrt(xdom * xdom + ydom * ydom)
         self.radius_xy = self.diameter_xy / 2.0
@@ -359,6 +376,10 @@ class MeshGL:
         self.ploc_lines = glGetUniformLocation(self.shader_lines, "project")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
 
+        self.cp_locs_lines[0] = glGetUniformLocation(self.shader_lines, "clip_x")
+        self.cp_locs_lines[1] = glGetUniformLocation(self.shader_lines, "clip_y")
+        self.cp_locs_lines[2] = glGetUniformLocation(self.shader_lines, "clip_z")
+
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
         self._bind_vao_triangels()
@@ -373,6 +394,9 @@ class MeshGL:
         self.vloc_ambient = glGetUniformLocation(self.shader_ambient, "view")
         self.ploc_ambient = glGetUniformLocation(self.shader_ambient, "project")
         self.cb_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_by")
+        self.cp_locs_ambient[0] = glGetUniformLocation(self.shader_ambient, "clip_x")
+        self.cp_locs_ambient[1] = glGetUniformLocation(self.shader_ambient, "clip_y")
+        self.cp_locs_ambient[2] = glGetUniformLocation(self.shader_ambient, "clip_z")
 
     def _create_shader_diffuse(self) -> None:
         """Create shader for diffuse shading."""
@@ -394,6 +418,10 @@ class MeshGL:
             self.shader_diffuse, "light_position"
         )
         self.vp_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "view_position")
+
+        self.cp_locs_diffuse[0] = glGetUniformLocation(self.shader_diffuse, "clip_x")
+        self.cp_locs_diffuse[1] = glGetUniformLocation(self.shader_diffuse, "clip_y")
+        self.cp_locs_diffuse[2] = glGetUniformLocation(self.shader_diffuse, "clip_z")
 
     def _create_shader_shadows(self) -> None:
         """Create shader for shading with shadows."""
@@ -418,6 +446,10 @@ class MeshGL:
             self.shader_shadows, "light_space_matrix"
         )
 
+        self.cp_locs_shadows[0] = glGetUniformLocation(self.shader_shadows, "clip_x")
+        self.cp_locs_shadows[1] = glGetUniformLocation(self.shader_shadows, "clip_y")
+        self.cp_locs_shadows[2] = glGetUniformLocation(self.shader_shadows, "clip_z")
+
     def _create_shader_shadow_map(self) -> None:
         """Create shader for rendering shadow map."""
         self.shader_shadow_map = compileProgram(
@@ -432,7 +464,7 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
-    def render_lines(self, interaction: Interaction) -> None:
+    def render_lines(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render wireframe lines of the mesh.
 
         Parameters
@@ -451,13 +483,15 @@ class MeshGL:
         glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_lines, 1, GL_FALSE, proj)
 
+        self.set_clipping_uniforms(gguip)
+
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_lines, color_by)
 
         self._lines_draw_call()
         self._unbind_shader()
 
-    def render_ambient(self, interaction: Interaction) -> None:
+    def render_ambient(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render the mesh with ambient shading.
 
         Parameters
@@ -475,13 +509,15 @@ class MeshGL:
         glUniformMatrix4fv(self.vloc_ambient, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_ambient, 1, GL_FALSE, proj)
 
+        self.set_clipping_uniforms(gguip)
+
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_ambient, color_by)
 
         self._triangles_draw_call()
         self._unbind_shader()
 
-    def render_diffuse(self, interaction: Interaction) -> None:
+    def render_diffuse(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render the mesh with diffuse shading.
 
         Parameters
@@ -500,6 +536,8 @@ class MeshGL:
         glUniformMatrix4fv(self.vloc_diffuse, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_diffuse, 1, GL_FALSE, proj)
 
+        self.set_clipping_uniforms(gguip)
+
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_diffuse, color_by)
 
@@ -513,7 +551,7 @@ class MeshGL:
         self._triangles_draw_call()
         self._unbind_shader()
 
-    def render_shadows(self, interaction: Interaction) -> None:
+    def render_shadows(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Generates a shadow map and renders the mesh with shadows by sampling that
         shadow map.
 
@@ -523,7 +561,7 @@ class MeshGL:
             The Interaction object containing camera and user interaction information.
         """
         self._render_shadow_map(interaction)
-        self._render_model_with_shadows(interaction)
+        self._render_model_with_shadows(interaction, gguip)
 
     def _render_shadow_map(self, interaction: Interaction) -> None:
         """Render a shadow map to the frame buffer.
@@ -564,7 +602,9 @@ class MeshGL:
 
         self._triangles_draw_call()
 
-    def _render_model_with_shadows(self, interaction: Interaction) -> None:
+    def _render_model_with_shadows(
+        self, interaction: Interaction, gguip: GuiParameters
+    ) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer.
 
         Parameters
@@ -585,6 +625,8 @@ class MeshGL:
         glUniformMatrix4fv(self.mloc_shadows, 1, GL_FALSE, move)
         glUniformMatrix4fv(self.ploc_shadows, 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.vloc_shadows, 1, GL_FALSE, view)
+
+        self.set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_diffuse, color_by)
@@ -676,3 +718,25 @@ class MeshGL:
         glUniform1i(cloc, color_by)
 
         pass
+
+    def set_clipping_uniforms(self, gguip: GuiParameters):
+        xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
+        ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
+        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+
+        if self.guip.mesh_shading == MeshShading.wireframe:
+            glUniform1f(self.cp_locs_lines[0], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.cp_locs_lines[1], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.cp_locs_lines[2], (zdom * gguip.clip_dist[2]))
+        elif self.guip.mesh_shading == MeshShading.shaded_ambient:
+            glUniform1f(self.cp_locs_ambient[0], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.cp_locs_ambient[1], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.cp_locs_ambient[2], (zdom * gguip.clip_dist[2]))
+        elif self.guip.mesh_shading == MeshShading.shaded_diffuse:
+            glUniform1f(self.cp_locs_diffuse[0], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.cp_locs_diffuse[1], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.cp_locs_diffuse[2], (zdom * gguip.clip_dist[2]))
+        elif self.guip.mesh_shading == MeshShading.shaded_shadows:
+            glUniform1f(self.cp_locs_shadows[0], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.cp_locs_shadows[1], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.cp_locs_shadows[2], (zdom * gguip.clip_dist[2]))

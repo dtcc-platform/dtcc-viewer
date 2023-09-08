@@ -9,14 +9,29 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
 uniform int color_by;
+uniform float clip_x;
+uniform float clip_y;
+uniform float clip_z;
 
 out vec3 v_frag_pos;
 out vec3 v_color;
 out vec3 v_normal;
 
 void main()
-{
-    gl_Position = project * view * model * vec4(a_position, 1.0);
+{	
+    vec4 clippingPlane1 = vec4(-1, 0, 0, clip_x);
+	vec4 clippingPlane2 = vec4(0, -1, 0, clip_y);
+	vec4 clippingPlane3 = vec4(0, 0, -1, clip_z);
+    
+    vec4 world_pos = model * vec4(a_position, 1.0);
+    
+    gl_ClipDistance[0] = dot(world_pos, clippingPlane1);
+    gl_ClipDistance[1] = dot(world_pos, clippingPlane2);
+    gl_ClipDistance[2] = dot(world_pos, clippingPlane3);
+
+    gl_Position = project * view * world_pos;
+
+    //gl_Position = project * view * model * vec4(a_position, 1.0);
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = a_normal;
 
@@ -38,7 +53,6 @@ in vec3 v_frag_pos;
 in vec3 v_color;
 in vec3 v_normal;
 
-uniform vec3 object_color;
 uniform vec3 light_color;
 uniform vec3 light_position;
 uniform vec3 view_position;
@@ -47,7 +61,7 @@ out vec4 out_frag_color;
 
 void main()
 {
-	float ambient_strength = 0.3;
+	float ambient_strength = 0.4;
 	vec3 ambient = ambient_strength * light_color;
 
 	vec3 norm = normalize(v_normal);

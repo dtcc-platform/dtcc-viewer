@@ -21,6 +21,96 @@ class ParticleColor(IntEnum):
     white = 2
 
 
+class UniformLocation:
+    move: int
+    view: int
+    proj: int
+    color_by: int
+    light_color: int  # Uniform location for light color for diffuse shadow rendering
+    light_position: int  # Uniform location for light position for diffuse shadow rendering
+    view_position: int  # Uniform location for view position for diffuse shadow rendering
+    light_space_matrix: int  # Uniform location for light space matrix for diffuse shadow rendering
+
+    def __init__():
+        move = None
+        view = None
+        proj = None
+
+        pass
+
+
+class BoundingBox:
+    xmin: float
+    xmax: float
+    ymin: float
+    ymax: float
+    zmin: float
+    zmax: float
+
+    xdom: float
+    ydom: float
+    zdom: float
+
+    mid_pt: np.ndarray
+    center_vec: np.ndarray
+    origin: np.ndarray
+
+    def __init__(self, vertices: np.ndarray):
+        if np.shape(vertices)[1] == 3 or np.shape(vertices)[1] == 9:
+            self.calc_bounds(vertices)
+        elif len(np.shape(vertices)) == 1:
+            self.calc_bounds_flat(vertices)
+
+        self.origin = np.array([0, 0, 0])
+        self.calc_mid_point()
+        self.calc_center_vec()
+
+    def calc_bounds(self, vertices: np.ndarray):
+        self.xmin = vertices[:, 0].min()
+        self.xmax = vertices[:, 0].max()
+        self.ymin = vertices[:, 1].min()
+        self.ymax = vertices[:, 1].max()
+        self.zmin = vertices[:, 2].min()
+        self.zmax = vertices[:, 2].max()
+
+        self.xdom = self.xmax - self.xmin
+        self.ydom = self.ymax - self.ymin
+        self.zdom = self.zmax - self.zmin
+
+        self.xdom = self.xmax - self.xmin
+        self.ydom = self.ymax - self.ymin
+        self.zdom = self.zmax - self.zmin
+
+    def calc_bounds_flat(self, vertices: np.ndarray):
+        self.xmin = vertices[0::3].min()
+        self.xmax = vertices[0::3].max()
+        self.ymin = vertices[1::3].min()
+        self.ymax = vertices[1::3].max()
+        self.zmin = vertices[2::3].min()
+        self.zmax = vertices[2::3].max()
+
+        self.xdom = self.xmax - self.xmin
+        self.ydom = self.ymax - self.ymin
+        self.zdom = self.zmax - self.zmin
+
+    def calc_mid_point(self):
+        x = (self.xmax + self.xmin) / 2.0
+        y = (self.ymax + self.ymin) / 2.0
+        z = (self.zmax + self.zmin) / 2.0
+        self.mid_pt = np.array([x, y, z], dtype="float32")
+
+    def calc_center_vec(self):
+        self.center_vec = self.origin - self.mid_pt
+
+    def print(self):
+        print("Bounds: ")
+        print([self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax])
+        print("Mid point: ")
+        print(self.mid_pt)
+        print("Center vector: ")
+        print(self.center_vec)
+
+
 def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     """
     Calculate a recentering vector based on mesh vertices and point cloud points.
@@ -49,66 +139,9 @@ def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     # Remove the [0,0,0] row that was added to enable concatenate.
     all_vertices = np.delete(all_vertices, obj=0, axis=0)
 
-    xmin = all_vertices[:, 0].min()
-    xmax = all_vertices[:, 0].max()
-    ymin = all_vertices[:, 1].min()
-    ymax = all_vertices[:, 1].max()
-    zmin = all_vertices[:, 2].min()
-    zmax = all_vertices[:, 2].max()
+    bb = BoundingBox(all_vertices)
 
-    mid_pt = np.array([(xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2])
-    origin = np.array([0, 0, 0])
-
-    move_vec = origin - mid_pt
-
-    return move_vec
-
-
-def calc_multi_geom_recenter_vector(
-    mesh_list: list[Mesh] = None, pc_list: list[PointCloud] = None
-):
-    """
-    Calculate a recentering vector for a list of meshes and point clouds.
-
-    Parameters
-    ----------
-    mesh_list : list of Mesh, optional
-        A list of Mesh objects representing meshes (default is None).
-    pc_list : list of PointCloud, optional
-        A list of PointCloud objects representing point clouds (default is None).
-
-    Returns
-    -------
-    numpy.ndarray
-        A numpy array representing the calculated recentering vector.
-    """
-
-    all_vertices = np.array([[0, 0, 0]])
-
-    if mesh_list:
-        for mesh in mesh_list:
-            all_vertices = np.concatenate((all_vertices, mesh.vertices), axis=0)
-
-    if pc_list:
-        for pc in pc_list:
-            all_vertices = np.concatenate((all_vertices, pc.points), axis=0)
-
-    # Remove the [0,0,0] row that was added to enable concatenate.
-    all_vertices = np.delete(all_vertices, obj=0, axis=0)
-
-    xmin = all_vertices[:, 0].min()
-    xmax = all_vertices[:, 0].max()
-    ymin = all_vertices[:, 1].min()
-    ymax = all_vertices[:, 1].max()
-    zmin = all_vertices[:, 2].min()
-    zmax = all_vertices[:, 2].max()
-
-    mid_pt = np.array([(xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2])
-    origin = np.array([0, 0, 0])
-
-    move_vec = origin - mid_pt
-
-    return move_vec
+    return bb
 
 
 def calc_blended_color(min, max, value):

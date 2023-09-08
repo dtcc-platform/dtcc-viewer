@@ -14,6 +14,8 @@ from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
+from dtcc_viewer.opengl_viewer.scene import Scene
+
 
 class Window:
     """OpenGL Rendering Window.
@@ -128,10 +130,7 @@ class Window:
 
     def render(
         self,
-        mesh_data_list: list[MeshData] = None,
-        mesh_data_obj: MeshData = None,
-        pc_data_list: list[PointCloudData] = None,
-        pc_data_obj: PointCloudData = None,
+        scene: Scene,
     ):
         """Render single or multiple MeshData and/or PointCloudData objects.
 
@@ -141,36 +140,21 @@ class Window:
 
         Parameters
         ----------
-        mesh_data_list : list[MeshData]
-            List of MeshData objects to render.
-        mesh_data : MeshData
-            Single instance of MeshData to be rendered
-        pc_data_list : list[PointCloudData]
-            List of PointCloudData objects to render.
-        pc_data: PointCloudData
-            Single instance of PointCloudData to be rendered
+            scene: Scene
+                The scene with objects to be rendered.
         """
 
         self.meshes = []
         self.point_clouds = []
+        scene.preprocess_drawing()
 
-        if mesh_data_list is None:
-            if mesh_data_obj is not None:
-                mesh_gl = MeshGL(mesh_data_obj)
-                self.meshes.append(mesh_gl)
-        else:
-            for mesh_data_obj in mesh_data_list:
-                mesh_gl = MeshGL(mesh_data_obj)
-                self.meshes.append(mesh_gl)
+        for mesh in scene.meshes:
+            mesh_gl = MeshGL(mesh)
+            self.meshes.append(mesh_gl)
 
-        if pc_data_list is None:
-            if pc_data_obj is not None:
-                pc_gl = PointCloudGL(pc_data_obj)
-                self.point_clouds.append(pc_gl)
-        else:
-            for pc_data_obj in pc_data_list:
-                pc_gl = PointCloudGL(pc_data_obj)
-                self.point_clouds.append(pc_gl)
+        for pc in scene.pointclouds:
+            pc_gl = PointCloudGL(pc)
+            self.point_clouds.append(pc_gl)
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
@@ -186,21 +170,23 @@ class Window:
                 self.guip.color[3],
             )
 
+            self._clipping_planes()
             self._render_point_clouds()
             self._render_meshes()
             self._fps_calculations()
 
             self.gui.init_draw(self.impl)
-            # add individual ui for each point cloud
-            for i, pc_data_obj in enumerate(self.point_clouds):
-                self.gui.draw_pc_gui(pc_data_obj.guip, i)
+            self.gui.draw_apperance_gui(self.guip)
+            self.gui.draw_separator()
+            # Add individual ui for each point cloud
+            for i, pcs in enumerate(self.point_clouds):
+                self.gui.draw_pc_gui(pcs.guip, i)
                 self.gui.draw_separator()
 
             for i, mesh in enumerate(self.meshes):
                 self.gui.draw_mesh_gui(mesh.guip, i)
                 self.gui.draw_separator()
 
-            self.gui.draw_apperance_gui(self.guip)
             self.gui.end_draw(self.impl)
 
             self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
@@ -217,13 +203,13 @@ class Window:
             mguip = mesh.guip
             if mguip.show:
                 if mguip.mesh_shading == MeshShading.wireframe:
-                    mesh.render_lines(self.interaction)
+                    mesh.render_lines(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_ambient:
-                    mesh.render_ambient(self.interaction)
+                    mesh.render_ambient(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_diffuse:
-                    mesh.render_diffuse(self.interaction)
+                    mesh.render_diffuse(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_shadows:
-                    mesh.render_shadows(self.interaction)
+                    mesh.render_shadows(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.
@@ -232,7 +218,7 @@ class Window:
         """
         for pc in self.point_clouds:
             if pc.guip.show:
-                pc.render(self.interaction)
+                pc.render(self.interaction, self.guip)
 
     def _fps_calculations(self, print_results=True):
         """Perform FPS calculations.
@@ -278,3 +264,19 @@ class Window:
         height = fb_size[1]
         glViewport(0, 0, width, height)
         self.interaction.update_window_size(width, height)
+
+    def _clipping_planes(self):
+        if self.guip.clip_bool[0]:
+            glEnable(GL_CLIP_DISTANCE0)
+        else:
+            glDisable(GL_CLIP_DISTANCE0)
+
+        if self.guip.clip_bool[1]:
+            glEnable(GL_CLIP_DISTANCE1)
+        else:
+            glDisable(GL_CLIP_DISTANCE1)
+
+        if self.guip.clip_bool[2]:
+            glEnable(GL_CLIP_DISTANCE2)
+        else:
+            glDisable(GL_CLIP_DISTANCE2)
