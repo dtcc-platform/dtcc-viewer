@@ -23,6 +23,7 @@ __all__ = [
     "MeshGL",
     "MeshData",
     "Interaction",
+    "Scene",
     "Gui",
     "GuiParameters",
     "GuiParametersMesh",
