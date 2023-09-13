@@ -59,7 +59,6 @@ class PointCloudData:
         self.name = name
         self.pc_size = 0.2
         self.colors = self._generate_pc_colors(pc, pc_data=pc_data, pc_colors=pc_colors)
-        print(self.colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):

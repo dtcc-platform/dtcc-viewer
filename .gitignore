@@ -1,5 +1,6 @@
 build/
 scratch/
+dtcc-demo-data/
 
 *.las
 *.csv

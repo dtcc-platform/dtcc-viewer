@@ -6,20 +6,20 @@ import numpy as np
 import trimesh
 
 from pprint import pp
+
 from dtcc_viewer import *
 from dtcc_viewer.colors import color_maps
 from typing import List, Iterable
 from dtcc_viewer import utils
 from dtcc_io import pointcloud
 from dtcc_io import meshes
-from dtcc_model import PointCloud
+from dtcc_io import city
 from dtcc_viewer.opengl_viewer.window import Window
+from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
-
-from dtcc_viewer.opengl_viewer.scene import Scene
 
 
 def window_gui_example():
@@ -198,11 +198,11 @@ if __name__ == "__main__":
     # pointcloud_example_3()
     # mesh_example_1()
     # mesh_example_2()
-    mesh_example_3()
+    # mesh_example_3()
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
-    # multi_geometry_example_4()
+    multi_geometry_example_4()
