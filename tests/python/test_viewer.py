@@ -1,28 +1,22 @@
 import numpy as np
-from dtcc_viewer import colors
-from dtcc_viewer.colors import color_maps
 from pprint import pp
 
+
 class TestViewer:
-
     def setup_method(self):
-
         pass
 
     def test_simple(self):
-
         pass
 
     def test_clamping(self):
-
         pass
 
     def test_muiltiple(self):
-
         pass
 
-if __name__ == '__main__':
 
+if __name__ == "__main__":
     test = TestViewer()
     test.setup_method()
     test.test_simple()
