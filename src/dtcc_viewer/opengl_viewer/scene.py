@@ -2,6 +2,7 @@ import numpy as np
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_model import Mesh
 
 
 class Scene:
@@ -12,6 +13,10 @@ class Scene:
     def __init__(self):
         self.meshes = []
         self.pointclouds = []
+
+    def add_mesh(self, name: str, mesh: Mesh, data: np.ndarray, colors: np.ndarray):
+        mesh_data = MeshData(name=name, mesh=mesh, data=data, colors=colors)
+        self.meshes.append(mesh_data)
 
     def add_mesh(self, mesh: MeshData):
         self.meshes.append(mesh)

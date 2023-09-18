@@ -35,8 +35,8 @@ class PointCloudData:
         self,
         name: str,
         pc: PointCloud,
-        pc_data: np.ndarray = None,
-        pc_colors: np.ndarray = None,
+        data: np.ndarray = None,
+        colors: np.ndarray = None,
     ) -> None:
         """Initialize a PointCloudData object.
 
@@ -46,7 +46,7 @@ class PointCloudData:
             Name of the point cloud data.
         pc : PointCloud
             The PointCloud object from which to generate data.
-        pc_data : np.ndarray
+        data : np.ndarray
             Additional data for color calculation.
         recenter_vec : np.ndarray
             Recentering vector for point cloud data.
@@ -58,7 +58,7 @@ class PointCloudData:
 
         self.name = name
         self.pc_size = 0.2
-        self.colors = self._generate_pc_colors(pc, pc_data=pc_data, pc_colors=pc_colors)
+        self.colors = self._generate_pc_colors(pc, pc_data=data, pc_colors=colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):

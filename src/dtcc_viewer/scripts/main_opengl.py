@@ -22,11 +22,6 @@ from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 
 
-def window_gui_example():
-    window = Window(1200, 800)
-    window.render_empty()
-
-
 def pointcloud_example_1():
     filename_csv = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(filename_csv)
@@ -192,7 +187,6 @@ def multi_geometry_example_4():
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
-    # window_gui_example()
     # pointcloud_example_1()
     # pointcloud_example_2()
     # pointcloud_example_3()

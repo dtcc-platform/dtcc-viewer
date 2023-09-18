@@ -20,8 +20,11 @@ class MeshData:
         The name of the mesh data.
     mesh : Mesh
         The underlying Mesh object from which to generate the mesh data.
-    mesh_data : np.ndarray, optional
+    data : np.ndarray, optional
         Additional mesh data for color calculation (default is None).
+    colors : np.ndarray, optional
+        Colors for vertices or faces (default is None).
+
     recenter_vec : np.ndarray, optional
         Vector for recentering the mesh (default is None).
 
@@ -55,8 +58,8 @@ class MeshData:
         self,
         name: str,
         mesh: Mesh,
-        mesh_data: np.ndarray = None,
-        mesh_colors: np.ndarray = None,
+        data: np.ndarray = None,
+        colors: np.ndarray = None,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -76,7 +79,7 @@ class MeshData:
         self.name = name
 
         [self.color_by, self.mesh_colors] = self._generate_mesh_colors(
-            mesh, mesh_data, mesh_colors
+            mesh, data, colors
         )
         [self.vertices, self.face_indices, self.edge_indices] = self._restructure_mesh(
             mesh, self.color_by, self.mesh_colors
