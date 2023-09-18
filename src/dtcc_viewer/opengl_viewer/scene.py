@@ -14,7 +14,9 @@ class Scene:
         self.meshes = []
         self.pointclouds = []
 
-    def add_mesh(self, name: str, mesh: Mesh, data: np.ndarray, colors: np.ndarray):
+    def add_mesh(
+        self, name: str, mesh: Mesh, data: np.ndarray = None, colors: np.ndarray = None
+    ):
         mesh_data = MeshData(name=name, mesh=mesh, data=data, colors=colors)
         self.meshes.append(mesh_data)
 
