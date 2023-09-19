@@ -20,10 +20,10 @@ class Scene:
         mesh_data = MeshData(name=name, mesh=mesh, data=data, colors=colors)
         self.meshes.append(mesh_data)
 
-    def add_mesh(self, mesh: MeshData):
+    def add_mesh_data(self, mesh: MeshData):
         self.meshes.append(mesh)
 
-    def add_meshes(self, meshes: list[MeshData]):
+    def add_mesh_data_list(self, meshes: list[MeshData]):
         self.meshes.extend(meshes)
 
     def add_pointcloud(
@@ -36,13 +36,10 @@ class Scene:
         pc_data = PointCloudData(name=name, pc=pc, data=data, colors=colors)
         self.pointclouds.append(pc_data)
 
-    def add_pointcloud(self, pc: PointCloudData):
+    def add_pointcloud_data(self, pc: PointCloudData):
         self.pointclouds.append(pc)
 
-    def add_pointclouds(self, pcs: list[PointCloudData]):
-        self.pointclouds.extend(pcs)
-
-    def add_pcs(self, pcs: list[PointCloudData]):
+    def add_pointcloud_data_list(self, pcs: list[PointCloudData]):
         self.pointclouds.extend(pcs)
 
     def preprocess_drawing(self):

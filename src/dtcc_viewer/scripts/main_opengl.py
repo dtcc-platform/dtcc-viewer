@@ -113,7 +113,7 @@ def multi_geometry_example_1():
     # Combine mesh and coloring data in a MeshData object and add to scene
     md_a = MeshData("mesh A", mesh_a, data_a)
     md_b = MeshData("mesh B", mesh_b, data_b)
-    scene.add_meshes([md_a, md_b])
+    scene.add_mesh_data_list([md_a, md_b])
 
     # Import point clodus to be viewed
     pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
@@ -124,7 +124,7 @@ def multi_geometry_example_1():
     # Combine pc and coloring data in a PointCloudData object and add to scene
     pcd_a = PointCloudData("pc A", pc_a, pc_data_a)
     pcd_b = PointCloudData("pc B", pc_b, pc_data_b)
-    scene.add_pointclouds([pcd_a, pcd_b])
+    scene.add_pointcloud_data_list([pcd_a, pcd_b])
 
     window.render(scene)
 
@@ -138,7 +138,7 @@ def multi_geometry_example_2():
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
         pcd = PointCloudData("pc" + str(i), pc, data)
-        scene.add_pointcloud(pcd)
+        scene.add_pointcloud_data(pcd)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -154,7 +154,7 @@ def multi_geometry_example_3():
     for i, mesh in enumerate(split_meshes):
         data = mesh.vertices[:, Direction.x]
         md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh(md)
+        scene.add_mesh_data(md)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -173,12 +173,12 @@ def multi_geometry_example_4():
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
         pcd = PointCloudData("pc " + str(i), pc, data)
-        scene.add_pointcloud(pcd)
+        scene.add_pointcloud_data(pcd)
 
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
         md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh(md)
+        scene.add_mesh_data(md)
 
     window = Window(1200, 800)
     window.render(scene)
