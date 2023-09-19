@@ -36,6 +36,7 @@ dependencies = [
   "imgui",
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
+  "dtcc-common@git+https://github.com/dtcc-platform/dtcc-common.git@develop",
 ]
 
 [project.optional-dependencies]
