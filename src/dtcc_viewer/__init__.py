@@ -18,7 +18,5 @@ __all__ = [
     "view_city",
     "view_mesh",
     "Window",
-    "PointCloudData",
-    "MeshData",
     "Scene",
 ]
