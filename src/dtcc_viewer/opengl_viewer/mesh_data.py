@@ -139,13 +139,13 @@ class MeshData:
                 return color_by, colors
             else:
                 print(
-                    "WARNING: Mesh colors are provided but does not match vertex or face count!"
+                    "WARNING: Provided mesh colors does not match vertex or face count for mesh : "
+                    + self.name
                 )
 
-        if data is not None:
-            n_data = len(data)
-
-        if data is None:
+        # No colors provided and no data for color calculations. Colors are retrieved
+        # from the mesh either base on vertices or face colors.
+        if mesh_colors is None and data is None:
             if n_vertex_colors == n_vertices:
                 color_by = ColorBy.vertex_colors
                 colors = self._normalise_colors(mesh.vertex_colors)
@@ -154,12 +154,13 @@ class MeshData:
                 colors = self._normalise_colors(mesh.face_colors)
             else:
                 print(
-                    "WARNING: Provided color data for mesh does not match vertex or face count!"
+                    "INFO: No valid colors found embeded in mesh object with name: "
+                    + self.name
                 )
-                print(
-                    "Default colors are used instead -> i.e. coloring per vertex z-value"
-                )
+                print("Coloring per vertex z-value")
+        # If there is data for coloring
         else:
+            n_data = len(data)
             if n_data == n_vertices:  # Generate colors base on provided vertex data
                 color_by = ColorBy.vertex_data
                 colors = calc_colors_rainbow(data)
@@ -168,7 +169,8 @@ class MeshData:
                 colors = calc_colors_rainbow(data)
             else:
                 print(
-                    "WARNING: Provided color data for mesh does not match vertex of face count!"
+                    "WARNING: Provided color data for mesh does not match vertex of face count for mesh with name: "
+                    + self.name
                 )
                 print(
                     "Default colors are used instead -> i.e. coloring per vertex z-value"

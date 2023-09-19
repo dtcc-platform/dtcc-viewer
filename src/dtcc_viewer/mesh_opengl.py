@@ -41,11 +41,11 @@ def view(
 
     if pc is None:
         mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
-        scene.add_mesh(mesh)
+        scene.add_mesh_data(mesh)
         window.render(scene)
     else:
         mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
         pc = PointCloudData("Point cloud", pc, pc_data, pc_colors)
-        scene.add_mesh(mesh)
-        scene.add_pointcloud(pc)
+        scene.add_mesh_data(mesh)
+        scene.add_pointcloud_data(pc)
         window.render(scene)
