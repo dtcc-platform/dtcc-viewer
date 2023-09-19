@@ -1,7 +1,9 @@
 import numpy as np
 from dtcc_model import Mesh
+from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
+from dtcc_viewer.opengl_viewer.utils import BoundingBox
 
 
 class MeshData:
@@ -18,8 +20,11 @@ class MeshData:
         The name of the mesh data.
     mesh : Mesh
         The underlying Mesh object from which to generate the mesh data.
-    mesh_data : np.ndarray, optional
+    data : np.ndarray, optional
         Additional mesh data for color calculation (default is None).
+    colors : np.ndarray, optional
+        Colors for vertices or faces (default is None).
+
     recenter_vec : np.ndarray, optional
         Vector for recentering the mesh (default is None).
 
@@ -46,13 +51,15 @@ class MeshData:
     face_indices: np.ndarray
     edge_indices: np.ndarray
     name: str
+    bb_local: BoundingBox
+    bb_global: BoundingBox = None
 
     def __init__(
         self,
         name: str,
         mesh: Mesh,
-        mesh_data: np.ndarray = None,
-        recenter_vec: np.ndarray = None,
+        data: np.ndarray = None,
+        colors: np.ndarray = None,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -66,18 +73,30 @@ class MeshData:
             Additional mesh data for color calculation (default is None).
         recenter_vec : np.ndarray, optional
             Vector for recentering the mesh (default is None).
+        bb_global : BoundingBox, optional
+            A bounding box for all geometry in a collection (default is None).
         """
         self.name = name
-        [self.color_by, self.mesh_colors] = self.generate_mesh_colors(mesh, mesh_data)
-        [self.vertices, self.face_indices, self.edge_indices] = self.restructure_mesh(
+
+        [self.color_by, self.mesh_colors] = self._generate_mesh_colors(
+            mesh, data, colors
+        )
+        [self.vertices, self.face_indices, self.edge_indices] = self._restructure_mesh(
             mesh, self.color_by, self.mesh_colors
         )
-        self.vertices = self.move_mesh_to_origin_multi(self.vertices, recenter_vec)
-        [self.vertices, self.edge_indices, self.face_indices] = self.flatten_mesh(
+
+    def preprocess_drawing(self, bb_global: BoundingBox):
+        self.bb_global = bb_global
+        self.vertices = self._move_mesh_to_origin_multi(self.vertices, self.bb_global)
+        self.bb_local = BoundingBox(self.vertices)
+
+        [self.vertices, self.edge_indices, self.face_indices] = self._flatten_mesh(
             self.vertices, self.edge_indices, self.face_indices
         )
 
-    def generate_mesh_colors(self, mesh: Mesh, data: np.ndarray = None):
+    def _generate_mesh_colors(
+        self, mesh: Mesh, data: np.ndarray = None, mesh_colors: np.ndarray = None
+    ):
         """Generate mesh colors based on the provided data.
 
         Parameters
@@ -101,25 +120,41 @@ class MeshData:
         n_faces = len(mesh.faces)
         n_data = 0
 
-        if data is not None:
-            n_data = len(data)
-
         # If no vertex of face colors are appended to the mesh and no data is provided
         # the mesh is colored by vertex height.
         color_by = ColorBy.vertex_height
         default_data = mesh.vertices[:, 2]
         colors = calc_colors_rainbow(default_data)
 
+        # First priority is coloring by provided color array.
+        if mesh_colors is not None:
+            n_mesh_colors = len(mesh_colors)
+            colors = self._normalise_colors(mesh_colors)
+            colors = np.array(colors)
+            if n_mesh_colors == n_vertices:
+                color_by = ColorBy.vertex_colors
+                return color_by, colors
+            elif n_mesh_colors == n_faces:
+                color_by = ColorBy.face_colors
+                return color_by, colors
+            else:
+                print(
+                    "WARNING: Mesh colors are provided but does not match vertex or face count!"
+                )
+
+        if data is not None:
+            n_data = len(data)
+
         if data is None:
             if n_vertex_colors == n_vertices:
                 color_by = ColorBy.vertex_colors
-                colors = self.normalise_colors(mesh.vertex_colors)
+                colors = self._normalise_colors(mesh.vertex_colors)
             elif n_face_colors == n_faces:
                 color_by = ColorBy.face_colors
-                colors = self.normalise_colors(mesh.face_colors)
+                colors = self._normalise_colors(mesh.face_colors)
             else:
                 print(
-                    "WARNING: Provided color data for mesh does not match vertex of face count!"
+                    "WARNING: Provided color data for mesh does not match vertex or face count!"
                 )
                 print(
                     "Default colors are used instead -> i.e. coloring per vertex z-value"
@@ -141,7 +176,7 @@ class MeshData:
 
         return color_by, np.array(colors)
 
-    def normalise_colors(self, colors: np.ndarray):
+    def _normalise_colors(self, colors: np.ndarray):
         """Normalize colors to the range [0, 1] if necessary.
 
         Parameters
@@ -160,7 +195,7 @@ class MeshData:
             colors /= 255.0
         return colors
 
-    def restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
+    def _restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
         """Restructure the mesh data for OpenGL rendering.
 
         Parameters
@@ -192,6 +227,8 @@ class MeshData:
         c1 = white
         c2 = white
         c3 = white
+
+        # print(color_by)
 
         for face_index, face in enumerate(mesh.faces):
             v1 = mesh.vertices[face[0], :]
@@ -235,79 +272,14 @@ class MeshData:
 
         return np.array(new_vertices), np.array(new_faces), np.array(new_edges)
 
-    def move_mesh_to_origin(
-        self,
-        vertices: np.ndarray,
-        pc_avrg_pt: np.ndarray = None,
-    ):
-        """Move the mesh vertices so that the model i centered around the origin [x = 0, y = 0, z = 0].
-
-        Parameters
-        ----------
-        vertices : np.ndarray
-            Array of mesh vertices.
-        pc_avrg_pt : np.ndarray, optional
-            Average point for recentering (default is None).
-        multi_recenter_vec : np.ndarray, optional
-            Vector for multi-point recentering (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Moved vertices array.
-        np.ndarray or None
-            Average point of the mesh after recentering.
-        """
+    def _move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox):
         # [x, y, z, r, g, b, nx, ny ,nz]
-        origin = np.array([0.0, 0.0, 0.0])
-        origin_extended = np.array([origin[0], origin[1], origin[2], 0, 0, 0, 0, 0, 0])
-        move_vec = 0
-        mesh_avrg_pt = None
-
-        if pc_avrg_pt is None:
-            x_avrg = (vertices[:, 0].min() + vertices[:, 0].max()) / 2.0
-            y_avrg = (vertices[:, 1].min() + vertices[:, 1].max()) / 2.0
-            z_avrg = (vertices[:, 2].min() + vertices[:, 2].max()) / 2.0
-            mesh_avrg_pt = np.array([x_avrg, y_avrg, z_avrg])
-            mesh_avrg_pt_extended = np.concatenate(
-                (mesh_avrg_pt, [0, 0, 0, 0, 0, 0]), axis=0
-            )
-            move_vec = origin_extended - mesh_avrg_pt_extended
-        else:
-            pc_avrg_pt_extended = np.concatenate(
-                (pc_avrg_pt, [0, 0, 0, 0, 0, 0]), axis=0
-            )
-            move_vec = origin_extended - pc_avrg_pt_extended
-
-        vertices += move_vec
-
-        return vertices, mesh_avrg_pt
-
-    def move_mesh_to_origin_multi(
-        self, vertices: np.ndarray, recenter_vec: np.ndarray = None
-    ):
-        """Move the mesh vertices to the origin using multiple recenter vectors.
-
-        Parameters
-        ----------
-        vertices : np.ndarray
-            Array of mesh vertices.
-        recenter_vec : np.ndarray, optional
-            Recenter vector for each vertex (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Moved vertices array.
-        """
-        # [x, y, z, r, g, b, nx, ny ,nz]
-        if recenter_vec is not None:
-            recenter_vec = np.concatenate((recenter_vec, [0, 0, 0, 0, 0, 0]), axis=0)
-            vertices += recenter_vec
+        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+        vertices += recenter_vec
 
         return vertices
 
-    def flatten_mesh(
+    def _flatten_mesh(
         self, vertices: np.ndarray, face_indices: np.ndarray, edge_indices: np.ndarray
     ):
         """Flatten the mesh data arrays for OpenGL compatibility.

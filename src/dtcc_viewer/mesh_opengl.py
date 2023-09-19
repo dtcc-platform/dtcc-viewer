@@ -6,13 +6,16 @@ from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.scene import Scene
 
 
 def view(
     mesh: Mesh,
     mesh_data: np.ndarray = None,
+    mesh_colors: np.ndarray = None,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
+    pc_colors: np.ndarray = None,
 ):
     """View a mesh in 3D with a GLFW window. This function is added to the Mesh class in dtcc_model.
 
@@ -22,20 +25,27 @@ def view(
         Mesh to be viewed (self).
     mesh_data : np.ndarray
         Data for coloring of mesh. Data should match vertex or face count.
+    mesh_colors : np.ndarray
+        Mesh colors [[r,g,b],[r,g,b]..]. Colors should match vertex or face count.
     pc : PointCloud
         Point cloud to be viewed togheter with the mesh.
-    p_data: np.ndarray
+    pc_data: np.ndarray
         Data for coloring of point cloud.
+    pc_colors : np.ndarray
+        Points colors [[r,g,b],[r,g,b]..]. Colors should number of points in pc.
+
     """
 
     window = Window(1200, 800)
+    scene = Scene()
 
     if pc is None:
-        recenter_vec = calc_recenter_vector(mesh=mesh)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec)
-        window.render(mesh_data_obj=mesh_data_obj)
+        mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
+        scene.add_mesh(mesh)
+        window.render(scene)
     else:
-        recenter_vec = calc_recenter_vector(mesh, pc)
-        mesh_data_obj = MeshData("Mesh View", mesh, mesh_data, recenter_vec)
-        pc_data_obj = PointCloudData("Point Cloud View", pc, pc_data, recenter_vec, 0.2)
-        window.render(mesh_data_obj=mesh_data_obj, pc_data_obj=pc_data_obj)
+        mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
+        pc = PointCloudData("Point cloud", pc, pc_data, pc_colors)
+        scene.add_mesh(mesh)
+        scene.add_pointcloud(pc)
+        window.render(scene)

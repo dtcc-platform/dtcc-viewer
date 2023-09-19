@@ -10,7 +10,8 @@ from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
     vertex_shader_pc,
     fragment_shader_pc,
 )
-from dtcc_viewer.opengl_viewer.gui import GuiParametersPC
+from dtcc_viewer.opengl_viewer.gui import GuiParametersPC, GuiParameters
+from dtcc_viewer.opengl_viewer.utils import BoundingBox
 
 
 class PointCloudGL:
@@ -47,6 +48,15 @@ class PointCloudGL:
     upper_count = 20000000  # More then 20M particles -> lowest resolution
     low_sides = 5  # Edge count for lowest resolution for discs
     upper_sides = 15  # Edge count for highest resolution for discs
+    bb_local: BoundingBox
+    bb_global: BoundingBox
+
+    model_loc: int  # Uniform location for model matrix
+    project_loc: int  # Uniform location for projection matrix
+    view_loc: int  # Uniform location for view matrix
+    color_by_loc: int  # Uniform location for color by variable
+    scale_loc: int  # Uniform location for scaling parameter
+    cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
 
     def __init__(self, pc_data_obj: PointCloudData):
         """Initialize the PointCloudGL object and set up rendering.
@@ -57,13 +67,17 @@ class PointCloudGL:
             Instance of the PointCloudData calss with points, colors and pc size.
         """
 
+        self.cp_locs = [0, 0, 0]
+
         self.guip = GuiParametersPC(pc_data_obj.name)
         n_points = len(pc_data_obj.points) / 3
+        self.bb_local = pc_data_obj.bb_local
+        self.bb_global = pc_data_obj.bb_global
         self._create_single_instance(pc_data_obj.pc_size, n_points)
         self._create_multiple_instances(pc_data_obj.points, pc_data_obj.colors)
         self._create_shader()
 
-    def render(self, interaction: Interaction) -> None:
+    def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render the point cloud using provided interaction parameters.
 
         Parameters
@@ -84,6 +98,8 @@ class PointCloudGL:
             interaction.camera.camera_pos, interaction.camera.camera_target
         )
         glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
+
+        self._set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_pc)
         glUniform1i(self.color_by_loc, color_by)
@@ -211,6 +227,10 @@ class PointCloudGL:
         self.view_loc = glGetUniformLocation(self.shader, "view")
         self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
         self.scale_loc = glGetUniformLocation(self.shader, "scale")
+
+        self.cp_locs[0] = glGetUniformLocation(self.shader, "clip_x")
+        self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")
+        self.cp_locs[2] = glGetUniformLocation(self.shader, "clip_z")
 
     def _bind_shader(self) -> None:
         """Bind the shader program."""
@@ -381,3 +401,12 @@ class PointCloudGL:
             n_sides = round(n_sides, 0)
 
         return int(n_sides)
+
+    def _set_clipping_uniforms(self, gguip: GuiParameters):
+        xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
+        ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
+        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+
+        glUniform1f(self.cp_locs[0], (xdom * gguip.clip_dist[0]))
+        glUniform1f(self.cp_locs[1], (ydom * gguip.clip_dist[1]))
+        glUniform1f(self.cp_locs[2], (zdom * gguip.clip_dist[2]))
