@@ -11,8 +11,8 @@ from dtcc_viewer.opengl_viewer.scene import Scene
 
 def view(
     mesh: Mesh,
-    mesh_data: np.ndarray = None,
-    mesh_colors: np.ndarray = None,
+    data: np.ndarray = None,
+    colors: np.ndarray = None,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
     pc_colors: np.ndarray = None,
@@ -23,9 +23,9 @@ def view(
     ----------
     mesh : Mesh
         Mesh to be viewed (self).
-    mesh_data : np.ndarray
+    data : np.ndarray
         Data for coloring of mesh. Data should match vertex or face count.
-    mesh_colors : np.ndarray
+    colors : np.ndarray
         Mesh colors [[r,g,b],[r,g,b]..]. Colors should match vertex or face count.
     pc : PointCloud
         Point cloud to be viewed togheter with the mesh.
@@ -40,11 +40,11 @@ def view(
     scene = Scene()
 
     if pc is None:
-        mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
+        mesh = MeshData("Mesh", mesh, data, colors)
         scene.add_mesh_data(mesh)
         window.render(scene)
     else:
-        mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors)
+        mesh = MeshData("Mesh", mesh, data, colors)
         pc = PointCloudData("Point cloud", pc, pc_data, pc_colors)
         scene.add_mesh_data(mesh)
         scene.add_pointcloud_data(pc)
