@@ -34,14 +34,9 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-<<<<<<< HEAD
-  "dtcc-model >= 0.7.17",
-  "dtcc-io >= 0.7.17",
-=======
   "dtcc-model >= 0.7.21",
   "dtcc-io >= 0.7.21",
   "dtcc-common >= 0.7.21",
->>>>>>> develop
 ]
 
 [project.optional-dependencies]
