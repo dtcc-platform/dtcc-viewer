@@ -54,7 +54,7 @@ class TestOpenGLViewer:
         mesh = Mesh(vertices=self.vertices, faces=self.faces)
         bb = BoundingBox(mesh.vertices)
         data = mesh.vertices[:, 0]
-        mesh_data_obj = MeshData("name", mesh=mesh, mesh_data=data)
+        mesh_data_obj = MeshData("name", mesh=mesh, data=data)
         mesh_data_obj.preprocess_drawing(bb)
         assert len(self.vertices_gl.flatten()) == len(mesh_data_obj.vertices)
 
@@ -63,7 +63,7 @@ class TestOpenGLViewer:
         mesh = meshes.load_mesh("data/models/cube.obj")
         bb = BoundingBox(mesh.vertices)
         data = mesh.vertices[:, 0]
-        mesh_data_obj = MeshData("name", mesh=mesh, mesh_data=data)
+        mesh_data_obj = MeshData("name", mesh=mesh, data=data)
         mesh_data_obj.preprocess_drawing(bb)
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)

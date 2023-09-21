@@ -5,6 +5,7 @@ from .point_cloud_gl import PointCloudGL
 from .mesh_gl import MeshGL
 from .mesh_data import MeshData
 from .interaction import Interaction
+from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC, GuiParameters
 
 
@@ -16,6 +17,7 @@ __all__ = [
     "MeshGL",
     "MeshData",
     "Interaction",
+    "Scene",
     "Gui",
     "GuiParameters",
     "GuiParametersMesh",

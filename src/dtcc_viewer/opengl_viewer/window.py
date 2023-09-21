@@ -171,18 +171,16 @@ class Window:
             )
 
             self._clipping_planes()
-
             self._render_point_clouds()
             self._render_meshes()
             self._fps_calculations()
 
             self.gui.init_draw(self.impl)
-            # Draw common ui for all viewing
             self.gui.draw_apperance_gui(self.guip)
             self.gui.draw_separator()
             # Add individual ui for each point cloud
-            for i, pc_data_obj in enumerate(self.point_clouds):
-                self.gui.draw_pc_gui(pc_data_obj.guip, i)
+            for i, pcs in enumerate(self.point_clouds):
+                self.gui.draw_pc_gui(pcs.guip, i)
                 self.gui.draw_separator()
 
             for i, mesh in enumerate(self.meshes):

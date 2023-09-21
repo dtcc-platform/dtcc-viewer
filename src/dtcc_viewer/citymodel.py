@@ -60,6 +60,7 @@ def view(
 ):
     tmp_geojson = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False)
     outpath = Path(tmp_geojson.name)
+    tmp_geojson.close()
     cm.save(outpath)
     bounds = io.city.building_bounds(outpath)
     data_mid = bounds.center()

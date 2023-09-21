@@ -102,7 +102,7 @@ float shadow_calc(float dot_light_normal)
 
 void main()
 {   
-	float ambient_strength = 0.2;
+	float ambient_strength = 0.4;
 	vec3 ambient = ambient_strength * light_color;
 
 	vec3 norm = normalize(v_normal);

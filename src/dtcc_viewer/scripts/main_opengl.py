@@ -6,24 +6,20 @@ import numpy as np
 import trimesh
 
 from pprint import pp
+
 from dtcc_viewer import *
 from dtcc_viewer.colors import color_maps
 from typing import List, Iterable
 from dtcc_viewer import utils
 from dtcc_io import pointcloud
 from dtcc_io import meshes
+from dtcc_io import city
 from dtcc_viewer.opengl_viewer.window import Window
+from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
-
-from dtcc_viewer.opengl_viewer.scene import Scene
-
-
-def window_gui_example():
-    window = Window(1200, 800)
-    window.render_empty()
 
 
 def pointcloud_example_1():
@@ -33,56 +29,73 @@ def pointcloud_example_1():
 
 
 def pointcloud_example_2():
-    filename_las = "../../../data/models/PointCloud.las"
-    pc = pointcloud.load(filename_las)
-    color_data = pc.points[:, 0]
-    pc.view(pc_data=color_data)
+    file = "../../../../dtcc-demo-data/helsingborg-residential-2022/pointcloud.las"
+    pc = pointcloud.load(file)
+
+    color_data = pc.points[:, 2]
+    color_data = abs(pc.points[:, 2]) / pc.points[:, 2].max()
+    colors = np.zeros((len(pc.points), 3))
+    colors[:, 0] = color_data
+    colors[:, 2] = color_data
+    pc.view(pc_colors=colors)
+
+
+def pointcloud_example_3():
+    file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
+    pc = pointcloud.load(file)
+    color_data = pc.points[:, 2]
+    color_data = abs(pc.points[:, 2]) / pc.points[:, 2].max()
+    colors = np.zeros((len(pc.points), 3))
+    colors[:, 0] = color_data
+    colors[:, 2] = color_data
+    pc.view(pc_colors=colors)
 
 
 def mesh_example_1():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    mesh = meshes.load_mesh(filename_obj)
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
     mesh.view()
 
 
 def mesh_example_2():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    mesh = meshes.load_mesh(filename_obj)
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     color_data = face_mid_pts[:, 2]
     mesh.view(mesh_data=color_data)
 
 
 def mesh_example_3():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    mesh = meshes.load_mesh(filename_obj)
-    color_data = mesh.vertices[:, 2]
-    # color_data = color_data * color_data
-    mesh.view(mesh_data=color_data)
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
+    color_data = abs(mesh.vertices[:, 2] / mesh.vertices[:, 2].max())
+    colors = np.zeros((len(mesh.vertices), 3))
+    colors[:, 0] = color_data
+    mesh.view(mesh_colors=colors)
 
 
 def mesh_point_cloud_example_1():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    filename_csv = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(filename_csv)
-    mesh = meshes.load_mesh(filename_obj)
+    file_1 = "../../../data/models/CitySurface.obj"
+    file_2 = "../../../data/models/PointCloud_HQ.csv"
+    pc = pointcloud.load(file_2)
+    mesh = meshes.load_mesh(file_1)
     mesh.view(pc=pc)
 
 
 def mesh_point_cloud_example_2():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    filename_csv = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(filename_csv)
-    mesh = meshes.load_mesh(filename_obj)
+    file_1 = "../../../data/models/CitySurface.obj"
+    file_2 = "../../../data/models/PointCloud_HQ.csv"
+    pc = pointcloud.load(file_2)
+    mesh = meshes.load_mesh(file_1)
     pc.view(mesh=mesh)
 
 
 def mesh_point_cloud_example_3():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    filename_csv = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(filename_csv)
+    file_1 = "../../../data/models/CitySurface.obj"
+    file_2 = "../../../data/models/PointCloud_HQ.csv"
+    pc = pointcloud.load(file_2)
     pc_data = pc.points[:, 0]
-    mesh = meshes.load_mesh(filename_obj)
+    mesh = meshes.load_mesh(file_1)
     mesh_data = mesh.vertices[:, 1]
     pc.view(mesh=mesh, pc_data=pc_data, mesh_data=mesh_data)
 
@@ -100,7 +113,7 @@ def multi_geometry_example_1():
     # Combine mesh and coloring data in a MeshData object and add to scene
     md_a = MeshData("mesh A", mesh_a, data_a)
     md_b = MeshData("mesh B", mesh_b, data_b)
-    scene.add_meshes([md_a, md_b])
+    scene.add_mesh_data_list([md_a, md_b])
 
     # Import point clodus to be viewed
     pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
@@ -111,7 +124,7 @@ def multi_geometry_example_1():
     # Combine pc and coloring data in a PointCloudData object and add to scene
     pcd_a = PointCloudData("pc A", pc_a, pc_data_a)
     pcd_b = PointCloudData("pc B", pc_b, pc_data_b)
-    scene.add_pointclouds([pcd_a, pcd_b])
+    scene.add_pointcloud_data_list([pcd_a, pcd_b])
 
     window.render(scene)
 
@@ -125,7 +138,7 @@ def multi_geometry_example_2():
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
         pcd = PointCloudData("pc" + str(i), pc, data)
-        scene.add_pointcloud(pcd)
+        scene.add_pointcloud_data(pcd)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -141,7 +154,7 @@ def multi_geometry_example_3():
     for i, mesh in enumerate(split_meshes):
         data = mesh.vertices[:, Direction.x]
         md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh(md)
+        scene.add_mesh_data(md)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -160,12 +173,12 @@ def multi_geometry_example_4():
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
         pcd = PointCloudData("pc " + str(i), pc, data)
-        scene.add_pointcloud(pcd)
+        scene.add_pointcloud_data(pcd)
 
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
         md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh(md)
+        scene.add_mesh_data(md)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -174,9 +187,9 @@ def multi_geometry_example_4():
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
-    # window_gui_example()
     # pointcloud_example_1()
     # pointcloud_example_2()
+    # pointcloud_example_3()
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
