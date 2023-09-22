@@ -98,6 +98,35 @@ class GuiParametersPC:
         self.pc_scale = 1.0
 
 
+class GuiParametersRN:
+    """Class representing GUI parameters for road networks.
+
+    Attributes
+    ----------
+    name : str
+        The name of the Road network.
+    show : bool
+        Flag indicating whether the road network is visible.
+    color_rn : bool
+        Flag indicating whether road network coloring is enabled.
+    rn_scale : float
+        The scaling factor for lines in the road network.
+    """
+
+    def __init__(self, name: str) -> None:
+        """Initialize the GuiParametersRN object.
+
+        Parameters
+        ----------
+        name : str
+            The name of the point cloud.
+        """
+        self.name = name
+        self.show = True
+        self.color_rn = True
+        self.rn_scale = 1.0
+
+
 class GuiParametersExample:
     """Class representing an example of GUI parameters.
 
@@ -174,8 +203,8 @@ class GuiParametersExample:
 class Gui:
     """Graphical user interface (GUI) calss built on imgui and GLFW.
 
-    This class has settings and methods for creating a GUI window and components for
-    interacting with Mesh and PointCloud objects.
+    This class has settings and methods for creating a GUI window and components
+    for interacting with Mesh and PointCloud objects.
 
     Attributes
     ----------
@@ -283,6 +312,36 @@ class Gui:
             imgui.push_id("Color pc " + str(index))
             [changed, guip.pc_scale] = imgui.slider_float(
                 "Scale factor", guip.pc_scale, 0, 10
+            )
+            imgui.pop_id()
+
+    def draw_rn_gui(self, guip: GuiParametersRN, index: int) -> None:
+        """
+        Draw GUI elements for road networks.
+
+        Parameters
+        ----------
+        guip : GuiParametersRN
+            The GuiParametersRN instance containing road network parameters.
+        index : int
+            The index of the road networks.
+
+        Returns
+        -------
+        None
+        """
+        [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
+        if expanded:
+            imgui.push_id("Show rn " + str(index))
+            [changed, guip.show] = imgui.checkbox("Show", guip.show)
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("Color rn " + str(index))
+            [changed, guip.color_rn] = imgui.checkbox("Color", guip.color_rn)
+            imgui.pop_id()
+            imgui.push_id("Color rn " + str(index))
+            [changed, guip.rn_scale] = imgui.slider_float(
+                "Scale factor", guip.rn_scale, 0, 10
             )
             imgui.pop_id()
 

@@ -20,6 +20,8 @@ from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
+from dtcc_io import load_roadnetwork
+import pyproj
 
 
 def pointcloud_example_1():
@@ -37,7 +39,7 @@ def pointcloud_example_2():
     colors = np.zeros((len(pc.points), 3))
     colors[:, 0] = color_data
     colors[:, 2] = color_data
-    pc.view(pc_colors=colors)
+    pc.view(colors=colors)
 
 
 def pointcloud_example_3():
@@ -62,7 +64,7 @@ def mesh_example_2():
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     color_data = face_mid_pts[:, 2]
-    mesh.view(mesh_data=color_data)
+    mesh.view(data=color_data)
 
 
 def mesh_example_3():
@@ -71,7 +73,7 @@ def mesh_example_3():
     color_data = abs(mesh.vertices[:, 2] / mesh.vertices[:, 2].max())
     colors = np.zeros((len(mesh.vertices), 3))
     colors[:, 0] = color_data
-    mesh.view(mesh_colors=colors)
+    mesh.view(colors=colors)
 
 
 def mesh_point_cloud_example_1():
@@ -97,7 +99,7 @@ def mesh_point_cloud_example_3():
     pc_data = pc.points[:, 0]
     mesh = meshes.load_mesh(file_1)
     mesh_data = mesh.vertices[:, 1]
-    pc.view(mesh=mesh, pc_data=pc_data, mesh_data=mesh_data)
+    pc.view(mesh=mesh, data=pc_data, mesh_data=mesh_data)
 
 
 def multi_geometry_example_1():
@@ -184,6 +186,29 @@ def multi_geometry_example_4():
     window.render(scene)
 
 
+def roadnetwork_example_1():
+    file_3 = "../../../data/models/helsingborg_road_data.shp"
+    rn = load_roadnetwork(file_3, type_field="Gcm_typ", name_field="id")
+    rn.view()
+
+
+def roadnetwork_example_2():
+    window = Window(1200, 800)
+    scene = Scene()
+
+    # file_1 = "../../../data/models/CitySurface.obj"
+    # file_2 = "../../../data/models/PointCloud.las"
+    # pc = pointcloud.load(file_2)
+    # mesh = meshes.load_mesh(file_1)
+    # scene.add_pointcloud("PC", pc)
+    # scene.add_mesh("Mesh", mesh)
+
+    file_3 = "../../../data/models/helsingborg_road_data.shp"
+    rn = load_roadnetwork(file_3, type_field="Gcm_typ", name_field="id")
+    scene.add_roadnetwork("Road Network", rn)
+    window.render(scene)
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -199,4 +224,6 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
-    multi_geometry_example_4()
+    # multi_geometry_example_4()
+    # roadnetwork_example_1()
+    roadnetwork_example_2()

@@ -56,7 +56,7 @@ class BoundingBox:
     origin: np.ndarray
 
     def __init__(self, vertices: np.ndarray):
-        if np.shape(vertices)[1] == 3 or np.shape(vertices)[1] == 9:
+        if np.shape(vertices)[1] > 2:
             self.calc_bounds(vertices)
         elif len(np.shape(vertices)) == 1:
             self.calc_bounds_flat(vertices)
@@ -72,10 +72,6 @@ class BoundingBox:
         self.ymax = vertices[:, 1].max()
         self.zmin = vertices[:, 2].min()
         self.zmax = vertices[:, 2].max()
-
-        self.xdom = self.xmax - self.xmin
-        self.ydom = self.ymax - self.ymin
-        self.zdom = self.zmax - self.zmin
 
         self.xdom = self.xmax - self.xmin
         self.ydom = self.ymax - self.ymin

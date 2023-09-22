@@ -3,7 +3,14 @@ scratch/
 dtcc-demo-data/
 
 *.las
+*.laz
 *.csv
+*.cpg
+*.dbf
+*.prj
+*.qmd
+*.shp
+*.shx
 !cube_pc.csv
 
 .idea/

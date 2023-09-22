@@ -17,7 +17,9 @@ def view(
     mesh_colors: np.ndarray = None,
 ):
     """
-    View a point cloud in 3D with a GLFW window. This function is added to the PointCloud class in dtcc_model.
+    View a point cloud in 3D with a GLFW window.
+
+    This function is added to the PointCloud class in dtcc_model.
 
     Parameters
     ----------

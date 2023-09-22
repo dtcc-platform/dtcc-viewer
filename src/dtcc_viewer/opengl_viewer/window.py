@@ -7,6 +7,7 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.point_cloud_gl import PointCloudGL
 from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
 from dtcc_viewer.opengl_viewer.utils import MeshShading
+from dtcc_viewer.opengl_viewer.roadnetwork_gl import RoadNetworkGL
 
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui, GuiParametersExample
 from imgui.integrations.glfw import GlfwRenderer
@@ -63,6 +64,7 @@ class Window:
 
     meshes: list[MeshGL]
     point_clouds: list[PointCloudGL]
+    road_networks: list[RoadNetworkGL]
     mesh: MeshGL
     pc: PointCloudGL
     gui: Gui
@@ -146,6 +148,7 @@ class Window:
 
         self.meshes = []
         self.point_clouds = []
+        self.road_networks = []
         scene.preprocess_drawing()
 
         for mesh in scene.meshes:
@@ -155,6 +158,10 @@ class Window:
         for pc in scene.pointclouds:
             pc_gl = PointCloudGL(pc)
             self.point_clouds.append(pc_gl)
+
+        for rn in scene.road_networks:
+            rn_gl = RoadNetworkGL(rn)
+            self.road_networks.append(rn_gl)
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
@@ -171,20 +178,25 @@ class Window:
             )
 
             self._clipping_planes()
-            self._render_point_clouds()
             self._render_meshes()
+            self._render_point_clouds()
+            self._render_road_networks()
             self._fps_calculations()
 
             self.gui.init_draw(self.impl)
             self.gui.draw_apperance_gui(self.guip)
             self.gui.draw_separator()
             # Add individual ui for each point cloud
-            for i, pcs in enumerate(self.point_clouds):
-                self.gui.draw_pc_gui(pcs.guip, i)
+            for i, pc in enumerate(self.point_clouds):
+                self.gui.draw_pc_gui(pc.guip, i)
                 self.gui.draw_separator()
 
             for i, mesh in enumerate(self.meshes):
                 self.gui.draw_mesh_gui(mesh.guip, i)
+                self.gui.draw_separator()
+
+            for i, rn in enumerate(self.road_networks):
+                self.gui.draw_rn_gui(rn.guip, i)
                 self.gui.draw_separator()
 
             self.gui.end_draw(self.impl)
@@ -202,14 +214,14 @@ class Window:
         for mesh in self.meshes:
             mguip = mesh.guip
             if mguip.show:
-                if mguip.mesh_shading == MeshShading.wireframe:
+                if mguip.mesh_shading == MeshShading.shaded_shadows:
+                    mesh.render_shadows(self.interaction, self.guip)
+                elif mguip.mesh_shading == MeshShading.wireframe:
                     mesh.render_lines(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_ambient:
                     mesh.render_ambient(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.shaded_diffuse:
                     mesh.render_diffuse(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.shaded_shadows:
-                    mesh.render_shadows(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.
@@ -219,6 +231,16 @@ class Window:
         for pc in self.point_clouds:
             if pc.guip.show:
                 pc.render(self.interaction, self.guip)
+
+    def _render_road_networks(self):
+        """Render all the road networks in the window.
+
+        This method renders all the road in all the road networks in an window using OpenGL.
+        """
+        for rn in self.road_networks:
+            mguip = rn.guip
+            if mguip.show:
+                rn.render(self.interaction, self.guip)
 
     def _fps_calculations(self, print_results=True):
         """Perform FPS calculations.
