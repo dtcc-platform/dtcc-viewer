@@ -218,7 +218,7 @@ class MeshGL:
             Instance of the MeshData class with vertices, edge indices, face indices.
         """
 
-        self.guip = GuiParametersMesh(mesh_data.name)
+        self.guip = GuiParametersMesh(mesh_data.name, mesh_data.shading)
 
         self.vertices = mesh_data.vertices
         self.face_indices = mesh_data.face_indices
@@ -728,15 +728,15 @@ class MeshGL:
             glUniform1f(self.cp_locs_lines[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_lines[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_lines[2], (zdom * gguip.clip_dist[2]))
-        elif self.guip.mesh_shading == MeshShading.shaded_ambient:
+        elif self.guip.mesh_shading == MeshShading.ambient:
             glUniform1f(self.cp_locs_ambient[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_ambient[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_ambient[2], (zdom * gguip.clip_dist[2]))
-        elif self.guip.mesh_shading == MeshShading.shaded_diffuse:
+        elif self.guip.mesh_shading == MeshShading.diffuse:
             glUniform1f(self.cp_locs_diffuse[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_diffuse[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_diffuse[2], (zdom * gguip.clip_dist[2]))
-        elif self.guip.mesh_shading == MeshShading.shaded_shadows:
+        elif self.guip.mesh_shading == MeshShading.shadows:
             glUniform1f(self.cp_locs_shadows[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_shadows[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_shadows[2], (zdom * gguip.clip_dist[2]))

@@ -26,7 +26,7 @@ class PointCloudData:
     points: np.ndarray  # [n_points x 3]
     colors: np.ndarray  # [n_points x 3]
     pc_avrg_pt: np.ndarray  # [1 x 3]
-    pc_size: float
+    size: float
     name: str
     bb_local: BoundingBox
     bb_global: BoundingBox
@@ -35,6 +35,7 @@ class PointCloudData:
         self,
         name: str,
         pc: PointCloud,
+        size: float = 0.2,
         data: np.ndarray = None,
         colors: np.ndarray = None,
     ) -> None:
@@ -46,10 +47,12 @@ class PointCloudData:
             Name of the point cloud data.
         pc : PointCloud
             The PointCloud object from which to generate data.
-        data : np.ndarray
-            Additional data for color calculation.
-        recenter_vec : np.ndarray
-            Recentering vector for point cloud data.
+        size : float, optional
+            Particle size in meters (default is 0.2 m).
+        data : np.ndarray, optional
+            Additional data for color calculation (default is None).
+        colors : np.ndarray, optional
+            Colors for each point in the pointcloud (default is None).
 
         Returns
         -------
@@ -57,7 +60,7 @@ class PointCloudData:
         """
 
         self.name = name
-        self.pc_size = 0.2
+        self.size = size
         self.colors = self._generate_pc_colors(pc, pc_data=data, pc_colors=colors)
         self.points = pc.points
 

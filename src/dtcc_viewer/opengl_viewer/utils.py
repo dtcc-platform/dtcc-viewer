@@ -6,9 +6,9 @@ from dtcc_model import Mesh, PointCloud
 
 class MeshShading(IntEnum):
     wireframe = 0
-    shaded_ambient = 1
-    shaded_diffuse = 2
-    shaded_shadows = 3
+    ambient = 1
+    diffuse = 2
+    shadows = 3
 
 
 class MeshColor(IntEnum):

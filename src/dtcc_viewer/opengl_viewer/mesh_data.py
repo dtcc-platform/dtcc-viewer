@@ -3,7 +3,7 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 
 
 class MeshData:
@@ -13,20 +13,6 @@ class MeshData:
     information about the mesh's vertices, face indices, edge indices, and coloring options,
     and provides methods to restructure the data of a Mesh object to a format that fits
     the OpenGL functions.
-
-    Parameters
-    ----------
-    name : str
-        The name of the mesh data.
-    mesh : Mesh
-        The underlying Mesh object from which to generate the mesh data.
-    data : np.ndarray, optional
-        Additional mesh data for color calculation (default is None).
-    colors : np.ndarray, optional
-        Colors for vertices or faces (default is None).
-
-    recenter_vec : np.ndarray, optional
-        Vector for recentering the mesh (default is None).
 
     Attributes
     ----------
@@ -42,7 +28,12 @@ class MeshData:
         Array of flattened edge indices.
     name : str
         The name of the mesh data.
-
+    shading : MeshShading
+        Shading setting for the mesh.
+    bb_local : BoundingBox
+        Bounding box for this mesh.
+    bb_global: BoundingBox
+        Bounding box all objects in the entire scene.
     """
 
     color_by: int
@@ -51,6 +42,7 @@ class MeshData:
     face_indices: np.ndarray
     edge_indices: np.ndarray
     name: str
+    shading: MeshShading
     bb_local: BoundingBox
     bb_global: BoundingBox = None
 
@@ -60,6 +52,7 @@ class MeshData:
         mesh: Mesh,
         data: np.ndarray = None,
         colors: np.ndarray = None,
+        shading: MeshShading = MeshShading.diffuse,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -69,14 +62,15 @@ class MeshData:
             The name of the mesh data.
         mesh : Mesh
             The underlying Mesh object from which to generate the mesh data.
-        mesh_data : np.ndarray, optional
+        data : np.ndarray, optional
             Additional mesh data for color calculation (default is None).
-        recenter_vec : np.ndarray, optional
-            Vector for recentering the mesh (default is None).
-        bb_global : BoundingBox, optional
-            A bounding box for all geometry in a collection (default is None).
+        colors : np.ndarray, optional
+            Colors for vertices or faces (default is None).
+        shading : MeshShading, optional
+            Shading option (default is MeshShading.diffuse).
         """
         self.name = name
+        self.shading = shading
 
         [self.color_by, self.mesh_colors] = self._generate_mesh_colors(
             mesh, data, colors

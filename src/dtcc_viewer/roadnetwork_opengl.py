@@ -1,11 +1,8 @@
 import numpy as np
 from dtcc_model import Mesh, RoadNetwork
-from dtcc_model import PointCloud
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.utils import *
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.opengl_viewer.roadnetwork_data import RoadNetworkData
 

@@ -58,6 +58,9 @@ class PointCloudGL:
     scale_loc: int  # Uniform location for scaling parameter
     cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
 
+    p_size: float  # Particle size
+    n_points: int  # Number of particles in point cloud
+
     def __init__(self, pc_data_obj: PointCloudData):
         """Initialize the PointCloudGL object and set up rendering.
 
@@ -68,12 +71,13 @@ class PointCloudGL:
         """
 
         self.cp_locs = [0, 0, 0]
+        self.p_size = pc_data_obj.size
+        self.n_points = len(pc_data_obj.points) / 3
 
         self.guip = GuiParametersPC(pc_data_obj.name)
-        n_points = len(pc_data_obj.points) / 3
         self.bb_local = pc_data_obj.bb_local
         self.bb_global = pc_data_obj.bb_global
-        self._create_single_instance(pc_data_obj.pc_size, n_points)
+        self._create_single_instance()
         self._create_multiple_instances(pc_data_obj.points, pc_data_obj.colors)
         self._create_shader()
 
@@ -121,20 +125,11 @@ class PointCloudGL:
         self._unbind_vao()
         self._unbind_shader()
 
-    def _create_single_instance(self, disc_size: float, n_points: int):
-        """Create a single instance of particle mesh geometry.
+    def _create_single_instance(self):
+        """Create a single instance of particle mesh geometry."""
 
-        Parameters
-        ----------
-        disc_size : float
-            The size of the circular disc for each point.
-        n_points : int
-            The number of points in the point cloud.
-        """
         # Get vertices and face indices for one instance. The geometry resolution is related to number of particles.
-        [self.vertices, self.face_indices] = self._get_instance_geometry(
-            disc_size, n_points
-        )
+        [self.vertices, self.face_indices] = self._get_instance_geometry()
 
         self.vertices = np.array(self.vertices, dtype=np.float32)
         self.face_indices = np.array(self.face_indices, dtype=np.uint32)
@@ -274,14 +269,14 @@ class PointCloudGL:
 
         return model_transform
 
-    def _create_circular_disc(self, radius, n):
+    def _create_circular_disc(self, n_sides: int):
         """Create vertices and face indices for a circular disc.
 
         Parameters
         ----------
         radius : float
             The radius of the circular disc.
-        n : int
+        n_sides : int
             The number of sides of the disc.
 
         Returns
@@ -289,30 +284,30 @@ class PointCloudGL:
         Tuple[List[float], List[int]]
             A tuple containing lists of vertices and face indices.
         """
-        center = [0.0, 0.0, 0.0]
+        center = np.array([0.0, 0.0, 0.0], dtype=float)
         center_color = [1.0, 1.0, 1.0]  # White
         edge_color = [0.5, 0.5, 0.5]  # Magenta
-        angle_between_points = 2 * math.pi / n
+        angle_between_points = 2 * math.pi / n_sides
         vertices = []
         vertices.extend(center)
         vertices.extend(center_color)
         face_indices = []
         # Iterate over each angle and calculate the corresponding point on the circle
-        for i in range(n):
+        for i in range(n_sides):
             angle = i * angle_between_points
             x = center[0]
-            y = center[1] + radius * math.cos(angle)
-            z = center[2] + radius * math.sin(angle)
+            y = center[1] + self.p_size * math.cos(angle)
+            z = center[2] + self.p_size * math.sin(angle)
             vertices.extend([x, y, z])
             vertices.extend(edge_color)
-            if i > 0 and i < n:
+            if i > 0 and i < n_sides:
                 face_indices.extend([0, i + 1, i])
-            if i == n - 1:
+            if i == n_sides - 1:
                 face_indices.extend([0, 1, i + 1])
 
         return vertices, face_indices
 
-    def _create_quad(self, radius):
+    def _create_quad(self):
         """Create vertices and face indices for a quad.
 
         Parameters
@@ -326,7 +321,7 @@ class PointCloudGL:
             A tuple containing lists of vertices and face indices.
         """
         color = [1.0, 1.0, 1.0]  # White
-        dy = radius / 2.0
+        dy = self.p_size / 2.0
         dz = dy
 
         vertices = []
@@ -345,42 +340,30 @@ class PointCloudGL:
 
         return vertices, face_indices
 
-    def _get_instance_geometry(self, disc_size: float, n_points: int):
+    def _get_instance_geometry(self):
         """Get vertices and face indices for a single instance of particle mesh geometry.
-
-        Parameters
-        ----------
-        disc_size : float
-            The size of the circular disc for each point.
-        n_points : int
-            The number of points in the point cloud.
 
         Returns
         -------
         Tuple[List[float], List[int]]
             A tuple containing lists of vertices and face indices.
         """
-        n_sides = self._calc_n_sides(n_points)
+        n_sides = self._calc_n_sides()
 
-        if n_points > self.upper_count:
-            [self.vertices, self.face_indices] = self._create_quad(
-                disc_size
-            )  # Lowest resolution, only 2 triangles
+        if self.n_points > self.upper_count:
+            [
+                self.vertices,
+                self.face_indices,
+            ] = self._create_quad()  # Lowest resolution, only 2 triangles
         else:
-            n_sides = self._calc_n_sides(n_points)
-            [self.vertices, self.face_indices] = self._create_circular_disc(
-                disc_size, n_sides
-            )  # Higher res discs
+            # Higher res discs
+            n_sides = self._calc_n_sides()
+            [self.vertices, self.face_indices] = self._create_circular_disc(n_sides)
 
         return self.vertices, self.face_indices
 
-    def _calc_n_sides(self, n_points: int):
+    def _calc_n_sides(self):
         """Calculate the number of sides for particle mesh geometry.
-
-        Parameters
-        ----------
-        n_points : int
-            The number of points in the point cloud.
 
         Returns
         -------
@@ -390,13 +373,13 @@ class PointCloudGL:
         count_diff = self.upper_count - self.low_count
         sides_diff = self.upper_sides - self.low_sides
 
-        if n_points < self.low_count:
+        if self.n_points < self.low_count:
             n_sides = self.upper_sides
-        elif n_points > self.upper_count:
+        elif self.n_points > self.upper_count:
             n_sides = self.low_sides
         else:
             n_sides = self.low_sides + sides_diff * (
-                1 - ((n_points - self.low_count) / count_diff)
+                1 - ((self.n_points - self.low_count) / count_diff)
             )
             n_sides = round(n_sides, 0)
 

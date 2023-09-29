@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.roadnetwork_data import RoadNetworkData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
-from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_model import Mesh, PointCloud, RoadNetwork
 
 
@@ -33,10 +33,17 @@ class Scene:
         self.road_networks = []
 
     def add_mesh(
-        self, name: str, mesh: Mesh, data: np.ndarray = None, colors: np.ndarray = None
+        self,
+        name: str,
+        mesh: Mesh,
+        data: np.ndarray = None,
+        colors: np.ndarray = None,
+        shading: MeshShading = MeshShading.diffuse,
     ):
         """Append a mesh with data and/or colors to the scene"""
-        mesh_data = MeshData(name=name, mesh=mesh, data=data, colors=colors)
+        mesh_data = MeshData(
+            name=name, mesh=mesh, data=data, colors=colors, shading=shading
+        )
         self.meshes.append(mesh_data)
 
     def add_mesh_data(self, mesh: MeshData):
@@ -51,11 +58,12 @@ class Scene:
         self,
         name: str,
         pc: PointCloud,
+        size: float = 0.2,
         data: np.ndarray = None,
         colors: np.ndarray = None,
     ):
         """Append a pointcloud with data and/or colors to the scene"""
-        pc_data = PointCloudData(name=name, pc=pc, data=data, colors=colors)
+        pc_data = PointCloudData(name=name, pc=pc, size=size, data=data, colors=colors)
         self.pointclouds.append(pc_data)
 
     def add_pointcloud_data(self, pc: PointCloudData):

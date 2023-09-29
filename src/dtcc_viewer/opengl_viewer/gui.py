@@ -38,60 +38,22 @@ class GuiParameters:
 
 
 class GuiParametersMesh:
-    """Class representing GUI parameters for meshes.
+    """Class representing GUI parameters for meshes."""
 
-    Attributes
-    ----------
-    name : str
-        The name of the mesh.
-    show : bool
-        Flag indicating whether the mesh is visible.
-    color_mesh : bool
-        Flag indicating whether mesh coloring is enabled.
-    animate_light : bool
-        Flag indicating whether light animation is enabled.
-    mesh_shading : MeshShading
-        The shading mode for the mesh.
-    """
-
-    def __init__(self, name: str) -> None:
-        """Initialize the GuiParametersMesh object.
-
-        Parameters
-        ----------
-        name : str
-            The name of the mesh.
-        """
+    def __init__(self, name: str, shading: MeshShading) -> None:
+        """Initialize the GuiParametersMesh object."""
         self.name = name
         self.show = True
         self.color_mesh = True
         self.animate_light = False
-        self.mesh_shading = MeshShading.shaded_diffuse
+        self.mesh_shading = shading
 
 
 class GuiParametersPC:
-    """Class representing GUI parameters for point clouds.
-
-    Attributes
-    ----------
-    name : str
-        The name of the point cloud.
-    show : bool
-        Flag indicating whether the point cloud is visible.
-    color_pc : bool
-        Flag indicating whether point cloud coloring is enabled.
-    pc_scale : float
-        The scaling factor for the point cloud.
-    """
+    """Class representing GUI parameters for point clouds."""
 
     def __init__(self, name: str) -> None:
-        """Initialize the GuiParametersPC object.
-
-        Parameters
-        ----------
-        name : str
-            The name of the point cloud.
-        """
+        """Initialize the GuiParametersPC object."""
         self.name = name
         self.show = True
         self.color_pc = True
@@ -99,28 +61,10 @@ class GuiParametersPC:
 
 
 class GuiParametersRN:
-    """Class representing GUI parameters for road networks.
-
-    Attributes
-    ----------
-    name : str
-        The name of the Road network.
-    show : bool
-        Flag indicating whether the road network is visible.
-    color_rn : bool
-        Flag indicating whether road network coloring is enabled.
-    rn_scale : float
-        The scaling factor for lines in the road network.
-    """
+    """Class representing GUI parameters for road networks."""
 
     def __init__(self, name: str) -> None:
-        """Initialize the GuiParametersRN object.
-
-        Parameters
-        ----------
-        name : str
-            The name of the point cloud.
-        """
+        """Initialize the GuiParametersRN object."""
         self.name = name
         self.show = True
         self.color_rn = True
@@ -370,7 +314,7 @@ class Gui:
             [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
             imgui.pop_id()
 
-            if guip.mesh_shading == MeshShading.shaded_shadows:
+            if guip.mesh_shading == MeshShading.shadows:
                 imgui.same_line()
                 imgui.push_id("Animate light " + str(index))
                 [changed, guip.animate_light] = imgui.checkbox(
@@ -380,11 +324,11 @@ class Gui:
 
             # Drawing mode
             imgui.push_id("Combo " + str(index))
-            items = ["Wireframe", "Shaded ambient", "Shaded diffuse", "Shaded shadow"]
+            items = ["wireframe", "ambient", "diffuse", "shadows"]
             with imgui.begin_combo("combo", items[guip.mesh_shading]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
-                        is_selected = i == guip.mesh_shading
+                        is_selected = guip.mesh_shading
                         if imgui.selectable(item, is_selected)[0]:
                             guip.mesh_shading = i
 

@@ -214,13 +214,13 @@ class Window:
         for mesh in self.meshes:
             mguip = mesh.guip
             if mguip.show:
-                if mguip.mesh_shading == MeshShading.shaded_shadows:
+                if mguip.mesh_shading == MeshShading.shadows:
                     mesh.render_shadows(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.wireframe:
                     mesh.render_lines(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.shaded_ambient:
+                elif mguip.mesh_shading == MeshShading.ambient:
                     mesh.render_ambient(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.shaded_diffuse:
+                elif mguip.mesh_shading == MeshShading.diffuse:
                     mesh.render_diffuse(self.interaction, self.guip)
 
     def _render_point_clouds(self):

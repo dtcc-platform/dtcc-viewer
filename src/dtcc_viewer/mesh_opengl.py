@@ -13,9 +13,11 @@ def view(
     mesh: Mesh,
     data: np.ndarray = None,
     colors: np.ndarray = None,
+    shading: MeshShading = MeshShading.diffuse,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
     pc_colors: np.ndarray = None,
+    pc_size: float = 0.2,
 ):
     """View a mesh in 3D with a GLFW window.
 
@@ -42,12 +44,12 @@ def view(
     scene = Scene()
 
     if pc is None:
-        mesh = MeshData("Mesh", mesh, data, colors)
+        mesh = MeshData("Mesh", mesh, data, colors, shading)
         scene.add_mesh_data(mesh)
         window.render(scene)
     else:
-        mesh = MeshData("Mesh", mesh, data, colors)
-        pc = PointCloudData("Point cloud", pc, pc_data, pc_colors)
+        mesh = MeshData("Mesh", mesh, data, colors, shading)
+        pc = PointCloudData("Point cloud", pc, pc_size, pc_data, pc_colors)
         scene.add_mesh_data(mesh)
         scene.add_pointcloud_data(pc)
         window.render(scene)

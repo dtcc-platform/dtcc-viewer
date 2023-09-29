@@ -39,7 +39,7 @@ def pointcloud_example_2():
     colors = np.zeros((len(pc.points), 3))
     colors[:, 0] = color_data
     colors[:, 2] = color_data
-    pc.view(colors=colors)
+    pc.view(colors=colors, size=0.5)
 
 
 def pointcloud_example_3():
@@ -50,7 +50,7 @@ def pointcloud_example_3():
     colors = np.zeros((len(pc.points), 3))
     colors[:, 0] = color_data
     colors[:, 2] = color_data
-    pc.view(pc_colors=colors)
+    pc.view(colors=colors)
 
 
 def mesh_example_1():
@@ -64,7 +64,7 @@ def mesh_example_2():
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     color_data = face_mid_pts[:, 2]
-    mesh.view(data=color_data)
+    mesh.view(data=color_data, shading=MeshShading.ambient)
 
 
 def mesh_example_3():
@@ -73,7 +73,7 @@ def mesh_example_3():
     color_data = abs(mesh.vertices[:, 2] / mesh.vertices[:, 2].max())
     colors = np.zeros((len(mesh.vertices), 3))
     colors[:, 0] = color_data
-    mesh.view(colors=colors)
+    mesh.view(colors=colors, shading=MeshShading.wireframe)
 
 
 def mesh_point_cloud_example_1():
@@ -81,7 +81,7 @@ def mesh_point_cloud_example_1():
     file_2 = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(file_2)
     mesh = meshes.load_mesh(file_1)
-    mesh.view(pc=pc)
+    mesh.view(pc=pc, pc_size=1.0)
 
 
 def mesh_point_cloud_example_2():
@@ -124,8 +124,8 @@ def multi_geometry_example_1():
     pc_data_b = pc_b.points[:, 1]
 
     # Combine pc and coloring data in a PointCloudData object and add to scene
-    pcd_a = PointCloudData("pc A", pc_a, pc_data_a)
-    pcd_b = PointCloudData("pc B", pc_b, pc_data_b)
+    pcd_a = PointCloudData("pc A", pc_a, 0.2, pc_data_a)
+    pcd_b = PointCloudData("pc B", pc_b, 0.2, pc_data_b)
     scene.add_pointcloud_data_list([pcd_a, pcd_b])
 
     window.render(scene)
@@ -139,7 +139,7 @@ def multi_geometry_example_2():
     scene = Scene()
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
-        pcd = PointCloudData("pc" + str(i), pc, data)
+        pcd = PointCloudData("pc" + str(i), pc, i * 0.1, data)
         scene.add_pointcloud_data(pcd)
 
     window = Window(1200, 800)
@@ -174,7 +174,7 @@ def multi_geometry_example_4():
 
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
-        pcd = PointCloudData("pc " + str(i), pc, data)
+        pcd = PointCloudData("pc " + str(i), pc, 0.2, data)
         scene.add_pointcloud_data(pcd)
 
     for i, mesh in enumerate(all_meshes):
@@ -187,25 +187,33 @@ def multi_geometry_example_4():
 
 
 def roadnetwork_example_1():
-    file_3 = "../../../data/models/helsingborg_road_data.shp"
-    rn = load_roadnetwork(file_3, type_field="Gcm_typ", name_field="id")
-    rn.view()
+    filename = "../../../data/models/helsingborg_road_data.shp"
+    roadnetwork = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
+    roadnetwork.view()
 
 
 def roadnetwork_example_2():
     window = Window(1200, 800)
     scene = Scene()
 
-    # file_1 = "../../../data/models/CitySurface.obj"
-    # file_2 = "../../../data/models/PointCloud.las"
-    # pc = pointcloud.load(file_2)
-    # mesh = meshes.load_mesh(file_1)
-    # scene.add_pointcloud("PC", pc)
-    # scene.add_mesh("Mesh", mesh)
-
-    file_3 = "../../../data/models/helsingborg_road_data.shp"
-    rn = load_roadnetwork(file_3, type_field="Gcm_typ", name_field="id")
+    filename = "../../../data/models/helsingborg_road_data.shp"
+    rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
     scene.add_roadnetwork("Road Network", rn)
+    window.render(scene)
+
+
+def roadnetwork_example_3():
+    window = Window(1200, 800)
+    scene = Scene()
+
+    file_1 = "../../../data/models/helsingborg_vagslag.shp"
+    file_3 = "../../../data/models/helsingborg_cykel.shp"
+
+    rn_1 = load_roadnetwork(file_1, type_field="Typ", name_field="id")
+    rn_3 = load_roadnetwork(file_3, type_field="ELEMENT_ID", name_field="id")
+
+    scene.add_roadnetwork("Road Network", rn_1)
+    scene.add_roadnetwork("Road Network", rn_3)
     window.render(scene)
 
 
@@ -226,4 +234,5 @@ if __name__ == "__main__":
     # multi_geometry_example_3()
     # multi_geometry_example_4()
     # roadnetwork_example_1()
-    roadnetwork_example_2()
+    # roadnetwork_example_2()
+    roadnetwork_example_3()

@@ -78,7 +78,7 @@ class TestOpenGLViewer:
         pc = pointcloud.load("data/models/cube_pc.csv")
         data = pc.points[:, 2]
         bb = BoundingBox(pc.points)
-        pc_data_obj = PointCloudData("name", pc, data)
+        pc_data_obj = PointCloudData("name", pc, 0.2, data)
         pc_data_obj.preprocess_drawing(bb)
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
