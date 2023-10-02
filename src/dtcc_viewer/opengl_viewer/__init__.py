@@ -7,6 +7,7 @@ from .mesh_data import MeshData
 from .interaction import Interaction
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC, GuiParameters
+from .utils import MeshShading
 
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "GuiParametersMesh",
     "GuiParametersPC",
     "GuiParameters",
+    "MeshShading",
 ]
