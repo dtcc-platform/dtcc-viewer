@@ -324,7 +324,7 @@ class Gui:
 
             # Drawing mode
             imgui.push_id("Combo " + str(index))
-            items = ["wireframe", "ambient", "diffuse", "shadows"]
+            items = ["wireframe", "ambient", "diffuse", "wireshaded", "shadows"]
             with imgui.begin_combo("combo", items[guip.mesh_shading]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):

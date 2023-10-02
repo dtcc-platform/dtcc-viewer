@@ -464,7 +464,7 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
-    def render_lines(self, interaction: Interaction, gguip: GuiParameters) -> None:
+    def render_lines(self, interaction: Interaction, gguip: GuiParameters, ws_pass=0):
         """Render wireframe lines of the mesh.
 
         Parameters
@@ -483,7 +483,7 @@ class MeshGL:
         glUniformMatrix4fv(self.vloc_lines, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_lines, 1, GL_FALSE, proj)
 
-        self.set_clipping_uniforms(gguip)
+        self.set_clipping_uniforms(gguip, ws_pass)
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_lines, color_by)
@@ -517,7 +517,7 @@ class MeshGL:
         self._triangles_draw_call()
         self._unbind_shader()
 
-    def render_diffuse(self, interaction: Interaction, gguip: GuiParameters) -> None:
+    def render_diffuse(self, interaction: Interaction, gguip: GuiParameters, ws_pass=0):
         """Render the mesh with diffuse shading.
 
         Parameters
@@ -536,7 +536,7 @@ class MeshGL:
         glUniformMatrix4fv(self.vloc_diffuse, 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ploc_diffuse, 1, GL_FALSE, proj)
 
-        self.set_clipping_uniforms(gguip)
+        self.set_clipping_uniforms(gguip, ws_pass)
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_diffuse, color_by)
@@ -562,6 +562,16 @@ class MeshGL:
         """
         self._render_shadow_map(interaction)
         self._render_model_with_shadows(interaction, gguip)
+
+    def render_wireshaded(self, interaction: Interaction, gguip: GuiParameters) -> None:
+        glEnable(GL_POLYGON_OFFSET_FILL)
+        glPolygonOffset(1.0, 1.0)
+        self.render_diffuse(interaction, gguip, ws_pass=1)
+        glDisable(GL_POLYGON_OFFSET_FILL)
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        self.render_lines(interaction, gguip, ws_pass=2)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     def _render_shadow_map(self, interaction: Interaction) -> None:
         """Render a shadow map to the frame buffer.
@@ -719,12 +729,12 @@ class MeshGL:
 
         pass
 
-    def set_clipping_uniforms(self, gguip: GuiParameters):
+    def set_clipping_uniforms(self, gguip: GuiParameters, ws_pass: int = 0):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
-        if self.guip.mesh_shading == MeshShading.wireframe:
+        if self.guip.mesh_shading == MeshShading.wireframe or ws_pass == 2:
             glUniform1f(self.cp_locs_lines[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_lines[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_lines[2], (zdom * gguip.clip_dist[2]))
@@ -732,7 +742,7 @@ class MeshGL:
             glUniform1f(self.cp_locs_ambient[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_ambient[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_ambient[2], (zdom * gguip.clip_dist[2]))
-        elif self.guip.mesh_shading == MeshShading.diffuse:
+        elif self.guip.mesh_shading == MeshShading.diffuse or ws_pass == 1:
             glUniform1f(self.cp_locs_diffuse[0], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.cp_locs_diffuse[1], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.cp_locs_diffuse[2], (zdom * gguip.clip_dist[2]))

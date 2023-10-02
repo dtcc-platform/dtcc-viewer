@@ -222,6 +222,8 @@ class Window:
                     mesh.render_ambient(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.diffuse:
                     mesh.render_diffuse(self.interaction, self.guip)
+                elif mguip.mesh_shading == MeshShading.wireshaded:
+                    mesh.render_wireshaded(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.

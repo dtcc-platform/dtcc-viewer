@@ -8,7 +8,8 @@ class MeshShading(IntEnum):
     wireframe = 0
     ambient = 1
     diffuse = 2
-    shadows = 3
+    wireshaded = 3
+    shadows = 4
 
 
 class MeshColor(IntEnum):
