@@ -52,7 +52,7 @@ class MeshData:
         mesh: Mesh,
         data: np.ndarray = None,
         colors: np.ndarray = None,
-        shading: MeshShading = MeshShading.diffuse,
+        shading: MeshShading = MeshShading.wireshaded,
     ) -> None:
         """Initialize the MeshData object.
 
@@ -67,7 +67,7 @@ class MeshData:
         colors : np.ndarray, optional
             Colors for vertices or faces (default is None).
         shading : MeshShading, optional
-            Shading option (default is MeshShading.diffuse).
+            Shading option (default is MeshShading.wireshaded).
         """
         self.name = name
         self.shading = shading

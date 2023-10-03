@@ -38,7 +38,7 @@ class Scene:
         mesh: Mesh,
         data: np.ndarray = None,
         colors: np.ndarray = None,
-        shading: MeshShading = MeshShading.diffuse,
+        shading: MeshShading = MeshShading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
         mesh_data = MeshData(

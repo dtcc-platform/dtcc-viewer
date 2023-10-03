@@ -13,7 +13,7 @@ def view(
     mesh: Mesh,
     data: np.ndarray = None,
     colors: np.ndarray = None,
-    shading: MeshShading = MeshShading.diffuse,
+    shading: MeshShading = MeshShading.wireshaded,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
     pc_colors: np.ndarray = None,

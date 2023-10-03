@@ -16,7 +16,7 @@ def view(
     mesh: Mesh = None,
     mesh_data: np.ndarray = None,
     mesh_colors: np.ndarray = None,
-    mesh_shading: MeshShading = MeshShading.diffuse,
+    mesh_shading: MeshShading = MeshShading.wireshaded,
 ):
     """
     View a point cloud in 3D with a GLFW window.
