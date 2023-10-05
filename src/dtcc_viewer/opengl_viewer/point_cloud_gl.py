@@ -173,9 +173,6 @@ class PointCloudGL:
         """
         self.n_instances = int(points.size / 3.0)
         self.instance_transforms = points
-
-        print("Number of instances created: " + str(self.n_instances))
-
         self.transforms_VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.transforms_VBO)
         glBufferData(

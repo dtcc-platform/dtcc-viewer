@@ -4,6 +4,7 @@ from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
+from dtcc_viewer.logging import info, warning
 
 
 class MeshData:
@@ -132,9 +133,8 @@ class MeshData:
                 color_by = ColorBy.face_colors
                 return color_by, colors
             else:
-                print(
-                    "WARNING: Provided mesh colors does not match vertex or face count for mesh : "
-                    + self.name
+                warning(
+                    f"Provided mesh colors do not match vertex or face count for mesh: {self.name}"
                 )
 
         # No colors provided and no data for color calculations. Colors are retrieved
@@ -147,11 +147,10 @@ class MeshData:
                 color_by = ColorBy.face_colors
                 colors = self._normalise_colors(mesh.face_colors)
             else:
-                print(
-                    "INFO: No valid colors found embeded in mesh object with name: "
-                    + self.name
+                info(
+                    f"No valid colors found embeded in mesh object with name: {self.name}"
                 )
-                print("Coloring per vertex z-value")
+                info("Coloring per vertex z-value")
         # If there is data for coloring
         else:
             n_data = len(data)
@@ -162,12 +161,11 @@ class MeshData:
                 color_by = ColorBy.face_data
                 colors = calc_colors_rainbow(data)
             else:
-                print(
-                    "WARNING: Provided color data for mesh does not match vertex of face count for mesh with name: "
-                    + self.name
+                warning(
+                    f"Provided color data for mesh does not match vertex of face count for mesh with name: {self.name}"
                 )
-                print(
-                    "Default colors are used instead -> i.e. coloring per vertex z-value"
+                info(
+                    f"Default colors are used instead -> i.e. coloring per vertex z-value"
                 )
 
         return color_by, np.array(colors)

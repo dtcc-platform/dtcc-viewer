@@ -2,6 +2,7 @@ import numpy as np
 from dtcc_model import RoadNetwork
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.logging import info, warning
 
 
 class RoadNetworkData:
@@ -122,20 +123,18 @@ class RoadNetworkData:
                 colors = np.array(rn_colors)
                 return colors
             else:
-                print(
-                    "WARNING: Road network colors provided does not match vertex count!"
-                )
+                warning(f"Road network colors provided does not match vertex count!")
 
         if rn_data is not None:
             if len(rn.vertices) == len(rn_data):
                 colors = calc_colors_rainbow(rn_data)
             else:
-                print("WARNING: Provided color data does not match the vertex count!")
-                print("Default colors are used instead -> i.e. coloring per z-value")
+                warning(f"Provided color data does not match the vertex count!")
+                info(f"Default colors are used instead -> i.e. coloring per z-value")
                 z = rn.vertices[:, 2]
                 colors = calc_colors_rainbow(z)
         else:
-            print("No data provided for point cloud -> colors are set based on y-value")
+            info(f"No data provided for road network -> colors are based on y-value")
             z = rn.vertices[:, 1]  # Color by height if no data is provided
             colors = calc_colors_rainbow(z)
 

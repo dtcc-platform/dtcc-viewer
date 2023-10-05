@@ -6,7 +6,7 @@ import logging
 
 format = "%(asctime)s [%(name)s] [%(levelname)s] %(message)s"
 logging.basicConfig(format=format)
-logger = logging.getLogger("dtcc_viewer")
+logger = logging.getLogger("dtcc-viewer")
 
 # Expose logging functions
 debug = logger.debug

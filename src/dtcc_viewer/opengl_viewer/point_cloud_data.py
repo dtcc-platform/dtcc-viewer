@@ -2,6 +2,7 @@ import numpy as np
 from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.logging import info, warning
 
 
 class PointCloudData:
@@ -99,20 +100,18 @@ class PointCloudData:
                 colors = np.array(pc_colors)
                 return colors
             else:
-                print(
-                    "WARNING: Point cloud colors provided does not match point count!"
-                )
+                warning("Point cloud colors provided does not match point count!")
 
         if pc_data is not None:
             if len(pc.points) == len(pc_data):
                 colors = calc_colors_rainbow(pc_data)
             else:
-                print("WARNING: Provided color data does not match the particle count!")
-                print("Default colors are used instead -> i.e. coloring per z-value")
+                warning("Provided color data does not match the particle count!")
+                info("Default colors are used instead -> coloring per z-value")
                 z = pc.points[:, 2]
                 colors = calc_colors_rainbow(z)
         else:
-            print("No data provided for point cloud -> colors are set based on z-value")
+            info("No data provided for point cloud -> coloring per z-value")
             z = pc.points[:, 2]  # Color by height if no data is provided
             colors = calc_colors_rainbow(z)
 
