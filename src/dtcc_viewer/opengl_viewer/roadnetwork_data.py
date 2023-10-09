@@ -86,7 +86,10 @@ class RoadNetworkData:
             c = colors[i, :]
             v = roadnetwork.vertices[i, :]  # has only x and y coordinates!
             n = np.array([0, 0, 1])
-            new_vertices[i, 0:2] = v
+            if len(v) == 2:
+                v = np.append(v, 0)
+
+            new_vertices[i, 0:3] = v
             new_vertices[i, 3:6] = c
             new_vertices[i, 6:9] = n
 
