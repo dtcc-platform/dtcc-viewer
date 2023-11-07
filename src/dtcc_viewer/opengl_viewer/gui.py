@@ -71,7 +71,7 @@ class GuiParametersRN:
         self.rn_scale = 1.0
 
 
-class GuiParametersExample:
+class GuiParametersDates:
     """Class representing an example of GUI parameters.
 
     Attributes
@@ -183,18 +183,7 @@ class Gui:
         pass
 
     def init_draw(self, impl: GlfwRenderer) -> None:
-        """
-        Initialize the GUI drawing environment.
-
-        Parameters
-        ----------
-        impl : GlfwRenderer
-            The GlfwRenderer instance used for rendering.
-
-        Returns
-        -------
-        None
-        """
+        """Initialize the GUI drawing environment."""
         window_with = impl.io.display_size.x
         self.gui_width = 320
         self.margin = 40
@@ -212,38 +201,14 @@ class Gui:
         )
 
     def end_draw(self, impl: GlfwRenderer) -> None:
-        """
-        Finalize the GUI drawing and rendering.
-
-        Parameters
-        ----------
-        impl : GlfwRenderer
-            The GlfwRenderer instance used for rendering.
-
-        Returns
-        -------
-        None
-        """
+        """Finalize the GUI drawing and rendering."""
         imgui.end()
         imgui.render()
         impl.render(imgui.get_draw_data())
         imgui.end_frame()
 
     def draw_pc_gui(self, guip: GuiParametersPC, index: int) -> None:
-        """
-        Draw GUI elements for point clouds.
-
-        Parameters
-        ----------
-        guip : GuiParametersPC
-            The GuiParametersPC instance containing point cloud parameters.
-        index : int
-            The index of the point cloud.
-
-        Returns
-        -------
-        None
-        """
+        """Draw GUI for point clouds."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
             imgui.push_id("Show pc " + str(index))
@@ -260,20 +225,7 @@ class Gui:
             imgui.pop_id()
 
     def draw_rn_gui(self, guip: GuiParametersRN, index: int) -> None:
-        """
-        Draw GUI elements for road networks.
-
-        Parameters
-        ----------
-        guip : GuiParametersRN
-            The GuiParametersRN instance containing road network parameters.
-        index : int
-            The index of the road networks.
-
-        Returns
-        -------
-        None
-        """
+        """Draw GUI for road networks."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
             imgui.push_id("Show rn " + str(index))
@@ -290,20 +242,7 @@ class Gui:
             imgui.pop_id()
 
     def draw_mesh_gui(self, guip: GuiParametersMesh, index: int) -> None:
-        """
-        Draw GUI elements for meshes.
-
-        Parameters
-        ----------
-        guip : GuiParametersMesh
-            The GuiParametersMesh instance containing mesh parameters.
-        index : int
-            The index of the mesh.
-
-        Returns
-        -------
-        None
-        """
+        """Draw GUI for mesh."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
             imgui.push_id("Show mesh " + str(index))
@@ -338,30 +277,13 @@ class Gui:
             imgui.pop_id()
 
     def draw_separator(self) -> None:
-        """
-        Draw a separator between GUI elements.
-
-        Returns
-        -------
-        None
-        """
+        """Draw a separator between GUI elements."""
         imgui.spacing()
         imgui.separator()
         imgui.spacing()
 
     def draw_apperance_gui(self, guip: GuiParameters) -> None:
-        """
-        Draw GUI elements for adjusting appearance settings like background color.
-
-        Parameters
-        ----------
-        guip : GuiParameters
-            The GuiParameters instance containing appearance parameters.
-
-        Returns
-        -------
-        None
-        """
+        """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
             imgui.spacing()
@@ -400,39 +322,17 @@ class Gui:
             )
             imgui.pop_id()
 
-    def draw_example_gui(self, guip: GuiParametersExample) -> None:
-        """
-        Draw an example GUI using provided parameters.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing example GUI parameters.
-
-        Returns
-        -------
-        None
-        """
+    def draw_example_gui(self, guip: GuiParametersDates) -> None:
+        """Draw an example GUI using provided parameters."""
         self.styles(guip)
         self.buttons_example(guip)
         self.checkbox_example(guip)
         self.combo_example(guip)
-        self.add_example_dates(guip)
+        self.add_date_controls(guip)
         self.draw_apperance_example(guip)
 
-    def styles(self, guip: GuiParametersExample) -> None:
-        """
-        Apply custom GUI styling based on provided parameters.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing style parameters.
-
-        Returns
-        -------
-        None
-        """
+    def styles(self, guip: GuiParametersDates) -> None:
+        """Apply custom GUI styling based on provided parameters."""
         style = imgui.get_style()
         style.colors[imgui.COLOR_BORDER] = (0, 0.5, 1, 1)
         style.colors[imgui.COLOR_TITLE_BACKGROUND] = (0.5, 0.5, 0.5, 1)
@@ -446,276 +346,8 @@ class Gui:
             1,
         )
 
-    def buttons_example(self, guip: GuiParametersExample) -> None:
-        """
-        Draw example buttons with associated actions.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing button parameters.
-
-        Returns
-        -------
-        None
-        """
-        [expanded, visible] = imgui.collapsing_header("Buttons")
-        if expanded:
-            # Buttons to trigger action of some sort
-            if imgui.button("btn1!"):
-                print("Pressed first btn")
-
-            imgui.same_line()
-            if imgui.button("btn2!"):
-                print("Pressed second btn")
-
-            imgui.same_line()
-            if imgui.button("btn3!"):
-                print("Pressed third btn")
-
-        imgui.spacing()
-
-    def combo_example(self, guip: GuiParametersExample):
-        """
-        Draw an example combo box for selecting items.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing combo box parameters.
-
-        Returns
-        -------
-        None
-        """
-        [expanded, visible] = imgui.collapsing_header("Combo")
-        if expanded:
-            items = ["AAAA", "BBBB", "CCCC", "DDDD"]
-            with imgui.begin_combo("combo", items[guip.combo_selected_index]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = i == guip.combo_selected_index
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.combo_selected_index = i
-
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-        imgui.spacing()
-
-    def checkbox_example(self, guip: GuiParametersExample) -> None:
-        """
-        Draw example checkboxes for changing settings.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing checkbox parameters.
-
-        Returns
-        -------
-        None
-        """
-        [expanded, visible] = imgui.collapsing_header("Checkboxes")
-        if expanded:
-            # Check box to change settings
-            [changed, guip.checkbox1] = imgui.checkbox("cbx1!", guip.checkbox1)
-            imgui.same_line()
-            [changed, guip.checkbox2] = imgui.checkbox("cbx2!", guip.checkbox2)
-
-        imgui.spacing()
-
-    def add_example_dates(self, guip: GuiParametersExample) -> None:
-        """
-        Draw example date and period selection controls.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing date and period parameters.
-
-        Returns
-        -------
-        None
-        """
-        [expanded, visible] = imgui.collapsing_header("Date")
-
-        if expanded:
-            if imgui.radio_button("date", guip.single_date):
-                guip.period = guip.single_date
-                guip.single_date = not guip.single_date
-
-            imgui.same_line()
-            if imgui.radio_button("period", guip.period):
-                guip.single_date = guip.period
-                guip.period = not guip.period
-
-            if guip.period:
-                imgui.same_line()
-                if imgui.button("match"):
-                    guip.match()
-
-            self.draw_bar(guip)
-
-            # Sliders to change values
-            [changed_year, guip.year_start] = imgui.slider_int(
-                "year_start", guip.year_start, 1990, 2023
-            )
-            [changed_month, guip.month_start] = imgui.slider_int(
-                "month_start", guip.month_start, 1, 12
-            )
-            [changed_day, guip.day_start] = imgui.slider_int(
-                "day_start",
-                guip.day_start,
-                1,
-                Gui.get_days_per_month(guip.year_start, guip.month_start),
-            )
-            [changed_hour, guip.hour_start] = imgui.slider_int(
-                "hour_start", guip.hour_start, 0, 24
-            )
-
-            if (changed_month, changed_year):
-                new_day = Gui.update_day(
-                    guip.year_start, guip.month_start, guip.day_start
-                )
-                guip.day_start = new_day
-
-            # Add an other
-            if guip.period:
-                self.draw_bar(guip)
-                [changed_year, guip.year_end] = imgui.slider_int(
-                    "year_end", guip.year_end, 1990, 2023
-                )
-                [changed_month, guip.month_end] = imgui.slider_int(
-                    "month_end", guip.month_end, 1, 12
-                )
-                [changed_day, guip.day_end] = imgui.slider_int(
-                    "day_end",
-                    guip.day_end,
-                    1,
-                    Gui.get_days_per_month(guip.year_end, guip.month_end),
-                )
-                [changed_hour, guip.hour_end] = imgui.slider_int(
-                    "hour_end", guip.hour_end, 0, 24
-                )
-
-                if (changed_month, changed_year):
-                    new_day = Gui.update_day(
-                        guip.year_end, guip.month_end, guip.day_end
-                    )
-                    guip.day_end = new_day
-            self.draw_bar(guip)
-
-        imgui.spacing()
-
-    def draw_apperance_example(self, guip: GuiParametersExample) -> None:
-        """
-        Draw example GUI elements for adjusting appearance settings.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing appearance parameters.
-
-        Returns
-        -------
-        None
-        """
-        [expanded, visible] = imgui.collapsing_header("Appearance")
-        if expanded:
-            [changed, guip.color] = imgui.color_edit4(
-                "color", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
-            )
-
-    def draw_bar(self, guip: GuiParametersExample) -> None:
-        """
-        Draw a visual bar separator.
-
-        Parameters
-        ----------
-        guip : GuiParametersExample
-            The GuiParametersExample instance containing bar parameters.
-
-        Returns
-        -------
-        None
-        """
-        imgui.push_style_color(
-            imgui.COLOR_TEXT,
-            guip.text_color[0],
-            guip.text_color[1],
-            guip.text_color[2],
-            0.5,
-        )
-        imgui.text("//////////////////////////////////////////")
-        imgui.pop_style_color()
-
-    @staticmethod
-    def update_day(year: int, month: int, current_day: int) -> None:
-        """
-        Update the day value to be within the valid range for the given year and month.
-
-        Parameters
-        ----------
-        year : int
-            The year.
-        month : int
-            The month.
-        current_day : int
-            The current day value.
-
-        Returns
-        -------
-        int
-            The updated day value.
-        """
-        new_day = current_day
-        days_per_month = Gui.get_days_per_month(year, month)
-
-        if current_day > days_per_month:
-            print(days_per_month)
-            new_day = days_per_month
-
-        return new_day
-
-    @staticmethod
-    def get_days_per_month(year: int, month: int) -> None:
-        """
-        Get the number of days in a month for a given year.
-
-        Parameters
-        ----------
-        year : int
-            The year.
-        month : int
-            The month.
-
-        Returns
-        -------
-        int
-            The number of days in the month.
-        """
-        days_per_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        if (year % 4) == 0:
-            days_per_month[1] = 29
-
-        month_index = month - 1
-        return days_per_month[month_index]
-
     @staticmethod
     def invert_color(color):
-        """
-        Invert the color.
-
-        Parameters
-        ----------
-        color
-            The color value to be inverted.
-
-        Returns
-        -------
-        list
-            The inverted color value.
-        """
+        """Invert the color."""
         inv_color = [1 - color[0], 1 - color[1], 1 - color[2], 1]
         return inv_color

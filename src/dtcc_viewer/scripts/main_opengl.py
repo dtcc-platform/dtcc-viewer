@@ -21,7 +21,7 @@ from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 from dtcc_io import load_roadnetwork
-import pyproj
+from dtcc_viewer.logging import set_log_level
 
 
 def pointcloud_example_1():
@@ -220,6 +220,7 @@ def roadnetwork_example_3():
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
+    set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
     # pointcloud_example_3()

@@ -29,6 +29,5 @@ def view(
     window = Window(1200, 800)
     scene = Scene()
 
-    rnd = RoadNetworkData("Road network", roadnetwork, data, colors)
-    scene.add_roadnetwork_data(rnd)
+    scene.add_roadnetwork("Road network", roadnetwork, data, colors)
     window.render(scene)

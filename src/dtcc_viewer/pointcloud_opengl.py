@@ -45,12 +45,9 @@ def view(
     scene = Scene()
 
     if mesh is None:
-        pc = PointCloudData("Point cloud", pc, size, data, colors)
-        scene.add_pointcloud_data(pc)
+        scene.add_pointcloud("Point cloud", pc, size, data, colors)
         window.render(scene)
     else:
-        mesh = MeshData("Mesh", mesh, mesh_data, mesh_colors, mesh_shading)
-        pc = PointCloudData("Point cloud", pc, size, data, colors)
-        scene.add_mesh_data(mesh)
-        scene.add_pointcloud_data(pc)
+        scene.add_pointcloud("Point cloud", pc, size, data, colors)
+        scene.add_mesh("Mesh", mesh, mesh_data, mesh_colors, mesh_shading)
         window.render(scene)

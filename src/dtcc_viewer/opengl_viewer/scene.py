@@ -4,6 +4,7 @@ from dtcc_viewer.opengl_viewer.roadnetwork_data import RoadNetworkData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_model import Mesh, PointCloud, RoadNetwork
+from dtcc_viewer.logging import info, warning
 
 
 class Scene:
@@ -41,6 +42,7 @@ class Scene:
         shading: MeshShading = MeshShading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
+        info(f"Mesh called - {name} - added to scene")
         mesh_data = MeshData(
             name=name, mesh=mesh, data=data, colors=colors, shading=shading
         )
@@ -48,10 +50,12 @@ class Scene:
 
     def add_mesh_data(self, mesh: MeshData):
         """Append a MeshData object to the secene"""
+        info(f"Mesh called - {mesh.name} - added to scene")
         self.meshes.append(mesh)
 
     def add_mesh_data_list(self, meshes: list[MeshData]):
         """Append a list of MeshData objects to the scene"""
+        info(f"List with {len(meshes)} meshes added to scene")
         self.meshes.extend(meshes)
 
     def add_pointcloud(
@@ -63,15 +67,18 @@ class Scene:
         colors: np.ndarray = None,
     ):
         """Append a pointcloud with data and/or colors to the scene"""
+        info(f"Point could called - {name} - added to scene")
         pc_data = PointCloudData(name=name, pc=pc, size=size, data=data, colors=colors)
         self.pointclouds.append(pc_data)
 
     def add_pointcloud_data(self, pc: PointCloudData):
         """Append a PointCloudData object to the scene"""
+        info(f"Point could called - {pc.name} - added to scene")
         self.pointclouds.append(pc)
 
     def add_pointcloud_data_list(self, pcs: list[PointCloudData]):
         """Append a list of PointCloudData objects to the scene"""
+        info(f"List with {len(pcs)} point clouds added to scene")
         self.pointclouds.extend(pcs)
 
     def add_roadnetwork(
@@ -82,15 +89,18 @@ class Scene:
         colors: np.ndarray = None,
     ):
         """Append a RoadNetwork object to the scene"""
+        info(f"Road network called - {name} - added to scene")
         rn_data = RoadNetworkData(name=name, rn=rn, data=data, colors=colors)
         self.road_networks.append(rn_data)
 
     def add_roadnetwork_data(self, roadnetwork: RoadNetworkData):
         """Append a RoadNetwork object to the scene"""
+        info(f"Road network called - {roadnetwork.name} - added to scene")
         self.road_networks.append(roadnetwork)
 
     def add_roadnetwork_data_list(self, roadnetwork_list: list[RoadNetworkData]):
         """Append a RoadNetwork object to the secene"""
+        info(f"List with {len(roadnetwork_list)} road networks added to scene")
         self.road_networks.extend(roadnetwork_list)
 
     def preprocess_drawing(self):
@@ -107,7 +117,7 @@ class Scene:
         for rn in self.road_networks:
             rn.preprocess_drawing(self.bb)
 
-            # rn.bb_global.print()
+        info(f"Scene preprocessing completed")
 
     def _calculate_bb(self):
         """Calculate bounding box of the scene"""

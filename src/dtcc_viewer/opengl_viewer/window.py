@@ -9,13 +9,14 @@ from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
 from dtcc_viewer.opengl_viewer.utils import MeshShading
 from dtcc_viewer.opengl_viewer.roadnetwork_gl import RoadNetworkGL
 
-from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui, GuiParametersExample
+from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui, GuiParametersDates
 from imgui.integrations.glfw import GlfwRenderer
 
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
 from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
 
 from dtcc_viewer.opengl_viewer.scene import Scene
+from dtcc_viewer.logging import info, warning
 
 
 class Window:
@@ -167,6 +168,8 @@ class Window:
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
 
+        info(f"Rendering scene...")
+
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -265,7 +268,7 @@ class Window:
         if self.time_acum > 1:
             self.time_acum = 0
             if print_results:
-                print("FPS:" + str(self.fps))
+                info(f"FPS: {self.fps}")
             self.fps = 0
 
     def _window_resize_callback(self, window, width, height):
