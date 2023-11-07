@@ -82,6 +82,10 @@ def view(
         folium.GeoJsonPopup(fields=view_fields, aliases=view_aliases)
     )
     m.add_child(cm_layers)
+
+    # Zoom to the added layer
+    m.fit_bounds(cm_layers.get_bounds())
+
     tmp_geojson.close()
     outpath_dir = outpath.parent
     outpath.unlink()
