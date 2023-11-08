@@ -72,7 +72,7 @@ class PointCloudGL:
 
         self.cp_locs = [0, 0, 0]
         self.p_size = pc_data_obj.size
-        self.n_points = len(pc_data_obj.points) / 3
+        self.n_points = int(len(pc_data_obj.points) / 3)
 
         self.guip = GuiParametersPC(pc_data_obj.name)
         self.bb_local = pc_data_obj.bb_local
@@ -119,7 +119,7 @@ class PointCloudGL:
             len(self.face_indices),
             GL_UNSIGNED_INT,
             None,
-            self.n_instances,
+            self.n_points,
         )
 
         self._unbind_vao()
@@ -171,7 +171,6 @@ class PointCloudGL:
         colors : np.ndarray
             Array containing the RGB colors corresponding to each point.
         """
-        self.n_instances = int(points.size / 3.0)
         self.instance_transforms = points
         self.transforms_VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.transforms_VBO)
