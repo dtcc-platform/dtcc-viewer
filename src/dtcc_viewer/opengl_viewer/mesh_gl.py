@@ -328,7 +328,6 @@ class MeshGL:
         """Set up framebuffer and texture for shadow map rendering."""
         # Frambuffer for the shadow map
         self.FBO = glGenFramebuffers(1)
-        glGenTextures(1, self.FBO)
 
         # Creating a texture which will be used as the framebuffers depth buffer
         self.depth_map = glGenTextures(1)
