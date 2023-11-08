@@ -1468,8 +1468,6 @@ FBO = glGenFramebuffers(1)
 
 # Creating a texture which will be used as the framebuffers depth buffer
 depth_map = glGenTextures(1)
-print(depth_map)
-print(a)
 glBindTexture(GL_TEXTURE_2D, depth_map)
 shadow_map_resolution = 1024
 glTexImage2D(
