@@ -1,5 +1,6 @@
 import math
 import glfw
+import copy
 import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
@@ -7,7 +8,8 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
+from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox, ColorSchema
+from dtcc_viewer.logging import info, warning
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -218,11 +220,15 @@ class MeshGL:
             Instance of the MeshData class with vertices, edge indices, face indices.
         """
 
-        self.guip = GuiParametersMesh(mesh_data.name, mesh_data.shading)
-
         self.vertices = mesh_data.vertices
-        self.face_indices = mesh_data.face_indices
-        self.edge_indices = mesh_data.edge_indices
+        self.face_indices = mesh_data.faces
+        self.edge_indices = mesh_data.edges
+        self.dict_colors = mesh_data.dict_colors
+
+        color_keys = list(mesh_data.dict_colors.keys())
+        self.guip = GuiParametersMesh(mesh_data.name, mesh_data.shading, color_keys)
+
+        self.init_vertices = copy.deepcopy(self.vertices)
 
         self.cp_locs_lines = [0, 0, 0]
         self.cp_locs_ambient = [0, 0, 0]
@@ -463,6 +469,32 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
+    def _update_colors(self) -> None:
+        if self.guip.update_colors:
+            glBindVertexArray(self.VAO_triangels)
+
+            color_keys = list(self.dict_colors.keys())
+            color_name = self.guip.get_current_color_name()
+            # (x, y, z, r, g, b, nx, ny, nz)
+            if color_name in color_keys:
+                self.vertices[3::9] = self.dict_colors[color_name][0::3]
+                self.vertices[4::9] = self.dict_colors[color_name][1::3]
+                self.vertices[5::9] = self.dict_colors[color_name][2::3]
+
+            # Updating vertex buffer object for triangles
+            size = len(self.vertices) * 4  # Size in bytes
+            glBindBuffer(GL_ARRAY_BUFFER, self.VBO_triangels)
+            glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
+            glBindVertexArray(0)
+
+            # Updating vertex buffer object for lines
+            size = len(self.vertices) * 4
+            glBindBuffer(GL_ARRAY_BUFFER, self.VBO_edge)
+            glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
+
+            info("Colors updated!")
+            self.guip.update_colors = False
+
     def render_lines(self, interaction: Interaction, gguip: GuiParameters, ws_pass=0):
         """Render wireframe lines of the mesh.
 
@@ -471,6 +503,8 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
+
+        self._update_colors()
 
         self._bind_shader_lines()
 
@@ -498,6 +532,8 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
+        self._update_colors()
+
         self._bind_shader_ambient()
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -524,6 +560,8 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
+        self._update_colors()
+
         self._bind_shader_diffuse()
         self.light_position = self._calc_light_position()
 
@@ -559,10 +597,14 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
+        self._update_colors()
+
         self._render_shadow_map(interaction)
-        self._render_model_with_shadows(interaction, gguip)
+        self._render_shadows(interaction, gguip)
 
     def render_wireshaded(self, interaction: Interaction, gguip: GuiParameters) -> None:
+        self._update_colors()
+
         glEnable(GL_POLYGON_OFFSET_FILL)
         glPolygonOffset(1.0, 1.0)
         self.render_diffuse(interaction, gguip, ws_pass=1)
@@ -611,9 +653,7 @@ class MeshGL:
 
         self._triangles_draw_call()
 
-    def _render_model_with_shadows(
-        self, interaction: Interaction, gguip: GuiParameters
-    ) -> None:
+    def _render_shadows(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer.
 
         Parameters

@@ -76,6 +76,21 @@ def mesh_example_3():
     mesh.view(colors=colors, shading=MeshShading.wireframe)
 
 
+def mesh_example_4():
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
+    # mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
+    face_mid_pts = calc_face_mid_points(mesh)
+    data_dict = {}
+    data_dict["vertex_x"] = mesh.vertices[:, 0]
+    data_dict["face_x"] = face_mid_pts[:, 0]
+    data_dict["vertex_y"] = mesh.vertices[:, 1]
+    data_dict["face_y"] = face_mid_pts[:, 1]
+    data_dict["vertex_z"] = mesh.vertices[:, 2]
+    data_dict["face_z"] = face_mid_pts[:, 2]
+    mesh.view(data=data_dict)
+
+
 def mesh_point_cloud_example_1():
     file_1 = "../../../data/models/CitySurface.obj"
     file_2 = "../../../data/models/PointCloud_HQ.csv"
@@ -109,24 +124,25 @@ def multi_geometry_example_1():
     # Import meshes to be viewed
     mesh_a = meshes.load_mesh("../../../data/models/CitySurfaceA.obj")
     mesh_b = meshes.load_mesh("../../../data/models/CitySurfaceB.obj")
-    data_a = mesh_a.vertices[:, 1]
-    data_b = mesh_b.vertices[:, 0]
 
-    # Combine mesh and coloring data in a MeshData object and add to scene
-    md_a = MeshData("mesh A", mesh_a, data_a)
-    md_b = MeshData("mesh B", mesh_b, data_b)
-    scene.add_mesh_data_list([md_a, md_b])
+    data_a = {}
+    data_a["vertex_x"] = mesh_a.vertices[:, 0]
+    data_a["vertex_y"] = mesh_a.vertices[:, 1]
+
+    data_b = {}
+    data_b["vertex_x"] = mesh_b.vertices[:, 0]
+    data_b["vertex_y"] = mesh_b.vertices[:, 1]
+
+    scene.add_mesh("mesh A", mesh_a, data_a)
+    scene.add_mesh("mesh B", mesh_b, data_b)
 
     # Import point clodus to be viewed
     pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
     pc_b = pointcloud.load("../../../data/models/PointCloud_HQ_B.csv")
     pc_data_a = pc_a.points[:, 0]
     pc_data_b = pc_b.points[:, 1]
-
-    # Combine pc and coloring data in a PointCloudData object and add to scene
-    pcd_a = PointCloudData("pc A", pc_a, 0.2, pc_data_a)
-    pcd_b = PointCloudData("pc B", pc_b, 0.2, pc_data_b)
-    scene.add_pointcloud_data_list([pcd_a, pcd_b])
+    scene.add_pointcloud("pc A", pc_a, 0.2, pc_data_a)
+    scene.add_pointcloud("pc B", pc_b, 0.2, pc_data_b)
 
     window.render(scene)
 
@@ -139,8 +155,7 @@ def multi_geometry_example_2():
     scene = Scene()
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
-        pcd = PointCloudData("pc" + str(i), pc, i * 0.1, data)
-        scene.add_pointcloud_data(pcd)
+        scene.add_pointcloud("pc" + str(i), pc, i * 0.1, data)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -155,8 +170,7 @@ def multi_geometry_example_3():
     scene = Scene()
     for i, mesh in enumerate(split_meshes):
         data = mesh.vertices[:, Direction.x]
-        md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh_data(md)
+        scene.add_mesh("Mesh " + str(i), mesh, data)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -174,13 +188,11 @@ def multi_geometry_example_4():
 
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
-        pcd = PointCloudData("pc " + str(i), pc, 0.2, data)
-        scene.add_pointcloud_data(pcd)
+        scene.add_pointcloud("pc " + str(i), pc, 0.2, data)
 
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
-        md = MeshData("Mesh " + str(i), mesh, data)
-        scene.add_mesh_data(md)
+        scene.add_mesh("Mesh " + str(i), mesh, data)
 
     window = Window(1200, 800)
     window.render(scene)
@@ -227,13 +239,14 @@ if __name__ == "__main__":
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
+    mesh_example_4()
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
-    multi_geometry_example_4()
+    # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()

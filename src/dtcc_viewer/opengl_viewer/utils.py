@@ -12,6 +12,13 @@ class MeshShading(IntEnum):
     shadows = 4
 
 
+class ColorSchema(IntEnum):
+    initial = 0
+    red = 1
+    blue = 2
+    green = 3
+
+
 class MeshColor(IntEnum):
     color = 1
     white = 2

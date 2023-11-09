@@ -1,6 +1,6 @@
 import imgui
 import copy
-from dtcc_viewer.opengl_viewer.utils import MeshShading
+from dtcc_viewer.opengl_viewer.utils import MeshShading, ColorSchema
 from imgui.integrations.glfw import GlfwRenderer
 
 
@@ -40,13 +40,20 @@ class GuiParameters:
 class GuiParametersMesh:
     """Class representing GUI parameters for meshes."""
 
-    def __init__(self, name: str, shading: MeshShading) -> None:
+    def __init__(self, name: str, shading: MeshShading, color_keys: list[str]) -> None:
         """Initialize the GuiParametersMesh object."""
         self.name = name
         self.show = True
         self.color_mesh = True
         self.animate_light = False
         self.mesh_shading = shading
+        self.color_index = 0
+        self.color_names = color_keys
+        self.update_colors = False
+
+    def get_current_color_name(self):
+        """Get the current color name."""
+        return self.color_names[self.color_index]
 
 
 class GuiParametersPC:
@@ -275,6 +282,24 @@ class Gui:
                         if is_selected:
                             imgui.set_item_default_focus()
             imgui.pop_id()
+
+            # Add combobox for selecting color if there are more then one color
+            if len(guip.color_names) > 1:
+                # Drawing colors
+                imgui.push_id("ColorsCombo " + str(index))
+                items = guip.color_names
+                with imgui.begin_combo("ColorsCombo", items[guip.color_index]) as combo:
+                    if combo.opened:
+                        for i, item in enumerate(items):
+                            is_selected = guip.color_index
+                            if imgui.selectable(item, is_selected)[0]:
+                                guip.update_colors = True
+                                guip.color_index = i
+
+                            # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                            if is_selected:
+                                imgui.set_item_default_focus()
+                imgui.pop_id()
 
     def draw_separator(self) -> None:
         """Draw a separator between GUI elements."""
