@@ -4,7 +4,7 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.point_cloud_gl import PointCloudGL
+from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
 from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
 from dtcc_viewer.opengl_viewer.utils import MeshShading
 from dtcc_viewer.opengl_viewer.roadnetwork_gl import RoadNetworkGL
@@ -12,8 +12,8 @@ from dtcc_viewer.opengl_viewer.roadnetwork_gl import RoadNetworkGL
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui, GuiParametersDates
 from imgui.integrations.glfw import GlfwRenderer
 
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 
 from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.logging import info, warning
@@ -152,15 +152,15 @@ class Window:
         self.road_networks = []
         scene.preprocess_drawing()
 
-        for mesh in scene.meshes:
+        for mesh in scene.mesh_wrappers:
             mesh_gl = MeshGL(mesh)
             self.meshes.append(mesh_gl)
 
-        for pc in scene.pointclouds:
+        for pc in scene.pcs_wrappers:
             pc_gl = PointCloudGL(pc)
             self.point_clouds.append(pc_gl)
 
-        for rn in scene.road_networks:
+        for rn in scene.roadn_wrappers:
             rn_gl = RoadNetworkGL(rn)
             self.road_networks.append(rn_gl)
 

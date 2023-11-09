@@ -7,9 +7,9 @@ from pprint import pp
 from dtcc_viewer import *
 from dtcc_viewer.colors import color_maps
 from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
-from dtcc_viewer.opengl_viewer.point_cloud_gl import PointCloudGL
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 from dtcc_model import Mesh
@@ -54,40 +54,40 @@ class TestOpenGLViewer:
         mesh = Mesh(vertices=self.vertices, faces=self.faces)
         bb = BoundingBox(mesh.vertices)
         data = mesh.vertices[:, 0]
-        mesh_data_obj = MeshData("name", mesh=mesh, data=data)
-        mesh_data_obj.preprocess_drawing(bb)
-        assert len(self.vertices_gl.flatten()) == len(mesh_data_obj.vertices)
+        mesh_wrapper = MeshWrapper("name", mesh=mesh, data=data)
+        mesh_wrapper.preprocess_drawing(bb)
+        assert len(self.vertices_gl.flatten()) == len(mesh_wrapper.vertices)
 
     def test_mesh_4(self):
         # Testing conversion from obj to MeshGL object
         mesh = meshes.load_mesh("data/models/cube.obj")
         bb = BoundingBox(mesh.vertices)
         data = mesh.vertices[:, 0]
-        mesh_data_obj = MeshData("name", mesh=mesh, data=data)
-        mesh_data_obj.preprocess_drawing(bb)
+        mesh_wrapper = MeshWrapper("name", mesh=mesh, data=data)
+        mesh_wrapper.preprocess_drawing(bb)
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
 
-        mesh_gl = MeshGL(mesh_data_obj)
+        mesh_gl = MeshGL(mesh_wrapper)
 
         # window.render_mesh(mesh_data_obj)
 
-        assert mesh and mesh_data_obj and mesh_gl
+        assert mesh and mesh_wrapper and mesh_gl
 
     def test_point_cloud(self):
         pc = pointcloud.load("data/models/cube_pc.csv")
         data = pc.points[:, 2]
         bb = BoundingBox(pc.points)
-        pc_data_obj = PointCloudData("name", pc, 0.2, data)
-        pc_data_obj.preprocess_drawing(bb)
+        pc_wrapper = PointCloudWrapper("name", pc, 0.2, data)
+        pc_wrapper.preprocess_drawing(bb)
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
 
-        pc_gl = PointCloudGL(pc_data_obj)
+        pc_gl = PointCloudGL(pc_wrapper)
 
         # window.render_point_cloud(pc_data_obj)
 
-        assert pc_data_obj
+        assert pc_wrapper
 
 
 if __name__ == "__main__":

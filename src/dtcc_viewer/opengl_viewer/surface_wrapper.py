@@ -7,7 +7,7 @@ from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_viewer.logging import info, warning
 
 
-class SurfaceData:
+class SurfaceWrapper:
     """Mesh attributes and associated data structured for the purpous of rendering.
 
     This class represents mesh data for rendering in an OpenGL window. It encapsulates
@@ -19,8 +19,8 @@ class SurfaceData:
     color_by: int
     colors: np.ndarray
     vertices: np.ndarray
-    face_indices: np.ndarray
-    edge_indices: np.ndarray
+    faces: np.ndarray
+    edges: np.ndarray
     name: str
     shading: MeshShading
     bb_local: BoundingBox
@@ -39,9 +39,7 @@ class SurfaceData:
         self.shading = shading
 
         [self.color_by, self.colors] = self._generate_colors(surface, data, colors)
-        [self.verts, self.faces, self.edges] = self._restructure_mesh(
-            surface, self.colors
-        )
+        [self.verts, self.faces, self.edges] = self._restructure_mesh(surface)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -71,7 +69,7 @@ class SurfaceData:
 
         pass
 
-    def _restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
+    def _restructure_mesh(self, mesh: Mesh):
         """Restructure the mesh data for OpenGL rendering."""
 
         # Vertex format that suits the opengl data structure:

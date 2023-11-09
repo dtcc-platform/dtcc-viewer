@@ -4,14 +4,15 @@ from dtcc_model import PointCloud
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.utils import *
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.scene import Scene
+from typing import Any
 
 
 def view(
     mesh: Mesh,
-    data: np.ndarray = None,
+    data: Any = None,
     colors: np.ndarray = None,
     shading: MeshShading = MeshShading.wireshaded,
     pc: PointCloud = None,

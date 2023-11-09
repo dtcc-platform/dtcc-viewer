@@ -7,7 +7,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox, ColorSchema
 from dtcc_viewer.logging import info, warning
 
@@ -211,7 +211,7 @@ class MeshGL:
     shadow_map_resolution: int  # Resolution of the shadow map, same in x and y.
     border_color: np.ndarray  # color for the border of the shadow map
 
-    def __init__(self, mesh_data: MeshData):
+    def __init__(self, mesh_wrapper: MeshWrapper):
         """Initialize the MeshGL object with vertex, face, and edge information.
 
         Parameters
@@ -220,13 +220,15 @@ class MeshGL:
             Instance of the MeshData class with vertices, edge indices, face indices.
         """
 
-        self.vertices = mesh_data.vertices
-        self.face_indices = mesh_data.faces
-        self.edge_indices = mesh_data.edges
-        self.dict_colors = mesh_data.dict_colors
+        self.vertices = mesh_wrapper.vertices
+        self.face_indices = mesh_wrapper.faces
+        self.edge_indices = mesh_wrapper.edges
+        self.dict_colors = mesh_wrapper.dict_colors
 
-        color_keys = list(mesh_data.dict_colors.keys())
-        self.guip = GuiParametersMesh(mesh_data.name, mesh_data.shading, color_keys)
+        color_keys = list(mesh_wrapper.dict_colors.keys())
+        self.guip = GuiParametersMesh(
+            mesh_wrapper.name, mesh_wrapper.shading, color_keys
+        )
 
         self.init_vertices = copy.deepcopy(self.vertices)
 
@@ -235,8 +237,8 @@ class MeshGL:
         self.cp_locs_diffuse = [0, 0, 0]
         self.cp_locs_shadows = [0, 0, 0]
 
-        self.bb_local = mesh_data.bb_local
-        self.bb_global = mesh_data.bb_global
+        self.bb_local = mesh_wrapper.bb_local
+        self.bb_global = mesh_wrapper.bb_global
 
         self._calc_model_scale()
         self._create_lines()

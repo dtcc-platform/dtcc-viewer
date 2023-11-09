@@ -5,14 +5,14 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
 from dtcc_viewer.opengl_viewer.gui import GuiParametersRN, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
-from dtcc_viewer.opengl_viewer.roadnetwork_data import RoadNetworkData
+from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 
 
 class RoadNetworkGL:
@@ -41,7 +41,7 @@ class RoadNetworkGL:
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, rn_data_obj: RoadNetworkData):
+    def __init__(self, rn_data_obj: RoadNetworkWrapper):
         """Initialize the RoadNetworkGL object and set up rendering.
 
         Parameters

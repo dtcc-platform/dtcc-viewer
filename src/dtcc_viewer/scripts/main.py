@@ -16,8 +16,8 @@ from dtcc_io import meshes
 from dtcc_io import city
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.scene import Scene
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 from dtcc_io import load_roadnetwork
@@ -239,13 +239,13 @@ if __name__ == "__main__":
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
-    mesh_example_4()
+    # mesh_example_4()
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
-    # multi_geometry_example_3()
+    multi_geometry_example_3()
     # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()

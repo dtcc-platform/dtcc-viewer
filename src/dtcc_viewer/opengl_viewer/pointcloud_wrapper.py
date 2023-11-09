@@ -5,7 +5,7 @@ from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
 
-class PointCloudData:
+class PointCloudWrapper:
     """Point cloud attributes and data structured for the purpous of rendering.
 
     This class is used to store point cloud data along with color information

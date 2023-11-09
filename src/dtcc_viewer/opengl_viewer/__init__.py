@@ -1,9 +1,9 @@
 from .camera import Camera
 from .window import Window
-from .point_cloud_data import PointCloudData
-from .point_cloud_gl import PointCloudGL
+from .pointcloud_wrapper import PointCloudWrapper
+from .pointcloud_gl import PointCloudGL
 from .mesh_gl import MeshGL
-from .mesh_data import MeshData
+from .mesh_wrapper import MeshWrapper
 from .interaction import Interaction
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
@@ -14,10 +14,10 @@ from .utils import MeshShading
 __all__ = [
     "Camera",
     "Window",
-    "PointCloudData",
+    "PointCloudWrapper",
     "PointCloudGL",
     "MeshGL",
-    "MeshData",
+    "MeshWrapper",
     "Interaction",
     "Scene",
     "Gui",

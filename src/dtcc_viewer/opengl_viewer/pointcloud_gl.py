@@ -5,7 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
     vertex_shader_pc,
     fragment_shader_pc,
@@ -61,7 +61,7 @@ class PointCloudGL:
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
 
-    def __init__(self, pc_data_obj: PointCloudData):
+    def __init__(self, pc_data_obj: PointCloudWrapper):
         """Initialize the PointCloudGL object and set up rendering.
 
         Parameters

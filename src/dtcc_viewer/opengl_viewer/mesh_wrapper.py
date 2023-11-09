@@ -7,7 +7,7 @@ from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_viewer.logging import info, warning
 
 
-class MeshData:
+class MeshWrapper:
     """Mesh attributes and associated data structured for the purpous of rendering.
 
     This class represents mesh data for rendering in an OpenGL window. It encapsulates
