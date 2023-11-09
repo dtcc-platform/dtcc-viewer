@@ -61,7 +61,7 @@ class PointCloudGL:
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
 
-    def __init__(self, pc_data_obj: PointCloudWrapper):
+    def __init__(self, pc_wrapper: PointCloudWrapper):
         """Initialize the PointCloudGL object and set up rendering.
 
         Parameters
@@ -71,14 +71,17 @@ class PointCloudGL:
         """
 
         self.cp_locs = [0, 0, 0]
-        self.p_size = pc_data_obj.size
-        self.n_points = int(len(pc_data_obj.points) / 3)
+        self.p_size = pc_wrapper.size
+        self.n_points = int(len(pc_wrapper.points) / 3)
+        self.colors = pc_wrapper.colors
+        self.dict_colors = pc_wrapper.dict_colors
+        color_keys = list(pc_wrapper.dict_colors.keys())
 
-        self.guip = GuiParametersPC(pc_data_obj.name)
-        self.bb_local = pc_data_obj.bb_local
-        self.bb_global = pc_data_obj.bb_global
+        self.guip = GuiParametersPC(pc_wrapper.name, color_keys)
+        self.bb_local = pc_wrapper.bb_local
+        self.bb_global = pc_wrapper.bb_global
         self._create_single_instance()
-        self._create_multiple_instances(pc_data_obj.points, pc_data_obj.colors)
+        self._create_multiple_instances(pc_wrapper.points)
         self._create_shader()
 
     def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
@@ -89,6 +92,8 @@ class PointCloudGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
+        self._update_colors()
+
         self._bind_vao()
         self._bind_shader()
 
@@ -125,6 +130,20 @@ class PointCloudGL:
         self._unbind_vao()
         self._unbind_shader()
 
+    def _update_colors(self):
+        if self.guip.update_colors:
+            color_keys = list(self.dict_colors.keys())
+            color_name = self.guip.get_current_color_name()
+
+            if color_name in color_keys:
+                self.colors = self.dict_colors[color_name]
+
+            size = self.colors.nbytes
+            glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
+            glBufferData(GL_ARRAY_BUFFER, size, self.colors, GL_STATIC_DRAW)
+
+            self.guip.update_colors = False
+
     def _create_single_instance(self):
         """Create a single instance of particle mesh geometry."""
 
@@ -140,20 +159,15 @@ class PointCloudGL:
 
         # Vertex buffer
         self.VBO = glGenBuffers(1)
+        size = len(self.vertices) * 4  # Size is nr of bytes
         glBindBuffer(GL_ARRAY_BUFFER, self.VBO)
-        glBufferData(
-            GL_ARRAY_BUFFER, len(self.vertices) * 4, self.vertices, GL_STATIC_DRAW
-        )  # Second argument is nr of bytes
+        glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
 
         # Element buffer
         self.EBO = glGenBuffers(1)
+        size = len(self.face_indices) * 4
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO)
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            len(self.face_indices) * 4,
-            self.face_indices,
-            GL_STATIC_DRAW,
-        )
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.face_indices, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
@@ -161,7 +175,7 @@ class PointCloudGL:
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
-    def _create_multiple_instances(self, points: np.ndarray, colors: np.ndarray):
+    def _create_multiple_instances(self, points: np.ndarray):
         """Create multiple instances of a particle mesh geometry.
 
         Parameters
@@ -171,15 +185,11 @@ class PointCloudGL:
         colors : np.ndarray
             Array containing the RGB colors corresponding to each point.
         """
-        self.instance_transforms = points
+        self.transforms = points
         self.transforms_VBO = glGenBuffers(1)
+        size = self.transforms.nbytes
         glBindBuffer(GL_ARRAY_BUFFER, self.transforms_VBO)
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            self.instance_transforms.nbytes,
-            self.instance_transforms,
-            GL_STATIC_DRAW,
-        )
+        glBufferData(GL_ARRAY_BUFFER, size, self.transforms, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
@@ -189,7 +199,7 @@ class PointCloudGL:
 
         self.color_VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
-        glBufferData(GL_ARRAY_BUFFER, colors.nbytes, colors, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, self.colors.nbytes, self.colors, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))

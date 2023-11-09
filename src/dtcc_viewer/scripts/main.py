@@ -45,12 +45,11 @@ def pointcloud_example_2():
 def pointcloud_example_3():
     file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
     pc = pointcloud.load(file)
-    color_data = pc.points[:, 2]
-    color_data = abs(pc.points[:, 2]) / pc.points[:, 2].max()
-    colors = np.zeros((len(pc.points), 3))
-    colors[:, 0] = color_data
-    colors[:, 2] = color_data
-    pc.view(colors=colors)
+    data_dict = {}
+    data_dict["vertex_x"] = pc.points[:, 0]
+    data_dict["vertex_y"] = pc.points[:, 1]
+    data_dict["vertex_z"] = pc.points[:, 2]
+    pc.view(data=data_dict)
 
 
 def mesh_example_1():
@@ -235,7 +234,7 @@ if __name__ == "__main__":
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
-    # pointcloud_example_3()
+    pointcloud_example_3()
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
@@ -245,7 +244,7 @@ if __name__ == "__main__":
     # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
-    multi_geometry_example_3()
+    # multi_geometry_example_3()
     # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()

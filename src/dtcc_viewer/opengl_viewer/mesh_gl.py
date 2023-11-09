@@ -219,16 +219,14 @@ class MeshGL:
         mesh_data : MeshData
             Instance of the MeshData class with vertices, edge indices, face indices.
         """
-
+        self.name = mesh_wrapper.name
         self.vertices = mesh_wrapper.vertices
         self.face_indices = mesh_wrapper.faces
         self.edge_indices = mesh_wrapper.edges
         self.dict_colors = mesh_wrapper.dict_colors
 
         color_keys = list(mesh_wrapper.dict_colors.keys())
-        self.guip = GuiParametersMesh(
-            mesh_wrapper.name, mesh_wrapper.shading, color_keys
-        )
+        self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, color_keys)
 
         self.init_vertices = copy.deepcopy(self.vertices)
 

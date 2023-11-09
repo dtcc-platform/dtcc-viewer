@@ -3,6 +3,7 @@ from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
+from typing import Any
 
 
 class PointCloudWrapper:
@@ -26,6 +27,7 @@ class PointCloudWrapper:
 
     points: np.ndarray  # [n_points x 3]
     colors: np.ndarray  # [n_points x 3]
+    dict_colors: dict
     pc_avrg_pt: np.ndarray  # [1 x 3]
     size: float
     name: str
@@ -37,7 +39,7 @@ class PointCloudWrapper:
         name: str,
         pc: PointCloud,
         size: float = 0.2,
-        data: np.ndarray = None,
+        data: Any = None,
         colors: np.ndarray = None,
     ) -> None:
         """Initialize a PointCloudData object.
@@ -62,7 +64,8 @@ class PointCloudWrapper:
 
         self.name = name
         self.size = size
-        self.colors = self._generate_pc_colors(pc, pc_data=data, pc_colors=colors)
+        self.dict_colors = {}
+        self.colors = self._generate_pc_colors(pc, data=data, input_colors=colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -74,8 +77,8 @@ class PointCloudWrapper:
     def _generate_pc_colors(
         self,
         pc: PointCloud,
-        pc_data: np.ndarray = None,
-        pc_colors: np.ndarray = None,
+        data: np.ndarray = None,
+        input_colors: np.ndarray = None,
     ) -> np.ndarray:
         """Generate colors for the point cloud based on the provided data.
 
@@ -91,33 +94,56 @@ class PointCloudWrapper:
         np.ndarray
             Array of colors for the point cloud.
         """
-        colors = []
         n_points = len(pc.points)
 
-        if pc_colors is not None:
-            n_pc_colors = len(pc_colors)
+        # Coloring by dictionary
+        if isinstance(data, dict):
+            if self._generate_dict_colors(data, n_points):
+                keys = list(self.dict_colors.keys())
+                colors_from_dict = np.array(self.dict_colors[keys[0]])
+                return colors_from_dict
+            else:
+                warning("Data dict for pc colors does not match point count!")
+
+        # Coloring by input colors
+        if input_colors is not None:
+            n_pc_colors = len(input_colors)
             if n_pc_colors == n_points:
-                colors = np.array(pc_colors)
-                return colors
+                colors_from_input = np.array(input_colors)
+                return colors_from_input
             else:
                 warning("Point cloud colors provided does not match point count!")
 
-        if pc_data is not None:
-            if len(pc.points) == len(pc_data):
-                colors = calc_colors_rainbow(pc_data)
+        # Coloring by data
+        if data is not None:
+            if len(pc.points) == len(data):
+                colors_from_data = np.array(calc_colors_rainbow(data))
+                return colors_from_data
             else:
                 warning("Provided color data does not match the particle count!")
-                info("Default colors are used instead -> coloring per z-value")
-                z = pc.points[:, 2]
-                colors = calc_colors_rainbow(z)
-        else:
-            info("No data provided for point cloud -> coloring per z-value")
-            z = pc.points[:, 2]  # Color by height if no data is provided
-            colors = calc_colors_rainbow(z)
 
-        colors = np.array(colors)
-        colors = colors[:, 0:3]
-        return colors
+        info("No data provided for point cloud -> coloring per z-value")
+        z = pc.points[:, 2]  # Color by height if no data is provided
+        default_colors = np.array(calc_colors_rainbow(z))
+        return default_colors
+
+    def _generate_dict_colors(self, data_dict: dict, n_points: int):
+        # return default colors to be added to the mesh
+        keys = data_dict.keys()
+
+        for key in keys:
+            row_data = data_dict[key]
+            if len(row_data) == n_points:
+                colors = calc_colors_rainbow(row_data)
+                colors = np.array(colors, dtype="float32")
+                self.dict_colors[key] = colors.flatten()
+            else:
+                warning(f"Dict data in for key {key} doesn't match point count:")
+
+        if len(self.dict_colors) == 0:
+            return False
+
+        return True
 
     def _move_pc_to_origin_multi(self, points: np.ndarray, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors.
@@ -140,22 +166,8 @@ class PointCloudWrapper:
         return points
 
     def _flatten_pc(self, points: np.ndarray, colors: np.ndarray):
-        """Flatten the point cloud data arrays for further processing.
+        """Flatten the point cloud data arrays for further processing."""
 
-        Parameters
-        ----------
-        points : np.ndarray
-            Array of point cloud data.
-        colors : np.ndarray
-            Array of point cloud colors.
-
-        Returns
-        -------
-        np.ndarray
-            Flattened point cloud data array.
-        np.ndarray
-            Flattened point cloud colors array.
-        """
         points = np.array(points, dtype="float32").flatten()
         colors = np.array(colors, dtype="float32").flatten()
         return points, colors
