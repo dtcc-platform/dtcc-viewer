@@ -1465,8 +1465,6 @@ glUseProgram(shader_debug)
 # ---------------- SHADOW MAP ---------------------#
 # Frambuffer for the shadow map
 FBO = glGenFramebuffers(1)
-glGenTextures(1, FBO)
-
 
 # Creating a texture which will be used as the framebuffers depth buffer
 depth_map = glGenTextures(1)

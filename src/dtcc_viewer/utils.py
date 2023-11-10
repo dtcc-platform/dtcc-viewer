@@ -11,11 +11,9 @@ from enum import IntEnum
 
 
 class ColorBy(Enum):
-    vertex_colors = 2
-    vertex_data = 1
-    face_colors = 3
-    face_data = 4
-    vertex_height = 5
+    vertex = 1
+    face = 2
+    dict = 3
 
 
 class Direction(IntEnum):
@@ -35,7 +33,7 @@ class Direction(IntEnum):
 # --------------------------- PointCloude Conversion Ended ---------------------------------#
 
 
-def calc_face_mid_points(mesh: trimesh):
+def calc_face_mid_points(mesh):
     faceVertexIndex1 = mesh.faces[:, 0]
     faceVertexIndex2 = mesh.faces[:, 1]
     faceVertexIndex3 = mesh.faces[:, 2]
@@ -67,6 +65,35 @@ def split_mesh_in_quadrants(mesh: trimesh, face_mid_pts: Iterable):
         meshes.append(mesh_q)
 
     return meshes, values
+
+
+def get_sub_mesh(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
+    face_mid_pts = calc_face_mid_points(mesh)
+
+    if len(xdom) == 2 and len(ydom) == 2 and xdom[0] < xdom[1] and ydom[0] < ydom[1]:
+        x_range = face_mid_pts[:, 0].max() - face_mid_pts[:, 0].min()
+        y_range = face_mid_pts[:, 1].max() - face_mid_pts[:, 1].min()
+        face_mask = []
+
+        for pt in face_mid_pts:
+            xnrm = pt[0] / x_range
+            ynrm = pt[1] / y_range
+            if (xnrm > xdom[0] and xnrm < xdom[1]) and (
+                ynrm > ydom[0] and ynrm < ydom[1]
+            ):
+                face_mask.append(True)
+            else:
+                face_mask.append(False)
+
+        mesh_tri = trimesh.Trimesh(mesh.vertices, mesh.faces)
+        mesh_tri.update_faces(face_mask)
+        mesh_tri.remove_unreferenced_vertices()
+        mesh_dtcc = Mesh(vertices=mesh_tri.vertices, faces=mesh_tri.faces)
+
+        return mesh_dtcc
+    else:
+        print(f"Invalid domain.")
+        return mesh
 
 
 def split_mesh_in_stripes(

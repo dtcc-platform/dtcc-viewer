@@ -5,7 +5,7 @@ from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
 
-class RoadNetworkData:
+class RoadNetworkWrapper:
     """Road network attributes and data structured for the purpous of rendering.
 
     This class is used to store a road network with associated data and colors

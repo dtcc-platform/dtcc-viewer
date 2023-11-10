@@ -1,10 +1,11 @@
 import numpy as np
-from dtcc_viewer.opengl_viewer.mesh_data import MeshData
-from dtcc_viewer.opengl_viewer.roadnetwork_data import RoadNetworkData
-from dtcc_viewer.opengl_viewer.point_cloud_data import PointCloudData
+from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
+from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
+from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_model import Mesh, PointCloud, RoadNetwork
 from dtcc_viewer.logging import info, warning
+from typing import Any
 
 
 class Scene:
@@ -23,40 +24,30 @@ class Scene:
         Bounding box for the entire collection of objects in the scene.
     """
 
-    meshes: list[MeshData]
-    pointclouds: list[PointCloudData]
-    road_networks: list[RoadNetworkData]
+    mesh_wrappers: list[MeshWrapper]
+    pcs_wrappers: list[PointCloudWrapper]
+    roadn_wrappers: list[RoadNetworkWrapper]
     bb: BoundingBox
 
     def __init__(self):
-        self.meshes = []
-        self.pointclouds = []
-        self.road_networks = []
+        self.mesh_wrappers = []
+        self.pcs_wrappers = []
+        self.roadn_wrappers = []
 
     def add_mesh(
         self,
         name: str,
         mesh: Mesh,
-        data: np.ndarray = None,
+        data: Any = None,
         colors: np.ndarray = None,
         shading: MeshShading = MeshShading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
         info(f"Mesh called - {name} - added to scene")
-        mesh_data = MeshData(
+        mesh_w = MeshWrapper(
             name=name, mesh=mesh, data=data, colors=colors, shading=shading
         )
-        self.meshes.append(mesh_data)
-
-    def add_mesh_data(self, mesh: MeshData):
-        """Append a MeshData object to the secene"""
-        info(f"Mesh called - {mesh.name} - added to scene")
-        self.meshes.append(mesh)
-
-    def add_mesh_data_list(self, meshes: list[MeshData]):
-        """Append a list of MeshData objects to the scene"""
-        info(f"List with {len(meshes)} meshes added to scene")
-        self.meshes.extend(meshes)
+        self.mesh_wrappers.append(mesh_w)
 
     def add_pointcloud(
         self,
@@ -68,18 +59,8 @@ class Scene:
     ):
         """Append a pointcloud with data and/or colors to the scene"""
         info(f"Point could called - {name} - added to scene")
-        pc_data = PointCloudData(name=name, pc=pc, size=size, data=data, colors=colors)
-        self.pointclouds.append(pc_data)
-
-    def add_pointcloud_data(self, pc: PointCloudData):
-        """Append a PointCloudData object to the scene"""
-        info(f"Point could called - {pc.name} - added to scene")
-        self.pointclouds.append(pc)
-
-    def add_pointcloud_data_list(self, pcs: list[PointCloudData]):
-        """Append a list of PointCloudData objects to the scene"""
-        info(f"List with {len(pcs)} point clouds added to scene")
-        self.pointclouds.extend(pcs)
+        pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data, colors=colors)
+        self.pcs_wrappers.append(pc_w)
 
     def add_roadnetwork(
         self,
@@ -90,31 +71,21 @@ class Scene:
     ):
         """Append a RoadNetwork object to the scene"""
         info(f"Road network called - {name} - added to scene")
-        rn_data = RoadNetworkData(name=name, rn=rn, data=data, colors=colors)
-        self.road_networks.append(rn_data)
-
-    def add_roadnetwork_data(self, roadnetwork: RoadNetworkData):
-        """Append a RoadNetwork object to the scene"""
-        info(f"Road network called - {roadnetwork.name} - added to scene")
-        self.road_networks.append(roadnetwork)
-
-    def add_roadnetwork_data_list(self, roadnetwork_list: list[RoadNetworkData]):
-        """Append a RoadNetwork object to the secene"""
-        info(f"List with {len(roadnetwork_list)} road networks added to scene")
-        self.road_networks.extend(roadnetwork_list)
+        rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data, colors=colors)
+        self.roadn_wrappers.append(rn_w)
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
         self._calculate_bb()
 
-        for mesh in self.meshes:
+        for mesh in self.mesh_wrappers:
             mesh.preprocess_drawing(self.bb)
 
-        for pc in self.pointclouds:
+        for pc in self.pcs_wrappers:
             pc.preprocess_drawing(self.bb)
 
-        for rn in self.road_networks:
+        for rn in self.roadn_wrappers:
             rn.preprocess_drawing(self.bb)
 
         info(f"Scene preprocessing completed")
@@ -124,14 +95,16 @@ class Scene:
 
         all_vertices = np.array([[0, 0, 0]])
 
-        for mesh in self.meshes:
-            all_vertices = np.concatenate((all_vertices, mesh.vertices[:, 0:3]), axis=0)
+        for mesh_w in self.mesh_wrappers:
+            all_vertices = np.concatenate(
+                (all_vertices, mesh_w.vertices[:, 0:3]), axis=0
+            )
 
-        for pc in self.pointclouds:
-            all_vertices = np.concatenate((all_vertices, pc.points), axis=0)
+        for pc_w in self.pcs_wrappers:
+            all_vertices = np.concatenate((all_vertices, pc_w.points), axis=0)
 
-        for rn in self.road_networks:
-            all_vertices = np.concatenate((all_vertices, rn.vertices[:, 0:3]), axis=0)
+        for rn_w in self.roadn_wrappers:
+            all_vertices = np.concatenate((all_vertices, rn_w.vertices[:, 0:3]), axis=0)
 
         # Remove the [0,0,0] row that was added to enable concatenate.
         all_vertices = np.delete(all_vertices, obj=0, axis=0)

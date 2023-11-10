@@ -7,7 +7,7 @@ from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_viewer.logging import info, warning
 
 
-class MeshData:
+class MeshWrapper:
     """Mesh attributes and associated data structured for the purpous of rendering.
 
     This class represents mesh data for rendering in an OpenGL window. It encapsulates
@@ -38,10 +38,12 @@ class MeshData:
     """
 
     color_by: int
-    mesh_colors: np.ndarray
+    colors: np.ndarray
+    dict_color_by: dict
+    dict_colors: dict
     vertices: np.ndarray
-    face_indices: np.ndarray
-    edge_indices: np.ndarray
+    faces: np.ndarray
+    edges: np.ndarray
     name: str
     shading: MeshShading
     bb_local: BoundingBox
@@ -72,25 +74,23 @@ class MeshData:
         """
         self.name = name
         self.shading = shading
+        self.dict_colors = {}
+        self.dict_color_by = {}
 
-        [self.color_by, self.mesh_colors] = self._generate_mesh_colors(
-            mesh, data, colors
-        )
-        [self.vertices, self.face_indices, self.edge_indices] = self._restructure_mesh(
-            mesh, self.color_by, self.mesh_colors
-        )
+        [self.color_by, self.colors] = self._generate_mesh_colors(mesh, data, colors)
+        [self.vertices, self.faces, self.edges] = self._restructure_mesh(mesh)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self.vertices = self._move_mesh_to_origin_multi(self.vertices, self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
 
-        [self.vertices, self.edge_indices, self.face_indices] = self._flatten_mesh(
-            self.vertices, self.edge_indices, self.face_indices
+        [self.vertices, self.edges, self.faces] = self._flatten_mesh(
+            self.vertices, self.edges, self.faces
         )
 
     def _generate_mesh_colors(
-        self, mesh: Mesh, data: np.ndarray = None, mesh_colors: np.ndarray = None
+        self, mesh: Mesh, data: Any = None, input_colors: np.ndarray = None
     ):
         """Generate mesh colors based on the provided data.
 
@@ -98,8 +98,8 @@ class MeshData:
         ----------
         mesh : Mesh
             The Mesh object from which to generate colors.
-        data : np.ndarray, optional
-            Additional data for color calculation (default is None).
+        data : np.ndarray or dictionaty, optional
+            Array or dictinary of data for color calculation (default is None).
 
         Returns
         -------
@@ -115,60 +115,72 @@ class MeshData:
         n_faces = len(mesh.faces)
         n_data = 0
 
+        # First priority is coloring by provided data dict.
+        if isinstance(data, dict):
+            info(f"Coloring mesh by data dictionary")
+            if self._generate_dict_colors(data, n_vertices, n_faces):
+                keys = list(self.dict_colors.keys())
+                colors_from_dict = self.dict_colors[keys[0]]
+                color_by = ColorBy.dict
+                return color_by, colors_from_dict
+
+        # Second priority is coloring by provided color array.
+        if input_colors is not None:
+            info(f"Coloring mesh by input colors")
+            n_input_colors = len(input_colors)
+            colors_from_input = self._normalise_colors(input_colors)
+            colors_from_input = np.array(input_colors)
+            if n_input_colors == n_vertices:
+                color_by = ColorBy.vertex
+                return color_by, colors_from_input
+            elif n_input_colors == n_faces:
+                color_by = ColorBy.face
+                return color_by, colors_from_input
+            else:
+                warning(f"Input colors do not match vertex/face count: {self.name}")
+                info(f"Default colors are used -> i.e. coloring per vertex z-value")
+
+        # If there is data for coloring
+        if data is not None:
+            info(f"Coloring mesh by data")
+            n_data = len(data)
+            colors_from_data = calc_colors_rainbow(data)
+            if n_data == n_vertices:  # Generate colors base on provided vertex data
+                color_by = ColorBy.vertex
+                return color_by, colors_from_data
+            elif n_data == n_faces:  # Generate colors base on provided face data
+                color_by = ColorBy.face
+                return color_by, colors_from_data
+            else:
+                warning(f"Color data does not match vertex of face count: {self.name}")
+                info(f"Default colors are used -> i.e. coloring per vertex z-value")
+
+        # No colors provided. Colors are then retrieved from the mesh either base on
+        # vertices or face colors.
+        if input_colors is None and data is None:
+            info(f"Coloring appended mesh colors")
+            if n_vertex_colors == n_vertices:
+                color_by = ColorBy.vertex
+                colors_from_mesh = self._normalise_colors(mesh.vertex_colors)
+                return color_by, colors_from_mesh
+            elif n_face_colors == n_faces:
+                color_by = ColorBy.face
+                colors_from_mesh = self._normalise_colors(mesh.face_colors)
+                return color_by, colors_from_mesh
+            else:
+                info(f"No valid colors found embeded in mesh called: {self.name}")
+                info(f"Default colors are used -> i.e. coloring per vertex z-value")
+
         # If no vertex of face colors are appended to the mesh and no data is provided
         # the mesh is colored by vertex height.
-        color_by = ColorBy.vertex_height
+        info(f"Coloring mesh by default colors")
+        color_by = ColorBy.vertex
         default_data = mesh.vertices[:, 2]
-        colors = calc_colors_rainbow(default_data)
+        colors_default = np.array(calc_colors_rainbow(default_data))
 
-        # First priority is coloring by provided color array.
-        if mesh_colors is not None:
-            n_mesh_colors = len(mesh_colors)
-            colors = self._normalise_colors(mesh_colors)
-            colors = np.array(colors)
-            if n_mesh_colors == n_vertices:
-                color_by = ColorBy.vertex_colors
-                return color_by, colors
-            elif n_mesh_colors == n_faces:
-                color_by = ColorBy.face_colors
-                return color_by, colors
-            else:
-                warning(
-                    f"Provided mesh colors do not match vertex or face count for mesh: {self.name}"
-                )
-
-        # No colors provided and no data for color calculations. Colors are retrieved
-        # from the mesh either base on vertices or face colors.
-        if mesh_colors is None and data is None:
-            if n_vertex_colors == n_vertices:
-                color_by = ColorBy.vertex_colors
-                colors = self._normalise_colors(mesh.vertex_colors)
-            elif n_face_colors == n_faces:
-                color_by = ColorBy.face_colors
-                colors = self._normalise_colors(mesh.face_colors)
-            else:
-                info(
-                    f"No valid colors found embeded in mesh object with name: {self.name}"
-                )
-                info("Coloring per vertex z-value")
-        # If there is data for coloring
-        else:
-            n_data = len(data)
-            if n_data == n_vertices:  # Generate colors base on provided vertex data
-                color_by = ColorBy.vertex_data
-                colors = calc_colors_rainbow(data)
-            elif n_data == n_faces:  # Generate colors base on provided face data
-                color_by = ColorBy.face_data
-                colors = calc_colors_rainbow(data)
-            else:
-                warning(
-                    f"Provided color data for mesh does not match vertex of face count for mesh with name: {self.name}"
-                )
-                info(
-                    f"Default colors are used instead -> i.e. coloring per vertex z-value"
-                )
-
-        return color_by, np.array(colors)
+        # No colors provided, no colors appeded to the mesh and no data provided
+        # the returned colors are then based on z-height of the vertices.
+        return color_by, colors_default
 
     def _normalise_colors(self, colors: np.ndarray):
         """Normalize colors to the range [0, 1] if necessary.
@@ -189,7 +201,30 @@ class MeshData:
             colors /= 255.0
         return colors
 
-    def _restructure_mesh(self, mesh: Mesh, color_by: ColorBy, colors: np.ndarray):
+    def _generate_dict_colors(self, data_dict: dict, n_vert: int, n_face: int):
+        # return default colors to be added to the mesh
+        keys = data_dict.keys()
+        self.dict_colors = {}
+        self.dict_color_by = {}
+        for key in keys:
+            row_data = data_dict[key]
+            if len(row_data) == n_vert:
+                colors = calc_colors_rainbow(row_data)
+                self.dict_colors[key] = colors
+                self.dict_color_by[key] = ColorBy.vertex
+            elif len(row_data) == n_face:
+                colors = calc_colors_rainbow(row_data)
+                self.dict_colors[key] = colors
+                self.dict_color_by[key] = ColorBy.face
+
+        if len(self.dict_colors) == 0:
+            warning(f"Dict data in {self.name} doesn't match vertex/face count:")
+            info("Coloring per vertex z-value")
+            return False
+
+        return True
+
+    def _restructure_mesh(self, mesh: Mesh):
         """Restructure the mesh data for OpenGL rendering.
 
         Parameters
@@ -213,6 +248,7 @@ class MeshData:
 
         # Vertex format that suits the opengl data structure:
         # [x, y, z, r, g, b, nx, ny ,nz]
+        new_dict_colors = dict.fromkeys(self.dict_colors.keys())
         new_faces = []
         new_vertices = []
         new_edges = []
@@ -221,26 +257,40 @@ class MeshData:
         c1 = white
         c2 = white
         c3 = white
+        for key in self.dict_colors.keys():
+            new_dict_colors[key] = []
 
-        # print(color_by)
-
+        # The restructuring makes sure that each faces has its own vertices. That is
+        # nessary in order to be able to color each face individually and to be able to
+        # use individual face normals for each mesh.
         for face_index, face in enumerate(mesh.faces):
             v1 = mesh.vertices[face[0], :]
             v2 = mesh.vertices[face[1], :]
             v3 = mesh.vertices[face[2], :]
 
-            if (
-                color_by == ColorBy.vertex_colors
-                or color_by == ColorBy.vertex_data
-                or color_by == ColorBy.vertex_height
-            ):
-                c1 = colors[face[0], 0:3]
-                c2 = colors[face[1], 0:3]
-                c3 = colors[face[2], 0:3]
-            elif color_by == ColorBy.face_colors or color_by == ColorBy.face_data:
-                c1 = colors[face_index, 0:3]
-                c2 = colors[face_index, 0:3]
-                c3 = colors[face_index, 0:3]
+            if self.color_by == ColorBy.vertex:
+                # c1, c2, c3 are different colors to color the mesh by vertex
+                c1 = self.colors[face[0]]
+                c2 = self.colors[face[1]]
+                c3 = self.colors[face[2]]
+            elif self.color_by == ColorBy.face:
+                # c1, c2, c3 are the same color to make the face color uniform
+                c1 = self.colors[face_index]
+                c2 = self.colors[face_index]
+                c3 = self.colors[face_index]
+
+            for key in self.dict_colors.keys():
+                color_row_by = self.dict_color_by[key]
+                if color_row_by == ColorBy.vertex:
+                    c1 = self.dict_colors[key][face[0]]
+                    c2 = self.dict_colors[key][face[1]]
+                    c3 = self.dict_colors[key][face[2]]
+                elif color_row_by == ColorBy.face:
+                    c1 = self.dict_colors[key][face_index]
+                    c2 = self.dict_colors[key][face_index]
+                    c3 = self.dict_colors[key][face_index]
+                arr = np.concatenate((c1, c2, c3))
+                new_dict_colors[key].extend(arr)
 
             v1 = np.concatenate((v1, c1), axis=0)
             v2 = np.concatenate((v2, c2), axis=0)
@@ -264,6 +314,9 @@ class MeshData:
 
             v_index += 3
 
+        for key in self.dict_colors.keys():
+            self.dict_colors[key] = np.array(new_dict_colors[key])  # .flatten()
+
         return np.array(new_vertices), np.array(new_faces), np.array(new_edges)
 
     def _move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox):
@@ -276,26 +329,7 @@ class MeshData:
     def _flatten_mesh(
         self, vertices: np.ndarray, face_indices: np.ndarray, edge_indices: np.ndarray
     ):
-        """Flatten the mesh data arrays for OpenGL compatibility.
-
-        Parameters
-        ----------
-        vertices : np.ndarray
-            Array of mesh vertices.
-        face_indices : np.ndarray
-            Array of face indices.
-        edge_indices : np.ndarray
-            Array of edge indices.
-
-        Returns
-        -------
-        np.ndarray
-            Flattened vertex array.
-        np.ndarray
-            Flattened face indices array.
-        np.ndarray
-            Flattened edge indices array.
-        """
+        """Flatten the mesh data arrays for OpenGL compatibility."""
         # Making sure the datatypes are aligned with opengl implementation
         vertices = np.array(vertices, dtype="float32").flatten()
         edge_indices = np.array(edge_indices, dtype="uint32").flatten()
