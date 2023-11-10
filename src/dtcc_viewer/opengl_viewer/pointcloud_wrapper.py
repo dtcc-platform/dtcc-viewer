@@ -65,7 +65,7 @@ class PointCloudWrapper:
         self.name = name
         self.size = size
         self.dict_colors = {}
-        self.colors = self._generate_pc_colors(pc, data=data, input_colors=colors)
+        self.colors = self._generate_pc_colors(pc, data=data, colors=colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -78,7 +78,7 @@ class PointCloudWrapper:
         self,
         pc: PointCloud,
         data: np.ndarray = None,
-        input_colors: np.ndarray = None,
+        colors: np.ndarray = None,
     ) -> np.ndarray:
         """Generate colors for the point cloud based on the provided data.
 
@@ -106,10 +106,10 @@ class PointCloudWrapper:
                 warning("Data dict for pc colors does not match point count!")
 
         # Coloring by input colors
-        if input_colors is not None:
-            n_pc_colors = len(input_colors)
+        if colors is not None:
+            n_pc_colors = len(colors)
             if n_pc_colors == n_points:
-                colors_from_input = np.array(input_colors)
+                colors_from_input = np.array(colors)
                 return colors_from_input
             else:
                 warning("Point cloud colors provided does not match point count!")
