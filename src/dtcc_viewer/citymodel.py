@@ -55,7 +55,7 @@ def view(
     color_map="",
     return_html=False,
     show_in_browser=False,
-    view_fields=["id", "height", "error"],
+    view_fields=["id", "height", "ground_height", "error"],
     view_aliases=None,
 ):
     tmp_geojson = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False)
