@@ -36,7 +36,7 @@ class RoadNetworkWrapper:
         data: np.ndarray = None,
         colors: np.ndarray = None,
     ) -> None:
-        """Initialize a PointCloudData object.
+        """Initialize a Road network wrapper object.
 
         Parameters
         ----------
@@ -55,21 +55,19 @@ class RoadNetworkWrapper:
         """
 
         self.name = name
-        self.colors = self._generate_rn_colors(rn, rn_data=data, rn_colors=colors)
-        [self.vertices, self.indices] = self._restructure_road_network(rn, self.colors)
+        self._generate_rn_colors(rn, rn_data=data, rn_colors=colors)
+        self._restructure_road_network(rn, self.colors)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self.vertices = self._move_rn_to_origin_multi(self.vertices, self.bb_global)
+        self._move_rn_to_origin_multi(self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
-        self.vertices, self.indices = self._flatten(self.vertices, self.indices)
+        self._flatten()
 
-    def _move_rn_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox = None):
+    def _move_rn_to_origin_multi(self, bb: BoundingBox = None):
         if bb is not None:
             recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
-            vertices += recenter_vec
-
-        return vertices
+            self.vertices += recenter_vec
 
     def _restructure_road_network(self, roadnetwork: RoadNetwork, colors: np.ndarray):
         new_indices = []
@@ -93,7 +91,8 @@ class RoadNetworkWrapper:
             new_vertices[i, 3:6] = c
             new_vertices[i, 6:9] = n
 
-        return new_vertices, new_indices
+        self.vertices = new_vertices
+        self.indices = new_indices
 
     def _generate_rn_colors(
         self,
@@ -141,29 +140,10 @@ class RoadNetworkWrapper:
             z = rn.vertices[:, 1]  # Color by height if no data is provided
             colors = calc_colors_rainbow(z)
 
-        colors = np.array(colors)
-        colors = colors[:, 0:3]
-        return colors
+        self.colors = colors
 
-    def _flatten(self, vertices: np.ndarray, indices: np.ndarray):
-        """Flatten the mesh data arrays for OpenGL compatibility.
-
-        Parameters
-        ----------
-        vertices : np.ndarray
-            Array of mesh vertices.
-        edge_indices : np.ndarray
-            Array of edge indices.
-
-        Returns
-        -------
-        np.ndarray
-            Flattened vertex array.
-        np.ndarray
-            Flattened edge indices array.
-        """
+    def _flatten(self):
+        """Flatten the mesh data arrays for OpenGL compatibility."""
         # Making sure the datatypes are aligned with opengl implementation
-        vertices = np.array(vertices, dtype="float32").flatten()
-        indices = np.array(indices, dtype="uint32").flatten()
-
-        return vertices, indices
+        self.vertices = np.array(self.vertices, dtype="float32").flatten()
+        self.indices = np.array(self.indices, dtype="uint32").flatten()

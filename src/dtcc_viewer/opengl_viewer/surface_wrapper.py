@@ -34,24 +34,22 @@ class SurfaceWrapper:
         colors: np.ndarray = None,
         shading: MeshShading = MeshShading.wireshaded,
     ) -> None:
-        """Initialize the SurfaceData object."""
+        """Initialize the SurfaceWrapper object."""
         self.name = name
         self.shading = shading
 
-        [self.color_by, self.colors] = self._generate_colors(surface, data, colors)
-        [self.verts, self.faces, self.edges] = self._restructure_mesh(surface)
+        self._generate_colors(surface, data, colors)
+        self._generate_mesh(surface)
+        self._restructure_mesh(surface)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self.verts = self._move_mesh_to_origin_multi(self.verts, self.bb_global)
+        self._move_mesh_to_origin_multi(self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
-
-        [self.verts, self.edges, self.faces] = self._flatten_mesh(
-            self.verts, self.edges, self.faces
-        )
+        self._flatten_mesh()
 
     def _generate_colors(
-        self, srf: Surface, data: np.ndarray = None, srf_colors: np.ndarray = None
+        self, mesh: Mesh, data: np.ndarray = None, colors: np.ndarray = None
     ):
         """Generate mesh colors based on the provided data."""
         pass
@@ -64,7 +62,7 @@ class SurfaceWrapper:
             colors /= 255.0
         return colors
 
-    def _create_mesh(self, surface: Surface):
+    def _generate_mesh(self, surface: Surface):
         # Triangultion of the Surface
 
         pass
@@ -77,19 +75,13 @@ class SurfaceWrapper:
 
         pass
 
-    def _move_mesh_to_origin_multi(self, vertices: np.ndarray, bb: BoundingBox):
+    def _move_mesh_to_origin_multi(self, bb: BoundingBox):
         # [x, y, z, r, g, b, nx, ny ,nz]
         recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
-        vertices += recenter_vec
+        self.vertices += recenter_vec
 
-        return vertices
-
-    def _flatten_mesh(
-        self, vertices: np.ndarray, face_indices: np.ndarray, edge_indices: np.ndarray
-    ):
+    def _flatten_mesh(self):
         # Making sure the datatypes are aligned with opengl implementation
-        vertices = np.array(vertices, dtype="float32").flatten()
-        edge_indices = np.array(edge_indices, dtype="uint32").flatten()
-        face_indices = np.array(face_indices, dtype="uint32").flatten()
-
-        return vertices, face_indices, edge_indices
+        self.vertices = np.array(self.vertices, dtype="float32").flatten()
+        self.edge_indices = np.array(self.edge_indices, dtype="uint32").flatten()
+        self.face_indices = np.array(self.face_indices, dtype="uint32").flatten()

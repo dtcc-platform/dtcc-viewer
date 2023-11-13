@@ -5,7 +5,7 @@ from .random_colors import get_random_colors
 
 def calc_colors_rainbow(
     values: Iterable[float], min: float = None, max: float = None
-) -> List[List[float]]:
+) -> list[list[float]]:
     """Calculate colors using a rainbow color map.
 
     Parameters
@@ -22,11 +22,10 @@ def calc_colors_rainbow(
     List[List[float]]
         List of color values for each input value in RGB format.
     """
-    colors = []
+    colors = np.zeros((len(values), 3))
     [min_value, max_value] = _get_min_max(values, min, max)
     for i in range(0, len(values)):
-        c = _get_blended_color(min_value, max_value, values[i])
-        colors.append(c)
+        colors[i, :] = _get_blended_color(min_value, max_value, values[i])
     return colors
 
 
@@ -219,34 +218,34 @@ def _get_blended_color(min, max, value):
 
     if new_value <= new_min:
         # Returning blue [0,0,1]
-        return [0.0, 0.0, 1.0]
+        return np.array([0.0, 0.0, 1.0])
     elif new_value >= new_max:
         # Returning red [1,0,0]
-        return [1.0, 0.0, 0.0]
+        return np.array([1.0, 0.0, 0.0])
     else:
         if percentage >= 0.0 and percentage <= 25.0:
             # Blue fading to Cyan [0,x,1], where x is increasing from 0 to 1
             frac = percentage / 25.0
-            return [0.0, (frac * 1.0), 1.0]
+            return np.array([0.0, (frac * 1.0), 1.0])
 
         elif percentage > 25.0 and percentage <= 50.0:
             # Cyan fading to Green [0,1,x], where x is decreasing from 1 to 0
             frac = 1.0 - abs(percentage - 25.0) / 25.0
-            return [0.0, 1.0, (frac * 1.0)]
+            return np.array([0.0, 1.0, (frac * 1.0)])
 
         elif percentage > 50.0 and percentage <= 75.0:
             # Green fading to Yellow [x,1,0], where x is increasing from 0 to 1
             frac = abs(percentage - 50.0) / 25.0
-            return [(frac * 1.0), 1.0, 0.0]
+            return np.array([(frac * 1.0), 1.0, 0.0])
 
         elif percentage > 75.0 and percentage <= 100.0:
             # Yellow fading to red [1,x,0], where x is decreasing from 1 to 0
             frac = 1.0 - abs(percentage - 75.0) / 25.0
-            return [1.0, (frac * 1.0), 0.0]
+            return np.array([1.0, (frac * 1.0), 0.0])
 
         elif percentage > 100.0:
             # Returning red if the value overshoot the limit.
-            return [1.0, 0.0, 0.0]
+            return np.array([1.0, 0.0, 0.0])
 
 
 def _get_blended_color_mono(min, max, value):

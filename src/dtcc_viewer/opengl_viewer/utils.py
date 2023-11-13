@@ -2,6 +2,7 @@ import pyrr
 import numpy as np
 from enum import IntEnum
 from dtcc_model import Mesh, PointCloud
+from pprint import pp
 
 
 class MeshShading(IntEnum):
@@ -43,7 +44,6 @@ class UniformLocation:
         move = None
         view = None
         proj = None
-
         pass
 
 
@@ -115,6 +115,42 @@ class BoundingBox:
         print(self.center_vec)
 
 
+def fit_colors_to_faces(faces: np.ndarray, n_vertices: int, colors: np.ndarray):
+    n_colors = len(colors)
+    n_faces = len(faces) / 3
+    new_colors = []
+    c1s, c2s, c3s = [], [], []
+
+    if n_colors == n_vertices:
+        # Faces is 1D array
+        fv1 = faces[0::3]
+        fv2 = faces[1::3]
+        fv3 = faces[2::3]
+        c1s = colors[fv1, :]
+        c2s = colors[fv2, :]
+        c3s = colors[fv3, :]
+
+    elif n_colors == n_faces:
+        f_indices = range(0, n_faces)
+        c1s = colors[f_indices, :]
+        c2s = colors[f_indices, :]
+        c3s = colors[f_indices, :]
+
+    new_colors = np.zeros(n_vertices * 3, dtype="float32")
+
+    new_colors[0::9] = c1s[:, 0]
+    new_colors[1::9] = c1s[:, 1]
+    new_colors[2::9] = c1s[:, 2]
+    new_colors[3::9] = c2s[:, 0]
+    new_colors[4::9] = c2s[:, 1]
+    new_colors[5::9] = c2s[:, 2]
+    new_colors[6::9] = c3s[:, 0]
+    new_colors[7::9] = c3s[:, 1]
+    new_colors[8::9] = c3s[:, 2]
+
+    return new_colors
+
+
 def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
     """
     Calculate a recentering vector based on mesh vertices and point cloud points.
@@ -149,23 +185,7 @@ def calc_recenter_vector(mesh: Mesh = None, pc: PointCloud = None):
 
 
 def calc_blended_color(min, max, value):
-    """
-    Calculate a blended color based on input range and value.
-
-    Parameters
-    ----------
-    min_value : float
-        The minimum value of the range.
-    max_value : float
-        The maximum value of the range.
-    value : float
-        The input value.
-
-    Returns
-    -------
-    list of float
-        A list representing the RGB values of the calculated blended color.
-    """
+    """Calculate a blended color based on input range and value."""
     diff = max - min
     if (diff) <= 0:
         print(
@@ -215,3 +235,16 @@ def calc_blended_color(min, max, value):
         elif percentage > 100.0:
             # Returning red if the value overshoots the limit.
             return [1.0, 0.0, 0.0]
+
+
+def calc_colormap(n_data):
+    a = np.arange(0, 106)
+
+    n_colors = 4
+
+    rest = n_data % n_colors
+
+    a1 = a[0 : len(a) - rest]
+    a2 = a[len(a) - rest : -1]
+
+    # if n_data % 2 == 0:

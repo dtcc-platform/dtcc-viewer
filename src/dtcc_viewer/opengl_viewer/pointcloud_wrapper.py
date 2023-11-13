@@ -65,14 +65,14 @@ class PointCloudWrapper:
         self.name = name
         self.size = size
         self.dict_colors = {}
-        self.colors = self._generate_pc_colors(pc, data=data, colors=colors)
+        self._generate_pc_colors(pc, data=data, colors=colors)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self.points = self._move_pc_to_origin_multi(self.points, self.bb_global)
+        self._move_pc_to_origin_multi(self.bb_global)
         self.bb_local = BoundingBox(self.points)
-        [self.points, self.colors] = self._flatten_pc(self.points, self.colors)
+        self._flatten_pc()
 
     def _generate_pc_colors(
         self,
@@ -100,8 +100,8 @@ class PointCloudWrapper:
         if isinstance(data, dict):
             if self._generate_dict_colors(data, n_points):
                 keys = list(self.dict_colors.keys())
-                colors_from_dict = np.array(self.dict_colors[keys[0]])
-                return colors_from_dict
+                self.colors = np.array(self.dict_colors[keys[0]])
+                return True
             else:
                 warning("Data dict for pc colors does not match point count!")
 
@@ -109,23 +109,23 @@ class PointCloudWrapper:
         if colors is not None:
             n_pc_colors = len(colors)
             if n_pc_colors == n_points:
-                colors_from_input = np.array(colors)
-                return colors_from_input
+                self.colors = np.array(colors)
+                return True
             else:
                 warning("Point cloud colors provided does not match point count!")
 
         # Coloring by data
         if data is not None:
             if len(pc.points) == len(data):
-                colors_from_data = np.array(calc_colors_rainbow(data))
-                return colors_from_data
+                self.colors = calc_colors_rainbow(data)
+                return True
             else:
                 warning("Provided color data does not match the particle count!")
 
         info("No data provided for point cloud -> coloring per z-value")
         z = pc.points[:, 2]  # Color by height if no data is provided
-        default_colors = np.array(calc_colors_rainbow(z))
-        return default_colors
+        self.colors = calc_colors_rainbow(z)
+        return True
 
     def _generate_dict_colors(self, data_dict: dict, n_points: int):
         # return default colors to be added to the mesh
@@ -145,29 +145,12 @@ class PointCloudWrapper:
 
         return True
 
-    def _move_pc_to_origin_multi(self, points: np.ndarray, bb: BoundingBox = None):
-        """Move the point cloud data to the origin using multiple recenter vectors.
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Array of point cloud data.
-        recenter_vec : np.ndarray, optional
-            Recenter vector for each point (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Moved point cloud data.
-        """
+    def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
+        """Move the point cloud data to the origin using multiple recenter vectors."""
         if bb is not None:
-            points += bb.center_vec
+            self.points += bb.center_vec
 
-        return points
-
-    def _flatten_pc(self, points: np.ndarray, colors: np.ndarray):
+    def _flatten_pc(self):
         """Flatten the point cloud data arrays for further processing."""
-
-        points = np.array(points, dtype="float32").flatten()
-        colors = np.array(colors, dtype="float32").flatten()
-        return points, colors
+        self.points = np.array(self.points, dtype="float32").flatten()
+        self.colors = np.array(self.colors, dtype="float32").flatten()

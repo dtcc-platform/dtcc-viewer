@@ -103,7 +103,11 @@ def mesh_point_cloud_example_2():
     file_2 = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(file_2)
     mesh = meshes.load_mesh(file_1)
-    pc.view(mesh=mesh)
+    data_dict = {}
+    data_dict["vertex_x"] = mesh.vertices[:, 0]
+    data_dict["vertex_y"] = mesh.vertices[:, 1]
+    data_dict["vertex_z"] = mesh.vertices[:, 2]
+    pc.view(mesh=mesh, mesh_data=data_dict)
 
 
 def mesh_point_cloud_example_3():
@@ -234,7 +238,7 @@ if __name__ == "__main__":
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
-    pointcloud_example_3()
+    # pointcloud_example_3()
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
@@ -242,7 +246,7 @@ if __name__ == "__main__":
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
-    # multi_geometry_example_1()
+    multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
     # multi_geometry_example_4()

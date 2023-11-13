@@ -8,8 +8,11 @@ import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
-from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox, ColorSchema
+from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
+from dtcc_viewer.opengl_viewer.utils import fit_colors_to_faces
 from dtcc_viewer.logging import info, warning
+from dtcc_viewer.colors import calc_colors_rainbow
+from pprint import pp
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -41,106 +44,6 @@ class MeshGL:
     shaders, and perform the necessary transformations camera interaction, perspective
     projection and other features needed for visualization.
 
-    Attributes
-    ----------
-    VAO_triangels : int
-        OpenGL Vertex attribut object for triangles.
-    VBO_triangels : int
-        OpenGL Vertex buffer object for triangles.
-    EBO_triangels : int
-        OpenGL Element buffer object for triangles.
-    VAO_edge : int
-        OpenGL Vertex attribut object for wireframe edges.
-    VBO_edge : int
-        OpenGL Vertex buffer object for wireframe edges.
-    EBO_edge : int
-        OpenGL Element buffer object for wireframe edges.
-    guip : GuiParametersMesh
-        Information used by the GUI.
-    vertices : np.ndarray
-        Array containing vertex information (x, y, z, r, g, b, nx, ny, nz).
-    face_indices : np.ndarray
-        Array containing face indices.
-    edge_indices : np.ndarray
-        Array containing edge indices.
-    shader_lines : int
-        Shader program for the lines.
-    mloc_lines : int
-        Uniform location for model matrix for lines.
-    vloc_lines : int
-        Uniform location for view matrix for lines.
-    ploc_lines : int
-        Uniform location for projection matrix for lines.
-    cb_loc_lines : int
-        Uniform location for color_by variable for lines.
-    shader_ambient : int
-        Shader program for ambient mesh rendering.
-    mloc_ambient : int
-        Uniform location for model matrix for ambient rendering.
-    ploc_ambient : int
-        Uniform location for projection matrix for ambient rendering.
-    vloc_ambient : int
-        Uniform location for view matrix for ambient rendering.
-    cb_loc_ambient : int
-        Uniform location for color_by variable for ambient rendering.
-    shader_diffuse : int
-        Shader program for diffuse mesh rendering.
-    mloc_diffuse : int
-        Uniform location for model matrix for diffuse rendering.
-    ploc_diffuse : int
-        Uniform location for projection matrix for diffuse rendering.
-    vloc_diffuse : int
-        Uniform location for view matrix for diffuse rendering.
-    cb_loc_diffuse : int
-        Uniform location for color_by variable for diffuse rendering.
-    lc_loc_diffuse : int
-        Uniform location for light color for diffuse rendering.
-    lp_loc_diffuse : int
-        Uniform location for light position for diffuse rendering.
-    vp_loc_diffuse : int
-        Uniform location for view position for diffuse rendering.
-    shader_shadows : int
-        Shader program for rendering of diffuse mesh with shadow map.
-    mloc_shadows : int
-        Uniform location for model matrix for diffuse shadow rendering.
-    ploc_shadows : int
-        Uniform location for projection matrix for diffuse shadow rendering.
-    vloc_shadows : int
-        Uniform location for view matrix for diffuse shadow rendering.
-    cb_loc_shadows : int
-        Uniform location for color_by variable for diffuse shadow rendering.
-    lc_loc_shadows : int
-        Uniform location for light color for diffuse shadow rendering.
-    lp_loc_shadows : int
-        Uniform location for light position for diffuse shadow rendering.
-    vp_loc_shadows : int
-        Uniform location for view position for diffuse shadow rendering.
-    lsm_loc_shadows : int
-        Uniform location for light space matrix for diffuse shadow rendering.
-    shader_shadow_map : int
-        Shader program for rendering of the shadow map to the frame buffer.
-    mloc_shadow_map : int
-        Uniform location for model matrix for shadow map rendering.
-    lsm_loc_shadow_map : int
-        Uniform location for light space matrix for shadow map rendering.
-    diameter_xy : float
-        Size of the model as diameter.
-    radius_xy : float
-        Size of model as radius.
-    light_position : np.ndarray
-        Position of light that casts shadows [1 x 3].
-    light_color : np.ndarray
-        Color of scene light [1 x 3].
-    loop_counter : int
-        Loop counter for animation of scene light source.
-    FBO : int
-        OpenGL Frame Buffer Objects.
-    depth_map : int
-        Depth map identifier.
-    shadow_map_resolution : int
-        Resolution of the shadow map, same in x and y.
-    border_color : np.ndarray
-        Color for the border of the shadow map.
     """
 
     # Mesh based parameters
@@ -153,8 +56,8 @@ class MeshGL:
 
     guip: GuiParametersMesh  # Information used by the Gui
     vertices: np.ndarray  # [n_vertices x 9] each row has (x, y, z, r, g, b, nx, ny, nz)
-    face_indices: np.ndarray  # [n_faces x 3] each row has three vertex indices
-    edge_indices: np.ndarray  # [n_edges x 2] each row has
+    faces: np.ndarray  # [n_faces x 3] each row has three vertex indices
+    edges: np.ndarray  # [n_edges x 2] each row has
 
     bb: np.ndarray  # Bounding box [xmin, xmax, ymin, ymax, zmin, zmax]
     bb_local: BoundingBox
@@ -221,14 +124,12 @@ class MeshGL:
         """
         self.name = mesh_wrapper.name
         self.vertices = mesh_wrapper.vertices
-        self.face_indices = mesh_wrapper.faces
-        self.edge_indices = mesh_wrapper.edges
+        self.faces = mesh_wrapper.faces
+        self.edges = mesh_wrapper.edges
+
         self.dict_colors = mesh_wrapper.dict_colors
-
-        color_keys = list(mesh_wrapper.dict_colors.keys())
-        self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, color_keys)
-
-        self.init_vertices = copy.deepcopy(self.vertices)
+        self.dict_data = mesh_wrapper.dict_data
+        self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, self.dict_data)
 
         self.cp_locs_lines = [0, 0, 0]
         self.cp_locs_ambient = [0, 0, 0]
@@ -281,10 +182,10 @@ class MeshGL:
         glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
 
         # Element buffer
-        size = len(self.edge_indices) * 4
+        size = len(self.edges) * 4
         self.EBO_edge = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_edge)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.edge_indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.edges, GL_STATIC_DRAW)
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
@@ -311,10 +212,10 @@ class MeshGL:
         glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
 
         # Element buffer
-        size = len(self.face_indices) * 4  # Size in bytes
+        size = len(self.faces) * 4  # Size in bytes
         self.EBO_triangels = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_triangels)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.face_indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.faces, GL_STATIC_DRAW)
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
@@ -470,16 +371,20 @@ class MeshGL:
         )
 
     def _update_colors(self) -> None:
+        if self.guip.update_caps:
+            self._update_colors_from_new_caps()
+            self.guip.update_caps = False
+
         if self.guip.update_colors:
             glBindVertexArray(self.VAO_triangels)
 
             color_keys = list(self.dict_colors.keys())
-            color_name = self.guip.get_current_color_name()
+            key = self.guip.get_current_color_name()
             # (x, y, z, r, g, b, nx, ny, nz)
-            if color_name in color_keys:
-                self.vertices[3::9] = self.dict_colors[color_name][0::3]
-                self.vertices[4::9] = self.dict_colors[color_name][1::3]
-                self.vertices[5::9] = self.dict_colors[color_name][2::3]
+            if key in color_keys:
+                self.vertices[3::9] = self.dict_colors[key][0::3]
+                self.vertices[4::9] = self.dict_colors[key][1::3]
+                self.vertices[5::9] = self.dict_colors[key][2::3]
 
             # Updating vertex buffer object for triangles
             size = len(self.vertices) * 4  # Size in bytes
@@ -494,6 +399,29 @@ class MeshGL:
 
             info("Colors updated!")
             self.guip.update_colors = False
+
+    def _update_colors_from_new_caps(self) -> None:
+        key = self.guip.get_current_color_name()
+        data = self.dict_data[key]
+
+        if self.guip.dict_has_data[key]:
+            min = np.min(data)
+            max = np.max(data)
+            dom = max - min
+
+            lower_cap = self.guip.dict_slider_caps[key][0]
+            upper_cap = self.guip.dict_slider_caps[key][1]
+            new_min = min + dom * lower_cap
+            new_max = min + dom * upper_cap
+
+            self.guip.set_dict_value_caps(key, new_min, new_max)
+
+            new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
+            n_vertices = int(len(self.vertices) / 9)
+            new_colors = fit_colors_to_faces(self.faces, n_vertices, new_colors)
+            self.dict_colors[key] = new_colors
+        else:
+            info(f"No data found for {key}!")
 
     def render_lines(self, interaction: Interaction, gguip: GuiParameters, ws_pass=0):
         """Render wireframe lines of the mesh.
@@ -696,13 +624,13 @@ class MeshGL:
     def _triangles_draw_call(self):
         """Bind the vertex array object and calling draw function for triangles"""
         self._bind_vao_triangels()
-        glDrawElements(GL_TRIANGLES, len(self.face_indices), GL_UNSIGNED_INT, None)
+        glDrawElements(GL_TRIANGLES, len(self.faces), GL_UNSIGNED_INT, None)
         self._unbind_vao()
 
     def _lines_draw_call(self):
         """Bind the vertex array object and calling draw function for lines"""
         self._bind_vao_lines()
-        glDrawElements(GL_LINES, len(self.edge_indices), GL_UNSIGNED_INT, None)
+        glDrawElements(GL_LINES, len(self.edges), GL_UNSIGNED_INT, None)
         self._unbind_vao()
 
     def _bind_vao_triangels(self) -> None:
