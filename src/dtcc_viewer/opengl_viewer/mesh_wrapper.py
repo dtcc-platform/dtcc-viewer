@@ -185,9 +185,9 @@ class MeshWrapper:
         # the mesh is colored by vertex height.
         info(f"Coloring mesh by default colors")
         key = "Default colors"
-        self.color_by = ColorBy.vertex
         default_data = mesh.vertices[:, 2]
         self.dict_data[key] = default_data
+        self.dict_color_by[key] = ColorBy.vertex
         self.dict_colors[key] = calc_colors_rainbow(default_data)
 
         # No colors provided, no colors appeded to the mesh and no data provided

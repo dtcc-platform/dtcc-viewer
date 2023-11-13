@@ -60,9 +60,6 @@ class GuiParametersMesh:
         self.set_dict_has_data(dict_data)
         self.calc_dict_value_caps(dict_data)
 
-        print("Has data:")
-        print(self.dict_has_data)
-
     def get_current_color_name(self):
         return self.color_keys[self.color_index]
 
