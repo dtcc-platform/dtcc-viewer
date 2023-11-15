@@ -92,22 +92,7 @@ class MeshWrapper:
     def _generate_mesh_colors(
         self, mesh: Mesh, data: Any = None, in_colors: np.ndarray = None
     ):
-        """Generate mesh colors based on the provided data.
-
-        Parameters
-        ----------
-        mesh : Mesh
-            The Mesh object from which to generate colors.
-        data : np.ndarray or dictionaty, optional
-            Array or dictinary of data for color calculation (default is None).
-
-        Returns
-        -------
-        int
-            Color mode based on ColorBy enumeration (e.g., ColorBy.vertex_colors).
-        np.ndarray
-            Array of vertex colors for the mesh.
-        """
+        """Generate mesh colors based on the provided data."""
 
         n_vertex_colors = len(mesh.vertex_colors)
         n_face_colors = len(mesh.face_colors)
@@ -195,18 +180,7 @@ class MeshWrapper:
         return True
 
     def _normalise_colors(self, colors: np.ndarray):
-        """Normalize colors to the range [0, 1] if necessary.
-
-        Parameters
-        ----------
-        colors : np.ndarray
-            Array of colors to normalize.
-
-        Returns
-        -------
-        np.ndarray
-            Normalized array of colors.
-        """
+        """Normalize colors to the range [0, 1] if necessary."""
         # If the max color value is larger then 1 it is assumed that the color range is 0-255
         max = np.max(colors)
         if max > 1.0:

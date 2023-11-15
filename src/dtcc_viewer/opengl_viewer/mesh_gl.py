@@ -2,9 +2,10 @@ import math
 import glfw
 import copy
 import numpy as np
+import pyrr
+from pprint import pp
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-import pyrr
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
@@ -12,7 +13,7 @@ from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
 from dtcc_viewer.opengl_viewer.utils import fit_colors_to_faces
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.colors import calc_colors_rainbow
-from pprint import pp
+from dtcc_viewer.colors import color_maps
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -416,7 +417,10 @@ class MeshGL:
 
             self.guip.set_dict_value_caps(key, new_min, new_max)
 
-            new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
+            cmap_key = self.guip.cmap_key
+            new_colors = color_maps[cmap_key](data, new_min, new_max)
+
+            # new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
             n_vertices = int(len(self.vertices) / 9)
             new_colors = fit_colors_to_faces(self.faces, n_vertices, new_colors)
             self.dict_colors[key] = new_colors

@@ -357,10 +357,8 @@ class PointCloudGL:
         n_sides = self._calc_n_sides()
 
         if self.n_points > self.upper_count:
-            [
-                self.vertices,
-                self.face_indices,
-            ] = self._create_quad()  # Lowest resolution, only 2 triangles
+            # Lowest resolution, only 2 triangles
+            [self.vertices, self.face_indices] = self._create_quad()
         else:
             # Higher res discs
             n_sides = self._calc_n_sides()
