@@ -4,6 +4,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from typing import Any
+from dtcc_viewer.colors import color_maps
 
 
 class PointCloudWrapper:
@@ -40,7 +41,6 @@ class PointCloudWrapper:
         pc: PointCloud,
         size: float = 0.2,
         data: Any = None,
-        colors: np.ndarray = None,
     ) -> None:
         """Initialize a PointCloudData object.
 
@@ -64,8 +64,8 @@ class PointCloudWrapper:
 
         self.name = name
         self.size = size
-        self.dict_colors = {}
-        self._generate_pc_colors(pc, data=data, colors=colors)
+        self.dict_data = {}
+        self._reformat_data_dict(pc, data=data)
         self.points = pc.points
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -74,74 +74,41 @@ class PointCloudWrapper:
         self.bb_local = BoundingBox(self.points)
         self._flatten_pc()
 
-    def _generate_pc_colors(
-        self,
-        pc: PointCloud,
-        data: np.ndarray = None,
-        colors: np.ndarray = None,
-    ) -> np.ndarray:
-        """Generate colors for the point cloud based on the provided data.
-
-        Parameters
-        ----------
-        pc : PointCloud
-            The PointCloud object to generate colors for.
-        pc_data : np.ndarray, optional
-            Additional data for color calculation (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Array of colors for the point cloud.
-        """
+    def _reformat_data_dict(self, pc: PointCloud, data: np.ndarray = None):
+        """Generate colors for the point cloud based on the provided data."""
         n_points = len(pc.points)
 
         # Coloring by dictionary
         if isinstance(data, dict):
-            if self._generate_dict_colors(data, n_points):
-                keys = list(self.dict_colors.keys())
-                self.colors = np.array(self.dict_colors[keys[0]])
+            if self._generate_dict_data(data, n_points):
                 return True
             else:
                 warning("Data dict for pc colors does not match point count!")
 
-        # Coloring by input colors
-        if colors is not None:
-            n_pc_colors = len(colors)
-            if n_pc_colors == n_points:
-                self.colors = np.array(colors)
-                return True
-            else:
-                warning("Point cloud colors provided does not match point count!")
-
-        # Coloring by data
-        if data is not None:
+        # Coloring by array data
+        elif data is not None:
             if len(pc.points) == len(data):
-                self.colors = calc_colors_rainbow(data)
+                self.dict_data["Data"] = data
                 return True
             else:
                 warning("Provided color data does not match the particle count!")
 
         info("No data provided for point cloud -> coloring per z-value")
         z = pc.points[:, 2]  # Color by height if no data is provided
-        self.colors = calc_colors_rainbow(z)
+        self.dict_data["Default data"] = z
+
         return True
 
-    def _generate_dict_colors(self, data_dict: dict, n_points: int):
-        # return default colors to be added to the mesh
+    def _generate_dict_data(self, data_dict: dict, n_points: int):
+        """Check the data dict to math point count."""
         keys = data_dict.keys()
 
         for key in keys:
             row_data = data_dict[key]
             if len(row_data) == n_points:
-                colors = calc_colors_rainbow(row_data)
-                colors = np.array(colors, dtype="float32")
-                self.dict_colors[key] = colors.flatten()
+                self.dict_data[key] = row_data
             else:
                 warning(f"Dict data in for key {key} doesn't match point count:")
-
-        if len(self.dict_colors) == 0:
-            return False
 
         return True
 
@@ -153,4 +120,3 @@ class PointCloudWrapper:
     def _flatten_pc(self):
         """Flatten the point cloud data arrays for further processing."""
         self.points = np.array(self.points, dtype="float32").flatten()
-        self.colors = np.array(self.colors, dtype="float32").flatten()

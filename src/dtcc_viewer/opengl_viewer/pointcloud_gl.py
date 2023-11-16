@@ -12,6 +12,8 @@ from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
 )
 from dtcc_viewer.opengl_viewer.gui import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.logging import info, warning
+from dtcc_viewer.colors import color_maps
 
 
 class PointCloudGL:
@@ -73,15 +75,24 @@ class PointCloudGL:
         self.cp_locs = [0, 0, 0]
         self.p_size = pc_wrapper.size
         self.n_points = int(len(pc_wrapper.points) / 3)
-        self.colors = pc_wrapper.colors
-        self.dict_colors = pc_wrapper.dict_colors
-        color_keys = list(pc_wrapper.dict_colors.keys())
+        self.transforms = pc_wrapper.points
+
+        self.dict_data = pc_wrapper.dict_data
+        color_keys = list(pc_wrapper.dict_data.keys())
 
         self.guip = GuiParametersPC(pc_wrapper.name, color_keys)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
+
+        # Calculate initial colors for the particles
+        cmap_key = self.guip.cmap_key
+        data_key = color_keys[0]
+        colors = color_maps[cmap_key](self.dict_data[data_key])
+        colors = np.array(colors, dtype="float32").flatten()
+        self.colors = colors
+
         self._create_single_instance()
-        self._create_multiple_instances(pc_wrapper.points)
+        self._create_multiple_instances()
         self._create_shader()
 
     def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
@@ -132,16 +143,23 @@ class PointCloudGL:
 
     def _update_colors(self):
         if self.guip.update_colors:
-            color_keys = list(self.dict_colors.keys())
-            color_name = self.guip.get_current_color_name()
+            color_keys = list(self.dict_data.keys())
+            color_key = self.guip.get_current_color_name()
+            cmap_key = self.guip.cmap_key
 
-            if color_name in color_keys:
-                self.colors = self.dict_colors[color_name]
+            if color_key in color_keys:
+                data = self.dict_data[color_key]
+                min = np.min(data)
+                max = np.max(data)
+                colors = color_maps[cmap_key](data, min, max)
+                colors = np.array(colors, dtype="float32").flatten()
+                self.colors = colors
 
             size = self.colors.nbytes
             glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
             glBufferData(GL_ARRAY_BUFFER, size, self.colors, GL_STATIC_DRAW)
 
+            info("Pc colors updated")
             self.guip.update_colors = False
 
     def _create_single_instance(self):
@@ -175,7 +193,7 @@ class PointCloudGL:
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
-    def _create_multiple_instances(self, points: np.ndarray):
+    def _create_multiple_instances(self):
         """Create multiple instances of a particle mesh geometry.
 
         Parameters
@@ -185,7 +203,7 @@ class PointCloudGL:
         colors : np.ndarray
             Array containing the RGB colors corresponding to each point.
         """
-        self.transforms = points
+
         self.transforms_VBO = glGenBuffers(1)
         size = self.transforms.nbytes
         glBindBuffer(GL_ARRAY_BUFFER, self.transforms_VBO)

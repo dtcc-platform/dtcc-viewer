@@ -13,11 +13,9 @@ from typing import Any
 def view(
     mesh: Mesh,
     data: Any = None,
-    colors: np.ndarray = None,
     shading: MeshShading = MeshShading.wireshaded,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
-    pc_colors: np.ndarray = None,
     pc_size: float = 0.2,
 ):
     """View a mesh in 3D with a GLFW window.
@@ -45,9 +43,9 @@ def view(
     scene = Scene()
 
     if pc is None:
-        scene.add_mesh("Mesh", mesh, data, colors, shading)
+        scene.add_mesh("Mesh", mesh, data, shading)
         window.render(scene)
     else:
-        scene.add_mesh("Mesh", mesh, data, colors, shading)
-        scene.add_pointcloud("Point cloud", pc, pc_size, pc_data, pc_colors)
+        scene.add_mesh("Mesh", mesh, data, shading)
+        scene.add_pointcloud("Point cloud", pc, pc_size, pc_data)
         window.render(scene)

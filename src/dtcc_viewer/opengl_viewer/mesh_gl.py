@@ -128,7 +128,6 @@ class MeshGL:
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
 
-        self.dict_colors = mesh_wrapper.dict_colors
         self.dict_data = mesh_wrapper.dict_data
         self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, self.dict_data)
 
@@ -150,6 +149,11 @@ class MeshGL:
         self._create_shader_shadows()
         self._create_shader_shadow_map()
         self._set_constats()
+
+        # Trigger color update to set the initial colors
+        self.guip.update_caps = True
+        self.guip.update_colors = True
+        self._update_colors()
 
     def _calc_model_scale(self) -> None:
         """Calculate the model scale from vertex positions."""
@@ -379,13 +383,10 @@ class MeshGL:
         if self.guip.update_colors:
             glBindVertexArray(self.VAO_triangels)
 
-            color_keys = list(self.dict_colors.keys())
-            key = self.guip.get_current_color_name()
             # (x, y, z, r, g, b, nx, ny, nz)
-            if key in color_keys:
-                self.vertices[3::9] = self.dict_colors[key][0::3]
-                self.vertices[4::9] = self.dict_colors[key][1::3]
-                self.vertices[5::9] = self.dict_colors[key][2::3]
+            self.vertices[3::9] = self.colors[0::3]
+            self.vertices[4::9] = self.colors[1::3]
+            self.vertices[5::9] = self.colors[2::3]
 
             # Updating vertex buffer object for triangles
             size = len(self.vertices) * 4  # Size in bytes
@@ -398,7 +399,7 @@ class MeshGL:
             glBindBuffer(GL_ARRAY_BUFFER, self.VBO_edge)
             glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
 
-            info("Colors updated!")
+            info("Mesh colors updated")
             self.guip.update_colors = False
 
     def _update_colors_from_new_caps(self) -> None:
@@ -423,7 +424,8 @@ class MeshGL:
             # new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
             n_vertices = int(len(self.vertices) / 9)
             new_colors = fit_colors_to_faces(self.faces, n_vertices, new_colors)
-            self.dict_colors[key] = new_colors
+            self.colors = new_colors
+
         else:
             info(f"No data found for {key}!")
 

@@ -39,14 +39,11 @@ class Scene:
         name: str,
         mesh: Mesh,
         data: Any = None,
-        colors: np.ndarray = None,
         shading: MeshShading = MeshShading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
         info(f"Mesh called - {name} - added to scene")
-        mesh_w = MeshWrapper(
-            name=name, mesh=mesh, data=data, colors=colors, shading=shading
-        )
+        mesh_w = MeshWrapper(name=name, mesh=mesh, data=data, shading=shading)
         self.mesh_wrappers.append(mesh_w)
 
     def add_pointcloud(
@@ -55,11 +52,10 @@ class Scene:
         pc: PointCloud,
         size: float = 0.2,
         data: np.ndarray = None,
-        colors: np.ndarray = None,
     ):
-        """Append a pointcloud with data and/or colors to the scene"""
+        """Append a pointcloud with data to color the scene"""
         info(f"Point could called - {name} - added to scene")
-        pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data, colors=colors)
+        pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data)
         self.pcs_wrappers.append(pc_w)
 
     def add_roadnetwork(

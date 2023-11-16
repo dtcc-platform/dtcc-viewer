@@ -97,12 +97,15 @@ class GuiParametersPC:
         self.color_pc = True
         self.pc_scale = 1.0
         self.color_index = 0
-        self.color_names = color_names
+        self.color_keys = color_names
         self.update_colors = False
+
+        self.cmap_index = 0
+        self.cmap_key = list(color_maps.keys())[0]
 
     def get_current_color_name(self):
         """Get the current color name."""
-        return self.color_names[self.color_index]
+        return self.color_keys[self.color_index]
 
 
 class GuiParametersRN:
@@ -253,11 +256,30 @@ class Gui:
             )
             imgui.pop_id()
 
-            # Add combobox for selecting color if there are more then one color
-            if len(guip.color_names) > 1:
+            key = guip.get_current_color_name()
+            # Color maps combo box
+
+            imgui.push_id("PcCmapCombo " + str(index))
+            items = list(color_maps.keys())
+            with imgui.begin_combo("Color map", items[guip.cmap_index]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = guip.cmap_index
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.update_colors = True
+                            guip.cmap_index = i
+                            guip.cmap_key = item
+
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
+
+            # Add combobox for selecting data to color by if a dict has been used
+            if len(guip.color_keys) > 1:
                 # Drawing colors
                 imgui.push_id("ColorsCombo " + str(index))
-                items = guip.color_names
+                items = guip.color_keys
                 with imgui.begin_combo("ColorsCombo", items[guip.color_index]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
@@ -359,7 +381,6 @@ class Gui:
                                 guip.color_index = i
                                 guip.dict_slider_caps[key][0] = 0.0
                                 guip.dict_slider_caps[key][1] = 1.0
-                                print(guip.cmap_key)
 
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                             if is_selected:

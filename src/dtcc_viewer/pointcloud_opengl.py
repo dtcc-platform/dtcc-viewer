@@ -12,10 +12,8 @@ def view(
     pc: PointCloud,
     size: float = 0.2,
     data: np.ndarray = None,
-    colors: np.ndarray = None,
     mesh: Mesh = None,
     mesh_data: np.ndarray = None,
-    mesh_colors: np.ndarray = None,
     mesh_shading: MeshShading = MeshShading.wireshaded,
 ):
     """
@@ -45,9 +43,9 @@ def view(
     scene = Scene()
 
     if mesh is None:
-        scene.add_pointcloud("Point cloud", pc, size, data, colors)
+        scene.add_pointcloud("Point cloud", pc, size, data)
         window.render(scene)
     else:
-        scene.add_pointcloud("Point cloud", pc, size, data, colors)
-        scene.add_mesh("Mesh", mesh, mesh_data, mesh_colors, mesh_shading)
+        scene.add_pointcloud("Point cloud", pc, size, data)
+        scene.add_mesh("Mesh", mesh, mesh_data, mesh_shading)
         window.render(scene)

@@ -31,18 +31,6 @@ def pointcloud_example_1():
 
 
 def pointcloud_example_2():
-    file = "../../../../dtcc-demo-data/helsingborg-residential-2022/pointcloud.las"
-    pc = pointcloud.load(file)
-
-    color_data = pc.points[:, 2]
-    color_data = abs(pc.points[:, 2]) / pc.points[:, 2].max()
-    colors = np.zeros((len(pc.points), 3))
-    colors[:, 0] = color_data
-    colors[:, 2] = color_data
-    pc.view(colors=colors, size=0.5)
-
-
-def pointcloud_example_3():
     file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
     pc = pointcloud.load(file)
     data_dict = {}
@@ -69,15 +57,6 @@ def mesh_example_2():
 def mesh_example_3():
     file = "../../../data/models/CitySurface.obj"
     mesh = meshes.load_mesh(file)
-    color_data = abs(mesh.vertices[:, 2] / mesh.vertices[:, 2].max())
-    colors = np.zeros((len(mesh.vertices), 3))
-    colors[:, 0] = color_data
-    mesh.view(colors=colors, shading=MeshShading.wireframe)
-
-
-def mesh_example_4():
-    file = "../../../data/models/CitySurface.obj"
-    mesh = meshes.load_mesh(file)
     # mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
     face_mid_pts = calc_face_mid_points(mesh)
     data_dict = {}
@@ -102,22 +81,27 @@ def mesh_point_cloud_example_2():
     file_1 = "../../../data/models/CitySurface.obj"
     file_2 = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(file_2)
+    pc_data = pc.points[:, 0]
     mesh = meshes.load_mesh(file_1)
-    data_dict = {}
-    data_dict["vertex_x"] = mesh.vertices[:, 0]
-    data_dict["vertex_y"] = mesh.vertices[:, 1]
-    data_dict["vertex_z"] = mesh.vertices[:, 2]
-    pc.view(mesh=mesh, mesh_data=data_dict)
+    mesh_data = mesh.vertices[:, 1]
+    pc.view(mesh=mesh, data=pc_data, mesh_data=mesh_data)
 
 
 def mesh_point_cloud_example_3():
     file_1 = "../../../data/models/CitySurface.obj"
     file_2 = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(file_2)
-    pc_data = pc.points[:, 0]
+    pc_data_dict = {}
+    pc_data_dict["point_x"] = pc.points[:, 0]
+    pc_data_dict["point_y"] = pc.points[:, 1]
+    pc_data_dict["point_z"] = pc.points[:, 2]
+
     mesh = meshes.load_mesh(file_1)
-    mesh_data = mesh.vertices[:, 1]
-    pc.view(mesh=mesh, data=pc_data, mesh_data=mesh_data)
+    mesh_data_dict = {}
+    mesh_data_dict["vertex_x"] = mesh.vertices[:, 0]
+    mesh_data_dict["vertex_y"] = mesh.vertices[:, 1]
+    mesh_data_dict["vertex_z"] = mesh.vertices[:, 2]
+    pc.view(data=pc_data_dict, mesh=mesh, mesh_data=mesh_data_dict)
 
 
 def multi_geometry_example_1():
@@ -238,11 +222,9 @@ if __name__ == "__main__":
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
-    # pointcloud_example_3()
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
-    mesh_example_4()
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
@@ -252,4 +234,4 @@ if __name__ == "__main__":
     # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
-    # roadnetwork_example_3()
+    roadnetwork_example_3()

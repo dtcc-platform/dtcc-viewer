@@ -183,7 +183,7 @@ def _get_blended_color_mono(min, max, value):
 
 def _get_blended_color_yellow_red(min, max, value):
     """Calculate a yellow-to-red color based on a value within a range."""
-    frac = _get_normalised_value_with_cap(min, max, value)
+    frac = 1.0 - _get_normalised_value_with_cap(min, max, value)
     return [1.0, (frac * 1.0), 0.0]
 
 
@@ -235,5 +235,4 @@ color_maps = {
     "mono": calc_colors_mono,
     "warm": calc_colors_warm,
     "cold": calc_colors_cold,
-    "arctic": calc_colors_arctic,
 }
