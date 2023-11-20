@@ -424,7 +424,10 @@ class MeshGL:
             # new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
             n_vertices = int(len(self.vertices) / 9)
             new_colors = fit_colors_to_faces(self.faces, n_vertices, new_colors)
-            self.colors = new_colors
+            if self.guip.invert_cmap:
+                self.colors = 1.0 - new_colors
+            else:
+                self.colors = new_colors
 
         else:
             info(f"No data found for {key}!")

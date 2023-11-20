@@ -46,6 +46,7 @@ class GuiParametersMesh:
         """Initialize the GuiParametersMesh object."""
         self.name = name
         self.show = True
+        self.invert_cmap = False
         self.color_mesh = True
         self.animate_light = False
         self.mesh_shading = shading
@@ -314,12 +315,22 @@ class Gui:
         """Draw GUI for mesh."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
-            imgui.push_id("Show mesh " + str(index))
+            imgui.push_id("ShowMesh " + str(index))
             [changed, guip.show] = imgui.checkbox("Show", guip.show)
             imgui.pop_id()
             imgui.same_line()
-            imgui.push_id("Color mesh " + str(index))
+            imgui.push_id("ColorMesh " + str(index))
             [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
+            imgui.pop_id()
+
+            imgui.push_id("InvertColors " + str(index))
+            imgui.same_line()
+            [changed, guip.invert_cmap] = imgui.checkbox(
+                "Invert cmap", guip.invert_cmap
+            )
+            if changed:
+                guip.update_colors = True
+                guip.update_caps = True
             imgui.pop_id()
 
             if guip.mesh_shading == MeshShading.shadows:
