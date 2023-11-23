@@ -42,9 +42,12 @@ class Scene:
         shading: MeshShading = MeshShading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
-        info(f"Mesh called - {name} - added to scene")
-        mesh_w = MeshWrapper(name=name, mesh=mesh, data=data, shading=shading)
-        self.mesh_wrappers.append(mesh_w)
+        if mesh is not None:
+            info(f"Mesh called - {name} - added to scene")
+            mesh_w = MeshWrapper(name=name, mesh=mesh, data=data, shading=shading)
+            self.mesh_wrappers.append(mesh_w)
+        else:
+            warning(f"Mesh called - {name} - is None and not added to scene")
 
     def add_pointcloud(
         self,
@@ -54,9 +57,12 @@ class Scene:
         data: np.ndarray = None,
     ):
         """Append a pointcloud with data to color the scene"""
-        info(f"Point could called - {name} - added to scene")
-        pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data)
-        self.pcs_wrappers.append(pc_w)
+        if pc is not None:
+            info(f"Point could called - {name} - added to scene")
+            pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data)
+            self.pcs_wrappers.append(pc_w)
+        else:
+            warning(f"Point could called - {name} - is None and not added to scene")
 
     def add_roadnetwork(
         self,
@@ -66,9 +72,12 @@ class Scene:
         colors: np.ndarray = None,
     ):
         """Append a RoadNetwork object to the scene"""
-        info(f"Road network called - {name} - added to scene")
-        rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data, colors=colors)
-        self.roadn_wrappers.append(rn_w)
+        if rn is not None:
+            info(f"Road network called - {name} - added to scene")
+            rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data, colors=colors)
+            self.roadn_wrappers.append(rn_w)
+        else:
+            warning(f"Road network called - {name} - is None and not added to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""

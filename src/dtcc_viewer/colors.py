@@ -90,9 +90,8 @@ def calc_colors_random(values: Iterable[Any]) -> List[List[float]]:
 def _get_blended_color(min, max, value):
     """Calculate a blended color based on a value within a range."""
     range = max - min
-    if range <= 0:
-        print("Error: MAX value is smaller than given MIN value!")
-        return [1, 0, 1]  # Error, returning magenta
+    if (range) <= 0:
+        return [0.95, 0.95, 0.95]  # Error, white
 
     new_min = 0
     new_max = range
@@ -135,8 +134,7 @@ def _get_blended_color_multi(min, max, value):
     """Calculate a blended color based on input range and value."""
     diff = max - min
     if (diff) <= 0:
-        print("Error: MAX value is smaller than given MIN value!")
-        return [1, 0, 1]  # Error, returning magenta
+        return [0.95, 0.95, 0.95]  # Error, white
 
     new_min = 0
     new_max = diff
@@ -186,8 +184,7 @@ def _get_blended_color_blackbody(min, max, value):
     """Calculate a blended color based on input range and value."""
     diff = max - min
     if (diff) <= 0:
-        print("Error: MAX value is smaller than given MIN value!")
-        return [1, 0, 1]  # Error, returning magenta
+        return [0.95, 0.95, 0.95]  # Error, white
 
     new_min = 0
     new_max = diff
@@ -220,8 +217,7 @@ def _get_blended_color_temperature(min, max, value):
     """Calculate a blended color based on input range and value."""
     diff = max - min
     if (diff) <= 0:
-        print("Error: MAX value is smaller than given MIN value!")
-        return [1, 0, 1]  # Error, returning magenta
+        return [0.95, 0.95, 0.95]  # Error, white
 
     new_min = 0
     new_max = diff
@@ -248,8 +244,7 @@ def _get_blended_color_inferno(min, max, value):
     """Calculate a blended color based on input range and value."""
     diff = max - min
     if (diff) <= 0:
-        print("Error: MAX value is smaller than given MIN value!")
-        return [1, 0, 1]  # Error, returning magenta
+        return [0.95, 0.95, 0.95]  # Error, white
 
     new_min = 0
     new_max = diff
