@@ -124,6 +124,9 @@ class PointCloudGL:
         color_by = int(self.guip.color_pc)
         glUniform1i(self.color_by_loc, color_by)
 
+        invert_color = int(self.guip.invert_cmap)
+        glUniform1i(self.invert_color_loc, invert_color)
+
         scale_factor = self.guip.pc_scale
         scale = pyrr.matrix44.create_from_scale(
             [scale_factor, scale_factor, scale_factor], dtype=np.float32
@@ -246,6 +249,7 @@ class PointCloudGL:
         self.view_loc = glGetUniformLocation(self.shader, "view")
         self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
         self.scale_loc = glGetUniformLocation(self.shader, "scale")
+        self.invert_color_loc = glGetUniformLocation(self.shader, "invert_color")
 
         self.cp_locs[0] = glGetUniformLocation(self.shader, "clip_x")
         self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")

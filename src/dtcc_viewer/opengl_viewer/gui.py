@@ -96,6 +96,7 @@ class GuiParametersPC:
         self.name = name
         self.show = True
         self.color_pc = True
+        self.invert_cmap = False
         self.pc_scale = 1.0
         self.color_index = 0
         self.color_keys = color_names
@@ -251,6 +252,12 @@ class Gui:
             imgui.push_id("Color pc " + str(index))
             [changed, guip.color_pc] = imgui.checkbox("Color", guip.color_pc)
             imgui.pop_id()
+
+            imgui.push_id("InvertColors " + str(index))
+            imgui.same_line()
+            [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
+            imgui.pop_id()
+
             imgui.push_id("Color pc " + str(index))
             [changed, guip.pc_scale] = imgui.slider_float(
                 "Scale factor", guip.pc_scale, 0, 10

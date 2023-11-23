@@ -13,6 +13,7 @@ uniform mat4 project;
 uniform mat4 view;
 uniform int color_by;
 uniform mat4 scale;
+uniform int invert_color;
 
 uniform float clip_x;
 uniform float clip_y;
@@ -34,14 +35,22 @@ void main()
     gl_ClipDistance[2] = dot(final_pos, clippingPlane3);
 
     gl_Position = project * view * final_pos;
+
+    vec3 v_icolor = a_icolor;
+    if(invert_color == 1)
+    {
+        v_icolor = vec3(1.0) - a_icolor;
+    }
+
     if(color_by == 1)
     {
-        v_color = a_icolor * a_color;
+        v_color = v_icolor * a_color;
     }
     else
     {
         v_color = a_color;
     }
+
 }
 """
 
