@@ -192,25 +192,25 @@ def _get_blended_color_blackbody(min, max, value):
     percentage = 100.0 * (new_value / new_max)
 
     if new_value <= new_min:
-        return [1.0, 1.0, 1.0]
+        return [0.0, 0.0, 0.0]
     else:
-        if percentage >= 0.0 and percentage <= 25.0:
-            # White fading to Yellow [1,1,x], where x is decreasing from 1 to 0
-            frac = 1.0 - percentage / 25.0
-            return [1.0, 1.0, (frac * 1.0)]
-
-        elif percentage > 25.0 and percentage <= 50.0:
-            # Yellow fading to red [1,x,0], where x is decreasing from 1 to 0
-            frac = 1.0 - abs(percentage - 25.0) / 25.0
-            return [1.0, (frac * 1.0), 0.0]
-
-        elif percentage > 50.0 and percentage <= 100.0:
-            # Red fading to dark red [0,x,0], where x is decreasing from 1 to 0.5
+        if percentage >= 0.0 and percentage <= 50.0:
+            # Black fading to red [x,0,0], where x is increasing from 0 to 1
             frac = 1.0 - abs(percentage - 50.0) / 50.0
             return [(frac * 1.0), 0.0, 0.0]
+
+        elif percentage > 50.0 and percentage <= 75.0:
+            # Red fading to yellow [1,x,0], where x is increasing from 0 to 1
+            frac = abs(percentage - 50.0) / 25.0
+            return [1.0, (frac * 1.0), 0.0]
+
+        elif percentage > 75.0 and percentage <= 100.0:
+            # Yellow fading to white [1,1,x], where x is increasing from 0 to 1
+            frac = abs(percentage - 75.0) / 25.0
+            return [1.0, 1.0, (frac * 1.0)]
         elif percentage > 100.0:
-            # Returning red if the value overshoots the limit.
-            return [0.0, 0.0, 0.0]
+            # Returning white if the value overshoots the limit.
+            return [1.0, 1.0, 1.0]
 
 
 def _get_blended_color_temperature(min, max, value):
@@ -252,27 +252,28 @@ def _get_blended_color_inferno(min, max, value):
     percentage = 100.0 * (new_value / new_max)
 
     if new_value <= new_min:
-        return [1.0, 1.0, 1.0]
+        return [0.0, 0.0, 0.0]
     else:
         if percentage >= 0.0 and percentage <= 33.3:
-            # White fading to Orange [1,x,y], where x is decreasing from 1 to 0.5
-            # and y is decreasing from 1 to 0
-            frac = 1.0 - percentage / 33.3
-            return [1.0, 0.5 + (frac * 0.5), (frac * 1.0)]
+            # Black fading to magenta [x,0,x], where x is increasing from 0 to 1
+            frac = percentage / 33.3
+            return [(frac * 1.0), 0.0, (frac * 1.0)]
 
         elif percentage > 33.3 and percentage <= 66.6:
-            # Orange fading to Magenta [1,x,y], where x is decreasing from 0.5 to 0
-            # and y is increasing from 0 to 1
-            frac = abs(percentage - 33.3) / 33.3
-            return [1.0, ((1 - frac) * 0.5), (frac * 1.0)]
+            # Magenta fading to Orange [1,x,y], where x is increasing from 0 to 0.5
+            # and y is decreasing from 1 to 0
+            frac = 1.0 - abs(percentage - 33.3) / 33.3
+            return [1.0, 0.5 - (frac * 0.5), (frac * 1.0)]
 
         elif percentage > 66.6 and percentage <= 100.0:
-            # Magenta fading to black [1,x,1], where x is increasing from 0 to 1
-            frac = 1.0 - abs(percentage - 66.6) / 33.4
-            return [(frac * 1.0), 0.0, (frac * 1.0)]
+            # Orange fading to White [1,x,y], where x is increasing from 0.5 to 1.0
+            # and y is increasing from 0 to 1
+            frac = abs(percentage - 66.6) / 33.4
+            return [1.0, 0.5 + (frac * 0.5), (frac * 1.0)]
+
         elif percentage > 100.0:
-            # Returning red if the value overshoots the limit.
-            return [0.0, 0.0, 0.0]
+            # Returning white if the value overshoots the limit.
+            return [1.0, 1.0, 1.0]
 
 
 def _get_blended_color_mono(min, max, value):
