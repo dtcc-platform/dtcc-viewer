@@ -489,7 +489,6 @@ vertices = [
     0,
 ]
 
-
 indices = [
     0,
     1,

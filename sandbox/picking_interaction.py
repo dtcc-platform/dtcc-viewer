@@ -1,8 +1,12 @@
 import glfw
+import time
+import pyrr
+from OpenGL.GL import *
+from OpenGL.GLU import *
 from dtcc_viewer.opengl_viewer.camera import Camera
 
 
-class Interaction:
+class PickingInteraction:
     """Handles mouse and keyboard interaction with the viewer.
 
     This class manages user input, such as keyboard, mouse button clicks, and cursor
@@ -42,6 +46,18 @@ class Interaction:
     right_first_mouse: bool
     right_mbtn_pressed: bool
     mouse_on_gui: bool
+    tic: float
+    toc: float
+    tictoc_duration: float
+    picking: bool
+    picked_x: float
+    picked_y: float
+
+    # Selection rays
+    ray_nds: pyrr.Vector3  # Ray in normalised device coordinates
+    ray_clip: pyrr.Vector4  # Ray in homogenous clip coordinates
+    ray_eye: pyrr.Vector4  # Ray in eye camera coordinates
+    ray_wrld: pyrr.Vector3  # Ray in world coordinates
 
     def __init__(self, width, height):
         """Initialize the Interaction object with the provided width and height.
@@ -63,6 +79,7 @@ class Interaction:
         self.right_first_mouse = True
         self.right_mbtn_pressed = False
         self.mouse_on_gui = False
+        self.picking = False
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -138,14 +155,37 @@ class Interaction:
 
         if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
             self.left_mbtn_pressed = True
+            self.tic = time.perf_counter()
+            print("Left mouse button pressed")
         elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
             self.left_mbtn_pressed = False
             self.left_first_mouse = True
+            self.toc = time.perf_counter()
+            self.tictoc_duration = self.toc - self.tic
+            if self.tictoc_duration < 0.2:
+                self.picking = True
+                (xpos, ypos) = glfw.get_cursor_pos(window)
+                self.picked_x = xpos
+                self.picked_y = self.height - ypos
+                print("Selection click at: ", xpos, ypos)
+
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS:
             self.right_mbtn_pressed = True
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.RELEASE:
             self.right_mbtn_pressed = False
             self.right_first_mouse = True
+
+    def get_selection_click_screen_coords(self):
+        """Get the screen coordinates of the selection click.
+
+        Returns
+        -------
+        float
+            The x-coordinate of the selection click.
+        float
+            The y-coordinate of the selection click.
+        """
+        return self.last_x, self.last_y
 
     def mouse_look_callback(self, window, xpos, ypos):
         """Callback function for mouse cursor movement for view rotation and panning.
@@ -159,6 +199,7 @@ class Interaction:
         ypos : float
             The new y-coordinate of the mouse cursor.
         """
+
         if not self.mouse_on_gui:
             if self.left_mbtn_pressed:
                 if self.left_first_mouse:
