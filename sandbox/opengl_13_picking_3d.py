@@ -10,8 +10,8 @@ import math
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from picking_interaction import PickingInteraction
 
-window_w = 1200
-window_h = 1200
+window_w = 800
+window_h = 800
 
 
 action = PickingInteraction(window_w, window_h)
@@ -61,6 +61,8 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
 
+uniform int selected;
+
 out vec3 v_frag_pos;
 out vec3 v_color;
 out vec3 v_normal;
@@ -69,7 +71,14 @@ void main()
 {
     gl_Position = project * view * model * vec4(a_position, 1.0);
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
-    v_color = a_color;
+    if (selected == 1)
+    {
+        v_color = vec3(1.0, 0.0, 1.0);
+    }
+    else
+    {
+        v_color = a_color;
+    }
     v_normal = a_normal;
 }
 """
@@ -155,7 +164,7 @@ glfw.set_window_size_callback(window, window_resize)
 # Calls can be made after the contex is made current
 glfw.make_context_current(window)
 
-floor_size = 30
+floor_size = 50
 floor_z = -2.0
 
 tex_min = 0
@@ -1395,6 +1404,7 @@ view_loc = glGetUniformLocation(shader_normal, "view")
 light_color_loc = glGetUniformLocation(shader_normal, "light_color")
 light_position_loc = glGetUniformLocation(shader_normal, "light_position")
 view_pos_loc = glGetUniformLocation(shader_normal, "view_position")
+selected_loc = glGetUniformLocation(shader_normal, "selected")
 
 light_pos = 3.0 * np.array([10.0, 10.0, 10.0], dtype=np.float32)
 light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
@@ -1463,14 +1473,41 @@ def color_to_id(color):
     return id
 
 
-trans_vecs = []
-trans_vecs.append([7, -7, 2])
-trans_vecs.append([7, 7, 2])
-trans_vecs.append([-7, 7, 2])
-trans_vecs.append([-7, -7, 2])
-trans_vecs = np.array(trans_vecs, dtype=np.float32)
+# trans_vecs = []
+# trans_vecs.append([7, -7, 2])
+# trans_vecs.append([7, 7, 2])
+# trans_vecs.append([-7, 7, 2])
+# trans_vecs.append([-7, -7, 2])
+# trans_vecs = np.array(trans_vecs, dtype=np.float32)
 
-cube_ids = [10, 2000, 300000, 40000]
+# cube_ids = [10, 20, 30, 40]
+# selected = [False, False, False, False]
+
+
+def create_cube_vecs():
+    z = 2.0
+    cube_size = 1
+    cube_spacing = 5
+    nx = 10
+    ny = 10
+    ymin = -(ny - 1) * (cube_size + cube_spacing) / 2.0
+    xmin = -(nx - 1) * (cube_size + cube_spacing) / 2.0
+    trans_vecs = []
+    cube_ids = []
+    selected = []
+    counter = 0
+    for i in range(ny):
+        y = ymin + i * (cube_size + cube_spacing)
+        for j in range(nx):
+            x = xmin + j * (cube_size + cube_spacing)
+            trans_vecs.append([x, y, z])
+            cube_ids.append(counter)
+            selected.append(False)
+            counter += 1
+
+    trans_vecs = np.array(trans_vecs, dtype=np.float32)
+
+    return trans_vecs, cube_ids, selected
 
 
 def render_picking(time, proj, view):
@@ -1490,24 +1527,35 @@ def render_scene(time):
     model_floor = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_floor)
     glBindVertexArray(VAO_floor)
+    glUniform1i(selected_loc, False)
     glDrawElements(GL_TRIANGLES, len(floor_indices), GL_UNSIGNED_INT, None)
 
     glBindVertexArray(VAO_cube)
     for i in range(len(trans_vecs)):
+        is_selected = int(selected[i])
         trans = pyrr.matrix44.create_from_translation(pyrr.Vector3(trans_vecs[i, :]))
+        glUniform1i(selected_loc, is_selected)
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
         glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
     glBindVertexArray(VAO_icosa)
     model_icosa = pyrr.matrix44.create_from_translation(pyrr.Vector3(light_pos))
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_icosa)
+    glUniform1i(selected_loc, False)
     glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
+
+(trans_vecs, cube_ids, selected) = create_cube_vecs()
 
 glUseProgram(shader_normal)
 glClearColor(0, 0.1, 0, 1)
 glEnable(GL_DEPTH_TEST)
 
+
+fb_size = glfw.get_framebuffer_size(window)
+print(fb_size)
+mac_window_w = fb_size[0]
+mac_window_h = fb_size[1]
 
 # Main application loop
 while not glfw.window_should_close(window):
@@ -1534,19 +1582,20 @@ while not glfw.window_should_close(window):
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
-        x = action.picked_x / action.width
-        y = action.picked_y / action.height
-
         x = action.picked_x
         y = action.picked_y
+        print(x, y)
+
+        if window_w != mac_window_w:
+            x = 2 * x
+            y = 2 * y
 
         data = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
-
         picked_id = color_to_id(data)
 
         if picked_id != 0x00FFFFFF:
-            print(data[0], data[1], data[2])
-            print("picked_id: ", picked_id)
+            picked_index = cube_ids.index(picked_id)
+            selected[picked_index] = not selected[picked_index]
 
         action.picking = False
 

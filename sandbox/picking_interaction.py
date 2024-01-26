@@ -101,9 +101,12 @@ class PickingInteraction:
         height : int
             The new height of the viewer window.
         """
+
         self.width = width
         self.height = height
         self.camera.update_window_size(width, height)
+
+        print(self.width, self.height)
 
     def key_input_callback(self, window, key, scancode, action, mode):
         """Callback function for handling keyboard input.
@@ -156,7 +159,6 @@ class PickingInteraction:
         if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
             self.left_mbtn_pressed = True
             self.tic = time.perf_counter()
-            print("Left mouse button pressed")
         elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
             self.left_mbtn_pressed = False
             self.left_first_mouse = True
@@ -167,7 +169,6 @@ class PickingInteraction:
                 (xpos, ypos) = glfw.get_cursor_pos(window)
                 self.picked_x = xpos
                 self.picked_y = self.height - ypos
-                print("Selection click at: ", xpos, ypos)
 
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS:
             self.right_mbtn_pressed = True
