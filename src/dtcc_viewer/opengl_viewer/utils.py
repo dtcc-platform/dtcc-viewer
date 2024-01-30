@@ -3,6 +3,27 @@ import numpy as np
 from enum import IntEnum
 from dtcc_model import Mesh, PointCloud
 from pprint import pp
+import triangle as tr
+from dtcc_viewer.logging import info, warning
+
+
+class Submesh:
+    # Defining the start and end of face list
+    face_start: int
+    face_end: int
+    face_count: int
+    id: int
+    meta_data: dict
+
+    def __init__(self, face_start, face_end, id):
+        self.face_start = face_start
+        self.face_end = face_end
+        self.face_count = face_end - face_start + 1
+        self.id = id
+        self.meta_data = {}
+
+    def add_meta_data(self, newkey, newdata):
+        self.meta_data[newkey] = newdata
 
 
 class MeshShading(IntEnum):
@@ -195,3 +216,208 @@ def calc_colormap(n_data):
     a2 = a[len(a) - rest : -1]
 
     # if n_data % 2 == 0:
+
+
+# ---------- load CityJSON helper functions --------#
+
+
+def rodrigues_rotation_matrix(a, b):
+    a = a / np.linalg.norm(a)
+    b = b / np.linalg.norm(b)
+
+    v = np.cross(a, b)
+    # Catch situations where a and b are parallel
+    if np.allclose(v, 0):
+        return np.eye(4)
+
+    s = np.linalg.norm(v)
+    c = np.dot(a, b)
+
+    vx = np.array(
+        [
+            [0, -v[2], v[1]],
+            [v[2], 0, -v[0]],
+            [-v[1], v[0], 0],
+        ]
+    )
+    R = np.eye(4)
+    R[:3, :3] = np.eye(3) + vx + vx @ vx * (1 / (1 + c))
+    return R
+
+
+def calc_translation_matrix(centroid):
+    T = np.eye(4)
+    T[:3, 3] = -centroid
+    return T
+
+
+def get_unique_vertex_pair(vertices):
+    # Get the vertices from the surface
+    vertex1 = vertices[0, :]
+
+    for i in range(1, vertices.shape[0]):
+        vertex2 = vertices[i, :]
+        if not np.allclose(vertex1, vertex2):
+            break
+
+    return vertex1, vertex2
+
+
+def remove_duplicate_vertices(vertices):
+    unique_vertices = []
+    for i in range(vertices.shape[0]):
+        new_vertex = vertices[i, :]
+        if not vertex_in_list(new_vertex, unique_vertices):
+            unique_vertices.append(new_vertex)
+
+    return np.array(unique_vertices)
+
+
+def vertex_in_list(vertex, vertex_list):
+    for v in vertex_list:
+        if np.allclose(vertex, v):
+            return True
+
+    return False
+
+
+def get_normal_from_surface(vertices, centroid):
+    vertex1, vertex2 = get_unique_vertex_pair(vertices)
+
+    # Calculate the normal vector of the plane defined by the vertices
+    vec1 = vertex1 - centroid
+    vec2 = vertex2 - centroid  # Could there be duplicate vertices?
+
+    normal_vector = np.cross(vec1, vec2)
+    vec_length = np.linalg.norm(normal_vector)
+
+    if vec_length != 0:
+        normal_vector = normal_vector / vec_length
+    else:
+        return None
+
+    return normal_vector
+
+
+def surface_2_mesh(vertices):
+    vertices = remove_duplicate_vertices(vertices)
+
+    if vertices.shape[0] < 3:
+        warning("Surface has fewer then 3 vertices -> returning None")
+        return None, None
+
+    centroid = np.mean(vertices, axis=0)
+    surface_normal = get_normal_from_surface(vertices, centroid)
+
+    if surface_normal is None:
+        warning("Surface normal is None -> returning None")
+        return None, None
+
+    T = calc_translation_matrix(centroid)
+    R = rodrigues_rotation_matrix(surface_normal, np.array([0, 0, 1]))
+
+    # Calculate the transformation matrix
+    M = R @ T
+
+    det = np.linalg.det(M)
+    singular = np.isclose(det, 0)
+
+    if singular:
+        warning("Singular matrix -> returning None")
+        return None, None
+
+    M_inv = np.linalg.inv(M)
+
+    # Add 1 to the end of each vertex
+    vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
+
+    # Transforming the vertices to the xy-plane
+    for i in range(vertices.shape[0]):
+        vertices[i, :] = M @ vertices[i, :]
+
+    # Triangulate the vertices
+    t = tr.triangulate({"vertices": vertices[:, :2]})  # , "a0.2")
+
+    if "triangles" not in t:  # If the triangulation fails
+        warning("Triangulation failed -> returning None")
+        return None, None
+
+    # Build mesh from untransformed vertices and faces
+    tri_faces = np.array(t["triangles"])
+    vertices = np.array(t["vertices"])
+
+    # Add 0 and then 1 to the end of each vertex
+    vertices = np.hstack((vertices, np.zeros((vertices.shape[0], 1))))
+    vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
+
+    # Transforming the vertices to the xy-plane
+    for i in range(vertices.shape[0]):
+        vertices[i, :] = M_inv @ vertices[i, :]
+
+    # Remove last column from vertices
+    mesh = Mesh(vertices=vertices[:, :3], faces=tri_faces)
+
+    return mesh, surface_normal
+
+
+def concatenate_meshes(meshes: list[Mesh]):
+    all_vertices = np.array([[0, 0, 0]])
+    all_faces = np.array([[0, 0, 0]])
+    for mesh in meshes:
+        faces_offset = len(all_vertices) - 1
+        all_vertices = np.vstack([all_vertices, mesh.vertices])
+        faces_to_add = mesh.faces + faces_offset
+        all_faces = np.vstack([all_faces, faces_to_add])
+
+    # Remove the [0,0,0] row that was added to enable concatenate.
+    all_vertices = np.delete(all_vertices, obj=0, axis=0)
+    all_faces = np.delete(all_faces, obj=0, axis=0)
+
+    mesh = Mesh(vertices=all_vertices, faces=all_faces)
+
+    return mesh
+
+
+def concatenate_meshes_with_ids(meshes, mesh_normals):
+    all_vertices = np.array([[0, 0, 0]])
+    all_vcolors = np.array([[0, 0, 0]])
+    all_vnormals = np.array([[0, 0, 0]])
+    all_faces = np.array([[0, 0, 0]])
+    ids = []
+    sub_meshes = []
+
+    for i, mesh in enumerate(meshes):
+        normal = [[mesh_normals[i][0], mesh_normals[i][1], mesh_normals[i][2]]]
+        normals = normal * len(mesh.vertices)
+        color = [[0, 1, 0]]
+        colors = color * len(mesh.vertices)
+
+        # Faces are essentially vertex indices. So when adding new faces we need to
+        # ensure we increment with all so far added vertices.
+        vertex_offset = len(all_vertices) - 1
+
+        all_vertices = np.vstack([all_vertices, mesh.vertices])
+        all_vnormals = np.vstack([all_vnormals, normals])
+        all_vcolors = np.vstack([all_vcolors, colors])
+
+        faces_to_add = mesh.faces + vertex_offset
+
+        start_idx = len(all_faces) - 1
+        end_idx = start_idx + len(faces_to_add) - 1
+        ids.append((start_idx, end_idx))
+
+        all_faces = np.vstack([all_faces, faces_to_add])
+        sub_mesh = Submesh(face_start=start_idx, face_end=end_idx, id=i)
+        sub_meshes.append(sub_mesh)
+
+    # Remove the [0,0,0] row that was added to enable concatenation
+    all_vnormals = np.delete(all_vnormals, obj=0, axis=0)
+    all_vcolors = np.delete(all_vcolors, obj=0, axis=0)
+    all_vertices = np.delete(all_vertices, obj=0, axis=0)
+    all_faces = np.delete(all_faces, obj=0, axis=0)
+
+    all_vertices = np.hstack([all_vertices, all_vcolors, all_vnormals])
+
+    mesh = Mesh(vertices=all_vertices, faces=all_faces)
+
+    return mesh, sub_meshes

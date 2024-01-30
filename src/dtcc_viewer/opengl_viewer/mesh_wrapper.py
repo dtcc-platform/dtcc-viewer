@@ -62,7 +62,7 @@ class MeshWrapper:
         Parameters
         ----------
         name : str
-            The name of the mesh data.
+            The name of the mesh wrapper.
         mesh : Mesh
             The underlying Mesh object from which to generate the mesh data.
         data : np.ndarray, optional

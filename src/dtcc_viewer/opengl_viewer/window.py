@@ -152,6 +152,12 @@ class Window:
         self.road_networks = []
         scene.preprocess_drawing()
 
+        for city in scene.city_wrappers:
+            mesh_gl_bld = MeshGL(city.building_mw)
+            # mesh_gl_ter = MeshGL(city.terrain_mw)
+            self.meshes.append(mesh_gl_bld)
+            # self.meshes.append(mesh_gl_ter)
+
         for mesh in scene.mesh_wrappers:
             mesh_gl = MeshGL(mesh)
             self.meshes.append(mesh_gl)
@@ -160,7 +166,7 @@ class Window:
             pc_gl = PointCloudGL(pc)
             self.point_clouds.append(pc_gl)
 
-        for rn in scene.roadn_wrappers:
+        for rn in scene.rnd_wrappers:
             rn_gl = RoadNetworkGL(rn)
             self.road_networks.append(rn_gl)
 

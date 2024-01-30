@@ -1,9 +1,10 @@
 import numpy as np
+from dtcc_viewer.opengl_viewer.city_wrapper import CityWrapper
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
-from dtcc_model import Mesh, PointCloud, RoadNetwork
+from dtcc_model import Mesh, PointCloud, RoadNetwork, City
 from dtcc_viewer.logging import info, warning
 from typing import Any
 
@@ -16,23 +17,29 @@ class Scene:
 
     Attributes
     ----------
-    meshes : list[MeshData]
-        List of MeshData objects representing meshes to be drawn.
-    point_clouds : list[PointCloudData]
-        List of PointCloudData objects representing point clouds to be drawn.
+    city_wrappers : list[CityWrapper]
+        List of CityWrapper objects representing cities to be drawn.
+    mesh_wrappers : list[MeshWrapper]
+        List of MeshWrapper objects representing meshes to be drawn.
+    pcs_wrappers : list[PointCloudWrapper]
+        List of PointCloudWrapper objects representing point clouds to be drawn.
+    rdn_wrappers : list[RoadNetworkWrapper]
+        List of RoadNetworkWrapper objects representing road networks to be drawn.
     bb : BoundingBox
         Bounding box for the entire collection of objects in the scene.
     """
 
+    city_wrappers: list[CityWrapper]
     mesh_wrappers: list[MeshWrapper]
     pcs_wrappers: list[PointCloudWrapper]
-    roadn_wrappers: list[RoadNetworkWrapper]
+    rnd_wrappers: list[RoadNetworkWrapper]
     bb: BoundingBox
 
     def __init__(self):
+        self.city_wrappers = []
         self.mesh_wrappers = []
         self.pcs_wrappers = []
-        self.roadn_wrappers = []
+        self.rnd_wrappers = []
 
     def add_mesh(
         self,
@@ -48,6 +55,20 @@ class Scene:
             self.mesh_wrappers.append(mesh_w)
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
+
+    def add_city(
+        self,
+        name: str,
+        city: City,
+        shading: MeshShading = MeshShading.wireshaded,
+    ):
+        """Append a city with data and/or colors to the scene"""
+        if city is not None:
+            info(f"City called - {name} - added to scene")
+            city_w = CityWrapper(name=name, city=city, shading=shading)
+            self.city_wrappers.append(city_w)
+        else:
+            warning(f"City called - {name} - is None and not added to scene")
 
     def add_pointcloud(
         self,
@@ -75,7 +96,7 @@ class Scene:
         if rn is not None:
             info(f"Road network called - {name} - added to scene")
             rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data, colors=colors)
-            self.roadn_wrappers.append(rn_w)
+            self.rnd_wrappers.append(rn_w)
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
 
@@ -84,13 +105,16 @@ class Scene:
 
         self._calculate_bb()
 
+        for city in self.city_wrappers:
+            city.preprocess_drawing(self.bb)
+
         for mesh in self.mesh_wrappers:
             mesh.preprocess_drawing(self.bb)
 
         for pc in self.pcs_wrappers:
             pc.preprocess_drawing(self.bb)
 
-        for rn in self.roadn_wrappers:
+        for rn in self.rnd_wrappers:
             rn.preprocess_drawing(self.bb)
 
         info(f"Scene preprocessing completed")
@@ -100,15 +124,19 @@ class Scene:
 
         all_vertices = np.array([[0, 0, 0]])
 
-        for mesh_w in self.mesh_wrappers:
-            all_vertices = np.concatenate(
-                (all_vertices, mesh_w.vertices[:, 0:3]), axis=0
-            )
+        for city_w in self.city_wrappers:
+            # tmw = city_w.terrain_mw
+            bmw = city_w.building_mw
+            # all_vertices = np.concatenate((all_vertices, tmw.vertices[:, 0:3]), axis=0)
+            all_vertices = np.concatenate((all_vertices, bmw.vertices[:, 0:3]), axis=0)
+
+        for mw in self.mesh_wrappers:
+            all_vertices = np.concatenate((all_vertices, mw.vertices[:, 0:3]), axis=0)
 
         for pc_w in self.pcs_wrappers:
             all_vertices = np.concatenate((all_vertices, pc_w.points), axis=0)
 
-        for rn_w in self.roadn_wrappers:
+        for rn_w in self.rnd_wrappers:
             all_vertices = np.concatenate((all_vertices, rn_w.vertices[:, 0:3]), axis=0)
 
         # Remove the [0,0,0] row that was added to enable concatenate.

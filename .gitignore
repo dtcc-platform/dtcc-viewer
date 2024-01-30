@@ -13,6 +13,8 @@ dtcc-demo-data/
 *.shx
 !cube_pc.csv
 
+*.city.json
+
 .idea/
 .vscode/
 cmake-build-debug/

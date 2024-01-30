@@ -11,9 +11,9 @@ from dtcc_viewer import *
 from dtcc_viewer.colors import color_maps
 from typing import List, Iterable
 from dtcc_viewer import utils
-from dtcc_io import pointcloud
-from dtcc_io import meshes
-from dtcc_io import city
+from dtcc_io import pointcloud, meshes
+import dtcc_io
+from dtcc_model import City, Mesh, PointCloud
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
@@ -216,6 +216,11 @@ def roadnetwork_example_3():
     window.render(scene)
 
 
+def city_example_1():
+    city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
+    city.view()
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -224,7 +229,7 @@ if __name__ == "__main__":
     # pointcloud_example_2()
     # mesh_example_1()
     # mesh_example_2()
-    mesh_example_3()
+    # mesh_example_3()
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
@@ -235,3 +240,4 @@ if __name__ == "__main__":
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()
+    city_example_1()
