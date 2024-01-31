@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import trimesh
+import time
 
 from pprint import pp
 

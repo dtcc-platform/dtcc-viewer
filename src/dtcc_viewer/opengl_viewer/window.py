@@ -153,10 +153,12 @@ class Window:
         scene.preprocess_drawing()
 
         for city in scene.city_wrappers:
-            mesh_gl_bld = MeshGL(city.building_mw)
-            # mesh_gl_ter = MeshGL(city.terrain_mw)
-            self.meshes.append(mesh_gl_bld)
-            # self.meshes.append(mesh_gl_ter)
+            if city.building_mw is not None:
+                mesh_gl_bld = MeshGL(city.building_mw)
+                self.meshes.append(mesh_gl_bld)
+            if city.terrain_mw is not None:
+                mesh_gl_ter = MeshGL(city.terrain_mw)
+                self.meshes.append(mesh_gl_ter)
 
         for mesh in scene.mesh_wrappers:
             mesh_gl = MeshGL(mesh)

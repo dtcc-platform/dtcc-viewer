@@ -40,7 +40,6 @@ class CityWrapper:
 
     name: str
     shading: MeshShading
-    bb_local: BoundingBox
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
     building_submeshes: list[Submesh]
@@ -84,27 +83,20 @@ class CityWrapper:
         info("CityWrapper initialized")
 
     def preprocess_drawing(self, bb_global: BoundingBox):
-        # self.terrain_mw.preprocess_drawing(bb_global)
-        self.bb_local = BoundingBox(self.building_mw.vertices)
-        self.building_mw.preprocess_drawing(bb_global)
+        if self.terrain_mw is not None:
+            self.terrain_mw.preprocess_drawing(bb_global)
+
+        if self.building_mw is not None:
+            self.building_mw.preprocess_drawing(bb_global)
 
     def _get_terrain_mesh(self, city: NewCity):
         meshes = []
         terrain_list = city.children[Terrain]
-        # print(type(terrain_list))
 
         for terrain in terrain_list:
             mesh = terrain.geometry.get(GeometryType.MESH, None)
             if mesh is not None:
                 meshes.append(mesh)
-
-        # print(keys)
-        # meshes.append(mesh)
-
-        # for child in city.children.get(Terrain, []):
-        #    mesh = child.geometry.get(GeometryType.MESH, None)
-        #    if mesh is not None:
-        #        meshes.append(mesh)
 
         if len(meshes) == 0:
             info("No terrain mesh found in city model")
