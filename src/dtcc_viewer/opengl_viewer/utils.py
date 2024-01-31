@@ -386,63 +386,27 @@ def surface_2_mesh(vertices):
 
 
 def concatenate_meshes(meshes: list[Mesh]):
-    all_vertices = np.array([[0, 0, 0]])
-    all_faces = np.array([[0, 0, 0]])
+    v_count_tot = 0
+    f_count_tot = 0
     for mesh in meshes:
-        faces_offset = len(all_vertices) - 1
-        all_vertices = np.vstack([all_vertices, mesh.vertices])
-        faces_to_add = mesh.faces + faces_offset
-        all_faces = np.vstack([all_faces, faces_to_add])
+        v_count_tot += len(mesh.vertices)
+        f_count_tot += len(mesh.faces)
 
-    # Remove the [0,0,0] row that was added to enable concatenate.
-    all_vertices = np.delete(all_vertices, obj=0, axis=0)
-    all_faces = np.delete(all_faces, obj=0, axis=0)
+    all_vertices = np.zeros((v_count_tot, 3), dtype=float)
+    all_faces = np.zeros((f_count_tot, 3), dtype=int)
+
+    # Accumulative face and vertex count
+    acc_v_count = 0
+    acc_f_count = 0
+
+    for mesh in meshes:
+        v_count = len(mesh.vertices)
+        f_count = len(mesh.faces)
+        vertex_offset = acc_v_count
+        all_vertices[acc_v_count : acc_v_count + v_count, :] = mesh.vertices
+        all_faces[acc_f_count : acc_f_count + f_count, :] = mesh.faces + vertex_offset
+        acc_v_count += v_count
+        acc_f_count += f_count
 
     mesh = Mesh(vertices=all_vertices, faces=all_faces)
-
     return mesh
-
-
-def concatenate_meshes_with_ids(meshes, mesh_normals):
-    all_vertices = np.array([[0, 0, 0]])
-    all_vcolors = np.array([[0, 0, 0]])
-    all_vnormals = np.array([[0, 0, 0]])
-    all_faces = np.array([[0, 0, 0]])
-    ids = []
-    sub_meshes = []
-
-    for i, mesh in enumerate(meshes):
-        normal = [[mesh_normals[i][0], mesh_normals[i][1], mesh_normals[i][2]]]
-        normals = normal * len(mesh.vertices)
-        color = [[0, 1, 0]]
-        colors = color * len(mesh.vertices)
-
-        # Faces are essentially vertex indices. So when adding new faces we need to
-        # ensure we increment with all so far added vertices.
-        vertex_offset = len(all_vertices) - 1
-
-        all_vertices = np.vstack([all_vertices, mesh.vertices])
-        all_vnormals = np.vstack([all_vnormals, normals])
-        all_vcolors = np.vstack([all_vcolors, colors])
-
-        faces_to_add = mesh.faces + vertex_offset
-
-        start_idx = len(all_faces) - 1
-        end_idx = start_idx + len(faces_to_add) - 1
-        ids.append((start_idx, end_idx))
-
-        all_faces = np.vstack([all_faces, faces_to_add])
-        sub_mesh = Submesh(face_start=start_idx, face_end=end_idx, id=i)
-        sub_meshes.append(sub_mesh)
-
-    # Remove the [0,0,0] row that was added to enable concatenation
-    all_vnormals = np.delete(all_vnormals, obj=0, axis=0)
-    all_vcolors = np.delete(all_vcolors, obj=0, axis=0)
-    all_vertices = np.delete(all_vertices, obj=0, axis=0)
-    all_faces = np.delete(all_faces, obj=0, axis=0)
-
-    all_vertices = np.hstack([all_vertices, all_vcolors, all_vnormals])
-
-    mesh = Mesh(vertices=all_vertices, faces=all_faces)
-
-    return mesh, sub_meshes

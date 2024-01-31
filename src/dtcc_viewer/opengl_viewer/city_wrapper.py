@@ -154,13 +154,12 @@ class CityWrapper:
                 submesh = Submesh(face_index_1, face_index_2, buildnig_id)
                 submesh.add_meta_data("id", building.id)
                 submeshes.append(submesh)
-
                 counter += 1
 
+        info(
+            f" The meshing of {meshing_fail_count} out of {meshing_attm_count} surfaces failed"
+        )
         if meshing_fail_count > 0:
-            info(
-                f" The meshing of {meshing_fail_count} out of {meshing_attm_count} surfaces failed"
-            )
             info(f"  - {count_inva} surfaces failed due to invalid input")
             info(f"  - {count_vdup} surfaces failed due to duplicated vertices")
             info(f"  - {count_fnor} surfaces failed due to failed normal calculation")
