@@ -51,6 +51,15 @@ class ParticleColor(IntEnum):
     white = 2
 
 
+class Results(IntEnum):
+    InvalidInput = 0
+    DuplicatedVertices = 1
+    FailedNormal = 2
+    FailedTriangulation = 3
+    SingularMatrix = 4
+    Success = 5
+
+
 class UniformLocation:
     move: int
     view: int
@@ -134,6 +143,8 @@ class BoundingBox:
         print(self.mid_pt)
         print("Center vector: ")
         print(self.center_vec)
+        print("Domain: ")
+        print([self.xdom, self.ydom, self.zdom])
 
 
 def fit_colors_to_faces(faces: np.ndarray, n_vertices: int, colors: np.ndarray):
@@ -257,7 +268,8 @@ def get_unique_vertex_pair(vertices):
 
     for i in range(1, vertices.shape[0]):
         vertex2 = vertices[i, :]
-        if not np.allclose(vertex1, vertex2):
+
+        if vertex_vertex_distance(vertex1, vertex2) > 1e-5:
             break
 
     return vertex1, vertex2
@@ -275,10 +287,14 @@ def remove_duplicate_vertices(vertices):
 
 def vertex_in_list(vertex, vertex_list):
     for v in vertex_list:
-        if np.allclose(vertex, v):
+        if vertex_vertex_distance(v, vertex) < 1e-8:
             return True
 
     return False
+
+
+def vertex_vertex_distance(vertex1, vertex2):
+    return np.linalg.norm(vertex1 - vertex2)
 
 
 def get_normal_from_surface(vertices, centroid):
@@ -302,16 +318,23 @@ def get_normal_from_surface(vertices, centroid):
 def surface_2_mesh(vertices):
     vertices = remove_duplicate_vertices(vertices)
 
+    # Capture simple cases
     if vertices.shape[0] < 3:
         warning("Surface has fewer then 3 vertices -> returning None")
-        return None, None
+        return None, Results.InvalidInput
+    elif vertices.shape[0] == 3:
+        mesh = Mesh(vertices=vertices, faces=np.array([[0, 1, 2]]))
+        return mesh, Results.Success
+    elif vertices.shape[0] == 4:
+        mesh = Mesh(vertices=vertices, faces=np.array([[0, 1, 2], [0, 2, 3]]))
+        return mesh, Results.Success
 
     centroid = np.mean(vertices, axis=0)
     surface_normal = get_normal_from_surface(vertices, centroid)
 
     if surface_normal is None:
         warning("Surface normal is None -> returning None")
-        return None, None
+        return None, Results.FailedNormal
 
     T = calc_translation_matrix(centroid)
     R = rodrigues_rotation_matrix(surface_normal, np.array([0, 0, 1]))
@@ -324,7 +347,7 @@ def surface_2_mesh(vertices):
 
     if singular:
         warning("Singular matrix -> returning None")
-        return None, None
+        return None, Results.SingularMatrix
 
     M_inv = np.linalg.inv(M)
 
@@ -335,12 +358,14 @@ def surface_2_mesh(vertices):
     for i in range(vertices.shape[0]):
         vertices[i, :] = M @ vertices[i, :]
 
+    vertices[:, 2] = 0
+
     # Triangulate the vertices
     t = tr.triangulate({"vertices": vertices[:, :2]})  # , "a0.2")
 
     if "triangles" not in t:  # If the triangulation fails
         warning("Triangulation failed -> returning None")
-        return None, None
+        return None, Results.FailedTriangulation
 
     # Build mesh from untransformed vertices and faces
     tri_faces = np.array(t["triangles"])
@@ -350,14 +375,14 @@ def surface_2_mesh(vertices):
     vertices = np.hstack((vertices, np.zeros((vertices.shape[0], 1))))
     vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
 
-    # Transforming the vertices to the xy-plane
+    # Transforming the vertices back to 3d position
     for i in range(vertices.shape[0]):
         vertices[i, :] = M_inv @ vertices[i, :]
 
     # Remove last column from vertices
     mesh = Mesh(vertices=vertices[:, :3], faces=tri_faces)
 
-    return mesh, surface_normal
+    return mesh, Results.Success
 
 
 def concatenate_meshes(meshes: list[Mesh]):

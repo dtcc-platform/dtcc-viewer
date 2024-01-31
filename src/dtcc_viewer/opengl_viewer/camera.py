@@ -70,7 +70,7 @@ class Camera:
         self.heigh = height
         self.aspect_ratio = float(width) / float(height)
         self.near_plane = 0.1
-        self.far_plane = 10000
+        self.far_plane = 1000000
         self.fov = 25
         self.mouse_sensitivity = -0.25
         self.scroll_sensitivity = -0.1

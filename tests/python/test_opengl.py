@@ -97,6 +97,6 @@ if __name__ == "__main__":
     test.setup_method()
 
     # test.test_mesh_2()
-    test.test_mesh_2()
-    # test.test_mesh_4()
+    # test.test_mesh_2()
+    test.test_mesh_4()
     # test.test_point_cloud()
