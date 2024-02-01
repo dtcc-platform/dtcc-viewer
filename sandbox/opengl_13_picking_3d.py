@@ -10,7 +10,6 @@ import math
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from picking_interaction import PickingInteraction
 from load_primitives import *
-from sandbox.cityjson_loading import load_city
 
 window_w = 800
 window_h = 800
@@ -375,7 +374,9 @@ def color_to_id(color):
 # selected = [False, False, False, False]
 
 
-def load_city_scene():
+def test():
+    gluUnProject()
+
     pass
 
 
@@ -383,8 +384,8 @@ def create_cube_vecs():
     z = 2.0
     cube_size = 1
     cube_spacing = 5
-    nx = 20
-    ny = 20
+    nx = 100
+    ny = 100
     ymin = -(ny - 1) * (cube_size + cube_spacing) / 2.0
     xmin = -(nx - 1) * (cube_size + cube_spacing) / 2.0
     trans_vecs = []

@@ -57,7 +57,8 @@ class Results(IntEnum):
     FailedNormal = 2
     FailedTriangulation = 3
     SingularMatrix = 4
-    Success = 5
+    TriSuccess = 5
+    Success = 6
 
 
 class UniformLocation:
@@ -94,10 +95,10 @@ class BoundingBox:
     origin: np.ndarray
 
     def __init__(self, vertices: np.ndarray):
-        if np.shape(vertices)[1] > 2:
-            self.calc_bounds(vertices)
-        elif len(np.shape(vertices)) == 1:
-            self.calc_bounds_flat(vertices)
+        # if len(np.shape(vertices)) == 1:
+        self.calc_bounds_flat(vertices)
+        # elif np.shape(vertices)[1] > 2:
+        #    self.calc_bounds(vertices)
 
         self.origin = np.array([0, 0, 0])
         self.calc_mid_point()
@@ -382,7 +383,7 @@ def surface_2_mesh(vertices):
     # Remove last column from vertices
     mesh = Mesh(vertices=vertices[:, :3], faces=tri_faces)
 
-    return mesh, Results.Success
+    return mesh, Results.TriSuccess
 
 
 def concatenate_meshes(meshes: list[Mesh]):

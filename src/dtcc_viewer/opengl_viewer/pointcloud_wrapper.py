@@ -65,36 +65,36 @@ class PointCloudWrapper:
         self.name = name
         self.size = size
         self.dict_data = {}
-        self._reformat_data_dict(pc, data=data)
-        self.points = pc.points
+        self.n_points = len(pc.points)
+        self.points = np.array(pc.points, dtype="float32").flatten()
+        self._reformat_data_dict(data=data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_pc_to_origin_multi(self.bb_global)
         self.bb_local = BoundingBox(self.points)
-        self._flatten_pc()
+        self._reformat_pc()
 
-    def _reformat_data_dict(self, pc: PointCloud, data: np.ndarray = None):
+    def _reformat_data_dict(self, data: np.ndarray = None):
         """Generate colors for the point cloud based on the provided data."""
-        n_points = len(pc.points)
 
         # Coloring by dictionary
         if isinstance(data, dict):
-            if self._generate_dict_data(data, n_points):
+            if self._generate_dict_data(data, self.n_points):
                 return True
             else:
                 warning("Data dict for pc colors does not match point count!")
 
         # Coloring by array data
         elif data is not None:
-            if len(pc.points) == len(data):
+            if self.n_points == len(data):
                 self.dict_data["Data"] = data
                 return True
             else:
                 warning("Provided color data does not match the particle count!")
 
         info("No data provided for point cloud -> coloring per z-value")
-        z = pc.points[:, 2]  # Color by height if no data is provided
+        z = self.points[2::3]  # Color by height if no data is provided
         self.dict_data["Default data"] = z
 
         return True
@@ -114,9 +114,10 @@ class PointCloudWrapper:
 
     def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""
+        move_vec = np.tile(bb.center_vec, self.n_points)
         if bb is not None:
-            self.points += bb.center_vec
+            self.points += move_vec
 
-    def _flatten_pc(self):
+    def _reformat_pc(self):
         """Flatten the point cloud data arrays for further processing."""
-        self.points = np.array(self.points, dtype="float32").flatten()
+        self.points = np.array(self.points, dtype="float32")

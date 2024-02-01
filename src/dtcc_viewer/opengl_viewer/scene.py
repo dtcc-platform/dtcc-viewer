@@ -103,6 +103,8 @@ class Scene:
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
+        # Calculate bounding box for the entire scene including the vector that is
+        # used to center move everything to the origin.
         self._calculate_bb()
 
         for city in self.city_wrappers:
@@ -117,29 +119,35 @@ class Scene:
         for rn in self.rnd_wrappers:
             rn.preprocess_drawing(self.bb)
 
+        # Update the bounding box for the scene after all objects have been moved
+        # self._calculate_bb()
+
         info(f"Scene preprocessing completed")
 
     def _calculate_bb(self):
         """Calculate bounding box of the scene"""
 
-        all_vertices = np.array([[0, 0, 0]])
+        # Flat array of vertices [x1,y1,z1,x2,y2,z2, ...]
+        vertices = np.array([])
 
         for city_w in self.city_wrappers:
-            # tmw = city_w.terrain_mw
-            bmw = city_w.building_mw
-            # all_vertices = np.concatenate((all_vertices, tmw.vertices[:, 0:3]), axis=0)
-            all_vertices = np.concatenate((all_vertices, bmw.vertices[:, 0:3]), axis=0)
+            if city_w.terrain_mw is not None:
+                vertex_pos = city_w.terrain_mw.get_vertex_positions()
+                vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+            if city_w.building_mw is not None:
+                vertex_pos = city_w.building_mw.get_vertex_positions()
+                vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for mw in self.mesh_wrappers:
-            all_vertices = np.concatenate((all_vertices, mw.vertices[:, 0:3]), axis=0)
+            vertex_pos = mw.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for pc_w in self.pcs_wrappers:
-            all_vertices = np.concatenate((all_vertices, pc_w.points), axis=0)
+            vertices = np.concatenate((vertices, pc_w.points), axis=0)
 
         for rn_w in self.rnd_wrappers:
-            all_vertices = np.concatenate((all_vertices, rn_w.vertices[:, 0:3]), axis=0)
+            vertex_pos = rn_w.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-        # Remove the [0,0,0] row that was added to enable concatenate.
-        all_vertices = np.delete(all_vertices, obj=0, axis=0)
-
-        self.bb = BoundingBox(all_vertices)
+        self.bb = BoundingBox(vertices)

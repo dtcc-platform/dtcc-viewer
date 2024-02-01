@@ -5,6 +5,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
 from dtcc_viewer.logging import info, warning
+from pprint import PrettyPrinter
 
 
 class MeshWrapper:
@@ -82,9 +83,9 @@ class MeshWrapper:
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self._move_mesh_to_origin_multi(self.bb_global)
+        self._move_mesh_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
-        self._flatten_mesh()
+        self._reformat_mesh()
 
     def _generate_mesh_colors(self, mesh: Mesh, data: Any = None):
         """Generate mesh colors based on the provided data."""
@@ -181,56 +182,64 @@ class MeshWrapper:
         return True
 
     def _restructure_mesh(self, mesh: Mesh):
-        """Restructure the mesh data for OpenGL rendering."""
+        array_length = len(mesh.faces) * 3 * 9
+        new_vertices = np.zeros(array_length)
+        face_verts = mesh.vertices[mesh.faces.flatten()]
 
-        # Vertex format that suits the opengl data structure:
+        c1 = face_verts[:-1]
+        c2 = face_verts[1:]
+        mask = np.ones(len(c1), dtype=bool)
+        mask[2::3] = False  # [True, True, False, True, True, False, ...]
+        cross_vecs = (c2 - c1)[mask]  # (v2 - v1), (v3 - v2)
+        cross_p = np.cross(cross_vecs[::2], cross_vecs[1::2])  # (v2 - v1) x (v3 - v2)
+        cross_p = cross_p / np.linalg.norm(cross_p, axis=1)[:, np.newaxis]  # normalize
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
+        color_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
+        normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
+
+        mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
+        new_vertices[mask] = face_verts.flatten()
+        mask = np.tile(color_mask, array_length // len(color_mask) + 1)[:array_length]
+        new_vertices[mask] = np.array([1.0, 0.0, 1.0] * len(mesh.faces) * 3).flatten()
+        mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
+        new_vertices[mask] = np.tile(cross_p, 3).flatten()
+        new_faces = np.arange(array_length // 9)
+
+        new_edges = np.zeros(len(mesh.faces) * 6)
+        new_edges[0::6] = new_faces[0::3]
+        new_edges[1::6] = new_faces[1::3]
+        new_edges[2::6] = new_faces[1::3]
+        new_edges[3::6] = new_faces[2::3]
+        new_edges[4::6] = new_faces[2::3]
+        new_edges[5::6] = new_faces[0::3]
+
+        self.vertices = new_vertices
+        self.faces = new_faces
+        self.edges = new_edges
+
+    def _move_mesh_to_origin(self, bb: BoundingBox):
         # [x, y, z, r, g, b, nx, ny ,nz]
-        new_faces = []
-        new_vertices = []
-        new_edges = []
-        v_index = 0
-
-        # The restructuring makes sure that each faces has its own vertices. That is
-        # nessary in order to be able to color each face individually and to be able to
-        # use individual face normals for each mesh.
-        for face in mesh.faces:
-            v1 = mesh.vertices[face[0], :]
-            v2 = mesh.vertices[face[1], :]
-            v3 = mesh.vertices[face[2], :]
-
-            # Magenta as predefined color for faces
-            c = np.array([1.0, 0.0, 1.0])
-
-            v1 = np.concatenate((v1, c), axis=0)
-            v2 = np.concatenate((v2, c), axis=0)
-            v3 = np.concatenate((v3, c), axis=0)
-
-            f_normal = np.cross(v2[0:3] - v1[0:3], v3[0:3] - v1[0:3])
-            f_normal = f_normal / np.linalg.norm(f_normal)
-
-            v1 = np.concatenate((v1, f_normal), axis=0)
-            v2 = np.concatenate((v2, f_normal), axis=0)
-            v3 = np.concatenate((v3, f_normal), axis=0)
-
-            new_vertices.append(v1)
-            new_vertices.append(v2)
-            new_vertices.append(v3)
-
-            new_faces.append([v_index, v_index + 1, v_index + 2])
-            new_edges.append([v_index, v_index + 1])
-            new_edges.append([v_index + 1, v_index + 2])
-            new_edges.append([v_index + 2, v_index])
-
-            v_index += 3
-
-        self.vertices = np.array(new_vertices)
-        self.faces = np.array(new_faces)
-        self.edges = np.array(new_edges)
-
-    def _move_mesh_to_origin_multi(self, bb: BoundingBox):
-        # [x, y, z, r, g, b, nx, ny ,nz]
+        v_count = len(self.vertices) // 9
         recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+        recenter_vec = np.tile(recenter_vec, v_count)
         self.vertices += recenter_vec
+
+    def get_vertex_positions(self):
+        """Get the vertex positions of the mesh."""
+        vertex_mask = np.array(
+            [True, True, True, False, False, False, False, False, False]
+        )
+        v_count = len(self.vertices) // 9
+        vertex_pos_mask = np.tile(vertex_mask, v_count)
+        vertex_pos = self.vertices[vertex_pos_mask]
+        return vertex_pos
+
+    def _reformat_mesh(self):
+        """Reformat the mesh data arrays for OpenGL compatibility."""
+        # Making sure the datatypes are aligned with opengl types
+        self.vertices = np.array(self.vertices, dtype="float32")
+        self.edges = np.array(self.edges, dtype="uint32")
+        self.faces = np.array(self.faces, dtype="uint32")
 
     def _flatten_mesh(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""

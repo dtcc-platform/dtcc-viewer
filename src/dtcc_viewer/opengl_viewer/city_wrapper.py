@@ -115,6 +115,7 @@ class CityWrapper:
         all_meshes = []
         meshing_fail_count = 0
         meshing_attm_count = 0
+        count_tria = 0
         count_vdup, count_fnor, count_ftri, count_smat, count_inva = 0, 0, 0, 0, 0
         # Generate mesh data for buildings
         for building in city.buildings:
@@ -125,8 +126,14 @@ class CityWrapper:
                 for s in flat_geom.surfaces:
                     (mesh, result) = surface_2_mesh(s.vertices)
                     meshing_attm_count += 1
-                    if mesh is not None and result == Results.Success:
+                    if (
+                        mesh is not None
+                        and result == Results.Success
+                        or result == Results.TriSuccess
+                    ):
                         building_meshes.append(mesh)
+                        if result == Results.TriSuccess:
+                            count_tria += 1
                     else:
                         meshing_fail_count += 1
                         if result == Results.InvalidInput:
@@ -156,8 +163,10 @@ class CityWrapper:
                 submeshes.append(submesh)
                 counter += 1
 
+        info(f"Calls to triangle {count_tria}")
+
         info(
-            f" The meshing of {meshing_fail_count} out of {meshing_attm_count} surfaces failed"
+            f"The meshing of {meshing_fail_count} surfaces out of {meshing_attm_count} failed"
         )
         if meshing_fail_count > 0:
             info(f"  - {count_inva} surfaces failed due to invalid input")

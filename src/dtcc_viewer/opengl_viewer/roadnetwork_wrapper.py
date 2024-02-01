@@ -66,8 +66,10 @@ class RoadNetworkWrapper:
 
     def _move_rn_to_origin_multi(self, bb: BoundingBox = None):
         if bb is not None:
+            v_count = len(self.vertices) // 9
             recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
-            self.vertices += recenter_vec
+            recenter_vec_tiled = np.tile(recenter_vec, v_count)
+            self.vertices += recenter_vec_tiled
 
     def _restructure_road_network(self, roadnetwork: RoadNetwork, colors: np.ndarray):
         new_indices = []
@@ -91,8 +93,8 @@ class RoadNetworkWrapper:
             new_vertices[i, 3:6] = c
             new_vertices[i, 6:9] = n
 
-        self.vertices = new_vertices
-        self.indices = new_indices
+        self.vertices = np.array(new_vertices, dtype="float32").flatten()
+        self.indices = np.array(new_indices, dtype="uint32").flatten()
 
     def _generate_rn_colors(
         self,
@@ -142,8 +144,18 @@ class RoadNetworkWrapper:
 
         self.colors = colors
 
+    def get_vertex_positions(self):
+        """Get the vertex positions"""
+        vertex_mask = np.array(
+            [True, True, True, False, False, False, False, False, False]
+        )
+        v_count = len(self.vertices) // 9
+        vertex_pos_mask = np.tile(vertex_mask, v_count)
+        vertex_pos = self.vertices[vertex_pos_mask]
+        return vertex_pos
+
     def _flatten(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""
         # Making sure the datatypes are aligned with opengl implementation
-        self.vertices = np.array(self.vertices, dtype="float32").flatten()
-        self.indices = np.array(self.indices, dtype="uint32").flatten()
+        self.vertices = np.array(self.vertices, dtype="float32")
+        self.indices = np.array(self.indices, dtype="uint32")
