@@ -1,10 +1,11 @@
 import numpy as np
 from dtcc_viewer.opengl_viewer.city_wrapper import CityWrapper
+from dtcc_viewer.opengl_viewer.object_wrapper import ObjectWrapper
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
-from dtcc_model import Mesh, PointCloud, RoadNetwork, City
+from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
 from dtcc_viewer.logging import info, warning
 from typing import Any
 
@@ -29,6 +30,7 @@ class Scene:
         Bounding box for the entire collection of objects in the scene.
     """
 
+    obj_wrappers: list[ObjectWrapper]
     city_wrappers: list[CityWrapper]
     mesh_wrappers: list[MeshWrapper]
     pcs_wrappers: list[PointCloudWrapper]
@@ -36,6 +38,7 @@ class Scene:
     bb: BoundingBox
 
     def __init__(self):
+        self.obj_wrappers = []
         self.city_wrappers = []
         self.mesh_wrappers = []
         self.pcs_wrappers = []
@@ -69,6 +72,20 @@ class Scene:
             self.city_wrappers.append(city_w)
         else:
             warning(f"City called - {name} - is None and not added to scene")
+
+    def add_object(
+        self,
+        name: str,
+        obj: Object,
+        shading: MeshShading = MeshShading.wireshaded,
+    ):
+        """Append a generic object with data and/or colors to the scene"""
+        if obj is not None:
+            info(f"Object called - {name} - added to scene")
+            obj_w = ObjectWrapper(name=name, obj=obj, shading=shading)
+            self.obj_wrappers.append(obj_w)
+        else:
+            warning(f"Object called - {name} - is None and not added to scene")
 
     def add_pointcloud(
         self,
@@ -107,6 +124,9 @@ class Scene:
         # used to center move everything to the origin.
         self._calculate_bb()
 
+        for obj in self.obj_wrappers:
+            obj.preprocess_drawing(self.bb)
+
         for city in self.city_wrappers:
             city.preprocess_drawing(self.bb)
 
@@ -129,6 +149,11 @@ class Scene:
 
         # Flat array of vertices [x1,y1,z1,x2,y2,z2, ...]
         vertices = np.array([])
+
+        for obj_w in self.obj_wrappers:
+            if obj_w.mesh_wrapper is not None:
+                vertex_pos = obj_w.mesh_wrapper.get_vertex_positions()
+                vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for city_w in self.city_wrappers:
             if city_w.terrain_mw is not None:

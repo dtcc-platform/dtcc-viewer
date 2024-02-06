@@ -181,6 +181,43 @@ class MeshWrapper:
 
         return True
 
+    def _restructure_dicts_2(self, mesh: Mesh):
+        # Structure the color data in the dict so that there are three colors for each
+        # face. This is necessary in order to be able to color each face individually.
+        # This structure is also neede for the vertices so that each face can have
+        # individual normals so that shading can be computed correctly.
+
+        n_vertices = len(mesh.vertices)
+        n_faces = len(mesh.faces)
+        d1, d2, d3 = 0, 0, 0
+        new_dict_data = dict.fromkeys(self.dict_data.keys())
+
+        for key in self.dict_data.keys():
+            if self.dict_data[key] is not None:
+                new_dict_data[key] = []
+            else:
+                new_dict_data[key] = None
+
+        for face_index, face in enumerate(mesh.faces):
+            for key in self.dict_data.keys():
+                if self.dict_data[key] is not None:
+                    data = self.dict_data[key]
+                    if len(data) == n_vertices:
+                        d1 = data[face[0]]
+                        d2 = data[face[1]]
+                        d3 = data[face[2]]
+                        new_dict_data[key].extend([d1, d2, d3])
+                    elif len(data) == n_faces:
+                        d1 = data[face_index]
+                        new_dict_data[key].extend([d1, d1, d1])
+
+        # Saving data with the new format
+        for key in self.dict_data.keys():
+            if self.dict_data[key] is not None:
+                self.dict_data[key] = np.array(new_dict_data[key])
+
+        return True
+
     def _restructure_mesh(self, mesh: Mesh):
         array_length = len(mesh.faces) * 3 * 9
         new_vertices = np.zeros(array_length)
@@ -196,7 +233,6 @@ class MeshWrapper:
         vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
         color_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
         normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
-
         mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
         new_vertices[mask] = face_verts.flatten()
         mask = np.tile(color_mask, array_length // len(color_mask) + 1)[:array_length]

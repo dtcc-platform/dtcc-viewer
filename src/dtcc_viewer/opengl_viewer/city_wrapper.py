@@ -1,4 +1,5 @@
 import numpy as np
+from collections import Counter
 from dtcc_model import NewCity, MultiSurface, Surface, NewBuilding, Mesh, Terrain
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
@@ -113,10 +114,10 @@ class CityWrapper:
         tot_f_count = 0
         submeshes = []
         all_meshes = []
+        results = []
         meshing_fail_count = 0
         meshing_attm_count = 0
         count_tria = 0
-        count_vdup, count_fnor, count_ftri, count_smat, count_inva = 0, 0, 0, 0, 0
         # Generate mesh data for buildings
         for building in city.buildings:
             buildnig_id = counter
@@ -126,26 +127,11 @@ class CityWrapper:
                 for s in flat_geom.surfaces:
                     (mesh, result) = surface_2_mesh(s.vertices)
                     meshing_attm_count += 1
-                    if (
-                        mesh is not None
-                        and result == Results.Success
-                        or result == Results.TriSuccess
-                    ):
+                    results.append(result)
+                    if mesh is not None:
                         building_meshes.append(mesh)
-                        if result == Results.TriSuccess:
-                            count_tria += 1
                     else:
                         meshing_fail_count += 1
-                        if result == Results.InvalidInput:
-                            count_inva += 1
-                        elif result == Results.DuplicatedVertices:
-                            count_vdup += 1
-                        elif result == Results.FailedNormal:
-                            count_fnor += 1
-                        elif result == Results.FailedTriangulation:
-                            count_ftri += 1
-                        elif result == Results.SingularMatrix:
-                            count_smat += 1
 
             if len(building_meshes) > 0:
                 # Concatenate all building meshes into one mesh
@@ -163,17 +149,10 @@ class CityWrapper:
                 submeshes.append(submesh)
                 counter += 1
 
-        info(f"Calls to triangle {count_tria}")
-
-        info(
-            f"The meshing of {meshing_fail_count} surfaces out of {meshing_attm_count} failed"
-        )
-        if meshing_fail_count > 0:
-            info(f"  - {count_inva} surfaces failed due to invalid input")
-            info(f"  - {count_vdup} surfaces failed due to duplicated vertices")
-            info(f"  - {count_fnor} surfaces failed due to failed normal calculation")
-            info(f"  - {count_ftri} surfaces failed due to failed triangulation")
-            info(f"  - {count_smat} surfaces failed due to singular matrix")
+        results_type_count = Counter(results)
+        info("Results from triangluation:")
+        for result_type, count in results_type_count.items():
+            info(f" - {result_type.name}: {count}")
 
         if len(all_meshes) == 0:
             info("No building meshes found in city model")
