@@ -52,31 +52,35 @@ vertex_shader_picking = """
 
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_color;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
 
+out vec3 v_color;
+
 void main()
 {
     // Output position of the vertex, in clip space : MVP * position
     gl_Position = project * view * model * vec4(a_position, 1.0);
+    v_color = a_color;
 }
 """
 
 fragment_shader_picking = """ 
 # version 330 core
 
+// Input from vertex shader
+in vec3 v_color;
+
 // Ouput data
 out vec4 color;
 
-// Values that stay constant for the whole mesh.
-uniform vec4 picking_color;
-
 void main()
 {
-    color = picking_color;
+    color =  vec4(v_color, 1.0);
 }
 """
 
@@ -111,6 +115,7 @@ void main()
         v_color = a_color;
     }
     v_normal = a_normal;
+
 }
 """
 
@@ -150,6 +155,34 @@ void main()
 
 }
 """
+
+
+def id_to_color(id):
+    # Extracting color components
+    r = (id & 0x000000FF) >> 0
+    g = (id & 0x0000FF00) >> 8
+    b = (id & 0x00FF0000) >> 16
+
+    return np.array([r, g, b], dtype=np.float32)
+
+
+def color_to_id(color):
+    id = color[0] + color[1] * 256 + color[2] * 256 * 256
+    return id
+
+
+def create_picking_attributes(n_faces):
+    indices = np.arange(0, n_faces, dtype=np.uint32)
+    picking_colors = np.zeros((n_faces, 9))
+
+    for face_index in indices:
+        c = id_to_color((face_index + 1) * 1000)
+        d = [c[0] / 255.0, c[1] / 255.0, c[2] / 255.0] * 3
+        picking_colors[face_index, :] = d
+
+    picking_colors = np.array(picking_colors, dtype=np.float32).flatten()
+
+    return picking_colors
 
 
 # glfw callback function
@@ -276,12 +309,28 @@ glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
 
 # ---------------- ICOSA PICKING VBO ---------------------#
 
-# Picking vertices has position and picking color
 n_vertices = len(icosa_vertices) // 9
+n_faces = len(icosa_indices) // 3
+
+print(n_faces)
+
+picking_colors = create_picking_attributes(n_faces)
+
+print(picking_colors.shape)
+print(icosa_vertices.shape)
+
+print(picking_colors)
+
+# Picking vertices has position and picking color
+
 picking_vertices = np.zeros(n_vertices * 6)
 picking_vertices[0::6] = icosa_vertices[0::9]
 picking_vertices[1::6] = icosa_vertices[1::9]
 picking_vertices[2::6] = icosa_vertices[2::9]
+picking_vertices[3::6] = picking_colors[0::3]
+picking_vertices[4::6] = picking_colors[1::3]
+picking_vertices[5::6] = picking_colors[2::3]
+picking_vertices = np.array(picking_vertices, dtype=np.float32)
 picking_indices = np.array(icosa_indices, dtype=np.uint32)
 
 VAO_picking = glGenVertexArrays(1)
@@ -417,7 +466,7 @@ glUseProgram(shader_picking)
 model_loc_picking = glGetUniformLocation(shader_picking, "model")
 project_loc_picking = glGetUniformLocation(shader_picking, "project")
 view_loc_picking = glGetUniformLocation(shader_picking, "view")
-picking_color_loc = glGetUniformLocation(shader_picking, "picking_color")
+picked_color_loc = glGetUniformLocation(shader_picking, "picked_color")
 
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
@@ -469,84 +518,22 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 # ----------------------------------------------------------#
 
 
-def id_to_color(id):
-    # Extracting color components
-    r = (id & 0x000000FF) >> 0
-    g = (id & 0x0000FF00) >> 8
-    b = (id & 0x00FF0000) >> 16
-
-    return np.array([r, g, b], dtype=np.float32)
-
-
-def color_to_id(color):
-    id = color[0] + color[1] * 256 + color[2] * 256 * 256
-    return id
-
-
-def create_picking_colors():
-    n_faces = len(icosa_indices) // 3
-    ids = np.arange(0, n_faces, dtype=np.uint32)
-    picking_colors = np.zeros((n_faces, 3))
-
-    for id in ids:
-        c = id_to_color(id)
-        picking_colors[id, :] = c
-
-    picking_colors = np.array(picking_colors, dtype=np.float32).flatten()
-
-    return picking_colors
-
-
-def create_trans_vecs():
-    z = 2.0
-    cube_size = 1
-    cube_spacing = 5
-    nx = 1
-    ny = 1
-    ymin = -(ny - 1) * (cube_size + cube_spacing) / 2.0
-    xmin = -(nx - 1) * (cube_size + cube_spacing) / 2.0
-    trans_vecs = []
-    cube_ids = []
-    selected = []
-    counter = 1000000
-    for i in range(ny):
-        y = ymin + i * (cube_size + cube_spacing)
-        for j in range(nx):
-            x = xmin + j * (cube_size + cube_spacing)
-            trans_vecs.append([x, y, z])
-            cube_ids.append(counter)
-            selected.append(False)
-            counter += 1
-
-    trans_vecs = np.array(trans_vecs, dtype=np.float32)
-
-    return trans_vecs, cube_ids, selected
-
-
 def render_picking(time, proj, view):
     # Only the cubes are pickable
-    glBindVertexArray(VAO_icosa)
-    for i in range(len(trans_vecs)):
-        id = ids[i]
-        c = id_to_color(id)
-        glUniform4f(picking_color_loc, c[0] / 255.0, c[1] / 255.0, c[2] / 255.0, 1.0)
-        trans = pyrr.matrix44.create_from_translation(pyrr.Vector3(trans_vecs[i, :]))
-        glUniformMatrix4fv(model_loc_picking, 1, GL_FALSE, trans)
-        glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
+    glBindVertexArray(VAO_picking)
+    trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+    glUniformMatrix4fv(model_loc_picking, 1, GL_FALSE, trans)
+    glDrawElements(GL_TRIANGLES, len(picking_indices), GL_UNSIGNED_INT, None)
 
 
 def render_scene(time):
     # Cubes
     glBindVertexArray(VAO_icosa)
-    for i in range(len(trans_vecs)):
-        is_selected = int(selected[i])
-        trans = pyrr.matrix44.create_from_translation(pyrr.Vector3(trans_vecs[i, :]))
-        glUniform1i(selected_loc, is_selected)
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
-        glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
+    trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+    # glUniform1i(selected_loc, is_selected)
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
+    glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
-
-(trans_vecs, ids, selected) = create_trans_vecs()
 
 glUseProgram(shader_normal)
 glClearColor(0, 0.1, 0, 1)
@@ -557,8 +544,6 @@ fb_size = glfw.get_framebuffer_size(window)
 print(fb_size)
 mac_window_w = fb_size[0]
 mac_window_h = fb_size[1]
-
-create_picking_colors()
 
 # Main application loop
 while not glfw.window_should_close(window):
@@ -583,8 +568,6 @@ while not glfw.window_should_close(window):
     glUniformMatrix4fv(view_loc_picking, 1, GL_FALSE, view)
 
     render_picking(time, proj, view)
-    # glFlush()
-    # glFinish()
 
     if action.picking:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
@@ -602,8 +585,6 @@ while not glfw.window_should_close(window):
         picked_id = color_to_id(data)
 
         if picked_id != 0x00FFFFFF:
-            picked_index = ids.index(picked_id)
-            selected[picked_index] = not selected[picked_index]
             print(picked_id)
             print(id_to_color(picked_id))
 
