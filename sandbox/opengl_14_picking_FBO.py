@@ -10,12 +10,42 @@ import math
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from picking_interaction import PickingInteraction
 from load_primitives import *
+from pprint import pp
 
 window_w = 800
 window_h = 800
 
 
 action = PickingInteraction(window_w, window_h)
+
+vertex_shader_quad = """
+#version 330 core
+
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0); 
+    TexCoords = aTexCoords;
+}
+"""
+
+fragment_shader_quad = """ 
+#version 330 core
+out vec4 FragColor;
+  
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+void main()
+{ 
+    FragColor = texture(screenTexture, TexCoords);
+}
+"""
 
 vertex_shader_picking = """
 # version 330 core
@@ -175,56 +205,61 @@ tex_max = 1
 (icosa_vertices, icosa_indices) = get_icosahedron()
 (cube_vertices, cube_indices) = get_cube()
 
+# Vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+# position_x, position_y, tex_coords_x, tex_coords_y
+quad_vertices = [
+    -1.0,
+    1.0,
+    0.0,
+    1.0,
+    -1.0,
+    -1.0,
+    0.0,
+    0.0,
+    1.0,
+    -1.0,
+    1.0,
+    0.0,
+    -1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    -1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+]
 
-# ---------------- DEBUG QUAD ---------------------#
+quad_indices = [0, 1, 2, 3, 4, 5]
 
-debug_vertices = np.array(debug_vertices, dtype=np.float32)
-debug_indices = np.array(debug_indices, dtype=np.uint32)
+# ---------------- ICOSAHEDRON ---------------------#
 
-VAO_debug = glGenVertexArrays(1)
-glBindVertexArray(VAO_debug)
+icosa_vertices = np.array(icosa_vertices, dtype=np.float32)
+icosa_indices = np.array(icosa_indices, dtype=np.uint32)
+
+icosa_vertices[0::9] *= 4.0
+icosa_vertices[1::9] *= 4.0
+icosa_vertices[2::9] *= 4.0
+
+VAO_icosa = glGenVertexArrays(1)
+glBindVertexArray(VAO_icosa)
 
 # Vertex buffer
-VBO_debug = glGenBuffers(1)
-glBindBuffer(GL_ARRAY_BUFFER, VBO_debug)
+VBO_icosa = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, VBO_icosa)
 glBufferData(
-    GL_ARRAY_BUFFER, len(debug_vertices) * 4, debug_vertices, GL_STATIC_DRAW
+    GL_ARRAY_BUFFER, len(icosa_vertices) * 4, icosa_vertices, GL_STATIC_DRAW
 )  # Second argument is nr of bytes
 
 # Element buffer
-EBO_debug = glGenBuffers(1)
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_debug)
+EBO_icosa = glGenBuffers(1)
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_icosa)
 glBufferData(
-    GL_ELEMENT_ARRAY_BUFFER, len(debug_indices) * 4, debug_indices, GL_STATIC_DRAW
-)
-
-# Position
-glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
-
-# Texture coordinates
-glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
-
-# ---------------- FLOOR ---------------------#
-floor_vertices = np.array(floor_vertices, dtype=np.float32)
-floor_indices = np.array(floor_indices, dtype=np.uint32)
-
-VAO_floor = glGenVertexArrays(1)
-glBindVertexArray(VAO_floor)
-
-# Vertex buffer
-VBO_floor = glGenBuffers(1)
-glBindBuffer(GL_ARRAY_BUFFER, VBO_floor)
-glBufferData(
-    GL_ARRAY_BUFFER, len(floor_vertices) * 4, floor_vertices, GL_STATIC_DRAW
-)  # Second argument is nr of bytes
-
-# Element buffer
-EBO_floor = glGenBuffers(1)
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_floor)
-glBufferData(
-    GL_ELEMENT_ARRAY_BUFFER, len(floor_indices) * 4, floor_indices, GL_STATIC_DRAW
+    GL_ELEMENT_ARRAY_BUFFER, len(icosa_indices) * 4, icosa_indices, GL_STATIC_DRAW
 )
 
 # Position
@@ -236,8 +271,44 @@ glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
 # Normal
-glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
+glEnableVertexAttribArray(2)  # 2 is the layout location for the vertex shader
 glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+
+# ---------------- ICOSA PICKING VBO ---------------------#
+
+# Picking vertices has position and picking color
+n_vertices = len(icosa_vertices) // 9
+picking_vertices = np.zeros(n_vertices * 6)
+picking_vertices[0::6] = icosa_vertices[0::9]
+picking_vertices[1::6] = icosa_vertices[1::9]
+picking_vertices[2::6] = icosa_vertices[2::9]
+picking_indices = np.array(icosa_indices, dtype=np.uint32)
+
+VAO_picking = glGenVertexArrays(1)
+glBindVertexArray(VAO_picking)
+
+# Vertex buffer
+VBO_picking = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, VBO_picking)
+glBufferData(
+    GL_ARRAY_BUFFER, len(picking_vertices) * 4, picking_vertices, GL_STATIC_DRAW
+)  # Second argument is nr of bytes
+
+# Element buffer
+EBO_picking = glGenBuffers(1)
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_picking)
+glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER, len(picking_indices) * 4, picking_indices, GL_STATIC_DRAW
+)
+
+# Position
+glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
+
+# Picking Color
+glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+
 
 # ---------------- CUBE ---------------------#
 
@@ -276,6 +347,37 @@ glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 # Normal
 glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
 glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+
+
+# ---------------- QUAD ---------------------#
+
+quad_vertices = np.array(quad_vertices, dtype=np.float32)
+quad_indices = np.array(quad_indices, dtype=np.uint32)
+
+VAO_quad = glGenVertexArrays(1)
+glBindVertexArray(VAO_quad)
+
+# Vertex buffer
+VBO_quad = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, VBO_quad)
+glBufferData(
+    GL_ARRAY_BUFFER, len(quad_vertices) * 4, quad_vertices, GL_STATIC_DRAW
+)  # Second argument is nr of bytes
+
+# Element buffer
+EBO_quad = glGenBuffers(1)
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_quad)
+glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER, len(quad_indices) * 4, quad_indices, GL_STATIC_DRAW
+)
+
+# Position x,y
+glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
+glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(0))
+
+# Texture x,y
+glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
+glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(8))
 
 
 # ---------------- NORMAL SHADER ---------------------#
@@ -321,32 +423,50 @@ glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
 
 
-def calc_ray_coords():
-    winx = 0.0  # action.select_x
-    winy = 0.0  # action.select_y
-    winz_near = 0.2
-    winz_far = 1.0
-    clip_w = 1.0
+# ---------------- QUAD SHADER ---------------------#
 
-    # m = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0], dtype=np.float32))
-    # mv = action.camera.get_view_matrix().astype("d")
-    # pr = action.camera.get_perspective_matrix().astype("d")
+shader_quad = compileProgram(
+    compileShader(vertex_shader_quad, GL_VERTEX_SHADER),
+    compileShader(fragment_shader_quad, GL_FRAGMENT_SHADER),
+)
 
-    # glMatrixMode(GL_MODELVIEW)
-    # glLoadIdentity()
-    # gluLookAt(0, 1, 20, 0, 0, 0, 0, 0, 1)
+glUseProgram(shader_quad)
 
-    # mv = glGetDoublev(GL_MODELVIEW_MATRIX)
+text_loc_quad = glGetUniformLocation(shader_quad, "screenTexture")
 
-    # viewport = glGetIntegerv(GL_VIEWPORT)
 
-    # near = gluUnProject(winx, winy, winz_near, mv, pr, viewport)
+# ---------------- PICKING FRAMEBUFFER ---------------------#
 
-    # Ray end at far plane
-    # far = gluUnProject(gluUnProject, winx, winy, winz_far, m, p, v)
+FBO = glGenFramebuffers(1)
+glBindFramebuffer(GL_FRAMEBUFFER, FBO)  # Bind our frame buffer
 
-    # print("Near: ", near)
-    # print("Far: ", far)
+pick_texture = glGenTextures(1)
+glBindTexture(GL_TEXTURE_2D, pick_texture)
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_w, window_h, 0, GL_RGB, GL_FLOAT, None)
+# glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1600, 1600, 0, GL_RGB, GL_FLOAT, None)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+glBindTexture(GL_TEXTURE_2D, 0)  # Unbind our texture
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pick_texture, 0
+)
+
+RBO = glGenRenderbuffers(1)
+glBindRenderbuffer(GL_RENDERBUFFER, RBO)
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_w, window_h)
+# glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1600, 1600)
+
+glFramebufferRenderbuffer(
+    GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO
+)
+
+if glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE:
+    print("Framebuffer is complete")
+
+glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
+
+
+# ----------------------------------------------------------#
 
 
 def id_to_color(id):
@@ -363,23 +483,32 @@ def color_to_id(color):
     return id
 
 
-def test():
-    gluUnProject()
-    pass
+def create_picking_colors():
+    n_faces = len(icosa_indices) // 3
+    ids = np.arange(0, n_faces, dtype=np.uint32)
+    picking_colors = np.zeros((n_faces, 3))
+
+    for id in ids:
+        c = id_to_color(id)
+        picking_colors[id, :] = c
+
+    picking_colors = np.array(picking_colors, dtype=np.float32).flatten()
+
+    return picking_colors
 
 
-def create_cube_vecs():
+def create_trans_vecs():
     z = 2.0
     cube_size = 1
     cube_spacing = 5
-    nx = 10
-    ny = 10
+    nx = 1
+    ny = 1
     ymin = -(ny - 1) * (cube_size + cube_spacing) / 2.0
     xmin = -(nx - 1) * (cube_size + cube_spacing) / 2.0
     trans_vecs = []
     cube_ids = []
     selected = []
-    counter = 0
+    counter = 1000000
     for i in range(ny):
         y = ymin + i * (cube_size + cube_spacing)
         for j in range(nx):
@@ -396,35 +525,28 @@ def create_cube_vecs():
 
 def render_picking(time, proj, view):
     # Only the cubes are pickable
-    glBindVertexArray(VAO_cube)
+    glBindVertexArray(VAO_icosa)
     for i in range(len(trans_vecs)):
-        id = cube_ids[i]
+        id = ids[i]
         c = id_to_color(id)
         glUniform4f(picking_color_loc, c[0] / 255.0, c[1] / 255.0, c[2] / 255.0, 1.0)
         trans = pyrr.matrix44.create_from_translation(pyrr.Vector3(trans_vecs[i, :]))
         glUniformMatrix4fv(model_loc_picking, 1, GL_FALSE, trans)
-        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+        glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
 
 def render_scene(time):
-    # Floor
-    model_floor = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model_floor)
-    glBindVertexArray(VAO_floor)
-    glUniform1i(selected_loc, False)
-    glDrawElements(GL_TRIANGLES, len(floor_indices), GL_UNSIGNED_INT, None)
-
     # Cubes
-    glBindVertexArray(VAO_cube)
+    glBindVertexArray(VAO_icosa)
     for i in range(len(trans_vecs)):
         is_selected = int(selected[i])
         trans = pyrr.matrix44.create_from_translation(pyrr.Vector3(trans_vecs[i, :]))
         glUniform1i(selected_loc, is_selected)
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
-        glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
+        glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
 
-(trans_vecs, cube_ids, selected) = create_cube_vecs()
+(trans_vecs, ids, selected) = create_trans_vecs()
 
 glUseProgram(shader_normal)
 glClearColor(0, 0.1, 0, 1)
@@ -436,7 +558,7 @@ print(fb_size)
 mac_window_w = fb_size[0]
 mac_window_h = fb_size[1]
 
-view_selection_colors = False
+create_picking_colors()
 
 # Main application loop
 while not glfw.window_should_close(window):
@@ -450,52 +572,68 @@ while not glfw.window_should_close(window):
     proj = action.camera.get_perspective_matrix()
 
     # Picking pass
+    # if action.picking:
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO)
+    glEnable(GL_DEPTH_TEST)
+    glClearColor(1.0, 1.0, 1.0, 1.0)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glUseProgram(shader_picking)
+
+    glUniformMatrix4fv(project_loc_picking, 1, GL_FALSE, proj)
+    glUniformMatrix4fv(view_loc_picking, 1, GL_FALSE, view)
+
+    render_picking(time, proj, view)
+    # glFlush()
+    # glFinish()
+
     if action.picking:
-        glClearColor(1.0, 1.0, 1.0, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(shader_picking)
-
-        glUniformMatrix4fv(project_loc_picking, 1, GL_FALSE, proj)
-        glUniformMatrix4fv(view_loc_picking, 1, GL_FALSE, view)
-
-        render_picking(time, proj, view)
-        glFlush()
-        glFinish()
-
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-
         x = action.picked_x
         y = action.picked_y
-        print(x, y)
 
         if window_w != mac_window_w:
             x = 2 * x
             y = 2 * y
 
+        print(x, y)
+        action.picking = False
+
         data = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
         picked_id = color_to_id(data)
 
         if picked_id != 0x00FFFFFF:
-            picked_index = cube_ids.index(picked_id)
+            picked_index = ids.index(picked_id)
             selected[picked_index] = not selected[picked_index]
+            print(picked_id)
+            print(id_to_color(picked_id))
 
-        action.picking = False
+    # action.picking = False
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-    # Normal pass
-    glClearColor(0, 0.1, 0, 1)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glUseProgram(shader_normal)
+    if action.render_fbo:
+        glDisable(GL_DEPTH_TEST)
+        glUseProgram(shader_quad)
+        glBindVertexArray(VAO_quad)
+        glBindTexture(GL_TEXTURE_2D, pick_texture)
+        # glUniform1i(text_loc_quad, 0)
+        glDrawElements(GL_TRIANGLES, len(quad_indices), GL_UNSIGNED_INT, None)
+    else:
+        # Normal pass
+        glClearColor(0, 0.1, 0, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glUseProgram(shader_normal)
 
-    # Set uniforms
-    glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
+        # Set uniforms
+        glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
 
-    # Set light uniforms
-    camera_pos = action.camera.camera_pos
-    glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
-    glUniform3f(view_pos_loc, camera_pos[0], camera_pos[1], camera_pos[2])
+        # Set light uniforms
+        camera_pos = action.camera.camera_pos
+        glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
+        glUniform3f(view_pos_loc, camera_pos[0], camera_pos[1], camera_pos[2])
 
-    render_scene(time)
+        render_scene(time)
+
     glfw.swap_buffers(window)
 
 glfw.terminate()

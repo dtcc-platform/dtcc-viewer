@@ -4,7 +4,7 @@ from dtcc_model import NewCity, MultiSurface, Surface, NewBuilding, Mesh, Terrai
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Results
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Results, Submeshes
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.utils import Submesh, concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
@@ -43,9 +43,9 @@ class CityWrapper:
     shading: MeshShading
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
-    building_submeshes: list[Submesh]
+    building_submeshes: Submeshes
     terrain_mw: MeshWrapper = None
-    terrain_submeshes: list[Submesh]
+    terrain_submeshes: Submeshes
 
     def __init__(
         self,
@@ -68,18 +68,19 @@ class CityWrapper:
         self.shading = shading
         self.dict_data = {}
 
-        submeshes = []
-
         # Read the city model and generate the mesh geometry for buildings and terrain
-        (building_mesh, submeshes) = self._generate_building_mesh(city)
+        (b_mesh, b_submeshes) = self._generate_building_mesh(city)
+        (t_mesh, t_submeshes) = self._get_terrain_mesh(city)
 
-        terrain_mesh = self._get_terrain_mesh(city)
+        if t_mesh is not None:
+            self.terrain_mw = MeshWrapper(
+                "terrain", t_mesh, submeshes=t_submeshes, shading=shading
+            )
 
-        if terrain_mesh is not None:
-            self.terrain_mw = MeshWrapper("terrain", terrain_mesh, shading=shading)
-
-        if building_mesh is not None:
-            self.building_mw = MeshWrapper("buildings", building_mesh, shading=shading)
+        if b_mesh is not None:
+            self.building_mw = MeshWrapper(
+                "buildings", b_mesh, submeshes=b_submeshes, shading=shading
+            )
 
         info("CityWrapper initialized")
 
@@ -92,6 +93,11 @@ class CityWrapper:
 
     def _get_terrain_mesh(self, city: NewCity):
         meshes = []
+        face_start_indices = []
+        face_end_indices = []
+        ids = []
+        tot_f_count = 0
+        counter = 0
         terrain_list = city.children[Terrain]
 
         for terrain in terrain_list:
@@ -99,54 +105,60 @@ class CityWrapper:
             if mesh is not None:
                 meshes.append(mesh)
 
+                # Stor face indices for this submesh to be used for picking
+                mesh_f_count = len(mesh.faces)
+                face_start_indices.append(tot_f_count)
+                face_end_indices.append(tot_f_count + mesh_f_count - 1)
+                tot_f_count += mesh_f_count
+
+                ids.append(counter)
+                counter += 1
+
         if len(meshes) == 0:
             info("No terrain mesh found in city model")
-            return None
+            return None, None
         else:
             mesh = concatenate_meshes(meshes)
+            submeshes = Submeshes(face_start_indices, face_end_indices, ids)
             info(
                 f"Terrain mesh with {len(mesh.faces)} faces and {len(mesh.vertices)} vertices generated "
             )
-            return mesh
+            return mesh, submeshes
+
+        return None, None
 
     def _generate_building_mesh(self, city: NewCity):
         counter = 0
         tot_f_count = 0
-        submeshes = []
         all_meshes = []
         results = []
-        meshing_fail_count = 0
-        meshing_attm_count = 0
-        count_tria = 0
+        face_start_index = []
+        face_end_index = []
+        ids = []
+
         # Generate mesh data for buildings
         for building in city.buildings:
-            buildnig_id = counter
             building_meshes = []
             flat_geom = building.flatten_geometry(GeometryType.LOD2)
             if isinstance(flat_geom, MultiSurface):
                 for s in flat_geom.surfaces:
                     (mesh, result) = surface_2_mesh(s.vertices)
-                    meshing_attm_count += 1
                     results.append(result)
                     if mesh is not None:
                         building_meshes.append(mesh)
-                    else:
-                        meshing_fail_count += 1
 
             if len(building_meshes) > 0:
                 # Concatenate all building meshes into one mesh
                 building_mesh = concatenate_meshes(building_meshes)
                 all_meshes.append(building_mesh)
 
+                # Stor face indices for this submesh to be used for picking
                 bld_f_count = len(building_mesh.faces)
+                face_start_index.append(tot_f_count)
+                face_end_index.append(tot_f_count + bld_f_count - 1)
                 tot_f_count += bld_f_count
-                face_index_1 = (tot_f_count - bld_f_count) - 1
-                face_index_2 = tot_f_count - 1
 
-                # Clickable subset of the mesh, here at the level of a building
-                submesh = Submesh(face_index_1, face_index_2, buildnig_id)
-                submesh.add_meta_data("id", building.id)
-                submeshes.append(submesh)
+                ids.append(counter)
                 counter += 1
 
         results_type_count = Counter(results)
@@ -159,8 +171,13 @@ class CityWrapper:
             return None, None
         else:
             mesh = concatenate_meshes(all_meshes)
+            submeshes = Submeshes(face_start_index, face_end_index, ids)
             info(
-                f"Building mesh with {len(mesh.faces)} faces and {len(mesh.vertices)} vertices generated "
+                f"Mesh with {len(mesh.faces)} faces and {len(mesh.vertices)} vertices generated "
             )
+            return mesh, submeshes
 
-        return mesh, submeshes
+        return None, None
+
+    def get_submesh_indices(self, new_mesh):
+        pass

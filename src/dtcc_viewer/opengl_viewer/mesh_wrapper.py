@@ -3,7 +3,7 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Submeshes
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
 
@@ -50,12 +50,14 @@ class MeshWrapper:
     shading: MeshShading
     bb_local: BoundingBox
     bb_global: BoundingBox = None
+    submeshes: Submeshes = None
 
     def __init__(
         self,
         name: str,
         mesh: Mesh,
         data: np.ndarray = None,
+        submeshes: Submeshes = None,
         shading: MeshShading = MeshShading.wireshaded,
     ) -> None:
         """Initialize the MeshData object.
@@ -80,6 +82,8 @@ class MeshWrapper:
         self._generate_mesh_colors(mesh, data)
         self._restructure_dicts(mesh)
         self._restructure_mesh(mesh)
+        if self.submeshes is None:
+            self._create_default_submeshes(mesh)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -283,3 +287,18 @@ class MeshWrapper:
         self.vertices = np.array(self.vertices, dtype="float32").flatten()
         self.edges = np.array(self.edges, dtype="uint32").flatten()
         self.faces = np.array(self.faces, dtype="uint32").flatten()
+
+    def _create_default_submeshes(self, mesh):
+        # The default structure is such that each face is represented as a submesh
+        # which makes the faces clickable in the viewer.
+
+        # faces = [f1v1, f1v2, f1v3, f2v1, f2v2, f2v3, ...]
+        n_faces = len(self.faces) // 3
+
+        # Start and end indices are the same, only one face is grouped in each submesh
+        start_faces = np.arange(0, n_faces)
+        end_faces = np.arange(0, n_faces)
+
+        id = np.arange(0, n_faces)
+
+        self.submeshes = Submeshes(start_faces, end_faces, id)

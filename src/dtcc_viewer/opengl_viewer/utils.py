@@ -5,6 +5,34 @@ from dtcc_model import Mesh, PointCloud
 from pprint import pp
 import triangle as tr
 from dtcc_viewer.logging import info, warning
+from dtcc_model import MultiSurface, Surface
+
+
+class Submeshes:
+    face_start_indices: np.ndarray
+    face_end_indices: np.ndarray
+    submesh_ids: np.ndarray
+    selected: np.ndarray
+    submesh_meta_data: dict
+
+    def __init__(self, face_start_indices, face_end_indices, submesh_ids):
+        self.face_start_indices = np.array(face_start_indices)
+        self.face_end_indices = np.array(face_end_indices)
+        self.submesh_ids = np.array(submesh_ids)
+        self.selected = np.zeros(len(submesh_ids), dtype=bool)
+        self.submesh_meta_data = {}
+
+    def add_meta_data(self, id, newdata_dict):
+        self.meta_data[id] = newdata_dict
+
+    def print(self):
+        print("Submeshes data: ")
+        print(self.face_start_indices)
+        print(self.face_end_indices)
+        print(self.submesh_ids)
+
+    def toogle_selected(self, id):
+        self.selected[id] = not self.selected[id]
 
 
 class Submesh:
@@ -411,3 +439,17 @@ def concatenate_meshes(meshes: list[Mesh]):
 
     mesh = Mesh(vertices=all_vertices, faces=all_faces)
     return mesh
+
+
+def id_to_color(id):
+    # Extracting color components
+    r = (id & 0x000000FF) >> 0
+    g = (id & 0x0000FF00) >> 8
+    b = (id & 0x00FF0000) >> 16
+
+    return np.array([r, g, b], dtype=np.float32)
+
+
+def color_to_id(color):
+    id = color[0] + color[1] * 256 + color[2] * 256 * 256
+    return id
