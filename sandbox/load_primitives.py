@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def get_quad(floor_size, tex_min, tex_max):
     debug_vertices = [
         -floor_size,
@@ -484,7 +487,7 @@ def get_cube():
     return cube_vertices, cube_indices
 
 
-def get_icosahedron():
+def get_icosahedron(center, radius):
     icosa_vertices = [
         0,
         0,
@@ -1090,5 +1093,18 @@ def get_icosahedron():
         58,
         59,
     ]
+
+    icosa_vertices = np.array(icosa_vertices, dtype=np.float32)
+    icosa_indices = np.array(icosa_indices, dtype=np.uint32)
+
+    # Scale icosahedron size
+    icosa_vertices[0::9] *= radius
+    icosa_vertices[1::9] *= radius
+    icosa_vertices[2::9] *= radius
+
+    # Translate icosahedron to center
+    icosa_vertices[0::9] += center[0]
+    icosa_vertices[1::9] += center[1]
+    icosa_vertices[2::9] += center[2]
 
     return icosa_vertices, icosa_indices

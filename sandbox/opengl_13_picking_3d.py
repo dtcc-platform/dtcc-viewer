@@ -172,7 +172,7 @@ tex_max = 1
 
 (debug_vertices, debug_indices) = get_quad(floor_size, tex_min, tex_max)
 (floor_vertices, floor_indices) = get_plane(floor_size, floor_z)
-(icosa_vertices, icosa_indices) = get_icosahedron()
+(icosa_vertices, icosa_indices) = get_icosahedron([0, 0, 0], 1)
 (cube_vertices, cube_indices) = get_cube()
 
 

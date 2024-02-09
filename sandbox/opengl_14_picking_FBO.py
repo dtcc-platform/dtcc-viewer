@@ -11,6 +11,8 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from picking_interaction import PickingInteraction
 from load_primitives import *
 from pprint import pp
+from dtcc_io import meshes
+from dtcc_viewer.opengl_viewer.utils import concatenate_meshes
 
 window_w = 800
 window_h = 800
@@ -51,8 +53,10 @@ vertex_shader_picking = """
 # version 330 core
 
 // Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 a_position;
+layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_color;
+layout(location = 2) in vec3 a_normal;
+layout(location = 3) in float a_index;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 model;
@@ -61,11 +65,20 @@ uniform mat4 project;
 
 out vec3 v_color;
 
+//Convert id to color
+vec3 id_to_color(int id) {
+    float r = float((id & 0x000000FF) >> 0) / 255.0;
+    float g = float((id & 0x0000FF00) >> 8) / 255.0;
+    float b = float((id & 0x00FF0000) >> 16) / 255.0;
+    return vec3(r, g, b);
+}
+
 void main()
 {
     // Output position of the vertex, in clip space : MVP * position
     gl_Position = project * view * model * vec4(a_position, 1.0);
-    v_color = a_color;
+    highp int index_int = int(a_index);
+    v_color = id_to_color(index_int);
 }
 """
 
@@ -84,19 +97,18 @@ void main()
 }
 """
 
-
 vertex_shader_normal = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_color;
 layout(location = 2) in vec3 a_normal;
+layout(location = 3) in float a_index;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
-
-uniform int selected;
+uniform int picked_id;
 
 out vec3 v_frag_pos;
 out vec3 v_color;
@@ -106,7 +118,10 @@ void main()
 {
     gl_Position = project * view * model * vec4(a_position, 1.0);
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
-    if (selected == 1)
+
+    highp int index_int = int(a_index);
+
+    if (index_int == picked_id) // If the vertex id is the picked id
     {
         v_color = vec3(1.0, 0.0, 1.0);
     }
@@ -115,7 +130,6 @@ void main()
         v_color = a_color;
     }
     v_normal = a_normal;
-
 }
 """
 
@@ -171,18 +185,40 @@ def color_to_id(color):
     return id
 
 
-def create_picking_attributes(n_faces):
+def create_face_picking_attributes(n_faces):
     indices = np.arange(0, n_faces, dtype=np.uint32)
     picking_colors = np.zeros((n_faces, 9))
+    picking_ids = np.zeros((n_faces, 3))
 
     for face_index in indices:
-        c = id_to_color((face_index + 1) * 1000)
+        id = (face_index + 1) * 1000
+        c = id_to_color(id)
         d = [c[0] / 255.0, c[1] / 255.0, c[2] / 255.0] * 3
         picking_colors[face_index, :] = d
+        picking_ids[face_index, :] = [id, id, id]  # Each vertex has the same id
 
     picking_colors = np.array(picking_colors, dtype=np.float32).flatten()
+    picking_ids = np.array(picking_ids, dtype=np.float32).flatten()
 
-    return picking_colors
+    return picking_colors, picking_ids
+
+
+def create_group_picking_attributes(n_faces, faces_per_group):
+    n_groups = n_faces // faces_per_group
+    picking_colors = []
+    picking_ids = []
+    for group_index in range(n_groups):
+        id = (group_index + 1) * 1000
+        c = id_to_color(id)
+        d = [c[0] / 255.0, c[1] / 255.0, c[2] / 255.0] * 3
+        for i in range(faces_per_group):
+            picking_colors.append(d)
+            picking_ids.append([id, id, id])  # Each vertex has the same id
+
+    picking_colors = np.array(picking_colors, dtype=np.float32).flatten()
+    picking_ids = np.array(picking_ids, dtype=np.float32).flatten()
+
+    return picking_colors, picking_ids
 
 
 # glfw callback function
@@ -227,16 +263,24 @@ glfw.set_window_size_callback(window, window_resize)
 # Calls can be made after the contex is made current
 glfw.make_context_current(window)
 
-floor_size = 70
-floor_z = -2.0
 
-tex_min = 0
-tex_max = 1
+# ------------------ Load Model --------------------#
 
-(debug_vertices, debug_indices) = get_quad(floor_size, tex_min, tex_max)
-(floor_vertices, floor_indices) = get_plane(floor_size, floor_z)
-(icosa_vertices, icosa_indices) = get_icosahedron()
-(cube_vertices, cube_indices) = get_cube()
+# mesh = meshes.load_mesh("../data/models/CitySurface.obj")
+
+(icosa_vs_1, icosa_is_1) = get_icosahedron([-10, -10, 0], 10.0)
+(icosa_vs_2, icosa_is_2) = get_icosahedron([-10, 10, 0], 10.0)
+(icosa_vs_3, icosa_is_3) = get_icosahedron([10, 10, 0], 10.0)
+(icosa_vs_4, icosa_is_4) = get_icosahedron([10, -10, 0], 10.0)
+
+icosa_index_count = len(icosa_is_1)
+
+icosa_is_2 += icosa_index_count
+icosa_is_3 += icosa_index_count * 2
+icosa_is_4 += icosa_index_count * 3
+
+icosa_vertices = np.concatenate((icosa_vs_1, icosa_vs_2, icosa_vs_3, icosa_vs_4))
+icosa_indices = np.concatenate((icosa_is_1, icosa_is_2, icosa_is_3, icosa_is_4))
 
 # Vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
 # position_x, position_y, tex_coords_x, tex_coords_y
@@ -269,14 +313,31 @@ quad_vertices = [
 
 quad_indices = [0, 1, 2, 3, 4, 5]
 
+# ------------------ Picking Attributes --------------------#
+
+n_vertices = len(icosa_vertices) // 9
+n_faces = len(icosa_indices) // 3
+
+(picking_colors, picking_ids) = create_face_picking_attributes(n_faces)
+(picking_colors, picking_ids) = create_group_picking_attributes(n_faces, 5)
+
 # ---------------- ICOSAHEDRON ---------------------#
 
 icosa_vertices = np.array(icosa_vertices, dtype=np.float32)
-icosa_indices = np.array(icosa_indices, dtype=np.uint32)
+icosa_vs_2 = np.zeros(n_vertices * 10)
 
-icosa_vertices[0::9] *= 4.0
-icosa_vertices[1::9] *= 4.0
-icosa_vertices[2::9] *= 4.0
+mask1 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 0], dtype=bool)
+mask2 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=bool)
+
+mask1 = np.tile(mask1, n_vertices)
+mask2 = np.tile(mask2, n_vertices)
+
+icosa_vs_2[mask1] = icosa_vertices
+icosa_vs_2[mask2] = picking_ids
+
+icosa_vertices = np.array(icosa_vs_2, dtype=np.float32)
+
+icosa_indices = np.array(icosa_indices, dtype=np.uint32)
 
 VAO_icosa = glGenVertexArrays(1)
 glBindVertexArray(VAO_icosa)
@@ -284,9 +345,7 @@ glBindVertexArray(VAO_icosa)
 # Vertex buffer
 VBO_icosa = glGenBuffers(1)
 glBindBuffer(GL_ARRAY_BUFFER, VBO_icosa)
-glBufferData(
-    GL_ARRAY_BUFFER, len(icosa_vertices) * 4, icosa_vertices, GL_STATIC_DRAW
-)  # Second argument is nr of bytes
+glBufferData(GL_ARRAY_BUFFER, len(icosa_vertices) * 4, icosa_vertices, GL_STATIC_DRAW)
 
 # Element buffer
 EBO_icosa = glGenBuffers(1)
@@ -297,106 +356,19 @@ glBufferData(
 
 # Position
 glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(0))
 
 # Color
 glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(12))
 
 # Normal
 glEnableVertexAttribArray(2)  # 2 is the layout location for the vertex shader
-glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(24))
 
-# ---------------- ICOSA PICKING VBO ---------------------#
-
-n_vertices = len(icosa_vertices) // 9
-n_faces = len(icosa_indices) // 3
-
-print(n_faces)
-
-picking_colors = create_picking_attributes(n_faces)
-
-print(picking_colors.shape)
-print(icosa_vertices.shape)
-
-print(picking_colors)
-
-# Picking vertices has position and picking color
-
-picking_vertices = np.zeros(n_vertices * 6)
-picking_vertices[0::6] = icosa_vertices[0::9]
-picking_vertices[1::6] = icosa_vertices[1::9]
-picking_vertices[2::6] = icosa_vertices[2::9]
-picking_vertices[3::6] = picking_colors[0::3]
-picking_vertices[4::6] = picking_colors[1::3]
-picking_vertices[5::6] = picking_colors[2::3]
-picking_vertices = np.array(picking_vertices, dtype=np.float32)
-picking_indices = np.array(icosa_indices, dtype=np.uint32)
-
-VAO_picking = glGenVertexArrays(1)
-glBindVertexArray(VAO_picking)
-
-# Vertex buffer
-VBO_picking = glGenBuffers(1)
-glBindBuffer(GL_ARRAY_BUFFER, VBO_picking)
-glBufferData(
-    GL_ARRAY_BUFFER, len(picking_vertices) * 4, picking_vertices, GL_STATIC_DRAW
-)  # Second argument is nr of bytes
-
-# Element buffer
-EBO_picking = glGenBuffers(1)
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_picking)
-glBufferData(
-    GL_ELEMENT_ARRAY_BUFFER, len(picking_indices) * 4, picking_indices, GL_STATIC_DRAW
-)
-
-# Position
-glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
-
-# Picking Color
-glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
-
-
-# ---------------- CUBE ---------------------#
-
-cube_vertices = np.array(cube_vertices, dtype=np.float32)
-cube_indices = np.array(cube_indices, dtype=np.uint32)
-
-cube_vertices[0::9] *= 4.0
-cube_vertices[1::9] *= 4.0
-cube_vertices[2::9] *= 4.0
-
-VAO_cube = glGenVertexArrays(1)
-glBindVertexArray(VAO_cube)
-
-# Vertex buffer
-VBO_cube = glGenBuffers(1)
-glBindBuffer(GL_ARRAY_BUFFER, VBO_cube)
-glBufferData(
-    GL_ARRAY_BUFFER, len(cube_vertices) * 4, cube_vertices, GL_STATIC_DRAW
-)  # Second argument is nr of bytes
-
-# Element buffer
-EBO_cube = glGenBuffers(1)
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_cube)
-glBufferData(
-    GL_ELEMENT_ARRAY_BUFFER, len(cube_indices) * 4, cube_indices, GL_STATIC_DRAW
-)
-
-# Position
-glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
-
-# Color
-glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
-
-# Normal
-glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
-glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
-
+# Face id for picking
+glEnableVertexAttribArray(3)  # 3 is the layout location for the vertex shader
+glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(36))
 
 # ---------------- QUAD ---------------------#
 
@@ -445,7 +417,7 @@ view_loc = glGetUniformLocation(shader_normal, "view")
 light_color_loc = glGetUniformLocation(shader_normal, "light_color")
 light_position_loc = glGetUniformLocation(shader_normal, "light_position")
 view_pos_loc = glGetUniformLocation(shader_normal, "view_position")
-selected_loc = glGetUniformLocation(shader_normal, "selected")
+picked_id_loc = glGetUniformLocation(shader_normal, "picked_id")
 
 light_pos = 3.0 * np.array([10.0, 10.0, 10.0], dtype=np.float32)
 light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
@@ -483,6 +455,15 @@ glUseProgram(shader_quad)
 
 text_loc_quad = glGetUniformLocation(shader_quad, "screenTexture")
 
+# ---------------- CLICK RESULTS TEXTURE ---------------------#
+
+ids = icosa_vertices[9::10]
+n_objects = len(np.unique(ids))
+
+TBO = glGenBuffers(1)
+glBindBuffer(GL_TEXTURE_BUFFER, TBO)
+glBufferData(GL_TEXTURE_BUFFER, n_objects * 4, None, GL_DYNAMIC_DRAW)
+
 
 # ---------------- PICKING FRAMEBUFFER ---------------------#
 
@@ -518,19 +499,9 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 # ----------------------------------------------------------#
 
 
-def render_picking(time, proj, view):
-    # Only the cubes are pickable
-    glBindVertexArray(VAO_picking)
-    trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-    glUniformMatrix4fv(model_loc_picking, 1, GL_FALSE, trans)
-    glDrawElements(GL_TRIANGLES, len(picking_indices), GL_UNSIGNED_INT, None)
-
-
 def render_scene(time):
-    # Cubes
     glBindVertexArray(VAO_icosa)
     trans = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-    # glUniform1i(selected_loc, is_selected)
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, trans)
     glDrawElements(GL_TRIANGLES, len(icosa_indices), GL_UNSIGNED_INT, None)
 
@@ -544,6 +515,8 @@ fb_size = glfw.get_framebuffer_size(window)
 print(fb_size)
 mac_window_w = fb_size[0]
 mac_window_h = fb_size[1]
+
+picked_id = -1
 
 # Main application loop
 while not glfw.window_should_close(window):
@@ -567,9 +540,10 @@ while not glfw.window_should_close(window):
     glUniformMatrix4fv(project_loc_picking, 1, GL_FALSE, proj)
     glUniformMatrix4fv(view_loc_picking, 1, GL_FALSE, view)
 
-    render_picking(time, proj, view)
+    render_scene(time)
 
     if action.picking:
+        # picked_id = -1
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         x = action.picked_x
         y = action.picked_y
@@ -582,7 +556,13 @@ while not glfw.window_should_close(window):
         action.picking = False
 
         data = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
-        picked_id = color_to_id(data)
+
+        picked_id_new = color_to_id(data)
+
+        if picked_id_new == picked_id:
+            picked_id = -1
+        else:
+            picked_id = picked_id_new
 
         if picked_id != 0x00FFFFFF:
             print(picked_id)
@@ -612,6 +592,7 @@ while not glfw.window_should_close(window):
         camera_pos = action.camera.camera_pos
         glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
         glUniform3f(view_pos_loc, camera_pos[0], camera_pos[1], camera_pos[2])
+        glUniform1i(picked_id_loc, picked_id)
 
         render_scene(time)
 
