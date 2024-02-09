@@ -65,6 +65,7 @@ uniform mat4 project;
 
 out vec3 v_color;
 
+
 //Convert id to color
 vec3 id_to_color(int id) {
     float r = float((id & 0x000000FF) >> 0) / 255.0;
@@ -80,6 +81,7 @@ void main()
     highp int index_int = int(a_index);
     v_color = id_to_color(index_int);
 }
+
 """
 
 fragment_shader_picking = """ 

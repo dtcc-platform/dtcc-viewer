@@ -54,6 +54,8 @@ class PickingInteraction:
     picked_y: float
 
     render_fbo: bool
+    cmap_index: int
+    cmap_index_max: int
 
     # Selection rays
     ray_nds: pyrr.Vector3  # Ray in normalised device coordinates
@@ -83,6 +85,9 @@ class PickingInteraction:
         self.mouse_on_gui = False
         self.picking = False
         self.render_fbo = False
+
+        self.cmap_index = 1
+        self.cmap_index_max = 3
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -129,6 +134,11 @@ class PickingInteraction:
         """
         if key == glfw.KEY_F and action == glfw.PRESS:
             self.render_fbo = not self.render_fbo
+
+        if key == glfw.KEY_C and action == glfw.PRESS:
+            self.cmap_index += 1
+            if self.cmap_index > self.cmap_index_max:
+                self.cmap_index = 1
 
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
