@@ -1,4 +1,5 @@
 import glfw
+import time
 from dtcc_viewer.opengl_viewer.camera import Camera
 
 
@@ -42,6 +43,14 @@ class Interaction:
     right_first_mouse: bool
     right_mbtn_pressed: bool
     mouse_on_gui: bool
+
+    # Tracking mouse picking clicks
+    picking: bool
+    picked_x: float
+    picked_y: float
+    tic: float
+    toc: float
+    tictoc_duration: float
 
     def __init__(self, width, height):
         """Initialize the Interaction object with the provided width and height.
@@ -138,9 +147,17 @@ class Interaction:
 
         if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
             self.left_mbtn_pressed = True
+            self.tic = time.perf_counter()
         elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
             self.left_mbtn_pressed = False
             self.left_first_mouse = True
+            self.toc = time.perf_counter()
+            self.tictoc_duration = self.toc - self.tic
+            if self.tictoc_duration < 0.2:
+                self.picking = True
+                (xpos, ypos) = glfw.get_cursor_pos(window)
+                self.picked_x = xpos
+                self.picked_y = self.height - ypos
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS:
             self.right_mbtn_pressed = True
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.RELEASE:

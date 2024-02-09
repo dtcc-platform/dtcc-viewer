@@ -53,6 +53,8 @@ class PickingInteraction:
     picked_x: float
     picked_y: float
 
+    render_fbo: bool
+
     # Selection rays
     ray_nds: pyrr.Vector3  # Ray in normalised device coordinates
     ray_clip: pyrr.Vector4  # Ray in homogenous clip coordinates
@@ -80,6 +82,7 @@ class PickingInteraction:
         self.right_mbtn_pressed = False
         self.mouse_on_gui = False
         self.picking = False
+        self.render_fbo = False
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -124,6 +127,9 @@ class PickingInteraction:
         mode : int
             The modifier keys (shift, ctrl, alt) held down during the key action.
         """
+        if key == glfw.KEY_F and action == glfw.PRESS:
+            self.render_fbo = not self.render_fbo
+
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
 

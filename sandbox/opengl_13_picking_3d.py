@@ -359,24 +359,12 @@ def id_to_color(id):
 
 
 def color_to_id(color):
-    id = data[0] + data[1] * 256 + data[2] * 256 * 256
+    id = color[0] + color[1] * 256 + color[2] * 256 * 256
     return id
-
-
-# trans_vecs = []
-# trans_vecs.append([7, -7, 2])
-# trans_vecs.append([7, 7, 2])
-# trans_vecs.append([-7, 7, 2])
-# trans_vecs.append([-7, -7, 2])
-# trans_vecs = np.array(trans_vecs, dtype=np.float32)
-
-# cube_ids = [10, 20, 30, 40]
-# selected = [False, False, False, False]
 
 
 def test():
     gluUnProject()
-
     pass
 
 
@@ -384,8 +372,8 @@ def create_cube_vecs():
     z = 2.0
     cube_size = 1
     cube_spacing = 5
-    nx = 100
-    ny = 100
+    nx = 10
+    ny = 10
     ymin = -(ny - 1) * (cube_size + cube_spacing) / 2.0
     xmin = -(nx - 1) * (cube_size + cube_spacing) / 2.0
     trans_vecs = []
@@ -454,6 +442,7 @@ view_selection_colors = False
 while not glfw.window_should_close(window):
     glfw.poll_events()
     time = glfw.get_time()
+    # Clearing the default framebuffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Camera input
