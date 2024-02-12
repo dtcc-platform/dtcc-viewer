@@ -330,11 +330,17 @@ def _get_normalised_value_with_cap(min, max, value):
     return frac
 
 
+shader_cmaps = {
+    "rainbow": 0,
+    "inferno": 1,
+    "blackbody": 2,
+}
+
 color_maps = {
     "rainbow": calc_colors_rainbow,
+    "inferno": calc_colors_inferno,
     "blackbody": calc_colors_blackbody,
     "temperature": calc_colors_temperature,
-    "inferno": calc_colors_inferno,
     "multi": calc_colors_multi,
     "xray": calc_colors_xray,
     "warm": calc_colors_warm,

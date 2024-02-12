@@ -38,10 +38,6 @@ class MeshWrapper:
         Bounding box all objects in the entire scene.
     """
 
-    color_by: int
-    colors: np.ndarray
-    dict_color_by: dict
-    dict_colors: dict
     dict_data: dict
     vertices: np.ndarray
     faces: np.ndarray
@@ -56,7 +52,7 @@ class MeshWrapper:
         self,
         name: str,
         mesh: Mesh,
-        data: np.ndarray = None,
+        data: Any = None,  # Dict or np.ndarray
         submeshes: Submeshes = None,
         shading: MeshShading = MeshShading.wireshaded,
     ) -> None:
@@ -68,10 +64,12 @@ class MeshWrapper:
             The name of the mesh wrapper.
         mesh : Mesh
             The underlying Mesh object from which to generate the mesh data.
-        data : np.ndarray, optional
-            Additional mesh data for color calculation (default is None).
+        data : Any, optional
+            Additional mesh data (dict or array) for color calculation (default is None).
         colors : np.ndarray, optional
             Colors for vertices or faces (default is None).
+        submeshes : Submeshes, optional
+            Faces grouped into a submeshes object for clickability (default is None).
         shading : MeshShading, optional
             Shading option (default is MeshShading.wireshaded).
         """
@@ -79,8 +77,7 @@ class MeshWrapper:
         self.shading = shading
         self.dict_data = {}
 
-        self._generate_mesh_colors(mesh, data)
-        self._restructure_dicts(mesh)
+        self._restructure_data(mesh, data)
         self._restructure_mesh(mesh)
         if self.submeshes is None:
             self._create_default_submeshes(mesh)
@@ -91,136 +88,77 @@ class MeshWrapper:
         self.bb_local = BoundingBox(self.vertices)
         self._reformat_mesh()
 
-    def _generate_mesh_colors(self, mesh: Mesh, data: Any = None):
-        """Generate mesh colors based on the provided data."""
+    def _restructure_data(self, mesh: Mesh, data: Any):
+        # Structure the data in the dict so that there are three data slots for each
+        # vertex, and three uniqie vertces for each face. This is necessary in order
+        # to enable to color each face individually. This structure is also needed for
+        # the vertices so that each face can have individual normals so that shading
+        # can be computed correctly.
 
+        n_faces = len(mesh.faces)
+
+        new_dict = {
+            "slot0": np.zeros(n_faces * 3),
+            "slot1": np.zeros(n_faces * 3),
+            "slot2": np.zeros(n_faces * 3),
+        }
+
+        if type(data) == dict:
+            self.dict_data = self._restructure_data_dict(mesh, data, new_dict)
+        elif type(data) == np.ndarray:
+            self.dict_data = self._restructure_data_array(mesh, data, new_dict)
+        else:
+            info("No data provided for mesh.")
+            info("Default (x,y,z)-coords per vertex data appended.")
+            face_verts = mesh.vertices[mesh.faces.flatten()]
+            new_dict["slot0"] = face_verts[:, 0]
+            new_dict["slot1"] = face_verts[:, 1]
+            new_dict["slot2"] = face_verts[:, 2]
+            self.dict_data = new_dict
+
+    def _restructure_data_array(self, mesh: Mesh, data: np.ndarray, new_dict: dict):
         n_vertices = len(mesh.vertices)
         n_faces = len(mesh.faces)
-        n_data = 0
 
-        # First priority is coloring by provided data dict.
-        if isinstance(data, dict):
-            info(f"Coloring mesh by data dictionary")
-            if self._generate_dict_colors(data, n_vertices, n_faces):
-                return True
+        if len(data) == n_vertices:
+            face_data = data[mesh.faces.flatten()]
+            new_dict["slot0"] = face_data
+        elif len(data) == n_faces:
+            face_indices = np.arange(0, len(mesh.faces))
+            face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
+            face_data = data[face_indices]
+            new_dict["slot0"] = face_data
+        else:
+            pass
 
-        # If there is data for coloring
-        if data is not None:
-            info(f"Coloring mesh by data")
-            n_data = len(data)
-            key = "Data array"
-            if n_data == n_vertices:  # Generate colors base on provided vertex data
-                self.dict_data[key] = np.array(data)
-                return True
-            elif n_data == n_faces:  # Generate colors base on provided face data
-                self.dict_data[key] = np.array(data)
-                return True
-            else:
-                warning(f"Color data does not match vertex of face count: {self.name}")
-                info(f"Default colors are used -> i.e. coloring per vertex z-value")
+        return new_dict
 
-        # If no vertex of face colors are appended to the mesh and no data is provided
-        # the mesh is colored by vertex height.
-        info(f"Coloring mesh by default colors")
-        key = "Default colors"
-        default_data = mesh.vertices[:, 2]
-        self.dict_data[key] = default_data
-
-        return True
-
-    def _normalise_colors(self, colors: np.ndarray):
-        """Normalize colors to the range [0, 1] if necessary."""
-        # If the max color value is larger then 1 it is assumed that the color range is 0-255
-        max = np.max(colors)
-        if max > 1.0:
-            colors /= 255.0
-        return colors
-
-    def _generate_dict_colors(self, data_dict: dict, n_vert: int, n_face: int):
-        # return default colors to be added to the mesh
-        keys = data_dict.keys()
-        for key in keys:
-            row_data = data_dict[key]
-            if len(row_data) == n_vert:
-                self.dict_data[key] = np.array(row_data)
-            elif len(row_data) == n_face:
-                self.dict_data[key] = np.array(row_data)
-
-        return True
-
-    def _restructure_dicts(self, mesh: Mesh):
-        # Structure the color data in the dict so that there are three colors for each
-        # face. This is necessary in order to be able to color each face individually.
-        # This structure is also neede for the vertices so that each face can have
-        # individual normals so that shading can be computed correctly.
-
+    def _restructure_data_dict(self, mesh: Mesh, data_dict: dict, new_dict: dict):
         n_vertices = len(mesh.vertices)
         n_faces = len(mesh.faces)
-        d1, d2, d3 = 0, 0, 0
-        new_dict_data = dict.fromkeys(self.dict_data.keys())
+        data_slots = len(new_dict)
+        counter = 0
 
-        for key in self.dict_data.keys():
-            if self.dict_data[key] is not None:
-                new_dict_data[key] = []
+        for key in data_dict.keys():
+            data = data_dict[key]
+            if counter < data_slots:
+                if len(data) == n_vertices:
+                    # Data matching the number of vertices
+                    face_data = data[mesh.faces.flatten()]
+                    new_dict["slot" + str(counter)] = face_data
+                elif len(data) == n_faces:
+                    # Data matching the number of faces
+                    face_indices = np.arange(0, len(mesh.faces))
+                    face_indices = np.repeat(face_indices, 3)
+                    face_data = data[face_indices]
+                    new_dict["slot" + str(counter)] = face_data
+                else:
+                    info(f"Data for {key} does not match vertex or face count")
             else:
-                new_dict_data[key] = None
+                info(f"Data for {key} does not fit in available slots")
+            counter += 1
 
-        for face_index, face in enumerate(mesh.faces):
-            for key in self.dict_data.keys():
-                if self.dict_data[key] is not None:
-                    data = self.dict_data[key]
-                    if len(data) == n_vertices:
-                        d1 = data[face[0]]
-                        d2 = data[face[1]]
-                        d3 = data[face[2]]
-                        new_dict_data[key].extend([d1, d2, d3])
-                    elif len(data) == n_faces:
-                        d1 = data[face_index]
-                        new_dict_data[key].extend([d1, d1, d1])
-
-        # Saving data with the new format
-        for key in self.dict_data.keys():
-            if self.dict_data[key] is not None:
-                self.dict_data[key] = np.array(new_dict_data[key])
-
-        return True
-
-    def _restructure_dicts_2(self, mesh: Mesh):
-        # Structure the color data in the dict so that there are three colors for each
-        # face. This is necessary in order to be able to color each face individually.
-        # This structure is also neede for the vertices so that each face can have
-        # individual normals so that shading can be computed correctly.
-
-        n_vertices = len(mesh.vertices)
-        n_faces = len(mesh.faces)
-        d1, d2, d3 = 0, 0, 0
-        new_dict_data = dict.fromkeys(self.dict_data.keys())
-
-        for key in self.dict_data.keys():
-            if self.dict_data[key] is not None:
-                new_dict_data[key] = []
-            else:
-                new_dict_data[key] = None
-
-        for face_index, face in enumerate(mesh.faces):
-            for key in self.dict_data.keys():
-                if self.dict_data[key] is not None:
-                    data = self.dict_data[key]
-                    if len(data) == n_vertices:
-                        d1 = data[face[0]]
-                        d2 = data[face[1]]
-                        d3 = data[face[2]]
-                        new_dict_data[key].extend([d1, d2, d3])
-                    elif len(data) == n_faces:
-                        d1 = data[face_index]
-                        new_dict_data[key].extend([d1, d1, d1])
-
-        # Saving data with the new format
-        for key in self.dict_data.keys():
-            if self.dict_data[key] is not None:
-                self.dict_data[key] = np.array(new_dict_data[key])
-
-        return True
+        return new_dict
 
     def _restructure_mesh(self, mesh: Mesh):
         array_length = len(mesh.faces) * 3 * 9
@@ -235,15 +173,20 @@ class MeshWrapper:
         cross_p = np.cross(cross_vecs[::2], cross_vecs[1::2])  # (v2 - v1) x (v3 - v2)
         cross_p = cross_p / np.linalg.norm(cross_p, axis=1)[:, np.newaxis]  # normalize
         vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
-        color_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
+        data_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
         normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
         mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
         new_vertices[mask] = face_verts.flatten()
-        mask = np.tile(color_mask, array_length // len(color_mask) + 1)[:array_length]
-        new_vertices[mask] = np.array([1.0, 0.0, 1.0] * len(mesh.faces) * 3).flatten()
+        mask = np.tile(data_mask, array_length // len(data_mask) + 1)[:array_length]
+        new_vertices[mask] = np.array([0.0, 0.0, 0.0] * len(mesh.faces) * 3).flatten()
         mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
         new_vertices[mask] = np.tile(cross_p, 3).flatten()
         new_faces = np.arange(array_length // 9)
+
+        # Insert data from restructured dict
+        new_vertices[3::9] = self.dict_data["slot0"]
+        new_vertices[4::9] = self.dict_data["slot1"]
+        new_vertices[5::9] = self.dict_data["slot2"]
 
         new_edges = np.zeros(len(mesh.faces) * 6)
         new_edges[0::6] = new_faces[0::3]
@@ -298,7 +241,5 @@ class MeshWrapper:
         # Start and end indices are the same, only one face is grouped in each submesh
         start_faces = np.arange(0, n_faces)
         end_faces = np.arange(0, n_faces)
-
         id = np.arange(0, n_faces)
-
         self.submeshes = Submeshes(start_faces, end_faces, id)

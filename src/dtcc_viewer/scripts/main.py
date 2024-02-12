@@ -59,6 +59,7 @@ def mesh_example_3():
     file = "../../../data/models/CitySurface.obj"
     mesh = meshes.load_mesh(file)
     # mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
+    print("Vertex count: " + str(len(mesh.vertices)))
     face_mid_pts = calc_face_mid_points(mesh)
     data_dict = {}
     data_dict["vertex_x"] = mesh.vertices[:, 0]
@@ -67,6 +68,7 @@ def mesh_example_3():
     data_dict["face_y"] = face_mid_pts[:, 1]
     data_dict["vertex_z"] = mesh.vertices[:, 2]
     data_dict["face_z"] = face_mid_pts[:, 2]
+    print(len(data_dict["vertex_x"]))
     mesh.view(data=data_dict)
 
 

@@ -4,7 +4,7 @@ vertex_shader_lines = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
-layout(location = 1) in vec3 a_color;
+layout(location = 1) in vec3 a_data;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -14,6 +14,15 @@ uniform int color_by;
 uniform float clip_x;
 uniform float clip_y;
 uniform float clip_z;
+
+uniform float data_min; 
+uniform float data_max;
+uniform int color_map;
+uniform int data_index;
+
+$color_map_0
+$color_map_1
+$color_map_2
 
 out vec3 v_color;
 void main()
@@ -32,11 +41,24 @@ void main()
     gl_Position = project * view * world_pos;
     
     //gl_Position = project * view * model * vec4(a_position, 1.0);
-    v_color = a_color;
-
+    
     if(color_by == 1)
     {
-        v_color = a_color;
+        //v_color = a_color;
+        
+        // Calculate the colors using the shader colormaps
+        if(color_map == 0)
+        {
+            v_color = rainbow(a_data[data_index]);
+        }
+        else if(color_map == 1)
+        {
+            v_color = inferno(a_data[data_index]);
+        }
+        else if(color_map == 2)
+        {
+            v_color = black_body(a_data[data_index]);
+        }
     }
     else if(color_by == 0)
     {

@@ -4,6 +4,7 @@ import copy
 import numpy as np
 import pyrr
 from pprint import pp
+from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl_viewer.interaction import Interaction
@@ -34,6 +35,12 @@ from dtcc_viewer.opengl_viewer.shaders_mesh_ambient import (
 from dtcc_viewer.opengl_viewer.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
+)
+
+from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+    color_map_rainbow,
+    color_map_inferno,
+    color_map_black_body,
 )
 
 
@@ -70,6 +77,10 @@ class MeshGL:
     ploc_lines: int  # Uniform location for projection matrix for lines
     cb_loc_lines: int  # Uniform location for color_by variable for lines
     cp_locs_lines: [int]  # Uniform locations for clip plane distance x,y,z
+    cm_loc_lines: int  # Uniform location for color map type
+    di_loc_lines: int  # Uniform location for data index
+    dmin_loc_lines: int  # Uniform location for data min
+    dmax_loc_lines: int  # Uniform location for data max
 
     shader_ambient: int  # Shader program for ambient mesh rendering
     mloc_ambient: int  # Uniform location for model matrix for ambient rendering
@@ -77,6 +88,10 @@ class MeshGL:
     vloc_ambient: int  # Uniform location for view matrix for ambient rendering
     cb_loc_ambient: int  # Uniform location for color_by variable for ambient rendering
     cp_locs_ambient: [int]  # Uniform locations for clip plane distance x,y,z
+    cm_loc_ambient: int  # Uniform location for color map type
+    di_loc_ambient: int  # Uniform location for data index
+    dmin_loc_ambient: int  # Uniform location for data min
+    dmax_loc_ambient: int  # Uniform location for data max
 
     shader_diffuse: int  # Shader program for diffuse mesh renderi
     mloc_diffuse: int  # Uniform location for model matrix for diffuse rendering
@@ -87,6 +102,10 @@ class MeshGL:
     lp_loc_diffuse: int  # Uniform location for light position for diffuse rendering
     vp_loc_diffuse: int  # Uniform location for view position for diffuse rendering
     cp_locs_diffuse: [int]  # Uniform locations for clip plane distance x,y,z
+    cm_loc_diffuse: int  # Uniform location for color map type
+    di_loc_diffuse: int  # Uniform location for data index
+    dmin_loc_diffuse: int  # Uniform location for data min
+    dmax_loc_diffuse: int  # Uniform location for data max
 
     shader_shadows: int  # Shader program for rendering of diffuse mesh with shadow map
     mloc_shadows: int  # Uniform location for model matrix for diffuse shadow rendering
@@ -98,6 +117,10 @@ class MeshGL:
     vp_loc_shadows: int  # Uniform location for view position for diffuse shadow rendering
     lsm_loc_shadows: int  # Uniform location for light space matrix for diffuse shadow rendering
     cp_locs_shadows: [int]  # Uniform locations for clip plane distance x,y,z
+    cm_loc_shadows: int  # Uniform location for color map type
+    di_loc_shadows: int  # Uniform location for data index
+    dmin_loc_shadows: int  # Uniform location for data min
+    dmax_loc_shadows: int  # Uniform location for data max
 
     shader_shadow_map: int  # Shader program for rendering of the shadow map to the frame buffer
     mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
@@ -150,11 +173,6 @@ class MeshGL:
         self._create_shader_shadow_map()
         self._set_constats()
 
-        # Trigger color update to set the initial colors
-        self.guip.update_caps = True
-        self.guip.update_colors = True
-        self._update_colors()
-
     def _calc_model_scale(self) -> None:
         """Calculate the model scale from vertex positions."""
 
@@ -196,7 +214,7 @@ class MeshGL:
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Color
+        # Data for color calculations
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
@@ -226,7 +244,7 @@ class MeshGL:
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Color
+        # Data for color calculations
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
@@ -275,10 +293,20 @@ class MeshGL:
 
     def _create_shader_lines(self) -> None:
         """Create shader for wireframe rendering."""
+
+        vertex_shader = vertex_shader_lines
+        fragment_shader = fragment_shader_lines
+
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+        )
+
         self._bind_vao_lines()
         self.shader_lines = compileProgram(
-            compileShader(vertex_shader_lines, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_lines, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
         glUseProgram(self.shader_lines)
 
@@ -286,17 +314,30 @@ class MeshGL:
         self.vloc_lines = glGetUniformLocation(self.shader_lines, "view")
         self.ploc_lines = glGetUniformLocation(self.shader_lines, "project")
         self.cb_loc_lines = glGetUniformLocation(self.shader_lines, "color_by")
-
         self.cp_locs_lines[0] = glGetUniformLocation(self.shader_lines, "clip_x")
         self.cp_locs_lines[1] = glGetUniformLocation(self.shader_lines, "clip_y")
         self.cp_locs_lines[2] = glGetUniformLocation(self.shader_lines, "clip_z")
+        self.cm_loc_lines = glGetUniformLocation(self.shader_lines, "color_map")
+        self.di_loc_lines = glGetUniformLocation(self.shader_lines, "data_index")
+        self.dmin_loc_lines = glGetUniformLocation(self.shader_lines, "data_min")
+        self.dmax_loc_lines = glGetUniformLocation(self.shader_lines, "data_max")
 
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
+
+        vertex_shader = vertex_shader_ambient
+        fragment_shader = fragment_shader_ambient
+
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+        )
+
         self._bind_vao_triangels()
         self.shader_ambient = compileProgram(
-            compileShader(vertex_shader_ambient, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_ambient, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_ambient)
@@ -308,13 +349,27 @@ class MeshGL:
         self.cp_locs_ambient[0] = glGetUniformLocation(self.shader_ambient, "clip_x")
         self.cp_locs_ambient[1] = glGetUniformLocation(self.shader_ambient, "clip_y")
         self.cp_locs_ambient[2] = glGetUniformLocation(self.shader_ambient, "clip_z")
+        self.cm_loc_ambient = glGetUniformLocation(self.shader_ambient, "color_map")
+        self.di_loc_ambient = glGetUniformLocation(self.shader_ambient, "data_index")
+        self.dmin_loc_ambient = glGetUniformLocation(self.shader_ambient, "data_min")
+        self.dmax_loc_ambient = glGetUniformLocation(self.shader_ambient, "data_max")
 
     def _create_shader_diffuse(self) -> None:
         """Create shader for diffuse shading."""
+
+        vertex_shader = vertex_shader_diffuse
+        fragment_shader = fragment_shader_diffuse
+
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+        )
+
         self._bind_vao_triangels()
         self.shader_diffuse = compileProgram(
-            compileShader(vertex_shader_diffuse, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_diffuse, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_diffuse)
@@ -323,23 +378,35 @@ class MeshGL:
         self.vloc_diffuse = glGetUniformLocation(self.shader_diffuse, "view")
         self.ploc_diffuse = glGetUniformLocation(self.shader_diffuse, "project")
         self.cb_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "color_by")
-
         self.lc_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "light_color")
         self.lp_loc_diffuse = glGetUniformLocation(
             self.shader_diffuse, "light_position"
         )
         self.vp_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "view_position")
-
         self.cp_locs_diffuse[0] = glGetUniformLocation(self.shader_diffuse, "clip_x")
         self.cp_locs_diffuse[1] = glGetUniformLocation(self.shader_diffuse, "clip_y")
         self.cp_locs_diffuse[2] = glGetUniformLocation(self.shader_diffuse, "clip_z")
+        self.cm_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "color_map")
+        self.di_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "data_index")
+        self.dmin_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "data_min")
+        self.dmax_loc_diffuse = glGetUniformLocation(self.shader_diffuse, "data_max")
 
     def _create_shader_shadows(self) -> None:
         """Create shader for shading with shadows."""
+
+        vertex_shader = vertex_shader_shadows
+        fragment_shader = fragment_shader_shadows
+
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+        )
+
         self._bind_vao_triangels()
         self.shader_shadows = compileProgram(
-            compileShader(vertex_shader_shadows, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_shadows, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
         glUseProgram(self.shader_shadows)
@@ -356,13 +423,17 @@ class MeshGL:
         self.lsm_loc_shadows = glGetUniformLocation(
             self.shader_shadows, "light_space_matrix"
         )
-
         self.cp_locs_shadows[0] = glGetUniformLocation(self.shader_shadows, "clip_x")
         self.cp_locs_shadows[1] = glGetUniformLocation(self.shader_shadows, "clip_y")
         self.cp_locs_shadows[2] = glGetUniformLocation(self.shader_shadows, "clip_z")
+        self.cm_loc_shadows = glGetUniformLocation(self.shader_shadows, "color_map")
+        self.di_loc_shadows = glGetUniformLocation(self.shader_shadows, "data_index")
+        self.dmin_loc_shadows = glGetUniformLocation(self.shader_shadows, "data_min")
+        self.dmax_loc_shadows = glGetUniformLocation(self.shader_shadows, "data_max")
 
     def _create_shader_shadow_map(self) -> None:
         """Create shader for rendering shadow map."""
+
         self.shader_shadow_map = compileProgram(
             compileShader(vertex_shader_shadow_map, GL_VERTEX_SHADER),
             compileShader(fragment_shader_shadow_map, GL_FRAGMENT_SHADER),
@@ -375,62 +446,10 @@ class MeshGL:
             self.shader_shadow_map, "light_space_matrix"
         )
 
-    def _update_colors(self) -> None:
+    def _update_color_caps(self):
         if self.guip.update_caps:
-            self._update_colors_from_new_caps()
+            self.guip.calc_data_min_max()
             self.guip.update_caps = False
-
-        if self.guip.update_colors:
-            glBindVertexArray(self.VAO_triangels)
-
-            # (x, y, z, r, g, b, nx, ny, nz)
-            self.vertices[3::9] = self.colors[0::3]
-            self.vertices[4::9] = self.colors[1::3]
-            self.vertices[5::9] = self.colors[2::3]
-
-            # Updating vertex buffer object for triangles
-            size = len(self.vertices) * 4  # Size in bytes
-            glBindBuffer(GL_ARRAY_BUFFER, self.VBO_triangels)
-            glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
-            glBindVertexArray(0)
-
-            # Updating vertex buffer object for lines
-            size = len(self.vertices) * 4
-            glBindBuffer(GL_ARRAY_BUFFER, self.VBO_edge)
-            glBufferData(GL_ARRAY_BUFFER, size, self.vertices, GL_STATIC_DRAW)
-
-            info("Mesh colors updated")
-            self.guip.update_colors = False
-
-    def _update_colors_from_new_caps(self) -> None:
-        key = self.guip.get_current_color_name()
-        data = self.dict_data[key]
-
-        if self.guip.dict_has_data[key]:
-            min = np.min(data)
-            max = np.max(data)
-            dom = max - min
-
-            lower_cap = self.guip.dict_slider_caps[key][0]
-            upper_cap = self.guip.dict_slider_caps[key][1]
-            new_min = min + dom * lower_cap
-            new_max = min + dom * upper_cap
-
-            self.guip.set_dict_value_caps(key, new_min, new_max)
-
-            cmap_key = self.guip.cmap_key
-            new_colors = color_maps[cmap_key](data, new_min, new_max)
-
-            # new_colors = np.array(calc_colors_rainbow(data, new_min, new_max))
-            n_vertices = int(len(self.vertices) / 9)
-            new_colors = fit_colors_to_faces(self.faces, n_vertices, new_colors)
-            if self.guip.invert_cmap:
-                self.colors = 1.0 - new_colors
-            else:
-                self.colors = new_colors
-
-        else:
-            info(f"No data found for {key}!")
 
     def render_lines(self, interaction: Interaction, gguip: GuiParameters, ws_pass=0):
         """Render wireframe lines of the mesh.
@@ -440,9 +459,7 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-
-        self._update_colors()
-
+        self._update_color_caps()
         self._bind_shader_lines()
 
         # MVP Calculations
@@ -457,6 +474,10 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_lines, color_by)
+        glUniform1i(self.cm_loc_lines, self.guip.cmap_index)
+        glUniform1i(self.di_loc_lines, self.guip.data_index)
+        glUniform1f(self.dmin_loc_lines, self.guip.data_min)
+        glUniform1f(self.dmax_loc_lines, self.guip.data_max)
 
         self._lines_draw_call()
         self._unbind_shader()
@@ -469,8 +490,7 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._update_colors()
-
+        self._update_color_caps()
         self._bind_shader_ambient()
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -485,6 +505,10 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_ambient, color_by)
+        glUniform1i(self.cm_loc_ambient, self.guip.cmap_index)
+        glUniform1i(self.di_loc_ambient, self.guip.data_index)
+        glUniform1f(self.dmin_loc_ambient, self.guip.data_min)
+        glUniform1f(self.dmax_loc_ambient, self.guip.data_max)
 
         self._triangles_draw_call()
         self._unbind_shader()
@@ -497,8 +521,7 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._update_colors()
-
+        self._update_color_caps()
         self._bind_shader_diffuse()
         self.light_position = self._calc_light_position()
 
@@ -514,6 +537,10 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.cb_loc_diffuse, color_by)
+        glUniform1i(self.cm_loc_diffuse, self.guip.cmap_index)
+        glUniform1i(self.di_loc_diffuse, self.guip.data_index)
+        glUniform1f(self.dmin_loc_diffuse, self.guip.data_min)
+        glUniform1f(self.dmax_loc_diffuse, self.guip.data_max)
 
         view_pos = interaction.camera.camera_pos
         glUniform3fv(self.vp_loc_shadows, 1, view_pos)
@@ -534,14 +561,12 @@ class MeshGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._update_colors()
-
+        self._update_color_caps()
         self._render_shadow_map(interaction)
         self._render_shadows(interaction, gguip)
 
     def render_wireshaded(self, interaction: Interaction, gguip: GuiParameters) -> None:
-        self._update_colors()
-
+        self._update_color_caps()
         glEnable(GL_POLYGON_OFFSET_FILL)
         glPolygonOffset(1.0, 1.0)
         self.render_diffuse(interaction, gguip, ws_pass=1)
@@ -615,7 +640,11 @@ class MeshGL:
         self.set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.cb_loc_diffuse, color_by)
+        glUniform1i(self.cb_loc_shadows, color_by)
+        glUniform1i(self.cm_loc_shadows, self.guip.cmap_index)
+        glUniform1i(self.di_loc_shadows, self.guip.data_index)
+        glUniform1f(self.dmin_loc_shadows, self.guip.data_min)
+        glUniform1f(self.dmax_loc_shadows, self.guip.data_max)
 
         # Set light uniforms
         glUniform3fv(self.lc_loc_shadows, 1, self.light_color)

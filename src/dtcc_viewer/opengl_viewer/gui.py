@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from dtcc_viewer.opengl_viewer.utils import MeshShading, ColorSchema
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.colors import color_maps
+from dtcc_viewer.colors import color_maps, shader_cmaps
 
 
 class GuiParameters:
@@ -50,7 +50,6 @@ class GuiParametersMesh:
         self.color_mesh = True
         self.animate_light = False
         self.mesh_shading = shading
-        self.update_colors = False
         self.lower_cap = 0.0
         self.upper_cap = 1.0
         self.update_caps = False
@@ -58,16 +57,19 @@ class GuiParametersMesh:
         self.cmap_index = 0
         self.cmap_key = list(color_maps.keys())[0]
 
-        self.color_index = 0
-        self.color_keys = list(dict_data.keys())
-        self.dict_slider_caps = dict.fromkeys(self.color_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.color_keys, [])
-        self.dict_has_data = dict.fromkeys(self.color_keys, False)
+        self.data_index = 0
+        self.data_min = 0  # Min value for color clamp
+        self.data_max = 0  # Max value for color clamp
+        self.data_keys = list(dict_data.keys())
+        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
+        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
+        self.dict_has_data = dict.fromkeys(self.data_keys, False)
         self.set_dict_has_data(dict_data)
         self.calc_dict_value_caps(dict_data)
+        self.calc_data_min_max()
 
-    def get_current_color_name(self):
-        return self.color_keys[self.color_index]
+    def get_current_data_name(self):
+        return self.data_keys[self.data_index]
 
     def set_dict_has_data(self, dict_data: dict):
         for key in dict_data.keys():
@@ -86,6 +88,17 @@ class GuiParametersMesh:
     def set_dict_value_caps(self, key: str, min: float, max: float):
         if key in self.dict_value_caps:
             self.dict_value_caps[key] = [min, max]
+
+    def calc_data_min_max(self):
+        key = self.get_current_data_name()
+        min = self.dict_value_caps[key][0]
+        max = self.dict_value_caps[key][1]
+        dom = max - min
+
+        lower_cap = self.dict_slider_caps[key][0]
+        upper_cap = self.dict_slider_caps[key][1]
+        self.data_min = min + dom * lower_cap
+        self.data_max = min + dom * upper_cap
 
 
 class GuiParametersPC:
@@ -268,7 +281,7 @@ class Gui:
             # Color maps combo box
 
             imgui.push_id("PcCmapCombo " + str(index))
-            items = list(color_maps.keys())
+            items = list(shader_cmaps.keys())
             with imgui.begin_combo("Color map", items[guip.cmap_index]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
@@ -336,7 +349,6 @@ class Gui:
                 "Invert cmap", guip.invert_cmap
             )
             if changed:
-                guip.update_colors = True
                 guip.update_caps = True
             imgui.pop_id()
 
@@ -363,18 +375,17 @@ class Gui:
                             imgui.set_item_default_focus()
             imgui.pop_id()
 
-            key = guip.get_current_color_name()
+            key = guip.get_current_data_name()
             # Color maps combo box
             if guip.dict_has_data[key]:
                 imgui.push_id("CmapCombo " + str(index))
-                items = list(color_maps.keys())
+                items = list(shader_cmaps.keys())
                 with imgui.begin_combo("Color map", items[guip.cmap_index]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
                             is_selected = guip.cmap_index
                             if imgui.selectable(item, is_selected)[0]:
                                 guip.update_caps = True
-                                guip.update_colors = True
                                 guip.cmap_index = i
                                 guip.cmap_key = item
 
@@ -383,20 +394,19 @@ class Gui:
                                 imgui.set_item_default_focus()
                 imgui.pop_id()
 
-            # Add combobox for selecting color if there are more then one color
-            if len(guip.color_keys) > 1:
+            # Add combobox for selecting data to color by
+            if len(guip.data_keys) > 1:
                 # Drawing colors
-                key = guip.get_current_color_name()
+                key = guip.get_current_data_name()
                 imgui.push_id("ColorsCombo " + str(index))
-                items = guip.color_keys
-                with imgui.begin_combo("Color by", items[guip.color_index]) as combo:
+                items = guip.data_keys
+                with imgui.begin_combo("Data", items[guip.data_index]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
-                            is_selected = guip.color_index
+                            is_selected = guip.data_index
                             if imgui.selectable(item, is_selected)[0]:
-                                guip.update_colors = True
                                 guip.update_caps = True
-                                guip.color_index = i
+                                guip.data_index = i
                                 guip.dict_slider_caps[key][0] = 0.0
                                 guip.dict_slider_caps[key][1] = 1.0
 
@@ -405,7 +415,7 @@ class Gui:
                                 imgui.set_item_default_focus()
                 imgui.pop_id()
 
-            key = guip.get_current_color_name()
+            key = guip.get_current_data_name()
             # Range sliders are only relevant if the colors are generated by data.
             if guip.dict_has_data[key]:
                 # Range sliders to cap colors
@@ -415,7 +425,6 @@ class Gui:
                 if changed:
                     guip.dict_slider_caps[key][0] = value
                     guip.update_caps = True
-                    guip.update_colors = True
                     if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
                         guip.dict_slider_caps[key][1] = (
                             guip.dict_slider_caps[key][0] + 0.001

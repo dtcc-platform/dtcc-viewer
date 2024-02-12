@@ -2,7 +2,7 @@ vertex_shader_shadows = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
-layout(location = 1) in vec3 a_color;
+layout(location = 1) in vec3 a_data;
 layout(location = 2) in vec3 a_normal;
 
 out vec3 v_frag_pos;
@@ -16,9 +16,18 @@ uniform mat4 project;
 uniform int color_by;
 uniform mat4 light_space_matrix;
 
+uniform float data_min; 
+uniform float data_max;
+uniform int color_map;
+uniform int data_index;
+
 uniform float clip_x;
 uniform float clip_y;
 uniform float clip_z;
+
+$color_map_0
+$color_map_1
+$color_map_2
 
 void main()
 {   
@@ -41,7 +50,21 @@ void main()
 
     if(color_by == 1)
     {
-        v_color = a_color;
+        //v_color = a_color;
+
+        // Calculate the colors using the shader colormaps
+        if(color_map == 0)
+        {
+            v_color = rainbow(a_data[data_index]);
+        }
+        else if(color_map == 1)
+        {
+            v_color = inferno(a_data[data_index]);
+        }
+        else if(color_map == 2)
+        {
+            v_color = black_body(a_data[data_index]);
+        }
     }
     else if(color_by == 2)
     {
