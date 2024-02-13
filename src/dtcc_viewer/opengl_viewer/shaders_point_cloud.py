@@ -4,9 +4,9 @@ vertex_shader_pc = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
-layout(location = 1) in vec3 a_color;
+layout(location = 1) in vec3 a_base_color;      //White in center, grey at border
 layout(location = 2) in vec3 a_offset;
-layout(location = 3) in vec3 a_icolor;
+layout(location = 3) in vec3 a_idata;           //Data per instance
 
 uniform mat4 model;
 uniform mat4 project;
@@ -18,6 +18,15 @@ uniform int invert_color;
 uniform float clip_x;
 uniform float clip_y;
 uniform float clip_z;
+
+uniform float data_min; 
+uniform float data_max;
+uniform int color_map;
+uniform int data_index;
+
+$color_map_0
+$color_map_1
+$color_map_2
 
 out vec3 v_color;
 void main()
@@ -36,19 +45,36 @@ void main()
 
     gl_Position = project * view * final_pos;
 
-    vec3 v_icolor = a_icolor;
-    if(invert_color == 1)
-    {
-        v_icolor = vec3(1.0) - a_icolor;
-    }
 
     if(color_by == 1)
-    {
-        v_color = v_icolor * a_color;
+    {   
+        // Calculate the colors using the shader colormaps
+
+        vec3 color_per_instance = vec3(1,0,1);
+
+        if(color_map == 0)
+        {
+            color_per_instance = rainbow(a_idata[data_index]);
+        }
+        else if(color_map == 1)
+        {
+            color_per_instance = inferno(a_idata[data_index]);
+        }
+        else if(color_map == 2)
+        {
+            color_per_instance = black_body(a_idata[data_index]);
+        }
+        
+        if(invert_color == 1)
+        {
+            color_per_instance = vec3(1.0) - color_per_instance;
+        }
+
+        v_color = color_per_instance * a_base_color;
     }
     else
     {
-        v_color = a_color;
+        v_color = a_base_color;
     }
 
 }

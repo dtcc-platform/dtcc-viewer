@@ -4,6 +4,7 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
+from string import Template
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
@@ -14,6 +15,12 @@ from dtcc_viewer.opengl_viewer.gui import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.colors import color_maps
+
+from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+    color_map_rainbow,
+    color_map_inferno,
+    color_map_black_body,
+)
 
 
 class PointCloudGL:
@@ -59,6 +66,10 @@ class PointCloudGL:
     color_by_loc: int  # Uniform location for color by variable
     scale_loc: int  # Uniform location for scaling parameter
     cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
+    cm_loc: int  # Uniform location for color map
+    di_loc: int  # Uniform location for data index
+    dmin_loc: int  # Uniform location for data min
+    dmax_loc: int  # Uniform location for data max
 
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
@@ -76,20 +87,16 @@ class PointCloudGL:
         self.p_size = pc_wrapper.size
         self.n_points = int(len(pc_wrapper.points) / 3)
         self.transforms = pc_wrapper.points
+        self.data_dict = pc_wrapper.data_dict
 
-        self.dict_data = pc_wrapper.dict_data
-        color_keys = list(pc_wrapper.dict_data.keys())
+        self.data = np.zeros((self.n_points, 3), dtype=np.float32)
+        self.data[:, 0] = self.data_dict["slot0"]
+        self.data[:, 1] = self.data_dict["slot1"]
+        self.data[:, 2] = self.data_dict["slot2"]
 
-        self.guip = GuiParametersPC(pc_wrapper.name, color_keys)
+        self.guip = GuiParametersPC(pc_wrapper.name, self.data_dict)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
-
-        # Calculate initial colors for the particles
-        cmap_key = self.guip.cmap_key
-        data_key = color_keys[0]
-        colors = color_maps[cmap_key](self.dict_data[data_key])
-        colors = np.array(colors, dtype="float32").flatten()
-        self.colors = colors
 
         self._create_single_instance()
         self._create_multiple_instances()
@@ -103,8 +110,7 @@ class PointCloudGL:
         interaction : Interaction
             The Interaction object containing camera and user interaction information.
         """
-        self._update_colors()
-
+        self._update_color_caps()
         self._bind_vao()
         self._bind_shader()
 
@@ -114,7 +120,7 @@ class PointCloudGL:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.view_loc, 1, GL_FALSE, view)
 
-        tans = self._get_billborad_transform(
+        tans = self._get_billboard_transform(
             interaction.camera.camera_pos, interaction.camera.camera_target
         )
         glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
@@ -123,9 +129,13 @@ class PointCloudGL:
 
         color_by = int(self.guip.color_pc)
         glUniform1i(self.color_by_loc, color_by)
-
         invert_color = int(self.guip.invert_cmap)
         glUniform1i(self.invert_color_loc, invert_color)
+
+        glUniform1i(self.cm_loc, self.guip.cmap_index)
+        glUniform1i(self.di_loc, self.guip.data_index)
+        glUniform1f(self.dmin_loc, self.guip.data_min)
+        glUniform1f(self.dmax_loc, self.guip.data_max)
 
         scale_factor = self.guip.pc_scale
         scale = pyrr.matrix44.create_from_scale(
@@ -144,26 +154,10 @@ class PointCloudGL:
         self._unbind_vao()
         self._unbind_shader()
 
-    def _update_colors(self):
-        if self.guip.update_colors:
-            color_keys = list(self.dict_data.keys())
-            color_key = self.guip.get_current_color_name()
-            cmap_key = self.guip.cmap_key
-
-            if color_key in color_keys:
-                data = self.dict_data[color_key]
-                min = np.min(data)
-                max = np.max(data)
-                colors = color_maps[cmap_key](data, min, max)
-                colors = np.array(colors, dtype="float32").flatten()
-                self.colors = colors
-
-            size = self.colors.nbytes
-            glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
-            glBufferData(GL_ARRAY_BUFFER, size, self.colors, GL_STATIC_DRAW)
-
-            info("Pc colors updated")
-            self.guip.update_colors = False
+    def _update_color_caps(self):
+        if self.guip.update_caps:
+            self.guip.calc_data_min_max()
+            self.guip.update_caps = False
 
     def _create_single_instance(self):
         """Create a single instance of particle mesh geometry."""
@@ -171,6 +165,7 @@ class PointCloudGL:
         # Get vertices and face indices for one instance. The geometry resolution is related to number of particles.
         [self.vertices, self.face_indices] = self._get_instance_geometry()
 
+        # Vertex structure is [x, y, z, r, g, b...]
         self.vertices = np.array(self.vertices, dtype=np.float32)
         self.face_indices = np.array(self.face_indices, dtype=np.uint32)
 
@@ -190,9 +185,11 @@ class PointCloudGL:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.face_indices, GL_STATIC_DRAW)
 
+        # Position for single instance around origin
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
 
+        # Color for single instance white in the center and greay at the edge
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
@@ -218,9 +215,9 @@ class PointCloudGL:
         # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).
         glVertexAttribDivisor(2, 1)
 
-        self.color_VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self.color_VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.colors.nbytes, self.colors, GL_STATIC_DRAW)
+        self.data_VBO = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.data_VBO)
+        glBufferData(GL_ARRAY_BUFFER, self.data.nbytes, self.data, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
@@ -238,9 +235,20 @@ class PointCloudGL:
 
     def _create_shader(self) -> None:
         """Create and compile the shader program."""
+
+        vertex_shader = vertex_shader_pc
+        fragment_shader = fragment_shader_pc
+
+        # Insert function for color map calculations
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+        )
+
         self.shader = compileProgram(
-            compileShader(vertex_shader_pc, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_pc, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
         glUseProgram(self.shader)
 
@@ -255,6 +263,11 @@ class PointCloudGL:
         self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")
         self.cp_locs[2] = glGetUniformLocation(self.shader, "clip_z")
 
+        self.cm_loc = glGetUniformLocation(self.shader, "color_map")
+        self.di_loc = glGetUniformLocation(self.shader, "data_index")
+        self.dmin_loc = glGetUniformLocation(self.shader, "data_min")
+        self.dmax_loc = glGetUniformLocation(self.shader, "data_max")
+
     def _bind_shader(self) -> None:
         """Bind the shader program."""
         glUseProgram(self.shader)
@@ -263,7 +276,7 @@ class PointCloudGL:
         """Unbind the shader program."""
         glUseProgram(0)
 
-    def _get_billborad_transform(self, camera_position, camera_target):
+    def _get_billboard_transform(self, camera_position, camera_target):
         """Calculate the transformation matrix for billboarding.
 
         Parameters
@@ -314,7 +327,7 @@ class PointCloudGL:
         """
         center = np.array([0.0, 0.0, 0.0], dtype=float)
         center_color = [1.0, 1.0, 1.0]  # White
-        edge_color = [0.5, 0.5, 0.5]  # Magenta
+        edge_color = [0.5, 0.5, 0.5]  # Grey
         angle_between_points = 2 * math.pi / n_sides
         vertices = []
         vertices.extend(center)

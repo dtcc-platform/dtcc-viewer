@@ -145,7 +145,8 @@ def multi_geometry_example_2():
     scene = Scene()
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
-        scene.add_pointcloud("pc" + str(i), pc, i * 0.1, data)
+        print(len(pc.points))
+        scene.add_pointcloud("pc" + str(i), pc, 0.1 + i * 0.1, data)
 
     window = Window(1200, 800)
     window.render(scene)

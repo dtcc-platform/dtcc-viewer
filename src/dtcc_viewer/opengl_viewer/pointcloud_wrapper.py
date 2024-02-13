@@ -64,10 +64,10 @@ class PointCloudWrapper:
 
         self.name = name
         self.size = size
-        self.dict_data = {}
+        self.data_dict = {}
         self.n_points = len(pc.points)
         self.points = np.array(pc.points, dtype="float32").flatten()
-        self._reformat_data_dict(data=data)
+        self._restructure_data(data=data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -75,42 +75,53 @@ class PointCloudWrapper:
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 
-    def _reformat_data_dict(self, data: np.ndarray = None):
+    def _restructure_data(self, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
-        # Coloring by dictionary
+        new_dict = {
+            "slot0": np.zeros(self.n_points),
+            "slot1": np.zeros(self.n_points),
+            "slot2": np.zeros(self.n_points),
+        }
+
         if isinstance(data, dict):
-            if self._generate_dict_data(data, self.n_points):
-                return True
-            else:
-                warning("Data dict for pc colors does not match point count!")
+            info("Provided color data is dict.")
+            self.data_dict = self._restructure_data_dict(data, self.n_points, new_dict)
+        elif isinstance(data, np.ndarray):
+            info("Provided color data is np.ndarray.")
+            self.data_dict = self._restructure_data_array(data, self.n_points, new_dict)
+        else:
+            info("No data provided for point cloud -> coloring per z-value")
+            z = self.points[2::3]  # Color by height if no data is provided
+            new_dict["slot0"] = self.points[0::3]
+            new_dict["slot1"] = self.points[1::3]
+            new_dict["slot2"] = self.points[2::3]
+            self.data_dict = new_dict
 
-        # Coloring by array data
-        elif data is not None:
-            if self.n_points == len(data):
-                self.dict_data["Data"] = data
-                return True
-            else:
-                warning("Provided color data does not match the particle count!")
+    def _restructure_data_array(self, data: np.ndarray, n_points: int, new_dict: dict):
+        if self.n_points == len(data):
+            new_dict["slot0"] = data
+        else:
+            warning("Provided data array does not match the particle count!")
+        return new_dict
 
-        info("No data provided for point cloud -> coloring per z-value")
-        z = self.points[2::3]  # Color by height if no data is provided
-        self.dict_data["Default data"] = z
-
-        return True
-
-    def _generate_dict_data(self, data_dict: dict, n_points: int):
+    def _restructure_data_dict(self, data_dict: dict, n_points: int, new_dict: dict):
         """Check the data dict to math point count."""
         keys = data_dict.keys()
-
+        counter = 0
+        slots = len(new_dict)
         for key in keys:
-            row_data = data_dict[key]
-            if len(row_data) == n_points:
-                self.dict_data[key] = row_data
+            data = data_dict[key]
+            if len(data) == n_points:
+                if counter < slots:
+                    new_dict[f"slot{counter}"] = data
+                else:
+                    warning("Data in for key {key} doesn't fit available data slots.")
+                counter += 1
             else:
                 warning(f"Dict data in for key {key} doesn't match point count:")
 
-        return True
+        return new_dict
 
     def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""
