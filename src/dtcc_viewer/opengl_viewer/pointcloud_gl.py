@@ -20,6 +20,8 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
     color_map_rainbow,
     color_map_inferno,
     color_map_black_body,
+    color_map_turbo,
+    color_map_viridis,
 )
 
 
@@ -244,6 +246,8 @@ class PointCloudGL:
             color_map_0=color_map_rainbow,
             color_map_1=color_map_inferno,
             color_map_2=color_map_black_body,
+            color_map_3=color_map_turbo,
+            color_map_4=color_map_viridis,
         )
 
         self.shader = compileProgram(

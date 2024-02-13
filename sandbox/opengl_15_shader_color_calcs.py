@@ -177,6 +177,44 @@ color_map_black_body = """vec3 black_body(float value) {
     return color;
 }"""
 
+color_map_plasma = """vec3 plasma(float value) {
+
+    vec3 sampleColors[18] = vec3[18](
+        vec3(0.050383, 0.029803, 0.527975),
+        vec3(0.186213, 0.018803, 0.587228),
+        vec3(0.287076, 0.010855, 0.627295),
+        vec3(0.381047, 0.001814, 0.653068),
+        vec3(0.471457, 0.005678, 0.659897),
+        vec3(0.557243, 0.047331, 0.643443),
+        vec3(0.636008, 0.112092, 0.605205),
+        vec3(0.706178, 0.178437, 0.553657),
+        vec3(0.76809,  0.244817, 0.498465),
+        vec3(0.823132, 0.311261, 0.444806),
+        vec3(0.872303, 0.378774, 0.393355),
+        vec3(0.915471, 0.448807, 0.34289),
+        vec3(0.951344, 0.52285,  0.292275),
+        vec3(0.977856, 0.602051, 0.241387),
+        vec3(0.992541, 0.68703,  0.19217),
+        vec3(0.992505, 0.777967, 0.152855),
+        vec3(0.974443, 0.874622, 0.144061),
+        vec3(0.940015, 0.975158, 0.131326)
+    );
+
+    float normalizedValue = clamp((value - data_min) / (data_max - data_min), 0.0, 1.0);
+
+    int lastIndex = sampleColors.length() - 1;
+    
+    // Calculate color segments
+    int index = int(normalizedValue * lastIndex);
+    float weight = fract(normalizedValue * lastIndex);
+
+    vec3 color0 = sampleColors[index];
+    vec3 color1 = sampleColors[index + 1];
+    vec3 color = mix(color0, color1, weight);
+
+    return color;
+"""
+
 
 # glfw callback function
 def window_resize(window, width, height):

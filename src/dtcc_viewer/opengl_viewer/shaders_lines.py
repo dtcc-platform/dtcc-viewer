@@ -23,6 +23,8 @@ uniform int data_index;
 $color_map_0
 $color_map_1
 $color_map_2
+$color_map_3
+$color_map_4
 
 out vec3 v_color;
 void main()
@@ -58,6 +60,14 @@ void main()
         else if(color_map == 2)
         {
             v_color = black_body(a_data[data_index]);
+        }
+        else if(color_map == 3)
+        {
+            v_color = turbo(a_data[data_index]);
+        }
+        else if(color_map == 4)
+        {
+            v_color = viridis(a_data[data_index]);
         }
     }
     else if(color_by == 0)

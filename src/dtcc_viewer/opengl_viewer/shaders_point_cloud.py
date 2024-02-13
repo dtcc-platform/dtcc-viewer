@@ -27,6 +27,8 @@ uniform int data_index;
 $color_map_0
 $color_map_1
 $color_map_2
+$color_map_3
+$color_map_4
 
 out vec3 v_color;
 void main()
@@ -64,7 +66,15 @@ void main()
         {
             color_per_instance = black_body(a_idata[data_index]);
         }
-        
+        else if(color_map == 3)
+        {
+            color_per_instance = turbo(a_idata[data_index]);
+        }
+        else if(color_map == 4)
+        {
+            color_per_instance = viridis(a_idata[data_index]);
+        }
+
         if(invert_color == 1)
         {
             color_per_instance = vec3(1.0) - color_per_instance;

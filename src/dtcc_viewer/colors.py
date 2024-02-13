@@ -334,6 +334,8 @@ shader_cmaps = {
     "rainbow": 0,
     "inferno": 1,
     "blackbody": 2,
+    "turbo": 3,
+    "viridis": 4,
 }
 
 color_maps = {
