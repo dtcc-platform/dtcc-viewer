@@ -18,7 +18,7 @@ uniform float clip_z;
 uniform float data_min; 
 uniform float data_max;
 uniform int color_map;
-uniform int data_index;
+uniform int data_idx;
 
 $color_map_0
 $color_map_1
@@ -50,23 +50,23 @@ void main()
         // Calculate the colors using the shader colormaps
         if(color_map == 0)
         {
-            v_color = rainbow(a_data[data_index]);
+            v_color = rainbow(a_data[data_idx]);
         }
         else if(color_map == 1)
         {
-            v_color = inferno(a_data[data_index]);
+            v_color = inferno(a_data[data_idx]);
         }
         else if(color_map == 2)
         {
-            v_color = black_body(a_data[data_index]);
+            v_color = black_body(a_data[data_idx]);
         }
         else if(color_map == 3)
         {
-            v_color = turbo(a_data[data_index]);
+            v_color = turbo(a_data[data_idx]);
         }
         else if(color_map == 4)
         {
-            v_color = viridis(a_data[data_index]);
+            v_color = viridis(a_data[data_idx]);
         }
     }
     else if(color_by == 2)

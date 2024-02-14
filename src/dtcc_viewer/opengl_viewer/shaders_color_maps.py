@@ -28,13 +28,6 @@ color_map_rainbow = """vec3 rainbow(float value)
 
 color_map_inferno = """vec3 inferno(float value) {
     
-    //vec3 sampleColors[4] = vec3[4](
-    //    vec3(0.0, 0.0, 0.0),
-    //    vec3(1.0, 0.0, 1.0),
-    //    vec3(1.0, 0.647, 0.0),
-    //    vec3(1.0, 1.0, 1.0),
-    //);
-
     vec3 sampleColors[6] = vec3[6](
         vec3(0.0, 0.0, 0.0),
         vec3(20.0/255.0, 11.0/255.0, 52.0/255.0),

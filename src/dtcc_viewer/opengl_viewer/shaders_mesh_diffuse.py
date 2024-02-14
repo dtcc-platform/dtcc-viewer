@@ -16,7 +16,7 @@ uniform float clip_z;
 uniform float data_min; 
 uniform float data_max;
 uniform int color_map;
-uniform int data_index;
+uniform int data_idx;
 
 out vec3 v_frag_pos;
 out vec3 v_color;
@@ -53,23 +53,23 @@ void main()
         // Calculate the colors using the shader colormaps
         if(color_map == 0)
         {
-            v_color = rainbow(a_data[data_index]);
+            v_color = rainbow(a_data[data_idx]);
         }
         else if(color_map == 1)
         {
-            v_color = inferno(a_data[data_index]);
+            v_color = inferno(a_data[data_idx]);
         }
         else if(color_map == 2)
         {
-            v_color = black_body(a_data[data_index]);
+            v_color = black_body(a_data[data_idx]);
         }
         else if(color_map == 3)
         {
-            v_color = turbo(a_data[data_index]);
+            v_color = turbo(a_data[data_idx]);
         }
         else if(color_map == 4)
         {
-            v_color = viridis(a_data[data_index]);
+            v_color = viridis(a_data[data_idx]);
         }
     }
     else if(color_by == 2)
@@ -87,8 +87,8 @@ in vec3 v_color;
 in vec3 v_normal;
 
 uniform vec3 light_color;
-uniform vec3 light_position;
-uniform vec3 view_position;
+uniform vec3 light_pos;
+uniform vec3 view_pos;
 
 out vec4 out_frag_color;
 
@@ -98,13 +98,13 @@ void main()
 	vec3 ambient = ambient_strength * light_color;
 
 	vec3 norm = normalize(v_normal);
-	vec3 light_dir = normalize(light_position); // - v_frag_pos);
+	vec3 light_dir = normalize(light_pos); // - v_frag_pos);
 
 	float diff = max(dot(norm, light_dir), 0.0);
 	vec3 diffuse = diff * light_color;
 
 	//float specular_strength = 0.7;
-	//vec3 view_dir = normalize(view_position - v_frag_pos);
+	//vec3 view_dir = normalize(view_pos - v_frag_pos);
 	//vec3 reflect_dir = reflect(-light_dir, norm);
 
 	//float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 16);

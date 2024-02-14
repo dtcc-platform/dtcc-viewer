@@ -19,7 +19,7 @@ uniform mat4 light_space_matrix;
 uniform float data_min; 
 uniform float data_max;
 uniform int color_map;
-uniform int data_index;
+uniform int data_idx;
 
 uniform float clip_x;
 uniform float clip_y;
@@ -57,23 +57,23 @@ void main()
         // Calculate the colors using the shader colormaps
         if(color_map == 0)
         {
-            v_color = rainbow(a_data[data_index]);
+            v_color = rainbow(a_data[data_idx]);
         }
         else if(color_map == 1)
         {
-            v_color = inferno(a_data[data_index]);
+            v_color = inferno(a_data[data_idx]);
         }
         else if(color_map == 2)
         {
-            v_color = black_body(a_data[data_index]);
+            v_color = black_body(a_data[data_idx]);
         }
         else if(color_map == 3)
         {
-            v_color = turbo(a_data[data_index]);
+            v_color = turbo(a_data[data_idx]);
         }
         else if(color_map == 4)
         {
-            v_color = viridis(a_data[data_index]);
+            v_color = viridis(a_data[data_idx]);
         }
     }
     else if(color_by == 2)
@@ -98,8 +98,8 @@ out vec4 out_frag_color;
 uniform sampler2D shadow_map;
 
 uniform vec3 light_color;
-uniform vec3 light_position;
-uniform vec3 view_position;
+uniform vec3 light_pos;
+uniform vec3 view_pos;
 
 
 float shadow_calc(float dot_light_normal)
@@ -139,7 +139,7 @@ void main()
 	vec3 ambient = ambient_strength * light_color;
 
 	vec3 norm = normalize(v_normal);
-	vec3 light_dir = normalize(light_position); // - v_frag_pos);
+	vec3 light_dir = normalize(light_pos); // - v_frag_pos);
 
     float dot_light_normal = dot(norm, light_dir);
 

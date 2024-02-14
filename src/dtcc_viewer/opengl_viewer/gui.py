@@ -54,10 +54,10 @@ class GuiParametersMesh:
         self.upper_cap = 1.0
         self.update_caps = False
 
-        self.cmap_index = 0
+        self.cmap_idx = 0
         self.cmap_key = list(color_maps.keys())[0]
 
-        self.data_index = 0
+        self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
         self.data_keys = list(dict_data.keys())
@@ -69,7 +69,7 @@ class GuiParametersMesh:
         self.calc_data_min_max()
 
     def get_current_data_name(self):
-        return self.data_keys[self.data_index]
+        return self.data_keys[self.data_idx]
 
     def set_dict_has_data(self, dict_data: dict):
         for key in dict_data.keys():
@@ -437,13 +437,13 @@ class Gui:
             if guip.dict_has_data[key]:
                 imgui.push_id("CmapCombo " + str(index))
                 items = list(shader_cmaps.keys())
-                with imgui.begin_combo("Color map", items[guip.cmap_index]) as combo:
+                with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
-                            is_selected = guip.cmap_index
+                            is_selected = guip.cmap_idx
                             if imgui.selectable(item, is_selected)[0]:
                                 guip.update_caps = True
-                                guip.cmap_index = i
+                                guip.cmap_idx = i
                                 guip.cmap_key = item
 
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -457,13 +457,13 @@ class Gui:
                 key = guip.get_current_data_name()
                 imgui.push_id("ColorsCombo " + str(index))
                 items = guip.data_keys
-                with imgui.begin_combo("Data", items[guip.data_index]) as combo:
+                with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
-                            is_selected = guip.data_index
+                            is_selected = guip.data_idx
                             if imgui.selectable(item, is_selected)[0]:
                                 guip.update_caps = True
-                                guip.data_index = i
+                                guip.data_idx = i
                                 guip.dict_slider_caps[key][0] = 0.0
                                 guip.dict_slider_caps[key][1] = 1.0
 
