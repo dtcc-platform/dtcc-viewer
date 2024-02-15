@@ -18,7 +18,7 @@ uniform mat4 light_space_matrix;
 
 uniform float data_min; 
 uniform float data_max;
-uniform int color_map;
+uniform int cmap_idx;
 uniform int data_idx;
 
 uniform float clip_x;
@@ -55,23 +55,23 @@ void main()
         //v_color = a_color;
 
         // Calculate the colors using the shader colormaps
-        if(color_map == 0)
+        if(cmap_idx == 0)
         {
             v_color = rainbow(a_data[data_idx]);
         }
-        else if(color_map == 1)
+        else if(cmap_idx == 1)
         {
             v_color = inferno(a_data[data_idx]);
         }
-        else if(color_map == 2)
+        else if(cmap_idx == 2)
         {
             v_color = black_body(a_data[data_idx]);
         }
-        else if(color_map == 3)
+        else if(cmap_idx == 3)
         {
             v_color = turbo(a_data[data_idx]);
         }
-        else if(color_map == 4)
+        else if(cmap_idx == 4)
         {
             v_color = viridis(a_data[data_idx]);
         }

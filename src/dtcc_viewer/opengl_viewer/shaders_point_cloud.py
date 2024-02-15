@@ -21,8 +21,8 @@ uniform float clip_z;
 
 uniform float data_min; 
 uniform float data_max;
-uniform int color_map;
-uniform int data_index;
+uniform int cmap_idx;
+uniform int data_idx;
 
 $color_map_0
 $color_map_1
@@ -54,25 +54,25 @@ void main()
 
         vec3 color_per_instance = vec3(1,0,1);
 
-        if(color_map == 0)
+        if(cmap_idx == 0)
         {
-            color_per_instance = rainbow(a_idata[data_index]);
+            color_per_instance = rainbow(a_idata[data_idx]);
         }
-        else if(color_map == 1)
+        else if(cmap_idx == 1)
         {
-            color_per_instance = inferno(a_idata[data_index]);
+            color_per_instance = inferno(a_idata[data_idx]);
         }
-        else if(color_map == 2)
+        else if(cmap_idx == 2)
         {
-            color_per_instance = black_body(a_idata[data_index]);
+            color_per_instance = black_body(a_idata[data_idx]);
         }
-        else if(color_map == 3)
+        else if(cmap_idx == 3)
         {
-            color_per_instance = turbo(a_idata[data_index]);
+            color_per_instance = turbo(a_idata[data_idx]);
         }
-        else if(color_map == 4)
+        else if(cmap_idx == 4)
         {
-            color_per_instance = viridis(a_idata[data_index]);
+            color_per_instance = viridis(a_idata[data_idx]);
         }
 
         if(invert_color == 1)

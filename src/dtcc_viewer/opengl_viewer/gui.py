@@ -39,6 +39,21 @@ class GuiParameters:
         self.clip_dist = [1, 1, 1]  # each variable has range [-1, 1]
 
 
+class GuiParametersObj:
+    cmap_idx: int
+    cmap_key: str
+
+    data_idx: int
+    data_min: float
+    data_max: float
+    data_keys: list
+    dict_slider_caps: dict
+    dict_value_caps: dict
+
+    def __init__(self) -> None:
+        pass
+
+
 class GuiParametersMesh:
     """Class representing GUI parameters for meshes."""
 
@@ -55,7 +70,7 @@ class GuiParametersMesh:
         self.update_caps = False
 
         self.cmap_idx = 0
-        self.cmap_key = list(color_maps.keys())[0]
+        self.cmap_key = list(shader_cmaps.keys())[0]
 
         self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
@@ -114,7 +129,7 @@ class GuiParametersPC:
         self.update_caps = False
 
         self.cmap_index = 0
-        self.cmap_key = list(color_maps.keys())[0]
+        self.cmap_key = list(shader_cmaps.keys())[0]
 
         self.data_index = 0
         self.data_min = 0  # Min value for color clamp
@@ -153,12 +168,51 @@ class GuiParametersPC:
 class GuiParametersRN:
     """Class representing GUI parameters for road networks."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, dict_data: dict) -> None:
         """Initialize the GuiParametersRN object."""
         self.name = name
         self.show = True
-        self.color_rn = True
-        self.rn_scale = 1.0
+        self.color = True
+        self.scale = 1.0
+
+        self.invert_cmap = False
+        self.update_caps = False
+
+        self.cmap_idx = 0
+        self.cmap_key = list(shader_cmaps.keys())[0]
+
+        self.data_idx = 0
+        self.data_min = 0  # Min value for color clamp
+        self.data_max = 0  # Max value for color clamp
+        self.data_keys = list(dict_data.keys())
+        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
+        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
+        self.calc_dict_value_caps(dict_data)
+        self.calc_data_min_max()
+
+    def get_current_data_name(self):
+        """Get the current color name."""
+        return self.data_keys[self.data_idx]
+
+    def calc_dict_value_caps(self, dict_data: dict):
+        for key in dict_data.keys():
+            if dict_data[key] is not None:
+                min = np.min(dict_data[key])
+                max = np.max(dict_data[key])
+                self.dict_value_caps[key] = [min, max]
+            else:
+                self.dict_value_caps[key] = None
+
+    def calc_data_min_max(self):
+        key = self.get_current_data_name()
+        min = self.dict_value_caps[key][0]
+        max = self.dict_value_caps[key][1]
+        dom = max - min
+
+        lower_cap = self.dict_slider_caps[key][0]
+        upper_cap = self.dict_slider_caps[key][1]
+        self.data_min = min + dom * lower_cap
+        self.data_max = min + dom * upper_cap
 
 
 class GuiParametersDates:
@@ -380,12 +434,77 @@ class Gui:
             imgui.pop_id()
             imgui.same_line()
             imgui.push_id("Color rn " + str(index))
-            [changed, guip.color_rn] = imgui.checkbox("Color", guip.color_rn)
+            [changed, guip.color] = imgui.checkbox("Color", guip.color)
             imgui.pop_id()
             imgui.push_id("Color rn " + str(index))
-            [changed, guip.rn_scale] = imgui.slider_float(
-                "Scale factor", guip.rn_scale, 0, 10
+            [changed, guip.scale] = imgui.slider_float(
+                "Scale factor", guip.scale, 0, 10
             )
+            imgui.pop_id()
+
+            # Colormap selection combo box
+            imgui.push_id("CmapSelectionCombo " + str(index))
+            items = list(shader_cmaps.keys())
+            with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = guip.cmap_idx
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.update_caps = True
+                            guip.cmap_idx = i
+                            guip.cmap_key = item
+
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
+
+            key = guip.get_current_data_name()
+
+            # Data selection combobox
+            imgui.push_id("DataSelectionCombo " + str(index))
+            items = guip.data_keys
+            with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = guip.data_idx
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.update_caps = True
+                            guip.data_idx = i
+                            # For selection of new data, reset the slider caps
+                            guip.dict_slider_caps[key][0] = 0.0
+                            guip.dict_slider_caps[key][1] = 1.0
+
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
+
+            # Range sliders to cap data
+            imgui.push_id("lower_cap" + str(index))
+            value = guip.dict_slider_caps[key][0]
+            [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
+            if changed:
+                guip.dict_slider_caps[key][0] = value
+                guip.update_caps = True
+                if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
+                    guip.dict_slider_caps[key][1] = (
+                        guip.dict_slider_caps[key][0] + 0.001
+                    )
+
+            imgui.pop_id()
+
+            imgui.push_id("upper_cap" + str(index))
+            value = guip.dict_slider_caps[key][1]
+            [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
+            if changed:
+                guip.dict_slider_caps[key][1] = value
+                guip.update_caps = True
+                if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
+                    guip.dict_slider_caps[key][0] = (
+                        guip.dict_slider_caps[key][1] - 0.001
+                    )
+
             imgui.pop_id()
 
     def draw_mesh_gui(self, guip: GuiParametersMesh, index: int) -> None:
@@ -501,6 +620,9 @@ class Gui:
                         )
 
                 imgui.pop_id()
+
+    def _create_range_sliders():
+        pass
 
     def draw_separator(self) -> None:
         """Draw a separator between GUI elements."""

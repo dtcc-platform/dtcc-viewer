@@ -10,7 +10,6 @@ from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 def view(
     roadnetwork: RoadNetwork,
     data: np.ndarray = None,
-    colors: np.ndarray = None,
 ):
     """View a roadnetwork in 3D with a GLFW window.
 
@@ -29,5 +28,5 @@ def view(
     window = Window(1200, 800)
     scene = Scene()
 
-    scene.add_roadnetwork("Road network", roadnetwork, data, colors)
+    scene.add_roadnetwork("Road network", roadnetwork, data)
     window.render(scene)

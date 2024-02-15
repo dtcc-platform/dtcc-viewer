@@ -107,12 +107,11 @@ class Scene:
         name: str,
         rn: RoadNetwork,
         data: np.ndarray = None,
-        colors: np.ndarray = None,
     ):
         """Append a RoadNetwork object to the scene"""
         if rn is not None:
             info(f"Road network called - {name} - added to scene")
-            rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data, colors=colors)
+            rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data)
             self.rnd_wrappers.append(rn_w)
         else:
             warning(f"Road network called - {name} - is None and not added to scene")

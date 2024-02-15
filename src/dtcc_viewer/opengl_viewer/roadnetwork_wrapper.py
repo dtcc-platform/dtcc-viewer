@@ -24,7 +24,7 @@ class RoadNetworkWrapper:
 
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
-    colors: np.ndarray  # [n_points x 3]
+    dict_data: dict
     name: str
     bb_local: BoundingBox
     bb_global: BoundingBox
@@ -34,7 +34,6 @@ class RoadNetworkWrapper:
         name: str,
         rn: RoadNetwork,
         data: np.ndarray = None,
-        colors: np.ndarray = None,
     ) -> None:
         """Initialize a Road network wrapper object.
 
@@ -53,16 +52,16 @@ class RoadNetworkWrapper:
         -------
         None
         """
-
+        self.dict_data = {}
         self.name = name
-        self._generate_rn_colors(rn, rn_data=data, rn_colors=colors)
-        self._restructure_road_network(rn, self.colors)
+        self._restructure_data(rn, data)
+        self._restructure_road_network(rn)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_rn_to_origin_multi(self.bb_global)
         self.bb_local = BoundingBox(self.vertices)
-        self._flatten()
+        self._reformat()
 
     def _move_rn_to_origin_multi(self, bb: BoundingBox = None):
         if bb is not None:
@@ -71,7 +70,57 @@ class RoadNetworkWrapper:
             recenter_vec_tiled = np.tile(recenter_vec, v_count)
             self.vertices += recenter_vec_tiled
 
-    def _restructure_road_network(self, roadnetwork: RoadNetwork, colors: np.ndarray):
+    def _restructure_data(self, rn: RoadNetwork, data: np.ndarray = None):
+        """Generate colors for the point cloud based on the provided data."""
+
+        n_points = len(rn.vertices)
+
+        new_dict = {
+            "slot0": np.zeros(n_points),
+            "slot1": np.zeros(n_points),
+            "slot2": np.zeros(n_points),
+        }
+
+        if type(data) == dict:
+            self.dict_data = self._restructure_data_dict(rn, data, new_dict)
+        elif type(data) == np.ndarray:
+            self.dict_data = self._restructure_data_array(rn, data, new_dict)
+        else:
+            info("No data provided for mesh.")
+            info("Default (x, y, z) - coords per vertex data appended.")
+            new_dict["slot0"] = rn.vertices[:, 0]
+            new_dict["slot1"] = rn.vertices[:, 1]
+            self.dict_data = new_dict
+
+    def _restructure_data_dict(self, rn: RoadNetwork, data: dict, new_dict: dict):
+        n_vertices = len(rn.vertices)
+        data_slots = len(new_dict)
+        counter = 0
+
+        for key in data.keys():
+            data = data[key]
+            if counter < data_slots:
+                if len(data) == n_vertices:
+                    new_dict["slot" + str(counter)] = data
+                else:
+                    info(f"Data for {key} does not match vertex or face count")
+            else:
+                info(f"Data for {key} does not fit in available slots")
+            counter += 1
+
+        return new_dict
+
+    def _restructure_data_array(
+        self, rn: RoadNetwork, data: np.ndarray, new_dict: dict
+    ):
+        if len(data) == len(rn.vertices):
+            new_dict["slot0"] = data
+        else:
+            pass
+
+        return new_dict
+
+    def _restructure_road_network(self, roadnetwork: RoadNetwork):
         new_indices = []
         for road in roadnetwork.roads:
             for i in range(len(road.road_vertices) - 1):
@@ -79,70 +128,16 @@ class RoadNetworkWrapper:
                 v2 = road.road_vertices[i + 1]
                 new_indices.append([v1, v2])
 
-        new_vertices = np.zeros([len(roadnetwork.vertices), 9])
+        new_vertices = np.zeros([len(roadnetwork.vertices), 9]).flatten()
 
-        # Vertex structure for OpenGL shaders: [x, y, z, r, g, b, nx, ny ,nz]
-        for i in range(len(roadnetwork.vertices)):
-            c = colors[i, :]
-            v = roadnetwork.vertices[i, :]  # has only x and y coordinates!
-            n = np.array([0, 0, 1])
-            if len(v) == 2:
-                v = np.append(v, 0)
-
-            new_vertices[i, 0:3] = v
-            new_vertices[i, 3:6] = c
-            new_vertices[i, 6:9] = n
+        new_vertices[0::9] = roadnetwork.vertices[:, 0]
+        new_vertices[1::9] = roadnetwork.vertices[:, 1]
+        new_vertices[3::9] = self.dict_data["slot0"]
+        new_vertices[4::9] = self.dict_data["slot1"]
+        new_vertices[5::9] = self.dict_data["slot2"]
 
         self.vertices = np.array(new_vertices, dtype="float32").flatten()
         self.indices = np.array(new_indices, dtype="uint32").flatten()
-
-    def _generate_rn_colors(
-        self,
-        rn: RoadNetwork,
-        rn_data: np.ndarray = None,
-        rn_colors: np.ndarray = None,
-    ) -> np.ndarray:
-        """Generate colors for the point cloud based on the provided data.
-
-        Parameters
-        ----------
-        rn : RoadNetwork
-            The RoadNetwork object to generate colors for.
-        rn_data : np.ndarray, optional
-            Additional data for color calculation (default is None).
-        rn_colors : np.ndarray, optional
-            Predifined colors (default is None).
-
-        Returns
-        -------
-        np.ndarray
-            Array of colors for the road network vertices
-        """
-        colors = []
-        n_points = len(rn.vertices)
-
-        if rn_colors is not None:
-            n_rn_colors = len(rn_colors)
-            if n_rn_colors == n_points:
-                colors = np.array(rn_colors)
-                return colors
-            else:
-                warning(f"Road network colors provided does not match vertex count!")
-
-        if rn_data is not None:
-            if len(rn.vertices) == len(rn_data):
-                colors = calc_colors_rainbow(rn_data)
-            else:
-                warning(f"Provided color data does not match the vertex count!")
-                info(f"Default colors are used instead -> i.e. coloring per z-value")
-                z = rn.vertices[:, 2]
-                colors = calc_colors_rainbow(z)
-        else:
-            info(f"No data provided for road network -> colors are based on y-value")
-            z = rn.vertices[:, 1]  # Color by height if no data is provided
-            colors = calc_colors_rainbow(z)
-
-        self.colors = colors
 
     def get_vertex_positions(self):
         """Get the vertex positions"""
@@ -154,7 +149,7 @@ class RoadNetworkWrapper:
         vertex_pos = self.vertices[vertex_pos_mask]
         return vertex_pos
 
-    def _flatten(self):
+    def _reformat(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""
         # Making sure the datatypes are aligned with opengl implementation
         self.vertices = np.array(self.vertices, dtype="float32")

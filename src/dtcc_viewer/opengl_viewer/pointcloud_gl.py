@@ -267,8 +267,8 @@ class PointCloudGL:
         self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")
         self.cp_locs[2] = glGetUniformLocation(self.shader, "clip_z")
 
-        self.cm_loc = glGetUniformLocation(self.shader, "color_map")
-        self.di_loc = glGetUniformLocation(self.shader, "data_index")
+        self.cm_loc = glGetUniformLocation(self.shader, "cmap_idx")
+        self.di_loc = glGetUniformLocation(self.shader, "data_idx")
         self.dmin_loc = glGetUniformLocation(self.shader, "data_min")
         self.dmax_loc = glGetUniformLocation(self.shader, "data_max")
 

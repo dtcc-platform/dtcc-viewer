@@ -4,6 +4,7 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
+from string import Template
 from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.shaders_lines import (
@@ -13,6 +14,14 @@ from dtcc_viewer.opengl_viewer.shaders_lines import (
 from dtcc_viewer.opengl_viewer.gui import GuiParametersRN, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
+
+from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+    color_map_rainbow,
+    color_map_inferno,
+    color_map_black_body,
+    color_map_turbo,
+    color_map_viridis,
+)
 
 
 class RoadNetworkGL:
@@ -26,9 +35,13 @@ class RoadNetworkGL:
     vertices: np.ndarray  # All vertices in the road network
     line_indices: np.ndarray  #  Line indices for roads [[2 x n_roads],]
     guip: GuiParametersRN
+    dict_data: dict
 
     bb_local: BoundingBox
     bb_global: BoundingBox
+
+    uniform_locs: dict  # Uniform locations for the shader program
+    shader: int  # Shader program
 
     model_loc: int  # Uniform location for model matrix
     view_loc: int  # Uniform location for view matrix
@@ -42,19 +55,16 @@ class RoadNetworkGL:
     EBO: int  # Element buffer object
 
     def __init__(self, rn_data_obj: RoadNetworkWrapper):
-        """Initialize the RoadNetworkGL object and set up rendering.
-
-        Parameters
-        ----------
-        rn_data_obj : RoadNetworkData
-            Instance of the PointCloudData calss with points, colors and pc size.
-        """
+        """Initialize the RoadNetworkGL object and set up rendering."""
 
         self.vertices = rn_data_obj.vertices
         self.line_indices = rn_data_obj.indices
+        self.dict_data = rn_data_obj.dict_data
 
-        self.cp_locs = [0, 0, 0]
-        self.guip = GuiParametersRN(rn_data_obj.name)
+        self.shader: int
+        self.uniform_locs = {}
+
+        self.guip = GuiParametersRN(rn_data_obj.name, self.dict_data)
         self.bb_local = rn_data_obj.bb_local
         self.bb_global = rn_data_obj.bb_global
 
@@ -97,62 +107,78 @@ class RoadNetworkGL:
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Color
+        # Data
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
         glBindVertexArray(0)
-
-    def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
-        """Render roads as lines in the road network.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
-
-        self._bind_shader()
-
-        # MVP Calculations
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = interaction.camera.get_view_matrix()
-        proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.view_loc, 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.project_loc, 1, GL_FALSE, proj)
-
-        self._set_clipping_uniforms(gguip)
-
-        color_by = int(self.guip.color_rn)
-        glUniform1i(self.color_by_loc, color_by)
-
-        self._bind_vao()
-        glDrawElements(GL_LINES, len(self.line_indices), GL_UNSIGNED_INT, None)
-        self._unbind_vao()
-
-        self._unbind_shader()
 
     def _create_shader(self) -> None:
         """Create and compile the shader program."""
 
         self._bind_vao()
 
+        vertex_shader = vertex_shader_lines
+        fragment_shader = fragment_shader_lines
+
+        vertex_shader = Template(vertex_shader).substitute(
+            color_map_0=color_map_rainbow,
+            color_map_1=color_map_inferno,
+            color_map_2=color_map_black_body,
+            color_map_3=color_map_turbo,
+            color_map_4=color_map_viridis,
+        )
+
         self.shader = compileProgram(
-            compileShader(vertex_shader_lines, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_lines, GL_FRAGMENT_SHADER),
+            compileShader(vertex_shader, GL_VERTEX_SHADER),
+            compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
         glUseProgram(self.shader)
 
-        self.model_loc = glGetUniformLocation(self.shader, "model")
-        self.view_loc = glGetUniformLocation(self.shader, "view")
-        self.project_loc = glGetUniformLocation(self.shader, "project")
-        self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
-        # self.scale_loc = glGetUniformLocation(self.shader, "scale")
+        self.uniform_locs["model"] = glGetUniformLocation(self.shader, "model")
+        self.uniform_locs["view"] = glGetUniformLocation(self.shader, "view")
+        self.uniform_locs["project"] = glGetUniformLocation(self.shader, "project")
+        self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
+        self.uniform_locs["clip_x"] = glGetUniformLocation(self.shader, "clip_x")
+        self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
+        self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
+        self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
+        self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
+        self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
+        self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
 
-        self.cp_locs[0] = glGetUniformLocation(self.shader, "clip_x")
-        self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")
-        self.cp_locs[2] = glGetUniformLocation(self.shader, "clip_z")
+    def _update_color_caps(self):
+        if self.guip.update_caps:
+            self.guip.calc_data_min_max()
+            self.guip.update_caps = False
+
+    def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
+        """Render roads as lines in the road network."""
+
+        self._bind_shader()
+        self._update_color_caps()
+
+        # MVP Calculations
+        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+        view = interaction.camera.get_view_matrix()
+        proj = interaction.camera.get_perspective_matrix()
+        glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
+
+        self._set_clipping_uniforms(gguip)
+
+        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
+        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
+        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
+        glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
+        glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
+
+        self._bind_vao()
+        glDrawElements(GL_LINES, len(self.line_indices), GL_UNSIGNED_INT, None)
+        self._unbind_vao()
+
+        self._unbind_shader()
 
     def _bind_shader(self) -> None:
         """Bind the shader program."""
@@ -175,6 +201,6 @@ class RoadNetworkGL:
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
-        glUniform1f(self.cp_locs[0], (xdom * gguip.clip_dist[0]))
-        glUniform1f(self.cp_locs[1], (ydom * gguip.clip_dist[1]))
-        glUniform1f(self.cp_locs[2], (zdom * gguip.clip_dist[2]))
+        glUniform1f(self.uniform_locs["clip_x"], (xdom * gguip.clip_dist[0]))
+        glUniform1f(self.uniform_locs["clip_y"], (ydom * gguip.clip_dist[1]))
+        glUniform1f(self.uniform_locs["clip_z"], (zdom * gguip.clip_dist[2]))

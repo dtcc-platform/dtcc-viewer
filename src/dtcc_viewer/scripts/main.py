@@ -189,8 +189,11 @@ def multi_geometry_example_4():
 
 def roadnetwork_example_1():
     filename = "../../../data/models/helsingborg_road_data.shp"
-    roadnetwork = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
-    roadnetwork.view()
+    rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
+    data_dict = {}
+    data_dict["vertex_x"] = rn.vertices[:, 0]
+    data_dict["vertex_y"] = rn.vertices[:, 1]
+    rn.view()
 
 
 def roadnetwork_example_2():
@@ -199,7 +202,9 @@ def roadnetwork_example_2():
 
     filename = "../../../data/models/helsingborg_road_data.shp"
     rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
-    scene.add_roadnetwork("Road Network", rn)
+    data = rn.vertices[:, 0]
+
+    scene.add_roadnetwork("Road Network", rn, data)
     window.render(scene)
 
 
@@ -250,7 +255,7 @@ if __name__ == "__main__":
     # multi_geometry_example_2()
     # multi_geometry_example_3()
     # multi_geometry_example_4()
-    # roadnetwork_example_1()
+    roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()
-    city_example_1()
+    # city_example_1()

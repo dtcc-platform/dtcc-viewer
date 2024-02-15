@@ -109,7 +109,7 @@ class MeshWrapper:
             self.dict_data = self._restructure_data_array(mesh, data, new_dict)
         else:
             info("No data provided for mesh.")
-            info("Default (x,y,z)-coords per vertex data appended.")
+            info("Default (x ,y ,z) - coords per vertex data appended.")
             face_verts = mesh.vertices[mesh.faces.flatten()]
             new_dict["slot0"] = face_verts[:, 0]
             new_dict["slot1"] = face_verts[:, 1]

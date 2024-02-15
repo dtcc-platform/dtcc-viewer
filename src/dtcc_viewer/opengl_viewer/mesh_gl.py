@@ -88,8 +88,8 @@ class MeshGL:
     shader_shm: int  # Shader program for rendering of the shadow map to the frame buffer
     uloc_shm: dict  # Uniform locations for the shadow map shader
 
-    mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
-    lsm_loc_shadow_map: int  # Uniform location for light space matrix for shadow map rendering
+    # mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
+    # lsm_loc_shadow_map: int  # Uniform location for light space matrix for shadow map rendering
 
     # Scene based parameters
     diameter_xy: float  # Size of the model as diameter
@@ -124,11 +124,6 @@ class MeshGL:
         self.uloc_dif = {}
         self.uloc_sha = {}
         self.uloc_shm = {}
-
-        self.cp_locs_lines = [0, 0, 0]
-        self.cp_locs_ambient = [0, 0, 0]
-        self.cp_locs_diffuse = [0, 0, 0]
-        self.cp_locs_shadows = [0, 0, 0]
 
         self.bb_local = mesh_wrapper.bb_local
         self.bb_global = mesh_wrapper.bb_global
@@ -290,7 +285,7 @@ class MeshGL:
         self.uloc_lin["clip_x"] = glGetUniformLocation(self.shader_lin, "clip_x")
         self.uloc_lin["clip_y"] = glGetUniformLocation(self.shader_lin, "clip_y")
         self.uloc_lin["clip_z"] = glGetUniformLocation(self.shader_lin, "clip_z")
-        self.uloc_lin["color_map"] = glGetUniformLocation(self.shader_lin, "color_map")
+        self.uloc_lin["cmap_idx"] = glGetUniformLocation(self.shader_lin, "cmap_idx")
         self.uloc_lin["data_idx"] = glGetUniformLocation(self.shader_lin, "data_idx")
         self.uloc_lin["data_min"] = glGetUniformLocation(self.shader_lin, "data_min")
         self.uloc_lin["data_max"] = glGetUniformLocation(self.shader_lin, "data_max")
@@ -454,7 +449,7 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.uloc_lin["color_by"], color_by)
-        glUniform1i(self.uloc_lin["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_lin["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_lin["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_lin["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_lin["data_max"], self.guip.data_max)
