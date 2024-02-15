@@ -131,10 +131,7 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
-    def render(
-        self,
-        scene: Scene,
-    ):
+    def render(self, scene: Scene):
         """Render single or multiple MeshData and/or PointCloudData objects.
 
         This method renders multiple meshes and point clouds in the window.
@@ -192,7 +189,7 @@ class Window:
             self._render_meshes()
             self._render_point_clouds()
             self._render_road_networks()
-            self._fps_calculations()
+            self._calc_fps()
 
             self.gui.init_draw(self.impl)
             self.gui.draw_apperance_gui(self.guip)
@@ -246,16 +243,13 @@ class Window:
                 pc.render(self.interaction, self.guip)
 
     def _render_road_networks(self):
-        """Render all the road networks in the window.
-
-        This method renders all the road in all the road networks in an window using OpenGL.
-        """
+        """Render all the road networks in the window."""
         for rn in self.road_networks:
             mguip = rn.guip
             if mguip.show:
                 rn.render(self.interaction, self.guip)
 
-    def _fps_calculations(self, print_results=True):
+    def _calc_fps(self, print_results=True):
         """Perform FPS calculations.
 
         This method calculates the frames per second (FPS) for the rendering loop.

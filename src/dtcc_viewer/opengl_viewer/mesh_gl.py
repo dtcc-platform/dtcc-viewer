@@ -1,6 +1,5 @@
 import math
 import glfw
-import copy
 import numpy as np
 import pyrr
 from pprint import pp
@@ -11,10 +10,7 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
-from dtcc_viewer.opengl_viewer.utils import fit_colors_to_faces
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.colors import calc_colors_rainbow
-from dtcc_viewer.colors import color_maps
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
@@ -23,6 +19,10 @@ from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadow_map,
     fragment_shader_shadow_map,
+)
+from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
+    vertex_shader_debug,
+    fragment_shader_debug,
 )
 from dtcc_viewer.opengl_viewer.shaders_mesh_diffuse import (
     vertex_shader_diffuse,
@@ -63,6 +63,9 @@ class MeshGL:
     VAO_edge: int  # OpenGL Vertex attribut object for wireframe edges
     VBO_edge: int  # OpenGL Vertex buffer object for wireframe edges
     EBO_edge: int  # OpenGL Element buffer object for wireframe edges
+    VAO_debug: int  # OpenGL Vertex attribut object for debug quad
+    VBO_debug: int  # OpenGL Vertex buffer object for debug quad
+    EBO_debug: int  # OpenGL Element buffer object for debug quad
 
     guip: GuiParametersMesh  # Information used by the Gui
     vertices: np.ndarray  # [n_vertices x 9] each row has (x, y, z, r, g, b, nx, ny, nz)
@@ -73,23 +76,22 @@ class MeshGL:
     bb_local: BoundingBox
     bb_global: BoundingBox
 
-    uloc_lin: dict  # Uniform locations for the lines shader
-    shader_lin: int  # Shader program for the lines
+    uloc_line: dict  # Uniform locations for the lines shader
+    uloc_ambi: dict  # Uniform locations for the ambient shader
+    uloc_diff: dict  # Uniform locations for the diffuse shader
+    uloc_shdw: dict  # Uniform locations for the shadow shader
+    uloc_shmp: dict  # Uniform locations for the shadow map shader
+    uloc_dbug: dict  # Uniform locations for the shadow map shader
 
-    uloc_amb: dict  # Uniform locations for the ambient shader
-    shader_amb: int  # Shader program for ambient mesh rendering
+    shader_line: int  # Shader program for the lines
+    shader_ambi: int  # Shader program for ambient mesh rendering
+    shader_diff: int  # Shader program for diffuse mesh rendering
+    shader_shdw: int  # Shader program for rendering of diffuse mesh with shadow map
+    shader_shmp: int  # Shader program for rendering of the shadow map to the frame buffer
+    shader_dbug: int  # Shader program for rendering of the shadow map to a quad
 
-    uloc_dif: dict  # Uniform locations for the diffuse shader
-    shader_dif: int  # Shader program for diffuse mesh rendering
-
-    uloc_sha: dict  # Uniform locations for the shadow shader
-    shader_sha: int  # Shader program for rendering of diffuse mesh with shadow map
-
-    shader_shm: int  # Shader program for rendering of the shadow map to the frame buffer
-    uloc_shm: dict  # Uniform locations for the shadow map shader
-
-    # mloc_shadow_map: int  # Uniform location for model matrix for shadow map rendering
-    # lsm_loc_shadow_map: int  # Uniform location for light space matrix for shadow map rendering
+    quad_vertices: np.ndarray  # Vertices for the debug quad
+    quad_indices: np.ndarray  # Indices for the debug quad
 
     # Scene based parameters
     diameter_xy: float  # Size of the model as diameter
@@ -119,11 +121,12 @@ class MeshGL:
         self.dict_data = mesh_wrapper.dict_data
         self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, self.dict_data)
 
-        self.uloc_lin = {}
-        self.uloc_amb = {}
-        self.uloc_dif = {}
-        self.uloc_sha = {}
-        self.uloc_shm = {}
+        self.uloc_line = {}
+        self.uloc_ambi = {}
+        self.uloc_diff = {}
+        self.uloc_shdw = {}
+        self.uloc_shmp = {}
+        self.uloc_dbug = {}
 
         self.bb_local = mesh_wrapper.bb_local
         self.bb_global = mesh_wrapper.bb_global
@@ -131,12 +134,14 @@ class MeshGL:
         self._calc_model_scale()
         self._create_lines()
         self._create_triangels()
+        self._create_debug_quad()
         self._create_shadow_map()
         self._create_shader_lines()
         self._create_shader_ambient()
         self._create_shader_diffuse()
         self._create_shader_shadows()
         self._create_shader_shadow_map()
+        self._create_shader_debug()
         self._set_constats()
 
     def _calc_model_scale(self) -> None:
@@ -220,6 +225,71 @@ class MeshGL:
 
         glBindVertexArray(0)
 
+    def _create_debug_quad(self) -> None:
+        tex_min = 0
+        tex_max = 1
+
+        self.quad_vertices = [
+            -1.0,
+            -1.0,
+            tex_min,
+            tex_min,
+            1.0,
+            -1.0,
+            tex_max,
+            tex_min,
+            -1.0,
+            1.0,
+            tex_min,
+            tex_max,
+            1.0,
+            -1.0,
+            tex_max,
+            tex_min,
+            -1.0,
+            1.0,
+            tex_min,
+            tex_max,
+            1.0,
+            1.0,
+            tex_max,
+            tex_max,
+        ]
+        self.quad_indices = [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+        ]
+
+        self.quad_vertices = np.array(self.quad_vertices, dtype=np.float32)
+        self.quad_indices = np.array(self.quad_indices, dtype=np.uint32)
+
+        self.VAO_debug = glGenVertexArrays(1)
+        glBindVertexArray(self.VAO_debug)
+
+        # Vertex buffer
+        size = len(self.quad_vertices) * 4  # Size in bytes
+        self.VBO_debug = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.VBO_debug)
+        glBufferData(GL_ARRAY_BUFFER, size, self.quad_vertices, GL_STATIC_DRAW)
+
+        # Element buffer
+        size = len(self.quad_indices) * 4  # Size in bytes
+        self.EBO_debug = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_debug)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.quad_indices, GL_STATIC_DRAW)
+
+        # Position (x, y)
+        glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(0))
+
+        # Texture coordinates (x, y)
+        glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(8))
+
     def _create_shadow_map(self) -> None:
         """Set up framebuffer and texture for shadow map rendering."""
         # Frambuffer for the shadow map
@@ -251,10 +321,11 @@ class MeshGL:
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.depth_map, 0
         )
-        glDrawBuffer(
-            GL_NONE
-        )  # Disable drawing to the color attachements since we only care about the depth
-        glReadBuffer(GL_NONE)  # We don't want to read color attachements either
+        # Disable drawing to the color attachements since we only care about the depth
+        glDrawBuffer(GL_NONE)
+
+        # We don't want to read color attachements either
+        glReadBuffer(GL_NONE)
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def _create_shader_lines(self) -> None:
@@ -272,23 +343,23 @@ class MeshGL:
         )
 
         self._bind_vao_lines()
-        self.shader_lin = compileProgram(
+        self.shader_line = compileProgram(
             compileShader(vertex_shader, GL_VERTEX_SHADER),
             compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
-        glUseProgram(self.shader_lin)
+        glUseProgram(self.shader_line)
 
-        self.uloc_lin["model"] = glGetUniformLocation(self.shader_lin, "model")
-        self.uloc_lin["view"] = glGetUniformLocation(self.shader_lin, "view")
-        self.uloc_lin["project"] = glGetUniformLocation(self.shader_lin, "project")
-        self.uloc_lin["color_by"] = glGetUniformLocation(self.shader_lin, "color_by")
-        self.uloc_lin["clip_x"] = glGetUniformLocation(self.shader_lin, "clip_x")
-        self.uloc_lin["clip_y"] = glGetUniformLocation(self.shader_lin, "clip_y")
-        self.uloc_lin["clip_z"] = glGetUniformLocation(self.shader_lin, "clip_z")
-        self.uloc_lin["cmap_idx"] = glGetUniformLocation(self.shader_lin, "cmap_idx")
-        self.uloc_lin["data_idx"] = glGetUniformLocation(self.shader_lin, "data_idx")
-        self.uloc_lin["data_min"] = glGetUniformLocation(self.shader_lin, "data_min")
-        self.uloc_lin["data_max"] = glGetUniformLocation(self.shader_lin, "data_max")
+        self.uloc_line["model"] = glGetUniformLocation(self.shader_line, "model")
+        self.uloc_line["view"] = glGetUniformLocation(self.shader_line, "view")
+        self.uloc_line["project"] = glGetUniformLocation(self.shader_line, "project")
+        self.uloc_line["color_by"] = glGetUniformLocation(self.shader_line, "color_by")
+        self.uloc_line["clip_x"] = glGetUniformLocation(self.shader_line, "clip_x")
+        self.uloc_line["clip_y"] = glGetUniformLocation(self.shader_line, "clip_y")
+        self.uloc_line["clip_z"] = glGetUniformLocation(self.shader_line, "clip_z")
+        self.uloc_line["cmap_idx"] = glGetUniformLocation(self.shader_line, "cmap_idx")
+        self.uloc_line["data_idx"] = glGetUniformLocation(self.shader_line, "data_idx")
+        self.uloc_line["data_min"] = glGetUniformLocation(self.shader_line, "data_min")
+        self.uloc_line["data_max"] = glGetUniformLocation(self.shader_line, "data_max")
 
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
@@ -305,24 +376,26 @@ class MeshGL:
         )
 
         self._bind_vao_triangels()
-        self.shader_amb = compileProgram(
+        self.shader_ambi = compileProgram(
             compileShader(vertex_shader, GL_VERTEX_SHADER),
             compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_amb)
+        glUseProgram(self.shader_ambi)
 
-        self.uloc_amb["model"] = glGetUniformLocation(self.shader_amb, "model")
-        self.uloc_amb["view"] = glGetUniformLocation(self.shader_amb, "view")
-        self.uloc_amb["project"] = glGetUniformLocation(self.shader_amb, "project")
-        self.uloc_amb["color_by"] = glGetUniformLocation(self.shader_amb, "color_by")
-        self.uloc_amb["clip_x"] = glGetUniformLocation(self.shader_amb, "clip_x")
-        self.uloc_amb["clip_y"] = glGetUniformLocation(self.shader_amb, "clip_y")
-        self.uloc_amb["clip_z"] = glGetUniformLocation(self.shader_amb, "clip_z")
-        self.uloc_amb["color_map"] = glGetUniformLocation(self.shader_amb, "color_map")
-        self.uloc_amb["data_idx"] = glGetUniformLocation(self.shader_amb, "data_idx")
-        self.uloc_amb["data_min"] = glGetUniformLocation(self.shader_amb, "data_min")
-        self.uloc_amb["data_max"] = glGetUniformLocation(self.shader_amb, "data_max")
+        self.uloc_ambi["model"] = glGetUniformLocation(self.shader_ambi, "model")
+        self.uloc_ambi["view"] = glGetUniformLocation(self.shader_ambi, "view")
+        self.uloc_ambi["project"] = glGetUniformLocation(self.shader_ambi, "project")
+        self.uloc_ambi["color_by"] = glGetUniformLocation(self.shader_ambi, "color_by")
+        self.uloc_ambi["clip_x"] = glGetUniformLocation(self.shader_ambi, "clip_x")
+        self.uloc_ambi["clip_y"] = glGetUniformLocation(self.shader_ambi, "clip_y")
+        self.uloc_ambi["clip_z"] = glGetUniformLocation(self.shader_ambi, "clip_z")
+        self.uloc_ambi["color_map"] = glGetUniformLocation(
+            self.shader_ambi, "color_map"
+        )
+        self.uloc_ambi["data_idx"] = glGetUniformLocation(self.shader_ambi, "data_idx")
+        self.uloc_ambi["data_min"] = glGetUniformLocation(self.shader_ambi, "data_min")
+        self.uloc_ambi["data_max"] = glGetUniformLocation(self.shader_ambi, "data_max")
 
     def _create_shader_diffuse(self) -> None:
         """Create shader for diffuse shading."""
@@ -339,30 +412,34 @@ class MeshGL:
         )
 
         self._bind_vao_triangels()
-        self.shader_dif = compileProgram(
+        self.shader_diff = compileProgram(
             compileShader(vertex_shader, GL_VERTEX_SHADER),
             compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_dif)
+        glUseProgram(self.shader_diff)
 
-        self.uloc_dif["model"] = glGetUniformLocation(self.shader_dif, "model")
-        self.uloc_dif["view"] = glGetUniformLocation(self.shader_dif, "view")
-        self.uloc_dif["project"] = glGetUniformLocation(self.shader_dif, "project")
-        self.uloc_dif["color_by"] = glGetUniformLocation(self.shader_dif, "color_by")
-        self.uloc_dif["light_color"] = glGetUniformLocation(
-            self.shader_dif, "light_color"
+        self.uloc_diff["model"] = glGetUniformLocation(self.shader_diff, "model")
+        self.uloc_diff["view"] = glGetUniformLocation(self.shader_diff, "view")
+        self.uloc_diff["project"] = glGetUniformLocation(self.shader_diff, "project")
+        self.uloc_diff["color_by"] = glGetUniformLocation(self.shader_diff, "color_by")
+        self.uloc_diff["light_color"] = glGetUniformLocation(
+            self.shader_diff, "light_color"
         )
-        self.uloc_dif["light_pos"] = glGetUniformLocation(self.shader_dif, "light_pos")
-        self.uloc_dif["view_pos"] = glGetUniformLocation(self.shader_dif, "view_pos")
+        self.uloc_diff["light_pos"] = glGetUniformLocation(
+            self.shader_diff, "light_pos"
+        )
+        self.uloc_diff["view_pos"] = glGetUniformLocation(self.shader_diff, "view_pos")
 
-        self.uloc_dif["clip_x"] = glGetUniformLocation(self.shader_dif, "clip_x")
-        self.uloc_dif["clip_y"] = glGetUniformLocation(self.shader_dif, "clip_y")
-        self.uloc_dif["clip_z"] = glGetUniformLocation(self.shader_dif, "clip_z")
-        self.uloc_dif["color_map"] = glGetUniformLocation(self.shader_dif, "color_map")
-        self.uloc_dif["data_idx"] = glGetUniformLocation(self.shader_dif, "data_idx")
-        self.uloc_dif["data_min"] = glGetUniformLocation(self.shader_dif, "data_min")
-        self.uloc_dif["data_max"] = glGetUniformLocation(self.shader_dif, "data_max")
+        self.uloc_diff["clip_x"] = glGetUniformLocation(self.shader_diff, "clip_x")
+        self.uloc_diff["clip_y"] = glGetUniformLocation(self.shader_diff, "clip_y")
+        self.uloc_diff["clip_z"] = glGetUniformLocation(self.shader_diff, "clip_z")
+        self.uloc_diff["color_map"] = glGetUniformLocation(
+            self.shader_diff, "color_map"
+        )
+        self.uloc_diff["data_idx"] = glGetUniformLocation(self.shader_diff, "data_idx")
+        self.uloc_diff["data_min"] = glGetUniformLocation(self.shader_diff, "data_min")
+        self.uloc_diff["data_max"] = glGetUniformLocation(self.shader_diff, "data_max")
 
     def _create_shader_shadows(self) -> None:
         """Create shader for shading with shadows."""
@@ -379,47 +456,60 @@ class MeshGL:
         )
 
         self._bind_vao_triangels()
-        self.shader_sha = compileProgram(
+        self.shader_shdw = compileProgram(
             compileShader(vertex_shader, GL_VERTEX_SHADER),
             compileShader(fragment_shader, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_sha)
+        glUseProgram(self.shader_shdw)
 
-        self.uloc_sha["model"] = glGetUniformLocation(self.shader_sha, "model")
-        self.uloc_sha["view"] = glGetUniformLocation(self.shader_sha, "view")
-        self.uloc_sha["project"] = glGetUniformLocation(self.shader_sha, "project")
-        self.uloc_sha["color_by"] = glGetUniformLocation(self.shader_sha, "color_by")
-        self.uloc_sha["clip_x"] = glGetUniformLocation(self.shader_sha, "clip_x")
-        self.uloc_sha["clip_y"] = glGetUniformLocation(self.shader_sha, "clip_y")
-        self.uloc_sha["clip_z"] = glGetUniformLocation(self.shader_sha, "clip_z")
-        self.uloc_sha["color_map"] = glGetUniformLocation(self.shader_sha, "color_map")
-        self.uloc_sha["data_idx"] = glGetUniformLocation(self.shader_sha, "data_idx")
-        self.uloc_sha["data_min"] = glGetUniformLocation(self.shader_sha, "data_min")
-        self.uloc_sha["data_max"] = glGetUniformLocation(self.shader_sha, "data_max")
-        self.uloc_sha["light_pos"] = glGetUniformLocation(self.shader_sha, "light_pos")
-        self.uloc_sha["view_pos"] = glGetUniformLocation(self.shader_sha, "view_pos")
-        self.uloc_sha["light_color"] = glGetUniformLocation(
-            self.shader_sha, "light_color"
+        self.uloc_shdw["model"] = glGetUniformLocation(self.shader_shdw, "model")
+        self.uloc_shdw["view"] = glGetUniformLocation(self.shader_shdw, "view")
+        self.uloc_shdw["project"] = glGetUniformLocation(self.shader_shdw, "project")
+        self.uloc_shdw["color_by"] = glGetUniformLocation(self.shader_shdw, "color_by")
+        self.uloc_shdw["clip_x"] = glGetUniformLocation(self.shader_shdw, "clip_x")
+        self.uloc_shdw["clip_y"] = glGetUniformLocation(self.shader_shdw, "clip_y")
+        self.uloc_shdw["clip_z"] = glGetUniformLocation(self.shader_shdw, "clip_z")
+        self.uloc_shdw["color_map"] = glGetUniformLocation(
+            self.shader_shdw, "color_map"
         )
-        self.uloc_sha["lsm"] = glGetUniformLocation(
-            self.shader_sha, "light_space_matrix"
+        self.uloc_shdw["data_idx"] = glGetUniformLocation(self.shader_shdw, "data_idx")
+        self.uloc_shdw["data_min"] = glGetUniformLocation(self.shader_shdw, "data_min")
+        self.uloc_shdw["data_max"] = glGetUniformLocation(self.shader_shdw, "data_max")
+        self.uloc_shdw["light_pos"] = glGetUniformLocation(
+            self.shader_shdw, "light_pos"
+        )
+        self.uloc_shdw["view_pos"] = glGetUniformLocation(self.shader_shdw, "view_pos")
+        self.uloc_shdw["light_color"] = glGetUniformLocation(
+            self.shader_shdw, "light_color"
+        )
+        self.uloc_shdw["lsm"] = glGetUniformLocation(
+            self.shader_shdw, "light_space_matrix"
         )
 
     def _create_shader_shadow_map(self) -> None:
         """Create shader for rendering shadow map."""
 
-        self.shader_shm = compileProgram(
+        self.shader_shmp = compileProgram(
             compileShader(vertex_shader_shadow_map, GL_VERTEX_SHADER),
             compileShader(fragment_shader_shadow_map, GL_FRAGMENT_SHADER),
         )
 
-        glUseProgram(self.shader_shm)
+        glUseProgram(self.shader_shmp)
 
-        self.uloc_shm["model"] = glGetUniformLocation(self.shader_shm, "model")
-        self.uloc_shm["lsm"] = glGetUniformLocation(
-            self.shader_shm, "light_space_matrix"
+        self.uloc_shmp["model"] = glGetUniformLocation(self.shader_shmp, "model")
+        self.uloc_shmp["lsm"] = glGetUniformLocation(
+            self.shader_shmp, "light_space_matrix"
         )
+
+    def _create_shader_debug(self) -> None:
+        """Create shader for rendering shadow map."""
+
+        self.shader_dbug = compileProgram(
+            compileShader(vertex_shader_debug, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_debug, GL_FRAGMENT_SHADER),
+        )
+        glUseProgram(self.shader_shmp)
 
     def _update_color_caps(self):
         if self.guip.update_caps:
@@ -441,18 +531,18 @@ class MeshGL:
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.uloc_lin["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.uloc_lin["view"], 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.uloc_lin["project"], 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.uloc_line["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_line["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_line["project"], 1, GL_FALSE, proj)
 
         self.set_clipping_uniforms(gguip, ws_pass)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_lin["color_by"], color_by)
-        glUniform1i(self.uloc_lin["cmap_idx"], self.guip.cmap_idx)
-        glUniform1i(self.uloc_lin["data_idx"], self.guip.data_idx)
-        glUniform1f(self.uloc_lin["data_min"], self.guip.data_min)
-        glUniform1f(self.uloc_lin["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_line["color_by"], color_by)
+        glUniform1i(self.uloc_line["cmap_idx"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
+        glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
+        glUniform1f(self.uloc_line["data_max"], self.guip.data_max)
 
         self._lines_draw_call()
         self._unbind_shader()
@@ -472,18 +562,18 @@ class MeshGL:
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
 
-        glUniformMatrix4fv(self.uloc_amb["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.uloc_amb["view"], 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.uloc_amb["project"], 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.uloc_ambi["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_ambi["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_ambi["project"], 1, GL_FALSE, proj)
 
         self.set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_amb["color_by"], color_by)
-        glUniform1i(self.uloc_amb["color_map"], self.guip.cmap_idx)
-        glUniform1i(self.uloc_amb["data_idx"], self.guip.data_idx)
-        glUniform1f(self.uloc_amb["data_min"], self.guip.data_min)
-        glUniform1f(self.uloc_amb["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_ambi["color_by"], color_by)
+        glUniform1i(self.uloc_ambi["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_ambi["data_idx"], self.guip.data_idx)
+        glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
+        glUniform1f(self.uloc_ambi["data_max"], self.guip.data_max)
 
         self._triangles_draw_call()
         self._unbind_shader()
@@ -504,25 +594,25 @@ class MeshGL:
         move = interaction.camera.get_move_matrix()
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.uloc_dif["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.uloc_dif["view"], 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.uloc_dif["project"], 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.uloc_diff["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_diff["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_diff["project"], 1, GL_FALSE, proj)
 
         self.set_clipping_uniforms(gguip, ws_pass)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_dif["color_by"], color_by)
-        glUniform1i(self.uloc_dif["color_map"], self.guip.cmap_idx)
-        glUniform1i(self.uloc_dif["data_idx"], self.guip.data_idx)
-        glUniform1f(self.uloc_dif["data_min"], self.guip.data_min)
-        glUniform1f(self.uloc_dif["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_diff["color_by"], color_by)
+        glUniform1i(self.uloc_diff["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_diff["data_idx"], self.guip.data_idx)
+        glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
+        glUniform1f(self.uloc_diff["data_max"], self.guip.data_max)
 
         view_pos = interaction.camera.camera_pos
-        glUniform3fv(self.uloc_dif["view_pos"], 1, view_pos)
+        glUniform3fv(self.uloc_diff["view_pos"], 1, view_pos)
 
         # Set light uniforms
-        glUniform3fv(self.uloc_dif["light_color"], 1, self.light_color)
-        glUniform3fv(self.uloc_dif["light_pos"], 1, self.light_position)
+        glUniform3fv(self.uloc_diff["light_color"], 1, self.light_color)
+        glUniform3fv(self.uloc_diff["light_pos"], 1, self.light_position)
 
         self._triangles_draw_call()
         self._unbind_shader()
@@ -538,7 +628,11 @@ class MeshGL:
         """
         self._update_color_caps()
         self._render_shadow_map(interaction)
-        self._render_shadows(interaction, gguip)
+
+        if interaction.show_shadow_map:
+            self._render_debug_shadows(interaction)
+        else:
+            self._render_shadows(interaction, gguip)
 
     def render_wireshaded(self, interaction: Interaction, gguip: GuiParameters) -> None:
         self._update_color_caps()
@@ -574,10 +668,10 @@ class MeshGL:
             self.light_position, look_target, global_up, dtype=np.float32
         )
         self.light_space_matrix = pyrr.matrix44.multiply(light_view, light_projection)
-        glUseProgram(self.shader_shm)
-        glUniformMatrix4fv(self.uloc_shm["lsm"], 1, GL_FALSE, self.light_space_matrix)
+        glUseProgram(self.shader_shmp)
+        glUniformMatrix4fv(self.uloc_shmp["lsm"], 1, GL_FALSE, self.light_space_matrix)
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        glUniformMatrix4fv(self.uloc_shm["model"], 1, GL_FALSE, translation)
+        glUniformMatrix4fv(self.uloc_shmp["model"], 1, GL_FALSE, translation)
 
         glViewport(0, 0, self.shadow_map_resolution, self.shadow_map_resolution)
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
@@ -586,6 +680,16 @@ class MeshGL:
         glClear(GL_DEPTH_BUFFER_BIT)
 
         self._triangles_draw_call()
+
+    def _render_debug_shadows(self, interaction: Interaction) -> None:
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glViewport(0, 0, interaction.width, interaction.height)
+        glClearColor(0.0, 0.0, 0.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glUseProgram(self.shader_dbug)
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.depth_map)
+        self._debug_quad_draw_call()
 
     def _render_shadows(self, interaction: Interaction, gguip: GuiParameters) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer.
@@ -599,38 +703,43 @@ class MeshGL:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
         glViewport(0, 0, interaction.width, interaction.height)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(self.shader_sha)
+        glUseProgram(self.shader_shdw)
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         view = interaction.camera.get_view_matrix()
         proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.uloc_sha["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.uloc_sha["project"], 1, GL_FALSE, proj)
-        glUniformMatrix4fv(self.uloc_sha["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_shdw["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_shdw["project"], 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.uloc_shdw["view"], 1, GL_FALSE, view)
 
         self.set_clipping_uniforms(gguip)
 
         color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_sha["color_by"], color_by)
-        glUniform1i(self.uloc_sha["color_map"], self.guip.cmap_idx)
-        glUniform1i(self.uloc_sha["data_idx"], self.guip.data_idx)
-        glUniform1f(self.uloc_sha["data_min"], self.guip.data_min)
-        glUniform1f(self.uloc_sha["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_shdw["color_by"], color_by)
+        glUniform1i(self.uloc_shdw["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_shdw["data_idx"], self.guip.data_idx)
+        glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)
+        glUniform1f(self.uloc_shdw["data_max"], self.guip.data_max)
 
         # Set light uniforms
-        glUniform3fv(self.uloc_sha["light_color"], 1, self.light_color)
-        glUniform3fv(self.uloc_sha["view_pos"], 1, interaction.camera.camera_pos)
-        glUniform3fv(self.uloc_sha["light_pos"], 1, self.light_position)
+        glUniform3fv(self.uloc_shdw["light_color"], 1, self.light_color)
+        glUniform3fv(self.uloc_shdw["view_pos"], 1, interaction.camera.camera_pos)
+        glUniform3fv(self.uloc_shdw["light_pos"], 1, self.light_position)
 
         # Set light space matrix
-        glUniformMatrix4fv(self.uloc_sha["lsm"], 1, GL_FALSE, self.light_space_matrix)
+        glUniformMatrix4fv(self.uloc_shdw["lsm"], 1, GL_FALSE, self.light_space_matrix)
 
+        # Bind the shadow map texture so that it can be sampled in the shader
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
 
         self._triangles_draw_call()
         self._unbind_shader()
+
+    def _debug_quad_draw_call(self) -> None:
+        glBindVertexArray(self.VAO_debug)
+        glDrawElements(GL_TRIANGLES, len(self.quad_indices), GL_UNSIGNED_INT, None)
 
     def _triangles_draw_call(self):
         """Bind the vertex array object and calling draw function for triangles"""
@@ -658,23 +767,23 @@ class MeshGL:
 
     def _bind_shader_lines(self) -> None:
         """Bind the shader for wireframe rendering."""
-        glUseProgram(self.shader_lin)
+        glUseProgram(self.shader_line)
 
     def _bind_shader_ambient(self) -> None:
         """Bind the shader for basic shading."""
-        glUseProgram(self.shader_amb)
+        glUseProgram(self.shader_ambi)
 
     def _bind_shader_diffuse(self) -> None:
         """Bind the shader for diffuse shading."""
-        glUseProgram(self.shader_dif)
+        glUseProgram(self.shader_diff)
 
     def _bind_shader_shadows(self) -> None:
         """Bind the shader for shading with shadows."""
-        glUseProgram(self.shader_sha)
+        glUseProgram(self.shader_shdw)
 
     def _bind_shader_shadow_map(self) -> None:
         """Bind the shader for rendering shadow map."""
-        glUseProgram(self.shader_shm)
+        glUseProgram(self.shader_shmp)
 
     def _unbind_shader(self) -> None:
         """Unbind the currently bound shader."""
@@ -713,18 +822,18 @@ class MeshGL:
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
         if self.guip.mesh_shading == MeshShading.wireframe or ws_pass == 2:
-            glUniform1f(self.uloc_lin["clip_x"], (xdom * gguip.clip_dist[0]))
-            glUniform1f(self.uloc_lin["clip_y"], (ydom * gguip.clip_dist[1]))
-            glUniform1f(self.uloc_lin["clip_z"], (zdom * gguip.clip_dist[2]))
+            glUniform1f(self.uloc_line["clip_x"], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.uloc_line["clip_y"], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.uloc_line["clip_z"], (zdom * gguip.clip_dist[2]))
         elif self.guip.mesh_shading == MeshShading.ambient:
-            glUniform1f(self.uloc_amb["clip_x"], (xdom * gguip.clip_dist[0]))
-            glUniform1f(self.uloc_amb["clip_y"], (ydom * gguip.clip_dist[1]))
-            glUniform1f(self.uloc_amb["clip_z"], (zdom * gguip.clip_dist[2]))
+            glUniform1f(self.uloc_ambi["clip_x"], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.uloc_ambi["clip_y"], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.uloc_ambi["clip_z"], (zdom * gguip.clip_dist[2]))
         elif self.guip.mesh_shading == MeshShading.diffuse or ws_pass == 1:
-            glUniform1f(self.uloc_dif["clip_x"], (xdom * gguip.clip_dist[0]))
-            glUniform1f(self.uloc_dif["clip_y"], (ydom * gguip.clip_dist[1]))
-            glUniform1f(self.uloc_dif["clip_z"], (zdom * gguip.clip_dist[2]))
+            glUniform1f(self.uloc_diff["clip_x"], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.uloc_diff["clip_y"], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.uloc_diff["clip_z"], (zdom * gguip.clip_dist[2]))
         elif self.guip.mesh_shading == MeshShading.shadows:
-            glUniform1f(self.uloc_sha["clip_x"], (xdom * gguip.clip_dist[0]))
-            glUniform1f(self.uloc_sha["clip_y"], (ydom * gguip.clip_dist[1]))
-            glUniform1f(self.uloc_sha["clip_z"], (zdom * gguip.clip_dist[2]))
+            glUniform1f(self.uloc_shdw["clip_x"], (xdom * gguip.clip_dist[0]))
+            glUniform1f(self.uloc_shdw["clip_y"], (ydom * gguip.clip_dist[1]))
+            glUniform1f(self.uloc_shdw["clip_z"], (zdom * gguip.clip_dist[2]))

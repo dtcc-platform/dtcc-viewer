@@ -1,5 +1,6 @@
 import glfw
 import time
+from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.camera import Camera
 
 
@@ -44,6 +45,8 @@ class Interaction:
     right_mbtn_pressed: bool
     mouse_on_gui: bool
 
+    show_shadow_map: bool
+
     # Tracking mouse picking clicks
     picking: bool
     picked_x: float
@@ -72,6 +75,7 @@ class Interaction:
         self.right_first_mouse = True
         self.right_mbtn_pressed = False
         self.mouse_on_gui = False
+        self.show_shadow_map = False
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -115,6 +119,9 @@ class Interaction:
         """
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
+        elif key == glfw.KEY_S and action == glfw.PRESS:
+            self.show_shadow_map = not self.show_shadow_map
+            info(f"Draw shadow map: {self.show_shadow_map}")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         """Callback function for handling mouse scroll input.

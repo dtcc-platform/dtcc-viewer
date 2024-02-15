@@ -516,6 +516,8 @@ glUseProgram(shader_shadow)
 light_space_matrix_loc = glGetUniformLocation(shader_shadow, "light_space_matrix")
 model_loc = glGetUniformLocation(shader_shadow, "model")
 
+# --------------------------------------------------------#
+
 
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)
