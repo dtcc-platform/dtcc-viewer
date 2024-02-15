@@ -62,30 +62,15 @@ class PointCloudGL:
     bb_local: BoundingBox
     bb_global: BoundingBox
 
-    model_loc: int  # Uniform location for model matrix
-    project_loc: int  # Uniform location for projection matrix
-    view_loc: int  # Uniform location for view matrix
-    color_by_loc: int  # Uniform location for color by variable
-    scale_loc: int  # Uniform location for scaling parameter
-    cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
-    cm_loc: int  # Uniform location for color map
-    di_loc: int  # Uniform location for data index
-    dmin_loc: int  # Uniform location for data min
-    dmax_loc: int  # Uniform location for data max
+    uniform_locs = {}  # Uniform locations for the shader program
+    shader: int  # Shader program
 
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
 
     def __init__(self, pc_wrapper: PointCloudWrapper):
-        """Initialize the PointCloudGL object and set up rendering.
+        """Initialize the PointCloudGL object and set up rendering."""
 
-        Parameters
-        ----------
-        pc_data_obj : PointCloudData
-            Instance of the PointCloudData calss with points, colors and pc size.
-        """
-
-        self.cp_locs = [0, 0, 0]
         self.p_size = pc_wrapper.size
         self.n_points = int(len(pc_wrapper.points) / 3)
         self.transforms = pc_wrapper.points
@@ -96,6 +81,8 @@ class PointCloudGL:
         self.data[:, 1] = self.data_dict["slot1"]
         self.data[:, 2] = self.data_dict["slot2"]
 
+        self.uniform_locs = {}
+
         self.guip = GuiParametersPC(pc_wrapper.name, self.data_dict)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
@@ -105,53 +92,39 @@ class PointCloudGL:
         self._create_shader()
 
     def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
-        """Render the point cloud using provided interaction parameters.
+        """Render the point cloud using provided interaction parameters."""
 
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
         self._update_color_caps()
         self._bind_vao()
         self._bind_shader()
 
         proj = interaction.camera.get_perspective_matrix()
-        glUniformMatrix4fv(self.project_loc, 1, GL_FALSE, proj)
+        glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
 
         view = interaction.camera.get_view_matrix()
-        glUniformMatrix4fv(self.view_loc, 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
 
-        tans = self._get_billboard_transform(
-            interaction.camera.camera_pos, interaction.camera.camera_target
-        )
-        glUniformMatrix4fv(self.model_loc, 1, GL_FALSE, tans)
+        cam_pos = interaction.camera.camera_pos
+        cam_tar = interaction.camera.camera_target
+        tans = self._get_billboard_transform(cam_pos, cam_tar)
+        glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, tans)
 
         self._set_clipping_uniforms(gguip)
 
-        color_by = int(self.guip.color_pc)
-        glUniform1i(self.color_by_loc, color_by)
-        invert_color = int(self.guip.invert_cmap)
-        glUniform1i(self.invert_color_loc, invert_color)
+        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color_pc))
+        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
+        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_index)
+        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_index)
+        glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
+        glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
 
-        glUniform1i(self.cm_loc, self.guip.cmap_index)
-        glUniform1i(self.di_loc, self.guip.data_index)
-        glUniform1f(self.dmin_loc, self.guip.data_min)
-        glUniform1f(self.dmax_loc, self.guip.data_max)
+        sf = self.guip.pc_scale
+        scale = pyrr.matrix44.create_from_scale([sf, sf, sf], dtype=np.float32)
+        glUniformMatrix4fv(self.uniform_locs["scale"], 1, GL_FALSE, scale)
 
-        scale_factor = self.guip.pc_scale
-        scale = pyrr.matrix44.create_from_scale(
-            [scale_factor, scale_factor, scale_factor], dtype=np.float32
-        )
-        glUniformMatrix4fv(self.scale_loc, 1, GL_FALSE, scale)
-
-        glDrawElementsInstanced(
-            GL_TRIANGLES,
-            len(self.face_indices),
-            GL_UNSIGNED_INT,
-            None,
-            self.n_points,
-        )
+        f_count = len(self.face_indices)
+        p_count = self.n_points
+        glDrawElementsInstanced(GL_TRIANGLES, f_count, GL_UNSIGNED_INT, None, p_count)
 
         self._unbind_vao()
         self._unbind_shader()
@@ -256,21 +229,19 @@ class PointCloudGL:
         )
         glUseProgram(self.shader)
 
-        self.model_loc = glGetUniformLocation(self.shader, "model")
-        self.project_loc = glGetUniformLocation(self.shader, "project")
-        self.view_loc = glGetUniformLocation(self.shader, "view")
-        self.color_by_loc = glGetUniformLocation(self.shader, "color_by")
-        self.scale_loc = glGetUniformLocation(self.shader, "scale")
-        self.invert_color_loc = glGetUniformLocation(self.shader, "invert_color")
-
-        self.cp_locs[0] = glGetUniformLocation(self.shader, "clip_x")
-        self.cp_locs[1] = glGetUniformLocation(self.shader, "clip_y")
-        self.cp_locs[2] = glGetUniformLocation(self.shader, "clip_z")
-
-        self.cm_loc = glGetUniformLocation(self.shader, "cmap_idx")
-        self.di_loc = glGetUniformLocation(self.shader, "data_idx")
-        self.dmin_loc = glGetUniformLocation(self.shader, "data_min")
-        self.dmax_loc = glGetUniformLocation(self.shader, "data_max")
+        self.uniform_locs["model"] = glGetUniformLocation(self.shader, "model")
+        self.uniform_locs["view"] = glGetUniformLocation(self.shader, "view")
+        self.uniform_locs["project"] = glGetUniformLocation(self.shader, "project")
+        self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
+        self.uniform_locs["scale"] = glGetUniformLocation(self.shader, "scale")
+        self.uniform_locs["clip_x"] = glGetUniformLocation(self.shader, "clip_x")
+        self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
+        self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
+        self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
+        self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
+        self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
+        self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
+        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
 
     def _bind_shader(self) -> None:
         """Bind the shader program."""
@@ -296,21 +267,24 @@ class PointCloudGL:
             The transformation matrix for billboarding.
         """
         dir_from_camera = camera_target - camera_position
-        angle1 = np.arctan2(-dir_from_camera[1], dir_from_camera[0])  # arctan(dy/dx)
-        dist2d = math.sqrt(
-            dir_from_camera[0] ** 2 + dir_from_camera[1] ** 2
-        )  # sqrt(dx^2 + dy^2)
-        angle2 = np.arctan2(dir_from_camera[2], dist2d)  # angle around vertical axis
 
+        # Angle1: arctan(dy/dx)
+        angle1 = np.arctan2(-dir_from_camera[1], dir_from_camera[0])
+
+        # Dist 2d: sqrt(dx^2 + dy^2)
+        dist2d = math.sqrt(dir_from_camera[0] ** 2 + dir_from_camera[1] ** 2)
+
+        # Angle2: around vertical axis
+        angle2 = np.arctan2(dir_from_camera[2], dist2d)
+
+        # Create transformation matrices for each mode
         model_transform = pyrr.matrix44.create_identity(dtype=np.float32)
-        model_transform = pyrr.matrix44.multiply(
-            model_transform,
-            pyrr.matrix44.create_from_y_rotation(theta=angle2, dtype=np.float32),
-        )
-        model_transform = pyrr.matrix44.multiply(
-            model_transform,
-            pyrr.matrix44.create_from_z_rotation(theta=angle1, dtype=np.float32),
-        )
+        rotation_y = pyrr.matrix44.create_from_y_rotation(angle2, np.float32)
+        rotation_z = pyrr.matrix44.create_from_z_rotation(angle1, np.float32)
+
+        # Combine the the transformations
+        model_transform = pyrr.matrix44.multiply(model_transform, rotation_y)
+        model_transform = pyrr.matrix44.multiply(model_transform, rotation_z)
 
         return model_transform
 
@@ -433,6 +407,6 @@ class PointCloudGL:
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
-        glUniform1f(self.cp_locs[0], (xdom * gguip.clip_dist[0]))
-        glUniform1f(self.cp_locs[1], (ydom * gguip.clip_dist[1]))
-        glUniform1f(self.cp_locs[2], (zdom * gguip.clip_dist[2]))
+        glUniform1f(self.uniform_locs["clip_x"], (xdom * gguip.clip_dist[0]))
+        glUniform1f(self.uniform_locs["clip_y"], (ydom * gguip.clip_dist[1]))
+        glUniform1f(self.uniform_locs["clip_z"], (zdom * gguip.clip_dist[2]))

@@ -13,7 +13,7 @@ uniform mat4 project;
 uniform mat4 view;
 uniform int color_by;
 uniform mat4 scale;
-uniform int invert_color;
+uniform int color_inv;
 
 uniform float clip_x;
 uniform float clip_y;
@@ -75,7 +75,7 @@ void main()
             color_per_instance = viridis(a_idata[data_idx]);
         }
 
-        if(invert_color == 1)
+        if(color_inv == 1)
         {
             color_per_instance = vec3(1.0) - color_per_instance;
         }
