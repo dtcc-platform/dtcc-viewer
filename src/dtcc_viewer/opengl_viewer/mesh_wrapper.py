@@ -79,8 +79,11 @@ class MeshWrapper:
 
         self._restructure_data(mesh, data)
         self._restructure_mesh(mesh)
-        if self.submeshes is None:
-            self._create_default_submeshes(mesh)
+
+        if submeshes is None:
+            print("submesh is none")
+        else:
+            self._create_ids_from_submeshes(submeshes)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -161,7 +164,7 @@ class MeshWrapper:
         return new_dict
 
     def _restructure_mesh(self, mesh: Mesh):
-        array_length = len(mesh.faces) * 3 * 9
+        array_length = len(mesh.faces) * 3 * 10
         new_vertices = np.zeros(array_length)
         face_verts = mesh.vertices[mesh.faces.flatten()]
 
@@ -172,21 +175,31 @@ class MeshWrapper:
         cross_vecs = (c2 - c1)[mask]  # (v2 - v1), (v3 - v2)
         cross_p = np.cross(cross_vecs[::2], cross_vecs[1::2])  # (v2 - v1) x (v3 - v2)
         cross_p = cross_p / np.linalg.norm(cross_p, axis=1)[:, np.newaxis]  # normalize
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
-        data_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
-        normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0, 0], dtype=bool)
+        data_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0, 0], dtype=bool)
+        normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 0], dtype=bool)
+        id_mask = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=bool)
         mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
         new_vertices[mask] = face_verts.flatten()
         mask = np.tile(data_mask, array_length // len(data_mask) + 1)[:array_length]
         new_vertices[mask] = np.array([0.0, 0.0, 0.0] * len(mesh.faces) * 3).flatten()
         mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
         new_vertices[mask] = np.tile(cross_p, 3).flatten()
-        new_faces = np.arange(array_length // 9)
+        new_faces = np.arange(array_length // 10)
+
+        # Add face index to vertices as a default id
+        faces_indices = np.arange(len(mesh.faces))
+        face_indices_in_vertex_shape = np.repeat(faces_indices, 3)
+        mask = np.tile(id_mask, array_length // len(normal_mask) + 1)[:array_length]
+        new_vertices[mask] = face_indices_in_vertex_shape
+
+        # np.set_printoptions(precision=3, suppress=True)
+        # pp(new_vertices.reshape(-1, 10))
 
         # Insert data from restructured dict
-        new_vertices[3::9] = self.dict_data["slot0"]
-        new_vertices[4::9] = self.dict_data["slot1"]
-        new_vertices[5::9] = self.dict_data["slot2"]
+        new_vertices[3::10] = self.dict_data["slot0"]
+        new_vertices[4::10] = self.dict_data["slot1"]
+        new_vertices[5::10] = self.dict_data["slot2"]
 
         new_edges = np.zeros(len(mesh.faces) * 6)
         new_edges[0::6] = new_faces[0::3]
@@ -202,17 +215,15 @@ class MeshWrapper:
 
     def _move_mesh_to_origin(self, bb: BoundingBox):
         # [x, y, z, r, g, b, nx, ny ,nz]
-        v_count = len(self.vertices) // 9
-        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+        v_count = len(self.vertices) // 10
+        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0, 0]), axis=0)
         recenter_vec = np.tile(recenter_vec, v_count)
         self.vertices += recenter_vec
 
     def get_vertex_positions(self):
         """Get the vertex positions of the mesh."""
-        vertex_mask = np.array(
-            [True, True, True, False, False, False, False, False, False]
-        )
-        v_count = len(self.vertices) // 9
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 10
         vertex_pos_mask = np.tile(vertex_mask, v_count)
         vertex_pos = self.vertices[vertex_pos_mask]
         return vertex_pos
@@ -230,6 +241,28 @@ class MeshWrapper:
         self.vertices = np.array(self.vertices, dtype="float32").flatten()
         self.edges = np.array(self.edges, dtype="uint32").flatten()
         self.faces = np.array(self.faces, dtype="uint32").flatten()
+
+    def _create_ids_from_submeshes(self, submeshes: Submeshes):
+        # Restructures submesh ids to the face index structure
+        face_per_submesh = submeshes.face_end_indices - submeshes.face_start_indices + 1
+        ids_in_submesh_shape = submeshes.ids + submeshes.id_offset
+        ids_in_faces_shape = np.repeat(ids_in_submesh_shape, face_per_submesh)
+
+        # Restructure the face ids to the vertex structure
+        ids_in_vertex_shape = np.repeat(ids_in_faces_shape, 3)
+
+        n_vertices = len(self.vertices) // 10
+
+        if len(ids_in_vertex_shape) != n_vertices:
+            warning(
+                f"Number of submesh ids and vertices do not match: {len(ids_in_vertex_shape)} != {n_vertices}"
+            )
+        else:
+            # Replace default id with submesh id in the vertices
+            info("Replacing default face ids with submesh ids in the vertices")
+            id_mask = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=bool)
+            mask = np.tile(id_mask, len(self.vertices) // 10)[: len(self.vertices)]
+            self.vertices[mask] = ids_in_vertex_shape
 
     def _create_default_submeshes(self, mesh):
         # The default structure is such that each face is represented as a submesh

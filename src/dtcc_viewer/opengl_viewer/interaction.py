@@ -34,8 +34,10 @@ class Interaction:
         Flag indicating if the mouse cursor is over the graphical user interface (GUI).
     """
 
-    width: int
-    height: int
+    fbuf_width: int  # Framwbuffer width
+    fbuf_height: int  # Framebuffer height
+    win_width: int  # Screen width (same as framebuffer width for non retina displays)
+    win_height: int  # Screen height (same as framebuffer width for non retina displays)
     last_x: float
     last_y: float
     camera: Camera
@@ -45,7 +47,8 @@ class Interaction:
     right_mbtn_pressed: bool
     mouse_on_gui: bool
 
-    show_shadow_map: bool
+    show_shadow_texture: bool
+    show_picking_texture: bool
 
     # Tracking mouse picking clicks
     picking: bool
@@ -65,17 +68,21 @@ class Interaction:
         height : int
             The height of the viewer window.
         """
-        self.width = width
-        self.height = height
-        self.last_x = self.width / 2.0
-        self.last_y = self.height / 2.0
-        self.camera = Camera(self.width, self.height)
+        self.fbuf_width = width
+        self.fbuf_height = height
+        self.last_x = self.fbuf_width / 2.0
+        self.last_y = self.fbuf_height / 2.0
+        self.camera = Camera(self.fbuf_width, self.fbuf_height)
         self.left_first_mouse = True
         self.left_mbtn_pressed = False
         self.right_first_mouse = True
         self.right_mbtn_pressed = False
         self.mouse_on_gui = False
-        self.show_shadow_map = False
+        self.show_shadow_texture = False
+        self.show_picking_texture = False
+        self.picking = False
+        self.picked_x = 0
+        self.picked_y = 0
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -87,7 +94,7 @@ class Interaction:
         """
         self.mouse_on_gui = mouse_on_gui
 
-    def update_window_size(self, width, height):
+    def update_window_size(self, fb_width, fb_height, win_width, win_height):
         """Update width and height of the viewer window and adjust the camera settings.
 
         Parameters
@@ -97,9 +104,11 @@ class Interaction:
         height : int
             The new height of the viewer window.
         """
-        self.width = width
-        self.height = height
-        self.camera.update_window_size(width, height)
+        self.fbuf_width = fb_width
+        self.fbuf_height = fb_height
+        self.win_width = win_width
+        self.win_height = win_height
+        self.camera.update_window_aspect_ratio(fb_width, fb_height)
 
     def key_input_callback(self, window, key, scancode, action, mode):
         """Callback function for handling keyboard input.
@@ -119,9 +128,13 @@ class Interaction:
         """
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
+            info("Viewer terminated")
         elif key == glfw.KEY_S and action == glfw.PRESS:
-            self.show_shadow_map = not self.show_shadow_map
-            info(f"Draw shadow map: {self.show_shadow_map}")
+            self.show_shadow_texture = not self.show_shadow_texture
+            info(f"Draw shadow map: {self.show_shadow_texture}")
+        elif key == glfw.KEY_D and action == glfw.PRESS:
+            self.show_picking_texture = not self.show_picking_texture
+            info(f"Draw picking texture: {self.show_picking_texture}")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         """Callback function for handling mouse scroll input.
@@ -163,8 +176,11 @@ class Interaction:
             if self.tictoc_duration < 0.2:
                 self.picking = True
                 (xpos, ypos) = glfw.get_cursor_pos(window)
+                xpos = (self.fbuf_width / self.win_width) * xpos
+                ypos = (self.fbuf_height / self.win_height) * ypos
                 self.picked_x = xpos
-                self.picked_y = self.height - ypos
+                self.picked_y = self.fbuf_height - ypos
+
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS:
             self.right_mbtn_pressed = True
         elif button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.RELEASE:

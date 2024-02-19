@@ -11,16 +11,18 @@ from dtcc_model import MultiSurface, Surface
 class Submeshes:
     face_start_indices: np.ndarray
     face_end_indices: np.ndarray
-    submesh_ids: np.ndarray
+    ids: np.ndarray
     selected: np.ndarray
-    submesh_meta_data: dict
+    meta_data: dict
+    id_offset: int
 
     def __init__(self, face_start_indices, face_end_indices, submesh_ids):
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
-        self.submesh_ids = np.array(submesh_ids)
+        self.ids = np.array(submesh_ids)
         self.selected = np.zeros(len(submesh_ids), dtype=bool)
-        self.submesh_meta_data = {}
+        self.meta_data = {}
+        self.id_offset = 0
 
     def add_meta_data(self, id, newdata_dict):
         self.meta_data[id] = newdata_dict
@@ -29,10 +31,16 @@ class Submeshes:
         print("Submeshes data: ")
         print(self.face_start_indices)
         print(self.face_end_indices)
-        print(self.submesh_ids)
+        print(self.ids)
+
+    def set_id_offset(self, offset):
+        self.id_offset = offset
 
     def toogle_selected(self, id):
         self.selected[id] = not self.selected[id]
+
+    def get_face_ids(self, id, mesh: Mesh):
+        len(mesh.faces)
 
 
 class Submesh:
@@ -60,6 +68,7 @@ class MeshShading(IntEnum):
     diffuse = 2
     wireshaded = 3
     shadows = 4
+    picking = 5
 
 
 class ColorSchema(IntEnum):

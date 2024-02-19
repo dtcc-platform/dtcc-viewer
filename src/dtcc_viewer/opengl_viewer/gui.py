@@ -7,23 +7,7 @@ from dtcc_viewer.colors import color_maps, shader_cmaps
 
 
 class GuiParameters:
-    """Class representing GUI parameters for the viewer.
-
-    Attributes
-    ----------
-    color : list of float
-        The color used for GUI elements.
-    text_color : list of float
-        The inverted color for text elements.
-    gui_width : int
-        The width of the GUI window.
-    gui_height : int
-        The height of the GUI window.
-    single_date : bool
-        Flag indicating whether a single date is selected.
-    period : bool
-        Flag indicating whether a date period is selected.
-    """
+    """Class representing GUI parameters for the viewer."""
 
     def __init__(self):
         """Initialize the GuiParameters object."""
@@ -216,45 +200,7 @@ class GuiParametersRN:
 
 
 class GuiParametersDates:
-    """Class representing an example of GUI parameters.
-
-    Attributes
-    ----------
-    year_start : int
-        The starting year.
-    month_start : int
-        The starting month.
-    day_start : int
-        The starting day.
-    hour_start : int
-        The starting hour.
-    year_end : int
-        The ending year.
-    month_end : int
-        The ending month.
-    day_end : int
-        The ending day.
-    hour_end : int
-        The ending hour.
-    color : list of float
-        The color used for GUI elements.
-    text_color : list of float
-        The inverted color for text elements.
-    gui_width : int
-        The width of the GUI window.
-    gui_height : int
-        The height of the GUI window.
-    single_date : bool
-        Flag indicating whether a single date is selected.
-    period : bool
-        Flag indicating whether a date period is selected.
-    checkbox1 : bool
-        The state of the first checkbox.
-    checkbox2 : bool
-        The state of the second checkbox.
-    combo_selected_index : int
-        The selected index in the combo box.
-    """
+    """Class representing an example of GUI parameters."""
 
     def __init__(self) -> None:
         """Initialize the GuiParametersExample object."""
@@ -538,7 +484,14 @@ class Gui:
 
             # Drawing mode combo box
             imgui.push_id("Combo " + str(index))
-            items = ["wireframe", "ambient", "diffuse", "wireshaded", "shadows"]
+            items = [
+                "wireframe",
+                "ambient",
+                "diffuse",
+                "wireshaded",
+                "shadows",
+                "picking",
+            ]
             with imgui.begin_combo("Shading", items[guip.mesh_shading]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
@@ -564,6 +517,7 @@ class Gui:
                                 guip.update_caps = True
                                 guip.cmap_idx = i
                                 guip.cmap_key = item
+                                print(guip.cmap_idx)
 
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                             if is_selected:
@@ -620,9 +574,6 @@ class Gui:
                         )
 
                 imgui.pop_id()
-
-    def _create_range_sliders():
-        pass
 
     def draw_separator(self) -> None:
         """Draw a separator between GUI elements."""

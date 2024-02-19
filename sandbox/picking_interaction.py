@@ -112,7 +112,7 @@ class PickingInteraction:
 
         self.width = width
         self.height = height
-        self.camera.update_window_size(width, height)
+        self.camera.update_window_aspect_ratio(width, height)
 
         print(self.width, self.height)
 

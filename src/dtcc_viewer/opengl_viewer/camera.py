@@ -66,8 +66,8 @@ class Camera:
         self.camera_direction = Vector3([0.0, 0.0, 0.0])
         self.distance_to_target = 100.0
 
-        self.width = width
-        self.heigh = height
+        # self.width = width
+        # self.heigh = height
         self.aspect_ratio = float(width) / float(height)
         self.near_plane = 0.1
         self.far_plane = 1000000
@@ -79,7 +79,7 @@ class Camera:
 
         self.update_camera_vectors()
 
-    def update_window_size(self, width, height) -> None:
+    def update_window_aspect_ratio(self, width, height) -> None:
         """Update the camera's viewport dimensions.
 
         Parameters
@@ -89,8 +89,8 @@ class Camera:
         height : int
             The new height of the viewport.
         """
-        self.width = width
-        self.heigh = height
+        # self.width = width
+        # self.heigh = height
         self.aspect_ratio = float(width) / float(height)
 
     def set_aspect_ratio(self, aspect_ratio) -> None:

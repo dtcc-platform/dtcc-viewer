@@ -6,6 +6,7 @@ vertex_shader_ambient = """
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_data;
 layout(location = 2) in vec3 a_normal;
+layout(location = 3) in float a_id;
 
 uniform mat4 model;
 uniform mat4 project;
@@ -19,6 +20,7 @@ uniform float data_min;
 uniform float data_max;
 uniform int cmap_idx;
 uniform int data_idx;
+uniform int picked_id;
 
 $color_map_0
 $color_map_1
@@ -43,10 +45,13 @@ void main()
 
     //gl_Position = project * view * vec4(a_position, 1.0);
     
-    if(color_by == 1)
+    highp int id_int = int(a_id);
+    if(picked_id == id_int)
+    {
+        v_color = vec3(1.0, 0.0, 1.0);
+    }
+    else if(color_by == 1)
     {   
-        //v_color = vec4(a_color, 1.0);
-
         // Calculate the colors using the shader colormaps
         if(cmap_idx == 0)
         {
@@ -73,6 +78,8 @@ void main()
     {
         v_color = vec3(1.0, 1.0, 1.0);   
     }
+
+    
 }
 """
 

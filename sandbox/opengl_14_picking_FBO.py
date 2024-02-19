@@ -440,7 +440,6 @@ glUseProgram(shader_picking)
 model_loc_picking = glGetUniformLocation(shader_picking, "model")
 project_loc_picking = glGetUniformLocation(shader_picking, "project")
 view_loc_picking = glGetUniformLocation(shader_picking, "view")
-picked_color_loc = glGetUniformLocation(shader_picking, "picked_color")
 
 glClearColor(0.0, 0.0, 0.0, 1)
 glEnable(GL_DEPTH_TEST)

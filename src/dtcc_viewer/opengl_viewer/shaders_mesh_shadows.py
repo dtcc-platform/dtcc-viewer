@@ -4,6 +4,7 @@ vertex_shader_shadows = """
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_data;
 layout(location = 2) in vec3 a_normal;
+layout(location = 3) in float a_id;
 
 out vec3 v_frag_pos;
 out vec3 v_color;
@@ -20,6 +21,7 @@ uniform float data_min;
 uniform float data_max;
 uniform int cmap_idx;
 uniform int data_idx;
+uniform int picked_id;
 
 uniform float clip_x;
 uniform float clip_y;
@@ -50,10 +52,13 @@ void main()
     v_normal = transpose(inverse(mat3(model))) * a_normal;
     v_frag_pos_light_space = light_space_matrix * vec4(v_frag_pos, 1.0);
 
-    if(color_by == 1)
+    highp int id_int = int(a_id);
+    if(picked_id == id_int)
     {
-        //v_color = a_color;
-
+        v_color = vec3(1.0, 0.0, 1.0);
+    }
+    else if(color_by == 1)
+    {
         // Calculate the colors using the shader colormaps
         if(cmap_idx == 0)
         {
@@ -81,6 +86,7 @@ void main()
         v_color = vec3(1.0, 1.0, 1.0);
     }
 
+    
     gl_Position = project * view * vec4(v_frag_pos, 1.0);
 }
 """
@@ -174,34 +180,5 @@ fragment_shader_shadow_map = """
 void main()
 {             
     // gl_FragDepth = gl_FragCoord.z;
-} 
-"""
-
-vertex_shader_debug = """
-#version 330 core
-layout (location = 0) in vec2 a_pos;
-layout (location = 1) in vec2 a_tex_coords;
-
-out vec2 tex_coords;
-
-void main()
-{
-    tex_coords = a_tex_coords;
-    gl_Position = vec4(a_pos, 0.0, 1.0);
-} 
-"""
-
-fragment_shader_debug = """
-#version 330 core
-
-out vec4 frag_color;
-in vec2 tex_coords;
-
-uniform sampler2D depth_map;
-
-void main()
-{   
-    float depth_value = texture(depth_map, tex_coords).r;          
-    frag_color = vec4(vec3(depth_value), 1.0); 
 } 
 """

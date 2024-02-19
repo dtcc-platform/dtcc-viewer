@@ -29,7 +29,6 @@ $color_map_4
 out vec3 v_color;
 void main()
 {
-
     vec4 clippingPlane1 = vec4(-1, 0, 0, clip_x);
 	vec4 clippingPlane2 = vec4(0, -1, 0, clip_y);
 	vec4 clippingPlane3 = vec4(0, 0, -1, clip_z);

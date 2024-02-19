@@ -69,8 +69,13 @@ class CityWrapper:
         self.dict_data = {}
 
         # Read the city model and generate the mesh geometry for buildings and terrain
-        (b_mesh, b_submeshes) = self._generate_building_mesh(city)
         (t_mesh, t_submeshes) = self._get_terrain_mesh(city)
+        (b_mesh, b_submeshes) = self._generate_building_mesh(city)
+
+        # Set the global ids for the entire scene
+        if t_submeshes is not None:
+            t_submeshes.id_offset = 0
+            b_submeshes.id_offset = np.max(t_submeshes.ids + t_submeshes.id_offset) + 1
 
         if t_mesh is not None:
             self.terrain_mw = MeshWrapper(
@@ -152,7 +157,7 @@ class CityWrapper:
                 building_mesh = concatenate_meshes(building_meshes)
                 all_meshes.append(building_mesh)
 
-                # Stor face indices for this submesh to be used for picking
+                # Store face indices for this submesh to be used for picking
                 bld_f_count = len(building_mesh.faces)
                 face_start_index.append(tot_f_count)
                 face_end_index.append(tot_f_count + bld_f_count - 1)

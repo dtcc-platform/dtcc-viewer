@@ -10,28 +10,33 @@ from dtcc_viewer.opengl_viewer.interaction import Interaction
 from dtcc_viewer.opengl_viewer.gui import GuiParameters, GuiParametersMesh
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.utils import MeshShading, BoundingBox
+from dtcc_viewer.opengl_viewer.utils import color_to_id, id_to_color
 from dtcc_viewer.logging import info, warning
 
 from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadows,
     fragment_shader_shadows,
-)
-from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
     vertex_shader_shadow_map,
     fragment_shader_shadow_map,
 )
-from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
-    vertex_shader_debug,
-    fragment_shader_debug,
+
+from dtcc_viewer.opengl_viewer.shaders_debug import (
+    vertex_shader_debug_shadows,
+    fragment_shader_debug_shadows,
+    vertex_shader_debug_picking,
+    fragment_shader_debug_picking,
 )
+
 from dtcc_viewer.opengl_viewer.shaders_mesh_diffuse import (
     vertex_shader_diffuse,
     fragment_shader_diffuse,
 )
+
 from dtcc_viewer.opengl_viewer.shaders_mesh_ambient import (
     vertex_shader_ambient,
     fragment_shader_ambient,
 )
+
 from dtcc_viewer.opengl_viewer.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
@@ -43,6 +48,11 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
     color_map_black_body,
     color_map_turbo,
     color_map_viridis,
+)
+
+from dtcc_viewer.opengl_viewer.shaders_mesh_picking import (
+    vertex_shader_picking,
+    fragment_shader_picking,
 )
 
 
@@ -81,14 +91,18 @@ class MeshGL:
     uloc_diff: dict  # Uniform locations for the diffuse shader
     uloc_shdw: dict  # Uniform locations for the shadow shader
     uloc_shmp: dict  # Uniform locations for the shadow map shader
-    uloc_dbug: dict  # Uniform locations for the shadow map shader
+    uloc_dbsh: dict  # Uniform locations for redering the shadow map on a quad
+    uloc_dbpi: dict  # Uniform locations for rendering picking texture on a quad
+    uloc_pick: dict  # Uniform locations for the picking shader
 
     shader_line: int  # Shader program for the lines
     shader_ambi: int  # Shader program for ambient mesh rendering
     shader_diff: int  # Shader program for diffuse mesh rendering
     shader_shdw: int  # Shader program for rendering of diffuse mesh with shadow map
     shader_shmp: int  # Shader program for rendering of the shadow map to the frame buffer
-    shader_dbug: int  # Shader program for rendering of the shadow map to a quad
+    shader_dbsh: int  # Shader program for debug rendering of the shadow map to a quad
+    shader_dbpi: int  # Shader program for debug rendering of picking texture to a quad
+    shader_pick: int  # Shader program for picking
 
     quad_vertices: np.ndarray  # Vertices for the debug quad
     quad_indices: np.ndarray  # Indices for the debug quad
@@ -100,19 +114,14 @@ class MeshGL:
     light_color: np.ndarray  # color of scene light [1 x 3]
     loop_counter: int  # loop counter for animation of scene light source
 
-    FBO: int  # OpenGL Frame Buffer Objects
+    FBO_shadows: int  # OpenGL Frame Buffer Objects
     depth_map: int  # Depth map identifier
     shadow_map_resolution: int  # Resolution of the shadow map, same in x and y.
     border_color: np.ndarray  # color for the border of the shadow map
 
     def __init__(self, mesh_wrapper: MeshWrapper):
-        """Initialize the MeshGL object with vertex, face, and edge information.
+        """Initialize the MeshGL object with vertex, face, and edge information."""
 
-        Parameters
-        ----------
-        mesh_data : MeshData
-            Instance of the MeshData class with vertices, edge indices, face indices.
-        """
         self.name = mesh_wrapper.name
         self.vertices = mesh_wrapper.vertices
         self.faces = mesh_wrapper.faces
@@ -126,7 +135,8 @@ class MeshGL:
         self.uloc_diff = {}
         self.uloc_shdw = {}
         self.uloc_shmp = {}
-        self.uloc_dbug = {}
+        self.uloc_dbsh = {}
+        self.uloc_pick = {}
 
         self.bb_local = mesh_wrapper.bb_local
         self.bb_global = mesh_wrapper.bb_global
@@ -141,8 +151,12 @@ class MeshGL:
         self._create_shader_diffuse()
         self._create_shader_shadows()
         self._create_shader_shadow_map()
-        self._create_shader_debug()
+        self._create_shader_picking()
+        self._create_shader_debug_shadows()
+        self._create_shader_debug_picking()
         self._set_constats()
+
+        self.picked_id = -1
 
     def _calc_model_scale(self) -> None:
         """Calculate the model scale from vertex positions."""
@@ -183,11 +197,13 @@ class MeshGL:
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(0))
 
         # Data for color calculations
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(12))
+
+        # Ignoring normals and id's
 
         glBindVertexArray(0)
 
@@ -213,15 +229,19 @@ class MeshGL:
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(0))
 
         # Data for color calculations
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(12))
 
         # Normals
         glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(24))
+
+        # Id for clickability
+        glEnableVertexAttribArray(3)  # 1 is the layout location for the vertex shader
+        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(36))
 
         glBindVertexArray(0)
 
@@ -293,7 +313,7 @@ class MeshGL:
     def _create_shadow_map(self) -> None:
         """Set up framebuffer and texture for shadow map rendering."""
         # Frambuffer for the shadow map
-        self.FBO = glGenFramebuffers(1)
+        self.FBO_shadows = glGenFramebuffers(1)
 
         # Creating a texture which will be used as the framebuffers depth buffer
         self.depth_map = glGenTextures(1)
@@ -317,7 +337,7 @@ class MeshGL:
         self.border_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, self.border_color)
 
-        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_shadows)
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.depth_map, 0
         )
@@ -327,6 +347,39 @@ class MeshGL:
         # We don't want to read color attachements either
         glReadBuffer(GL_NONE)
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def create_picking_fbo(self, interaction: Interaction) -> None:
+        window_w = interaction.fbuf_width
+        window_h = interaction.fbuf_height
+
+        self.FBO_picking = glGenFramebuffers(1)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)  # Bind our frame buffer
+
+        self.pick_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.pick_texture)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGB, window_w, window_h, 0, GL_RGB, GL_FLOAT, None
+        )
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glBindTexture(GL_TEXTURE_2D, 0)  # Unbind our texture
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.pick_texture, 0
+        )
+
+        RBO = glGenRenderbuffers(1)
+        glBindRenderbuffer(GL_RENDERBUFFER, RBO)
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_w, window_h)
+        glFramebufferRenderbuffer(
+            GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO
+        )
+
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE:
+            print("Framebuffer for picking is complete")
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
+
+        pass
 
     def _create_shader_lines(self) -> None:
         """Create shader for wireframe rendering."""
@@ -390,12 +443,13 @@ class MeshGL:
         self.uloc_ambi["clip_x"] = glGetUniformLocation(self.shader_ambi, "clip_x")
         self.uloc_ambi["clip_y"] = glGetUniformLocation(self.shader_ambi, "clip_y")
         self.uloc_ambi["clip_z"] = glGetUniformLocation(self.shader_ambi, "clip_z")
-        self.uloc_ambi["color_map"] = glGetUniformLocation(
-            self.shader_ambi, "color_map"
-        )
+        self.uloc_ambi["cmap_idx"] = glGetUniformLocation(self.shader_ambi, "cmap_idx")
         self.uloc_ambi["data_idx"] = glGetUniformLocation(self.shader_ambi, "data_idx")
         self.uloc_ambi["data_min"] = glGetUniformLocation(self.shader_ambi, "data_min")
         self.uloc_ambi["data_max"] = glGetUniformLocation(self.shader_ambi, "data_max")
+        self.uloc_ambi["picked_id"] = glGetUniformLocation(
+            self.shader_ambi, "picked_id"
+        )
 
     def _create_shader_diffuse(self) -> None:
         """Create shader for diffuse shading."""
@@ -434,12 +488,13 @@ class MeshGL:
         self.uloc_diff["clip_x"] = glGetUniformLocation(self.shader_diff, "clip_x")
         self.uloc_diff["clip_y"] = glGetUniformLocation(self.shader_diff, "clip_y")
         self.uloc_diff["clip_z"] = glGetUniformLocation(self.shader_diff, "clip_z")
-        self.uloc_diff["color_map"] = glGetUniformLocation(
-            self.shader_diff, "color_map"
-        )
+        self.uloc_diff["cmap_idx"] = glGetUniformLocation(self.shader_diff, "cmap_idx")
         self.uloc_diff["data_idx"] = glGetUniformLocation(self.shader_diff, "data_idx")
         self.uloc_diff["data_min"] = glGetUniformLocation(self.shader_diff, "data_min")
         self.uloc_diff["data_max"] = glGetUniformLocation(self.shader_diff, "data_max")
+        self.uloc_diff["picked_id"] = glGetUniformLocation(
+            self.shader_diff, "picked_id"
+        )
 
     def _create_shader_shadows(self) -> None:
         """Create shader for shading with shadows."""
@@ -470,9 +525,7 @@ class MeshGL:
         self.uloc_shdw["clip_x"] = glGetUniformLocation(self.shader_shdw, "clip_x")
         self.uloc_shdw["clip_y"] = glGetUniformLocation(self.shader_shdw, "clip_y")
         self.uloc_shdw["clip_z"] = glGetUniformLocation(self.shader_shdw, "clip_z")
-        self.uloc_shdw["color_map"] = glGetUniformLocation(
-            self.shader_shdw, "color_map"
-        )
+        self.uloc_shdw["cmap_idx"] = glGetUniformLocation(self.shader_shdw, "cmap_idx")
         self.uloc_shdw["data_idx"] = glGetUniformLocation(self.shader_shdw, "data_idx")
         self.uloc_shdw["data_min"] = glGetUniformLocation(self.shader_shdw, "data_min")
         self.uloc_shdw["data_max"] = glGetUniformLocation(self.shader_shdw, "data_max")
@@ -485,6 +538,9 @@ class MeshGL:
         )
         self.uloc_shdw["lsm"] = glGetUniformLocation(
             self.shader_shdw, "light_space_matrix"
+        )
+        self.uloc_shdw["picked_id"] = glGetUniformLocation(
+            self.shader_shdw, "picked_id"
         )
 
     def _create_shader_shadow_map(self) -> None:
@@ -502,14 +558,35 @@ class MeshGL:
             self.shader_shmp, "light_space_matrix"
         )
 
-    def _create_shader_debug(self) -> None:
+    def _create_shader_debug_shadows(self) -> None:
         """Create shader for rendering shadow map."""
 
-        self.shader_dbug = compileProgram(
-            compileShader(vertex_shader_debug, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_debug, GL_FRAGMENT_SHADER),
+        self.shader_dbsh = compileProgram(
+            compileShader(vertex_shader_debug_shadows, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_debug_shadows, GL_FRAGMENT_SHADER),
         )
-        glUseProgram(self.shader_shmp)
+
+    def _create_shader_picking(self) -> None:
+        """Create shader for picking."""
+
+        self.shader_pick = compileProgram(
+            compileShader(vertex_shader_picking, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_picking, GL_FRAGMENT_SHADER),
+        )
+
+        glUseProgram(self.shader_pick)
+
+        self.uloc_pick["model"] = glGetUniformLocation(self.shader_pick, "model")
+        self.uloc_pick["project"] = glGetUniformLocation(self.shader_pick, "project")
+        self.uloc_pick["view"] = glGetUniformLocation(self.shader_pick, "view")
+
+    def _create_shader_debug_picking(self) -> None:
+        """Create shader for rendering shadow map."""
+
+        self.shader_dbpi = compileProgram(
+            compileShader(vertex_shader_debug_picking, GL_VERTEX_SHADER),
+            compileShader(fragment_shader_debug_picking, GL_FRAGMENT_SHADER),
+        )
 
     def _update_color_caps(self):
         if self.guip.update_caps:
@@ -570,10 +647,11 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.uloc_ambi["color_by"], color_by)
-        glUniform1i(self.uloc_ambi["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_ambi["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_ambi["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_ambi["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_ambi["picked_id"], self.picked_id)
 
         self._triangles_draw_call()
         self._unbind_shader()
@@ -602,10 +680,11 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.uloc_diff["color_by"], color_by)
-        glUniform1i(self.uloc_diff["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_diff["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_diff["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_diff["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_diff["picked_id"], self.picked_id)
 
         view_pos = interaction.camera.camera_pos
         glUniform3fv(self.uloc_diff["view_pos"], 1, view_pos)
@@ -629,7 +708,7 @@ class MeshGL:
         self._update_color_caps()
         self._render_shadow_map(interaction)
 
-        if interaction.show_shadow_map:
+        if interaction.show_shadow_texture:
             self._render_debug_shadows(interaction)
         else:
             self._render_shadows(interaction, gguip)
@@ -644,6 +723,65 @@ class MeshGL:
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         self.render_lines(interaction, gguip, ws_pass=2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+    def evaluate_picking(self, interaction: Interaction) -> None:
+        self._draw_picking_texture(interaction)
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        x = interaction.picked_x
+        y = interaction.picked_y
+
+        # print(x, y, interaction.width, interaction.height)
+
+        data = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
+        picked_id_new = color_to_id(data)
+
+        if picked_id_new == self.picked_id:
+            self.picked_id = -1
+        else:
+            self.picked_id = picked_id_new
+            # print(self.picked_id)
+
+        interaction.picking = False
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def _draw_picking_texture(self, keyaction: Interaction) -> None:
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        # Camera input
+        move = keyaction.camera.get_move_matrix()
+        view = keyaction.camera.get_view_matrix()
+        proj = keyaction.camera.get_perspective_matrix()
+
+        # Picking pass
+        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)
+        glEnable(GL_DEPTH_TEST)
+        # glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glUseProgram(self.shader_pick)
+
+        glUniformMatrix4fv(self.uloc_pick["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_pick["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_pick["project"], 1, GL_FALSE, proj)
+
+        # Render to the picking texture
+        self._triangles_draw_call()
+
+    def render_pick_texture(self, keyaction: Interaction, gguip: GuiParameters) -> None:
+        self._draw_picking_texture(keyaction)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+        # Apply the picking texture to the debug quad which spans th whole screen.
+        glDisable(GL_DEPTH_TEST)
+        glUseProgram(self.shader_dbpi)  # Use the debug picking shader
+        glBindVertexArray(self.VAO_debug)
+        glBindTexture(GL_TEXTURE_2D, self.pick_texture)
+
+        # Draw the quad
+        self._debug_quad_draw_call()
+        glEnable(GL_DEPTH_TEST)
 
     def _render_shadow_map(self, interaction: Interaction) -> None:
         """Render a shadow map to the frame buffer.
@@ -674,7 +812,7 @@ class MeshGL:
         glUniformMatrix4fv(self.uloc_shmp["model"], 1, GL_FALSE, translation)
 
         glViewport(0, 0, self.shadow_map_resolution, self.shadow_map_resolution)
-        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_shadows)
 
         # Only clearing depth buffer since there is no color attachement
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -683,10 +821,10 @@ class MeshGL:
 
     def _render_debug_shadows(self, interaction: Interaction) -> None:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-        glViewport(0, 0, interaction.width, interaction.height)
+        glViewport(0, 0, interaction.fbuf_width, interaction.fbuf_height)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(self.shader_dbug)
+        glUseProgram(self.shader_dbsh)
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.depth_map)
         self._debug_quad_draw_call()
@@ -701,7 +839,7 @@ class MeshGL:
         """
         # Second pass: Render objects with the shadow map computed in the first pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
-        glViewport(0, 0, interaction.width, interaction.height)
+        glViewport(0, 0, interaction.fbuf_width, interaction.fbuf_height)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glUseProgram(self.shader_shdw)
 
@@ -717,10 +855,11 @@ class MeshGL:
 
         color_by = int(self.guip.color_mesh)
         glUniform1i(self.uloc_shdw["color_by"], color_by)
-        glUniform1i(self.uloc_shdw["color_map"], self.guip.cmap_idx)
+        glUniform1i(self.uloc_shdw["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_shdw["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_shdw["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_shdw["picked_id"], self.picked_id)
 
         # Set light uniforms
         glUniform3fv(self.uloc_shdw["light_color"], 1, self.light_color)
@@ -740,6 +879,7 @@ class MeshGL:
     def _debug_quad_draw_call(self) -> None:
         glBindVertexArray(self.VAO_debug)
         glDrawElements(GL_TRIANGLES, len(self.quad_indices), GL_UNSIGNED_INT, None)
+        self._unbind_vao()
 
     def _triangles_draw_call(self):
         """Bind the vertex array object and calling draw function for triangles"""

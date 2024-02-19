@@ -70,8 +70,8 @@ class Window:
     pc: PointCloudGL
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
-    width: int
-    height: int
+    win_width: int
+    win_height: int
     interaction: Interaction
     impl: GlfwRenderer
     fps: int
@@ -88,8 +88,8 @@ class Window:
         height : int
             The height of the window in pixels.
         """
-        self.width = width
-        self.height = height
+        self.win_width = width
+        self.win_height = height
         self.interaction = Interaction(width, height)
 
         imgui.create_context()
@@ -105,7 +105,7 @@ class Window:
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         self.window = glfw.create_window(
-            self.width, self.height, "OpenGL Window", None, None
+            self.win_width, self.win_height, "OpenGL Window", None, None
         )  # Create window
 
         if not self.window:
@@ -131,6 +131,8 @@ class Window:
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
+        self._update_window_framebuffer_size()
+
     def render(self, scene: Scene):
         """Render single or multiple MeshData and/or PointCloudData objects.
 
@@ -152,13 +154,16 @@ class Window:
         for city in scene.city_wrappers:
             if city.building_mw is not None:
                 mesh_gl_bld = MeshGL(city.building_mw)
+                mesh_gl_bld.create_picking_fbo(self.interaction)
                 self.meshes.append(mesh_gl_bld)
             if city.terrain_mw is not None:
                 mesh_gl_ter = MeshGL(city.terrain_mw)
+                mesh_gl_ter.create_picking_fbo(self.interaction)
                 self.meshes.append(mesh_gl_ter)
 
         for mesh in scene.mesh_wrappers:
             mesh_gl = MeshGL(mesh)
+            mesh_gl.create_picking_fbo(self.interaction)
             self.meshes.append(mesh_gl)
 
         for pc in scene.pcs_wrappers:
@@ -186,6 +191,10 @@ class Window:
             )
 
             self._clipping_planes()
+
+            if self.interaction.picking:
+                self._evaluate_picking()
+
             self._render_meshes()
             self._render_point_clouds()
             self._render_road_networks()
@@ -214,6 +223,14 @@ class Window:
 
         glfw.terminate()
 
+    def _evaluate_picking(self):
+        if not self.interaction.mouse_on_gui:
+            for mesh in self.meshes:
+                if mesh.guip.show:
+                    mesh.evaluate_picking(self.interaction)
+        else:
+            self.interaction.picking = False
+
     def _render_meshes(self):
         """Render all the meshes in the window.
 
@@ -232,6 +249,8 @@ class Window:
                     mesh.render_diffuse(self.interaction, self.guip)
                 elif mguip.mesh_shading == MeshShading.wireshaded:
                     mesh.render_wireshaded(self.interaction, self.guip)
+                elif mguip.mesh_shading == MeshShading.picking:
+                    mesh.render_pick_texture(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.
@@ -288,11 +307,23 @@ class Window:
         height : int
             The new height of the window.
         """
-        fb_size = glfw.get_framebuffer_size(self.window)
-        width = fb_size[0]
-        height = fb_size[1]
-        glViewport(0, 0, width, height)
-        self.interaction.update_window_size(width, height)
+
+        self._update_window_framebuffer_size()
+
+        for mesh in self.meshes:
+            mesh.create_picking_fbo(self.interaction)
+
+    def _update_window_framebuffer_size(self):
+        fbuf_size = glfw.get_framebuffer_size(self.window)
+        win_size = glfw.get_window_size(self.window)
+        fb_width = fbuf_size[0]
+        fb_height = fbuf_size[1]
+        win_width = win_size[0]
+        win_height = win_size[1]
+        glViewport(0, 0, fb_width, fb_height)
+        self.interaction.update_window_size(fb_width, fb_height, win_width, win_height)
+        info(f"Window size: {win_width} x {win_height}")
+        info(f"Frame bufffer size: {fb_width} x {fb_height}")
 
     def _clipping_planes(self):
         if self.guip.clip_bool[0]:
