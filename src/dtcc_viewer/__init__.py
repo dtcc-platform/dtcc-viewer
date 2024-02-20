@@ -23,5 +23,5 @@ __all__ = [
     "view_roadnetwork",
     "Window",
     "Scene",
-    "MeshShading",
+    "Shading",
 ]

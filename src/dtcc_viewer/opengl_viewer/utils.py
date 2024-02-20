@@ -62,7 +62,7 @@ class Submesh:
         self.meta_data[newkey] = newdata
 
 
-class MeshShading(IntEnum):
+class Shading(IntEnum):
     wireframe = 0
     ambient = 1
     diffuse = 2
@@ -132,11 +132,7 @@ class BoundingBox:
     origin: np.ndarray
 
     def __init__(self, vertices: np.ndarray):
-        # if len(np.shape(vertices)) == 1:
         self.calc_bounds_flat(vertices)
-        # elif np.shape(vertices)[1] > 2:
-        #    self.calc_bounds(vertices)
-
         self.origin = np.array([0, 0, 0])
         self.calc_mid_point()
         self.calc_center_vec()
@@ -462,3 +458,18 @@ def id_to_color(id):
 def color_to_id(color):
     id = color[0] + color[1] * 256 + color[2] * 256 * 256
     return id
+
+
+def invert_color(color):
+    """Invert the color."""
+    inv_color = [1 - color[0], 1 - color[1], 1 - color[2], 1]
+    return inv_color
+
+
+shader_cmaps = {
+    "rainbow": 0,
+    "inferno": 1,
+    "blackbody": 2,
+    "turbo": 3,
+    "viridis": 4,
+}

@@ -5,13 +5,13 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
-from dtcc_viewer.opengl_viewer.gui import GuiParametersRN, GuiParameters
+from dtcc_viewer.opengl_viewer.parameters import GuiParametersLS, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 
@@ -24,7 +24,7 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
 )
 
 
-class RoadNetworkGL:
+class LineStringGL:
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.
@@ -34,7 +34,7 @@ class RoadNetworkGL:
 
     vertices: np.ndarray  # All vertices in the road network
     line_indices: np.ndarray  #  Line indices for roads [[2 x n_roads],]
-    guip: GuiParametersRN
+    guip: GuiParametersLS
     dict_data: dict
 
     bb_local: BoundingBox
@@ -64,7 +64,7 @@ class RoadNetworkGL:
         self.shader: int
         self.uniform_locs = {}
 
-        self.guip = GuiParametersRN(rn_data_obj.name, self.dict_data)
+        self.guip = GuiParametersLS(rn_data_obj.name, self.dict_data)
         self.bb_local = rn_data_obj.bb_local
         self.bb_global = rn_data_obj.bb_global
 
@@ -147,16 +147,15 @@ class RoadNetworkGL:
         self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
 
-    def _update_color_caps(self):
+    def update_color_caps(self):
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
 
-    def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
+    def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render roads as lines in the road network."""
 
         self._bind_shader()
-        self._update_color_caps()
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))

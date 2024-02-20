@@ -5,13 +5,13 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.interaction import Action
 
 window_w = 1200
 window_h = 800
 
 
-action = Interaction(window_w, window_h)
+action = Action(window_w, window_h)
 
 vs_solid = """ 
 #version 400 core
@@ -165,14 +165,17 @@ def window_resize(window, width, height):
     glViewport(0, 0, window_w, window_h)
     action.update_window_size(window_w, window_h)
 
+
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
-    
+
 glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
 glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 0)
 glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
 glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-window = glfw.create_window(window_w, window_h, "OpenGL Window", None, None)      # Create window
+window = glfw.create_window(
+    window_w, window_h, "OpenGL Window", None, None
+)  # Create window
 
 print(glGetString(GL_VERSION))
 print(OpenGL.__version__)
@@ -181,7 +184,7 @@ print(glfw.__version__)
 if not window:
     glfw.terminate()
     raise Exception("glfw window can not be created!")
-    
+
 glfw.set_window_pos(window, 400, 200)
 
 glfw.set_cursor_pos_callback(window, action.mouse_look_callback)
@@ -196,15 +199,40 @@ glfw.make_context_current(window)
 
 quad_size = 5.0
 
-quadVertices =[-quad_size, 0.0, -quad_size,	0.0, 0.0,
-		        quad_size, 0.0, -quad_size, 1.0, 0.0,
-		        quad_size, 0.0,  quad_size, 1.0, 1.0,
+quadVertices = [
+    -quad_size,
+    0.0,
+    -quad_size,
+    0.0,
+    0.0,
+    quad_size,
+    0.0,
+    -quad_size,
+    1.0,
+    0.0,
+    quad_size,
+    0.0,
+    quad_size,
+    1.0,
+    1.0,
+    quad_size,
+    0.0,
+    quad_size,
+    1.0,
+    1.0,
+    -quad_size,
+    0.0,
+    quad_size,
+    0.0,
+    1.0,
+    -quad_size,
+    0.0,
+    -quad_size,
+    0.0,
+    0.0,
+]
 
-		        quad_size, 0.0,  quad_size, 1.0, 1.0,
-		       -quad_size, 0.0,  quad_size, 0.0, 1.0,
-		       -quad_size, 0.0, -quad_size, 0.0, 0.0,]
-
-quadVertices = np.array(quadVertices, dtype=np.float32)     
+quadVertices = np.array(quadVertices, dtype=np.float32)
 
 quadVBO = glGenBuffers(1)
 glBindBuffer(GL_ARRAY_BUFFER, quadVBO)
@@ -214,24 +242,49 @@ glBufferData(GL_ARRAY_BUFFER, len(quadVertices) * 4, quadVertices, GL_STATIC_DRA
 quadVAO = glGenVertexArrays(1)
 glBindVertexArray(quadVAO)
 
-#Position
+# Position
 glEnableVertexAttribArray(0)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
 
-#Texture
+# Texture
 glEnableVertexAttribArray(1)
 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
 
 
-screenVertices =[-1.0,-1.0, 0.0, 0.0, 0.0,
-		          1.0,-1.0, 0.0, 1.0, 0.0,
-		          1.0, 1.0, 0.0, 1.0, 1.0,
+screenVertices = [
+    -1.0,
+    -1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    -1.0,
+    1.0,
+    0.0,
+    0.0,
+    1.0,
+    -1.0,
+    -1.0,
+    0.0,
+    0.0,
+    0.0,
+]
 
-		          1.0, 1.0, 0.0, 1.0, 1.0,
-		         -1.0, 1.0, 0.0, 0.0, 1.0,
-		         -1.0,-1.0, 0.0, 0.0, 0.0,]
-
-screenVertices = np.array(screenVertices, dtype=np.float32) 
+screenVertices = np.array(screenVertices, dtype=np.float32)
 
 screenVBO = glGenBuffers(1)
 glBindBuffer(GL_ARRAY_BUFFER, screenVBO)
@@ -241,17 +294,20 @@ glBufferData(GL_ARRAY_BUFFER, len(screenVertices) * 4, screenVertices, GL_STATIC
 screenVAO = glGenVertexArrays(1)
 glBindVertexArray(screenVAO)
 
-#Position
+# Position
 glEnableVertexAttribArray(0)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
 
-#Color
+# Color
 glEnableVertexAttribArray(1)
 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
 
 
 # ---------------- SOLID SHADER ---------------------#
-solid_shader = compileProgram(compileShader(vs_solid, GL_VERTEX_SHADER), compileShader(fs_solid, GL_FRAGMENT_SHADER))
+solid_shader = compileProgram(
+    compileShader(vs_solid, GL_VERTEX_SHADER),
+    compileShader(fs_solid, GL_FRAGMENT_SHADER),
+)
 glUseProgram(solid_shader)
 model_loc_s = glGetUniformLocation(solid_shader, "model")
 view_loc_s = glGetUniformLocation(solid_shader, "view")
@@ -260,7 +316,10 @@ col_loc_s = glGetUniformLocation(solid_shader, "color")
 
 
 # ---------------- TRANSPARENT SHADER ---------------------#
-trans_shader = compileProgram(compileShader(vs_transparent, GL_VERTEX_SHADER), compileShader(fs_transparent, GL_FRAGMENT_SHADER))
+trans_shader = compileProgram(
+    compileShader(vs_transparent, GL_VERTEX_SHADER),
+    compileShader(fs_transparent, GL_FRAGMENT_SHADER),
+)
 glUseProgram(trans_shader)
 model_loc_t = glGetUniformLocation(trans_shader, "model")
 view_loc_t = glGetUniformLocation(trans_shader, "view")
@@ -269,13 +328,19 @@ col_loc_t = glGetUniformLocation(trans_shader, "color")
 
 
 # ---------------- COMPOSITE SHADER ---------------------#
-compo_shader = compileProgram(compileShader(vs_composit, GL_VERTEX_SHADER), compileShader(fs_composit, GL_FRAGMENT_SHADER))
+compo_shader = compileProgram(
+    compileShader(vs_composit, GL_VERTEX_SHADER),
+    compileShader(fs_composit, GL_FRAGMENT_SHADER),
+)
 glUseProgram(compo_shader)
 accum_loc_c = glGetUniformLocation(compo_shader, "accum")
 reveal_loc_c = glGetUniformLocation(compo_shader, "reveal")
 
 # ---------------- SCREEN SHADER ---------------------#
-screen_shader = compileProgram(compileShader(vs_screen, GL_VERTEX_SHADER), compileShader(fs_screen, GL_FRAGMENT_SHADER))
+screen_shader = compileProgram(
+    compileShader(vs_screen, GL_VERTEX_SHADER),
+    compileShader(fs_screen, GL_FRAGMENT_SHADER),
+)
 glUseProgram(screen_shader)
 screen_loc_c = glGetUniformLocation(screen_shader, "screen")
 
@@ -289,29 +354,47 @@ SCR_HEIGHT = window_h
 # Set up attachments for opaque SOLID framebuffer
 opaque_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, opaque_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None
+)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 depth_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, depth_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D,
+    0,
+    GL_DEPTH_COMPONENT,
+    SCR_WIDTH,
+    SCR_HEIGHT,
+    0,
+    GL_DEPTH_COMPONENT,
+    GL_FLOAT,
+    None,
+)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 glBindFramebuffer(GL_FRAMEBUFFER, opaqueFBO)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaque_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0)
-	
-if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE):
-	print("ERROR::FRAMEBUFFER:: Opaque framebuffer is not complete!")
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaque_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0
+)
+
+if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+    print("ERROR::FRAMEBUFFER:: Opaque framebuffer is not complete!")
 
 glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 # Set up attachments for TRANSPARENT framebuffer
 accum_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, accum_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None
+)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
@@ -324,28 +407,33 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 glBindFramebuffer(GL_FRAMEBUFFER, transparentFBO)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accum_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, reveal_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0) # opaque framebuffer's depth texture
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accum_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, reveal_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0
+)  # opaque framebuffer's depth texture
 
 # Don't forget to explicitly tell OpenGL that your transparent framebuffer has two draw buffers
 transparentDrawBuffers = [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1]
-glDrawBuffers(2,transparentDrawBuffers)
+glDrawBuffers(2, transparentDrawBuffers)
 
-if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE):
-	print("ERROR::FRAMEBUFFER:: Transparent framebuffer is not complete!")
+if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+    print("ERROR::FRAMEBUFFER:: Transparent framebuffer is not complete!")
 
 glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 # Main application loop
 while not glfw.window_should_close(window):
-    
-    #---------------------- Camera Update ------------------------------------#
+    # ---------------------- Camera Update ------------------------------------#
 
     view = action.camera.get_view_matrix()
     proj = action.camera.get_perspective_matrix()
 
-    #-------------------- Opaque pass (drawing solid objects) -------------------------#
+    # -------------------- Opaque pass (drawing solid objects) -------------------------#
     # Configure render states
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
@@ -362,7 +450,7 @@ while not glfw.window_should_close(window):
     # Draw red quad
     model_1 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, -2.0, 0.0]))
     color_1 = pyrr.Vector3([1.0, 0.0, 0.0])
-    
+
     glUniformMatrix4fv(model_loc_s, 1, GL_FALSE, model_1)
     glUniformMatrix4fv(view_loc_s, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_s, 1, GL_FALSE, proj)
@@ -371,8 +459,8 @@ while not glfw.window_should_close(window):
     glBindVertexArray(quadVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
 
-    #-------------------- Transparent pass -------------------------#
-    
+    # -------------------- Transparent pass -------------------------#
+
     # configure render states
     glDepthMask(GL_FALSE)
     glEnable(GL_BLEND)
@@ -398,11 +486,11 @@ while not glfw.window_should_close(window):
     glUniform4fv(col_loc_t, 1, color_2)
     glBindVertexArray(quadVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     # draw blue quad
     model_3 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 2.0, 0.0]))
     color_3 = pyrr.Vector4([0.0, 0.0, 1.0, 0.5])
-    
+
     glUniformMatrix4fv(model_loc_t, 1, GL_FALSE, model_3)
     glUniformMatrix4fv(view_loc_t, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_t, 1, GL_FALSE, proj)
@@ -410,9 +498,9 @@ while not glfw.window_should_close(window):
     glUniform4fv(col_loc_t, 1, color_3)
     glBindVertexArray(quadVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     # ------------------ Draw composite image (composite pass) ------------------
-	# set render states
+    # set render states
     glDepthFunc(GL_ALWAYS)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -427,17 +515,19 @@ while not glfw.window_should_close(window):
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, accum_texture)
     glUniform1i(accum_loc_c, 0)
-    
+
     glActiveTexture(GL_TEXTURE1)
-    glBindTexture(GL_TEXTURE_2D, reveal_texture)    
+    glBindTexture(GL_TEXTURE_2D, reveal_texture)
     glUniform1i(reveal_loc_c, 1)
-    
+
     glBindVertexArray(screenVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     # set render states
     glDisable(GL_DEPTH_TEST)
-    glDepthMask(GL_TRUE) # enable depth writes so glClear won't ignore clearing the depth buffer
+    glDepthMask(
+        GL_TRUE
+    )  # enable depth writes so glClear won't ignore clearing the depth buffer
     glDisable(GL_BLEND)
 
     # bind backbuffer
@@ -447,19 +537,15 @@ while not glfw.window_should_close(window):
 
     # use screen shader
     glUseProgram(screen_shader)
-    
+
     # draw final screen quad
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, opaque_texture)
     glBindVertexArray(screenVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     glfw.poll_events()
     glfw.swap_buffers(window)
-    
 
 
-
-glfw.terminate()    
-
-
+glfw.terminate()

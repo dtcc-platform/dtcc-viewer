@@ -4,11 +4,11 @@ from .pointcloud_wrapper import PointCloudWrapper
 from .pointcloud_gl import PointCloudGL
 from .mesh_gl import MeshGL
 from .mesh_wrapper import MeshWrapper
-from .interaction import Interaction
+from .interaction import Action
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
-from .gui import GuiParametersRN, GuiParameters, GuiParametersDates
-from .utils import MeshShading
+from .gui import GuiParametersLS, GuiParameters, GuiParametersDates
+from .utils import Shading
 
 
 __all__ = [
@@ -18,13 +18,13 @@ __all__ = [
     "PointCloudGL",
     "MeshGL",
     "MeshWrapper",
-    "Interaction",
+    "Action",
     "Scene",
     "Gui",
     "GuiParameters",
     "GuiParametersMesh",
     "GuiParametersPC",
-    "GuiParametersRN",
+    "GuiParametersLS",
     "GuiParameters",
-    "MeshShading",
+    "Shading",
 ]

@@ -6,13 +6,13 @@ import pyrr
 from enum import Enum
 import math
 from load_primitives import *
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.interaction import Action
 
 window_w = 1000
 window_h = 1000
 
 
-action = Interaction(window_w, window_h)
+action = Action(window_w, window_h)
 
 vertex_shader_fancy = """
 # version 330 core
@@ -690,9 +690,9 @@ while not glfw.window_should_close(window):
         glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
         glUniform3f(
             view_position_loc,
-            action.camera.camera_pos[0],
-            action.camera.camera_pos[1],
-            action.camera.camera_pos[2],
+            action.camera.position[0],
+            action.camera.position[1],
+            action.camera.position[2],
         )
         glUniform3f(
             light_position_loc, light_position[0], light_position[1], light_position[2]

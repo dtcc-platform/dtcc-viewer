@@ -3,20 +3,19 @@ import imgui
 import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from imgui.integrations.glfw import GlfwRenderer
+from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
 from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
-from dtcc_viewer.opengl_viewer.utils import MeshShading
-from dtcc_viewer.opengl_viewer.roadnetwork_gl import RoadNetworkGL
-
-from dtcc_viewer.opengl_viewer.gui import GuiParameters, Gui, GuiParametersDates
-from imgui.integrations.glfw import GlfwRenderer
-
+from dtcc_viewer.opengl_viewer.model_gl import ModelGL
+from dtcc_viewer.opengl_viewer.utils import Shading
+from dtcc_viewer.opengl_viewer.linestring_gl import LineStringGL
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
-
 from dtcc_viewer.opengl_viewer.scene import Scene
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl_viewer.gui import Gui
+from dtcc_viewer.opengl_viewer.parameters import GuiParameters
 
 
 class Window:
@@ -64,15 +63,16 @@ class Window:
     """
 
     meshes: list[MeshGL]
-    point_clouds: list[PointCloudGL]
-    road_networks: list[RoadNetworkGL]
+    pointclouds: list[PointCloudGL]
+    roadnetworks: list[LineStringGL]
+    model: ModelGL
     mesh: MeshGL
     pc: PointCloudGL
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
     win_width: int
     win_height: int
-    interaction: Interaction
+    action: Action
     impl: GlfwRenderer
     fps: int
     time: float
@@ -90,7 +90,7 @@ class Window:
         """
         self.win_width = width
         self.win_height = height
-        self.interaction = Interaction(width, height)
+        self.action = Action(width, height)
 
         imgui.create_context()
         self.gui = Gui()
@@ -122,12 +122,10 @@ class Window:
 
         # Register callback functions to enable mouse and keyboard interaction
         glfw.set_window_size_callback(self.window, self._window_resize_callback)
-        glfw.set_cursor_pos_callback(self.window, self.interaction.mouse_look_callback)
-        glfw.set_key_callback(self.window, self.interaction.key_input_callback)
-        glfw.set_mouse_button_callback(
-            self.window, self.interaction.mouse_input_callback
-        )
-        glfw.set_scroll_callback(self.window, self.interaction.scroll_input_callback)
+        glfw.set_cursor_pos_callback(self.window, self.action.mouse_look_callback)
+        glfw.set_key_callback(self.window, self.action.key_input_callback)
+        glfw.set_mouse_button_callback(self.window, self.action.mouse_input_callback)
+        glfw.set_scroll_callback(self.window, self.action.scroll_input_callback)
 
         self.time, self.time_acum, self.fps = 0.0, 0.0, 0
 
@@ -147,32 +145,34 @@ class Window:
         """
 
         self.meshes = []
-        self.point_clouds = []
-        self.road_networks = []
+        self.pointclouds = []
+        self.roadnetworks = []
         scene.preprocess_drawing()
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
                 mesh_gl_bld = MeshGL(city.building_mw)
-                mesh_gl_bld.create_picking_fbo(self.interaction)
                 self.meshes.append(mesh_gl_bld)
             if city.terrain_mw is not None:
                 mesh_gl_ter = MeshGL(city.terrain_mw)
-                mesh_gl_ter.create_picking_fbo(self.interaction)
                 self.meshes.append(mesh_gl_ter)
 
         for mesh in scene.mesh_wrappers:
             mesh_gl = MeshGL(mesh)
-            mesh_gl.create_picking_fbo(self.interaction)
             self.meshes.append(mesh_gl)
 
         for pc in scene.pcs_wrappers:
             pc_gl = PointCloudGL(pc)
-            self.point_clouds.append(pc_gl)
+            self.pointclouds.append(pc_gl)
 
         for rn in scene.rnd_wrappers:
-            rn_gl = RoadNetworkGL(rn)
-            self.road_networks.append(rn_gl)
+            rn_gl = LineStringGL(rn)
+            self.roadnetworks.append(rn_gl)
+
+        # Create model from meshes
+        self.model = ModelGL(self.meshes, self.pointclouds, self.roadnetworks, scene.bb)
+
+        self.model.create_picking_fbo(self.action)
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
@@ -183,90 +183,47 @@ class Window:
         while not glfw.window_should_close(self.window):
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(
-                self.guip.color[0],
-                self.guip.color[1],
-                self.guip.color[2],
-                self.guip.color[3],
-            )
 
+            color = self.guip.color
+            glClearColor(color[0], color[1], color[2], color[3])
+
+            # Enable clipping planes
             self._clipping_planes()
 
-            if self.interaction.picking:
-                self._evaluate_picking()
+            # Check if the mouse is on the GUI or on the model
+            self.action.set_mouse_on_gui(self.io.want_capture_mouse)
 
-            self._render_meshes()
-            self._render_point_clouds()
-            self._render_road_networks()
+            # True if the user has clicked on the GUI
+            if self.action.picking:
+                self.model.evaluate_picking(self.action)
+
+            # Render the model
+            self.model.render(self.action, self.guip)
+
+            # Render the GUI
+            self.gui.render_gui(self.model, self.impl, self.guip)
+
             self._calc_fps()
 
-            self.gui.init_draw(self.impl)
-            self.gui.draw_apperance_gui(self.guip)
-            self.gui.draw_separator()
-            # Add individual ui for each point cloud
-            for i, pc in enumerate(self.point_clouds):
-                self.gui.draw_pc_gui(pc.guip, i)
-                self.gui.draw_separator()
-
-            for i, mesh in enumerate(self.meshes):
-                self.gui.draw_mesh_gui(mesh.guip, i)
-                self.gui.draw_separator()
-
-            for i, rn in enumerate(self.road_networks):
-                self.gui.draw_rn_gui(rn.guip, i)
-                self.gui.draw_separator()
-
-            self.gui.end_draw(self.impl)
-
-            self.interaction.set_mouse_on_gui(self.io.want_capture_mouse)
             glfw.swap_buffers(self.window)
 
         glfw.terminate()
-
-    def _evaluate_picking(self):
-        if not self.interaction.mouse_on_gui:
-            for mesh in self.meshes:
-                if mesh.guip.show:
-                    mesh.evaluate_picking(self.interaction)
-        else:
-            self.interaction.picking = False
-
-    def _render_meshes(self):
-        """Render all the meshes in the window.
-
-        This method renders all the mesh objects in the window using OpenGL.
-        """
-        for mesh in self.meshes:
-            mguip = mesh.guip
-            if mguip.show:
-                if mguip.mesh_shading == MeshShading.shadows:
-                    mesh.render_shadows(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.wireframe:
-                    mesh.render_lines(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.ambient:
-                    mesh.render_ambient(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.diffuse:
-                    mesh.render_diffuse(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.wireshaded:
-                    mesh.render_wireshaded(self.interaction, self.guip)
-                elif mguip.mesh_shading == MeshShading.picking:
-                    mesh.render_pick_texture(self.interaction, self.guip)
 
     def _render_point_clouds(self):
         """Render all the point clouds in the window.
 
         This method renders all the point cloud objects in the window using OpenGL.
         """
-        for pc in self.point_clouds:
+        for pc in self.pointclouds:
             if pc.guip.show:
-                pc.render(self.interaction, self.guip)
+                pc.render(self.action, self.guip)
 
     def _render_road_networks(self):
         """Render all the road networks in the window."""
-        for rn in self.road_networks:
+        for rn in self.roadnetworks:
             mguip = rn.guip
             if mguip.show:
-                rn.render(self.interaction, self.guip)
+                rn.render(self.action, self.guip)
 
     def _calc_fps(self, print_results=True):
         """Perform FPS calculations.
@@ -309,9 +266,7 @@ class Window:
         """
 
         self._update_window_framebuffer_size()
-
-        for mesh in self.meshes:
-            mesh.create_picking_fbo(self.interaction)
+        self.model.create_picking_fbo(self.action)
 
     def _update_window_framebuffer_size(self):
         fbuf_size = glfw.get_framebuffer_size(self.window)
@@ -321,7 +276,7 @@ class Window:
         win_width = win_size[0]
         win_height = win_size[1]
         glViewport(0, 0, fb_width, fb_height)
-        self.interaction.update_window_size(fb_width, fb_height, win_width, win_height)
+        self.action.update_window_size(fb_width, fb_height, win_width, win_height)
         info(f"Window size: {win_width} x {win_height}")
         info(f"Frame bufffer size: {fb_width} x {fb_height}")
 

@@ -7,7 +7,7 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.interaction import Action
 from picking_interaction import PickingInteraction
 from load_primitives import *
 from pprint import PrettyPrinter
@@ -432,7 +432,7 @@ while not glfw.window_should_close(window):
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
 
     # Set light uniforms
-    camera_pos = action.camera.camera_pos
+    camera_pos = action.camera.position
     glUniform3f(light_color_loc, light_color[0], light_color[1], light_color[2])
     glUniform3f(view_pos_loc, camera_pos[0], camera_pos[1], camera_pos[2])
 

@@ -52,13 +52,13 @@ def mesh_example_2():
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     color_data = face_mid_pts[:, 2]
-    mesh.view(data=color_data, shading=MeshShading.ambient)
+    mesh.view(data=color_data, shading=Shading.ambient)
 
 
 def mesh_example_3():
     file = "../../../data/models/CitySurface.obj"
     mesh = meshes.load_mesh(file)
-    # mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
+    mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
     face_mid_pts = calc_face_mid_points(mesh)
     data_dict = {}
     data_dict["vertex_x"] = mesh.vertices[:, 0]
@@ -251,11 +251,11 @@ if __name__ == "__main__":
     # mesh_point_cloud_example_1()
     # mesh_point_cloud_example_2()
     # mesh_point_cloud_example_3()
-    # multi_geometry_example_1()
+    multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
     # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()
-    city_example_1()
+    # city_example_1()

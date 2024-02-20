@@ -15,7 +15,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
 uniform int color_by;
-uniform mat4 light_space_matrix;
+uniform mat4 lsm;       // light space matrix
 
 uniform float data_min; 
 uniform float data_max;
@@ -50,7 +50,7 @@ void main()
 
     //v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = transpose(inverse(mat3(model))) * a_normal;
-    v_frag_pos_light_space = light_space_matrix * vec4(v_frag_pos, 1.0);
+    v_frag_pos_light_space = lsm * vec4(v_frag_pos, 1.0);
 
     highp int id_int = int(a_id);
     if(picked_id == id_int)
@@ -165,12 +165,12 @@ vertex_shader_shadow_map = """
 #version 330 core
 layout (location = 0) in vec3 a_pos;
 
-uniform mat4 light_space_matrix;
+uniform mat4 lsm; // light space matrix
 uniform mat4 model;
 
 void main()
 {
-    gl_Position = light_space_matrix * model * vec4(a_pos, 1.0);
+    gl_Position = lsm * model * vec4(a_pos, 1.0);
 } 
 """
 

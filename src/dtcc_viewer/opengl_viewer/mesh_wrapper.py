@@ -3,7 +3,7 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Submeshes
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading, Submeshes
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
 
@@ -43,7 +43,7 @@ class MeshWrapper:
     faces: np.ndarray
     edges: np.ndarray
     name: str
-    shading: MeshShading
+    shading: Shading
     bb_local: BoundingBox
     bb_global: BoundingBox = None
     submeshes: Submeshes = None
@@ -54,7 +54,7 @@ class MeshWrapper:
         mesh: Mesh,
         data: Any = None,  # Dict or np.ndarray
         submeshes: Submeshes = None,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
     ) -> None:
         """Initialize the MeshData object.
 

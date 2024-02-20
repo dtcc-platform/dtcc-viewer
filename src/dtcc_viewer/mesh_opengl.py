@@ -13,7 +13,7 @@ from typing import Any
 def view(
     mesh: Mesh,
     data: Any = None,
-    shading: MeshShading = MeshShading.wireshaded,
+    shading: Shading = Shading.wireshaded,
     pc: PointCloud = None,
     pc_data: np.ndarray = None,
     pc_size: float = 0.2,

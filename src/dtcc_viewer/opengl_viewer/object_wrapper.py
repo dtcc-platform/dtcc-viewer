@@ -5,7 +5,7 @@ from dtcc_model import Bounds, Object
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Results
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading, Results
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.utils import Submesh, concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
@@ -36,7 +36,7 @@ class ObjectWrapper:
     """
 
     name: str
-    shading: MeshShading
+    shading: Shading
     bb_local: BoundingBox = None
     bb_global: BoundingBox = None
     mesh_wrapper: MeshWrapper = None
@@ -46,7 +46,7 @@ class ObjectWrapper:
         self,
         name: str,
         obj: Object,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
         lod: GeometryType = GeometryType.LOD2,
     ) -> None:
         """Initialize the MeshData object.

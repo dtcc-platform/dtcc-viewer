@@ -4,7 +4,7 @@ from dtcc_viewer.opengl_viewer.object_wrapper import ObjectWrapper
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading
 from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
 from dtcc_viewer.logging import info, warning
 from typing import Any
@@ -49,7 +49,7 @@ class Scene:
         name: str,
         mesh: Mesh,
         data: Any = None,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
     ):
         """Append a mesh with data and/or colors to the scene"""
         if mesh is not None:
@@ -63,7 +63,7 @@ class Scene:
         self,
         name: str,
         city: City,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
     ):
         """Append a city with data and/or colors to the scene"""
         if city is not None:
@@ -77,7 +77,7 @@ class Scene:
         self,
         name: str,
         obj: Object,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
     ):
         """Append a generic object with data and/or colors to the scene"""
         if obj is not None:

@@ -2,9 +2,10 @@ import glfw
 import time
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.camera import Camera
+from dtcc_viewer.opengl_viewer.environment import Environment
 
 
-class Interaction:
+class Action:
     """Handles mouse and keyboard interaction with the viewer.
 
     This class manages user input, such as keyboard, mouse button clicks, and cursor
@@ -50,10 +51,13 @@ class Interaction:
     show_shadow_texture: bool
     show_picking_texture: bool
 
+    zoom_selected: bool
+
     # Tracking mouse picking clicks
     picking: bool
     picked_x: float
     picked_y: float
+    picked_id: int
     tic: float
     toc: float
     tictoc_duration: float
@@ -83,6 +87,7 @@ class Interaction:
         self.picking = False
         self.picked_x = 0
         self.picked_y = 0
+        self.picked_id = -1
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -135,6 +140,9 @@ class Interaction:
         elif key == glfw.KEY_D and action == glfw.PRESS:
             self.show_picking_texture = not self.show_picking_texture
             info(f"Draw picking texture: {self.show_picking_texture}")
+        elif key == glfw.KEY_Z and action == glfw.PRESS:
+            self.zoom_selected = True
+            info(f"Zoom selected")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         """Callback function for handling mouse scroll input.

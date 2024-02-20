@@ -1,17 +1,12 @@
 import math
-import glfw
+import pyrr
 import numpy as np
+from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-import pyrr
-from string import Template
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
-    vertex_shader_pc,
-    fragment_shader_pc,
-)
-from dtcc_viewer.opengl_viewer.gui import GuiParametersPC, GuiParameters
+from dtcc_viewer.opengl_viewer.parameters import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.colors import color_maps
@@ -22,6 +17,11 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
     color_map_black_body,
     color_map_turbo,
     color_map_viridis,
+)
+
+from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
+    vertex_shader_pc,
+    fragment_shader_pc,
 )
 
 
@@ -91,10 +91,9 @@ class PointCloudGL:
         self._create_multiple_instances()
         self._create_shader()
 
-    def render(self, interaction: Interaction, gguip: GuiParameters) -> None:
+    def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render the point cloud using provided interaction parameters."""
 
-        self._update_color_caps()
         self._bind_vao()
         self._bind_shader()
 
@@ -104,8 +103,8 @@ class PointCloudGL:
         view = interaction.camera.get_view_matrix()
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
 
-        cam_pos = interaction.camera.camera_pos
-        cam_tar = interaction.camera.camera_target
+        cam_pos = interaction.camera.position
+        cam_tar = interaction.camera.target
         tans = self._get_billboard_transform(cam_pos, cam_tar)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, tans)
 
@@ -129,7 +128,7 @@ class PointCloudGL:
         self._unbind_vao()
         self._unbind_shader()
 
-    def _update_color_caps(self):
+    def update_color_caps(self):
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False

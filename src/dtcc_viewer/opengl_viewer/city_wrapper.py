@@ -4,7 +4,7 @@ from dtcc_model import NewCity, MultiSurface, Surface, NewBuilding, Mesh, Terrai
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, MeshShading, Results, Submeshes
+from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading, Results, Submeshes
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.utils import Submesh, concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
@@ -40,7 +40,7 @@ class CityWrapper:
     """
 
     name: str
-    shading: MeshShading
+    shading: Shading
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
     building_submeshes: Submeshes
@@ -51,7 +51,7 @@ class CityWrapper:
         self,
         name: str,
         city: NewCity,
-        shading: MeshShading = MeshShading.wireshaded,
+        shading: Shading = Shading.wireshaded,
     ) -> None:
         """Initialize the MeshData object.
 

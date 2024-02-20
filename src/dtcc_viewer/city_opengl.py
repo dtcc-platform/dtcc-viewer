@@ -12,7 +12,7 @@ from typing import Any
 
 def view(
     city: City,
-    shading: MeshShading = MeshShading.wireshaded,
+    shading: Shading = Shading.wireshaded,
 ):
     """View a mesh in 3D with a GLFW window.
 
