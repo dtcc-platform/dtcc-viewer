@@ -198,7 +198,8 @@ class Window:
                 self.model.evaluate_picking(self.action)
 
             # Render the model
-            self.model.render(self.action, self.guip)
+            if self.model.guip.show:
+                self.model.render(self.action, self.guip)
 
             # Render the GUI
             self.gui.render_gui(self.model, self.impl, self.guip)

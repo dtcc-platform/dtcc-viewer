@@ -81,14 +81,14 @@ class MeshWrapper:
         self._restructure_mesh(mesh)
 
         if submeshes is None:
-            print("submesh is none")
+            info("Submesh is None faces are used as defualt submeshes")
         else:
             self._create_ids_from_submeshes(submeshes)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_mesh_to_origin(self.bb_global)
-        self.bb_local = BoundingBox(self.vertices)
+        self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
     def _restructure_data(self, mesh: Mesh, data: Any):

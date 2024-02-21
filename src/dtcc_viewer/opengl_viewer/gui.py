@@ -106,8 +106,12 @@ class Gui:
         if expanded:
             guip = model.guip
 
+            imgui.push_id("Model show")
+            [changed, guip.show] = imgui.checkbox("Show", guip.show)
+            imgui.pop_id()
+
             if guip.shading == Shading.shadows:
-                # imgui.same_line()
+                imgui.same_line()
                 imgui.push_id("Animate light")
                 [changed, guip.animate_light] = imgui.checkbox(
                     "Animate light", guip.animate_light

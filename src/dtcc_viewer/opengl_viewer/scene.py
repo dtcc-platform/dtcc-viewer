@@ -175,3 +175,15 @@ class Scene:
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         self.bb = BoundingBox(vertices)
+
+    def _offset_picking_ids(self) -> None:
+        id_offset = 0
+        id_offsets = []
+        id_offsets.append(0)
+
+        for mesh in self.meshes:
+            id_offset += np.max(mesh.vertices[9::10]) + 1
+            id_offsets.append(id_offset)
+
+        for i, mesh in enumerate(self.meshes):
+            mesh.vertices[9::10] += id_offsets[i]
