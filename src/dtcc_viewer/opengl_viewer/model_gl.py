@@ -90,7 +90,6 @@ class ModelGL:
         self.uloc_dbpi = {}
         self.uloc_pick = {}
 
-        self._offset_picking_ids()
         self._create_debug_quad()
         self._create_shadow_map()
         self._create_shader_picking()
@@ -138,18 +137,6 @@ class ModelGL:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 
         pass
-
-    def _offset_picking_ids(self) -> None:
-        id_offset = 0
-        id_offsets = []
-        id_offsets.append(0)
-
-        for mesh in self.meshes:
-            id_offset += np.max(mesh.vertices[9::10]) + 1
-            id_offsets.append(id_offset)
-
-        for i, mesh in enumerate(self.meshes):
-            mesh.vertices[9::10] += id_offsets[i]
 
     def _create_debug_quad(self) -> None:
         tex_min = 0
@@ -306,9 +293,10 @@ class ModelGL:
 
         if picked_id_new == action.picked_id:
             action.picked_id = -1
+            self.guip.picked_id = -1
         else:
             action.picked_id = picked_id_new
-            # print(self.picked_id)
+            self.guip.picked_id = picked_id_new
 
         action.picking = False
 
@@ -392,7 +380,7 @@ class ModelGL:
     def _render_lines(self, action: Action, gguip: GuiParameters) -> None:
         for mesh in self.meshes:
             if mesh.guip.show:
-                mesh.render_lines(action, gguip, self.guip)
+                mesh.render_lines(action, self.env, gguip, self.guip)
 
     def _render_ambient(self, action: Action, gguip: GuiParameters) -> None:
         for mesh in self.meshes:

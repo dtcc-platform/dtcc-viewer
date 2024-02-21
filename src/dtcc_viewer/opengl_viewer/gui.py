@@ -35,21 +35,34 @@ class Gui:
         pass
 
     def render_gui(self, model: ModelGL, impl: GlfwRenderer, gguip: GuiParameters):
-        self._init_draw(impl)
+        self._init_gui(impl)
+
+        # Draw window with GUI controls
+        self._init_win_1(impl)
         self._draw_apperance_gui(gguip)
         self._draw_model_gui(model)
-        self._end_draw(impl)
+        self._end_win_1(impl)
 
-    def _init_draw(self, impl: GlfwRenderer) -> None:
-        """Initialize the GUI drawing environment."""
-        window_with = impl.io.display_size.x
+        # Draw window for data display
+        self._init_win_2(impl)
+        self._draw_help()
+        self._draw_data(model)
+        self._end_win_2()
+
+        self._end_gui(impl)
+
+    def _init_gui(self, impl: GlfwRenderer) -> None:
         self.gui_width = 320
-        self.margin = 40
+        self.margin = 30
         impl.process_inputs()
         imgui.new_frame()
+
+    def _init_win_1(self, impl: GlfwRenderer) -> None:
+        """Initialize the GUI drawing environment."""
         imgui.set_next_window_size_constraints(
             (self.gui_width, 20), (self.gui_width, 1200)
         )
+        window_with = impl.io.display_size.x
         imgui.begin(
             "DTCC Viewer",
             flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
@@ -150,9 +163,11 @@ class Gui:
             for i, ls in enumerate(model.linestrings):
                 self._draw_ls_gui(ls.guip, i)
 
-    def _end_draw(self, impl: GlfwRenderer) -> None:
-        """Finalize the GUI drawing and rendering."""
+    def _end_win_1(self, impl: GlfwRenderer) -> None:
         imgui.end()
+
+    def _end_gui(self, impl: GlfwRenderer) -> None:
+        """Finalize the GUI drawing and rendering."""
         imgui.render()
         impl.render(imgui.get_draw_data())
         imgui.end_frame()
@@ -454,3 +469,89 @@ class Gui:
             1 - guip.color[2],
             1,
         )
+
+    def _init_win_2(self, impl: GlfwRenderer) -> None:
+        imgui.set_next_window_size_constraints(
+            (self.gui_width, 20), (self.gui_width, 1200)
+        )
+
+        imgui.begin(
+            "Data Display",
+            flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
+        )
+
+        imgui.set_window_position_labeled("Data Display", self.margin, self.margin)
+
+    def _end_win_2(self) -> None:
+        imgui.end()
+
+    def _draw_help(self) -> None:
+        """Draw GUI elements for adjusting appearance settings like background color."""
+        width = 45
+        [expanded, visible] = imgui.collapsing_header("Help")
+        if expanded:
+            imgui.bullet_text("NAVIGATION:")
+            text_0 = "- Use the mouse to navigate the scene."
+            text_1 = "- Press left mouse button to rotate the view."
+            text_2 = "- Press right mouse button to pan the view."
+            text_3 = "- Scroll the mouse wheel to zoom in and out."
+            imgui.text(self.wrap_text(text_0, width))
+            imgui.text(self.wrap_text(text_1, width))
+            imgui.text(self.wrap_text(text_2, width))
+            imgui.text(self.wrap_text(text_3, width))
+
+            imgui.bullet_text("OBJECT SELECTION:")
+            text_0 = " - Left-click on an object to select an object."
+            text_1 = " - Data attached to the selected object will be displayed under 'data'."
+            imgui.text(self.wrap_text(text_0, width))
+            imgui.text(self.wrap_text(text_1, width))
+
+            imgui.bullet_text("VIEW OPTIONS:")
+            text_0 = " - Use the gui under the 'Appearance' to set background color and clipping planes."
+            text_1 = "- Use the checkboxes or dropdown menus for each object under 'Model' to customise the view."
+            text_2 = "- Use the range sliders to set the range of data to be displayed."
+            imgui.text(self.wrap_text(text_0, width))
+            imgui.text(self.wrap_text(text_1, width))
+            imgui.text(self.wrap_text(text_2, width))
+
+            imgui.bullet_text("HELP:")
+            text_0 = "- If you need further assistance, reach out on github."
+            imgui.text(self.wrap_text(text_0, width))
+
+            imgui.bullet_text("ADDITIONAL TIPS:")
+            text_0 = "- In shadow mode, the light source can be animated by checking the 'Animate light' checkbox."
+            text_1 = "- In shadow mode, press the 'S-'key to see the shadow map from the light source persepctive."
+            imgui.text(self.wrap_text(text_0, width))
+            imgui.text(self.wrap_text(text_1, width))
+
+        self.draw_separator()
+
+    def _draw_data(self, model: ModelGL) -> None:
+        """Draw GUI elements for adjusting appearance settings like background color."""
+        [expanded, visible] = imgui.collapsing_header("Data")
+        if expanded:
+            imgui.begin_child(
+                "Scrolling", 0, 250, border=True, flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE
+            )
+            if model.guip.picked_id != -1:
+                imgui.text("Selected object id: " + str(model.guip.picked_id))
+            for n in range(0, 20):
+                imgui.text(f"{n}: Some data")
+            imgui.end_child()
+        self.draw_separator()
+
+    def wrap_text(self, text, width):
+        lines = []
+        current_line = ""
+        words = text.split()
+        for word in words:
+            if len(current_line) + len(word) + 1 <= width:
+                if current_line:
+                    current_line += " "
+                current_line += word
+            else:
+                lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        return "\n".join(lines)

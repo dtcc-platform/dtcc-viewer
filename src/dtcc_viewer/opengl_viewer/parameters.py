@@ -102,12 +102,14 @@ class GuiParametersModel:
     show: bool
     shading: Shading
     animate_light: bool
+    picked_id: int
 
     def __init__(self, name: str, shading: Shading) -> None:
         self.name = name
         self.show = True
         self.shading = shading
         self.animate_light = False
+        self.picked_id = -1
 
 
 class GuiParametersPC:
