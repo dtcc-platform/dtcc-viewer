@@ -6,11 +6,11 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.interaction import Action
-from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
-from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
-from dtcc_viewer.opengl_viewer.model_gl import ModelGL
+from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
+from dtcc_viewer.opengl_viewer.gl_model import GlModel
 from dtcc_viewer.opengl_viewer.utils import Shading
-from dtcc_viewer.opengl_viewer.linestring_gl import LineStringGL
+from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.scene import Scene
@@ -62,12 +62,12 @@ class Window:
         Accumulated time for FPS calculation.
     """
 
-    meshes: list[MeshGL]
-    pointclouds: list[PointCloudGL]
-    roadnetworks: list[LineStringGL]
-    model: ModelGL
-    mesh: MeshGL
-    pc: PointCloudGL
+    meshes: list[GlMesh]
+    pointclouds: list[GlPointCloud]
+    roadnetworks: list[GlLineString]
+    model: GlModel
+    mesh: GlMesh
+    pc: GlPointCloud
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
     win_width: int
@@ -112,7 +112,14 @@ class Window:
             glfw.terminate()
             raise Exception("glfw window can not be created!")
 
-        glfw.set_window_pos(self.window, 400, 200)
+        # Calculate screen position for window
+        primary_monitor = glfw.get_primary_monitor()
+        mode = glfw.get_video_mode(primary_monitor)
+
+        x_pos = (mode.size.width - self.win_width) // 2
+        y_pos = (mode.size.height - self.win_height) // 2
+
+        glfw.set_window_pos(self.window, x_pos, y_pos)
 
         # Calls can be made after the contex is made current
         glfw.make_context_current(self.window)
@@ -151,26 +158,26 @@ class Window:
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
-                mesh_gl_bld = MeshGL(city.building_mw)
+                mesh_gl_bld = GlMesh(city.building_mw)
                 self.meshes.append(mesh_gl_bld)
             if city.terrain_mw is not None:
-                mesh_gl_ter = MeshGL(city.terrain_mw)
+                mesh_gl_ter = GlMesh(city.terrain_mw)
                 self.meshes.append(mesh_gl_ter)
 
         for mesh in scene.mesh_wrappers:
-            mesh_gl = MeshGL(mesh)
+            mesh_gl = GlMesh(mesh)
             self.meshes.append(mesh_gl)
 
         for pc in scene.pcs_wrappers:
-            pc_gl = PointCloudGL(pc)
+            pc_gl = GlPointCloud(pc)
             self.pointclouds.append(pc_gl)
 
         for rn in scene.rnd_wrappers:
-            rn_gl = LineStringGL(rn)
+            rn_gl = GlLineString(rn)
             self.roadnetworks.append(rn_gl)
 
         # Create model from meshes
-        self.model = ModelGL(self.meshes, self.pointclouds, self.roadnetworks, scene.bb)
+        self.model = GlModel(self.meshes, self.pointclouds, self.roadnetworks, scene.bb)
 
         self.model.create_picking_fbo(self.action)
 

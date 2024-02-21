@@ -47,7 +47,7 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
 )
 
 
-class MeshGL:
+class GlMesh:
     """Represents a 3D mesh in OpenGL and provides methods for rendering.
 
     This class handles the rendering of mesh data using OpenGL. It provides methods to

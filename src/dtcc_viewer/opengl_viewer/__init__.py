@@ -1,8 +1,8 @@
 from .camera import Camera
 from .window import Window
 from .pointcloud_wrapper import PointCloudWrapper
-from .pointcloud_gl import PointCloudGL
-from .mesh_gl import MeshGL
+from .gl_pointcloud import GlPointCloud
+from .gl_mesh import GlMesh
 from .mesh_wrapper import MeshWrapper
 from .interaction import Action
 from .scene import Scene
@@ -15,8 +15,8 @@ __all__ = [
     "Camera",
     "Window",
     "PointCloudWrapper",
-    "PointCloudGL",
-    "MeshGL",
+    "GlPointCloud",
+    "GlMesh",
     "MeshWrapper",
     "Action",
     "Scene",

@@ -24,7 +24,7 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
 )
 
 
-class LineStringGL:
+class GlLineString:
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.

@@ -7,9 +7,9 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.utils import Shading, BoundingBox, color_to_id
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
-from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
-from dtcc_viewer.opengl_viewer.linestring_gl import LineStringGL
+from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
+from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
 from dtcc_viewer.opengl_viewer.environment import Environment
 from dtcc_viewer.opengl_viewer.parameters import GuiParameters, GuiParametersModel
 
@@ -26,7 +26,7 @@ from dtcc_viewer.opengl_viewer.shaders_mesh_picking import (
 )
 
 
-class ModelGL:
+class GlModel:
     """Holds a collection of meshes for rendering with multi-mesh dependent features.
 
     This class contains a collection of meshes and related features for rendering of
@@ -35,9 +35,9 @@ class ModelGL:
 
     """
 
-    meshes: list[MeshGL]
-    pointclouds: list[PointCloudGL]
-    linestrings: list[LineStringGL]
+    meshes: list[GlMesh]
+    pointclouds: list[GlPointCloud]
+    linestrings: list[GlLineString]
 
     guip: GuiParametersModel  # Gui parameters for the model
     env: Environment  # Collection of environment data like light sources etc.
@@ -73,9 +73,9 @@ class ModelGL:
 
     def __init__(
         self,
-        msh: list[MeshGL],
-        pcs: list[PointCloudGL],
-        rns: list[LineStringGL],
+        msh: list[GlMesh],
+        pcs: list[GlPointCloud],
+        rns: list[GlLineString],
         bb_global: BoundingBox,
     ):
         self.meshes = msh

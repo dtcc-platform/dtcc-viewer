@@ -2,7 +2,7 @@ import imgui
 from dtcc_viewer.opengl_viewer.utils import Shading
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl_viewer.utils import shader_cmaps
-from dtcc_viewer.opengl_viewer.model_gl import ModelGL
+from dtcc_viewer.opengl_viewer.gl_model import GlModel
 from dtcc_viewer.opengl_viewer.parameters import (
     GuiParameters,
     GuiParametersMesh,
@@ -34,7 +34,7 @@ class Gui:
         """
         pass
 
-    def render_gui(self, model: ModelGL, impl: GlfwRenderer, gguip: GuiParameters):
+    def render_gui(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParameters):
         self._init_gui(impl)
 
         # Draw window with GUI controls
@@ -113,7 +113,7 @@ class Gui:
 
         self.draw_separator()
 
-    def _draw_model_gui(self, model: ModelGL) -> None:
+    def _draw_model_gui(self, model: GlModel) -> None:
         """Draw GUI for model."""
         [expanded, visible] = imgui.collapsing_header(model.guip.name)
         if expanded:
@@ -514,19 +514,19 @@ class Gui:
             imgui.text(self.wrap_text(text_1, width))
             imgui.text(self.wrap_text(text_2, width))
 
-            imgui.bullet_text("HELP:")
-            text_0 = "- If you need further assistance, reach out on github."
-            imgui.text(self.wrap_text(text_0, width))
-
             imgui.bullet_text("ADDITIONAL TIPS:")
             text_0 = "- In shadow mode, the light source can be animated by checking the 'Animate light' checkbox."
             text_1 = "- In shadow mode, press the 'S-'key to see the shadow map from the light source persepctive."
             imgui.text(self.wrap_text(text_0, width))
             imgui.text(self.wrap_text(text_1, width))
 
+            imgui.bullet_text("HELP:")
+            text_0 = "- If you need further assistance, reach out on github."
+            imgui.text(self.wrap_text(text_0, width))
+
         self.draw_separator()
 
-    def _draw_data(self, model: ModelGL) -> None:
+    def _draw_data(self, model: GlModel) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Data")
         if expanded:

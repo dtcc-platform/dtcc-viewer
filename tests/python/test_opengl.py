@@ -6,8 +6,8 @@ import numpy as np
 from pprint import pp
 from dtcc_viewer import *
 from dtcc_viewer.colors import color_maps
-from dtcc_viewer.opengl_viewer.mesh_gl import MeshGL
-from dtcc_viewer.opengl_viewer.pointcloud_gl import PointCloudGL
+from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
+from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
 from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import *
@@ -68,7 +68,7 @@ class TestOpenGLViewer:
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
 
-        mesh_gl = MeshGL(mesh_wrapper)
+        mesh_gl = GlMesh(mesh_wrapper)
 
         # window.render_mesh(mesh_data_obj)
 
@@ -83,7 +83,7 @@ class TestOpenGLViewer:
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
 
-        pc_gl = PointCloudGL(pc_wrapper)
+        pc_gl = GlPointCloud(pc_wrapper)
 
         # window.render_point_cloud(pc_data_obj)
 
