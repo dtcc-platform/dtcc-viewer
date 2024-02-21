@@ -10,6 +10,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 project;
 uniform int color_by;
+uniform int color_inv;
 uniform float clip_x;
 uniform float clip_y;
 uniform float clip_z;
@@ -29,7 +30,6 @@ $color_map_1
 $color_map_2
 $color_map_3
 $color_map_4
-
 
 
 void main()
@@ -77,6 +77,11 @@ void main()
         else if(cmap_idx == 4)
         {
             v_color = viridis(a_data[data_idx]);
+        }
+
+        if(color_inv == 1)
+        {
+            v_color = vec3(1.0) - v_color;
         }
     }
     else if(color_by == 2)

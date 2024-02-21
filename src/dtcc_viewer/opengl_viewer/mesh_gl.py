@@ -220,6 +220,9 @@ class MeshGL:
         self.uloc_line["view"] = glGetUniformLocation(self.shader_line, "view")
         self.uloc_line["project"] = glGetUniformLocation(self.shader_line, "project")
         self.uloc_line["color_by"] = glGetUniformLocation(self.shader_line, "color_by")
+        self.uloc_line["color_inv"] = glGetUniformLocation(
+            self.shader_line, "color_inv"
+        )
         self.uloc_line["clip_x"] = glGetUniformLocation(self.shader_line, "clip_x")
         self.uloc_line["clip_y"] = glGetUniformLocation(self.shader_line, "clip_y")
         self.uloc_line["clip_z"] = glGetUniformLocation(self.shader_line, "clip_z")
@@ -254,6 +257,9 @@ class MeshGL:
         self.uloc_ambi["view"] = glGetUniformLocation(self.shader_ambi, "view")
         self.uloc_ambi["project"] = glGetUniformLocation(self.shader_ambi, "project")
         self.uloc_ambi["color_by"] = glGetUniformLocation(self.shader_ambi, "color_by")
+        self.uloc_ambi["color_inv"] = glGetUniformLocation(
+            self.shader_ambi, "color_inv"
+        )
         self.uloc_ambi["clip_x"] = glGetUniformLocation(self.shader_ambi, "clip_x")
         self.uloc_ambi["clip_y"] = glGetUniformLocation(self.shader_ambi, "clip_y")
         self.uloc_ambi["clip_z"] = glGetUniformLocation(self.shader_ambi, "clip_z")
@@ -291,6 +297,10 @@ class MeshGL:
         self.uloc_diff["view"] = glGetUniformLocation(self.shader_diff, "view")
         self.uloc_diff["project"] = glGetUniformLocation(self.shader_diff, "project")
         self.uloc_diff["color_by"] = glGetUniformLocation(self.shader_diff, "color_by")
+        self.uloc_diff["color_inv"] = glGetUniformLocation(
+            self.shader_diff, "color_inv"
+        )
+
         self.uloc_diff["light_color"] = glGetUniformLocation(
             self.shader_diff, "light_color"
         )
@@ -349,6 +359,9 @@ class MeshGL:
         self.uloc_shdw["view"] = glGetUniformLocation(self.shader_shdw, "view")
         self.uloc_shdw["project"] = glGetUniformLocation(self.shader_shdw, "project")
         self.uloc_shdw["color_by"] = glGetUniformLocation(self.shader_shdw, "color_by")
+        self.uloc_shdw["color_inv"] = glGetUniformLocation(
+            self.shader_shdw, "color_inv"
+        )
         self.uloc_shdw["clip_x"] = glGetUniformLocation(self.shader_shdw, "clip_x")
         self.uloc_shdw["clip_y"] = glGetUniformLocation(self.shader_shdw, "clip_y")
         self.uloc_shdw["clip_z"] = glGetUniformLocation(self.shader_shdw, "clip_z")
@@ -400,8 +413,8 @@ class MeshGL:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_line["color_by"], color_by)
+        glUniform1i(self.uloc_line["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_line["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_line["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
@@ -429,8 +442,8 @@ class MeshGL:
 
         self._set_clipping_uniforms(gguip, mguip)
 
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_ambi["color_by"], color_by)
+        glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_ambi["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_ambi["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_ambi["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
@@ -461,8 +474,8 @@ class MeshGL:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        color_by = int(self.guip.color_mesh)
-        glUniform1i(self.uloc_diff["color_by"], color_by)
+        glUniform1i(self.uloc_diff["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_diff["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_diff["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_diff["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
@@ -524,6 +537,7 @@ class MeshGL:
         self._set_clipping_uniforms(gguip, mguip)
 
         glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_shdw["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_shdw["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_shdw["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)

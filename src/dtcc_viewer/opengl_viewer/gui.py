@@ -174,8 +174,6 @@ class Gui:
             [changed, guip.invert_cmap] = imgui.checkbox(
                 "Invert cmap", guip.invert_cmap
             )
-            if changed:
-                guip.update_caps = True
             imgui.pop_id()
 
             key = guip.get_current_data_name()
