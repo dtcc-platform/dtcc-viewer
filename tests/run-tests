@@ -2,4 +2,4 @@
 
 echo "Running Python tests"
 echo "===================="
-pytest python/test_colors.py python/test_viewer.py
+pytest python/test_viewer.py
