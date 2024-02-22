@@ -4,7 +4,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.window import Window
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.opengl_viewer.scene import Scene
-from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
+from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
 
 
 def view(

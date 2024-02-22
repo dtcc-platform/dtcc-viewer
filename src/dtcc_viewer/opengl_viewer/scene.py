@@ -1,9 +1,9 @@
 import numpy as np
-from dtcc_viewer.opengl_viewer.city_wrapper import CityWrapper
-from dtcc_viewer.opengl_viewer.object_wrapper import ObjectWrapper
-from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
-from dtcc_viewer.opengl_viewer.roadnetwork_wrapper import RoadNetworkWrapper
-from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
+from dtcc_viewer.opengl_viewer.wrp_city import CityWrapper
+from dtcc_viewer.opengl_viewer.wrp_object import ObjectWrapper
+from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
+from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading
 from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
 from dtcc_viewer.logging import info, warning

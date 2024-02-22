@@ -47,6 +47,7 @@ class Gui:
         self._init_win_2(impl)
         self._draw_help()
         self._draw_data(model)
+        self._draw_fps(gguip)
         self._end_win_2()
 
         self._end_gui(impl)
@@ -486,9 +487,17 @@ class Gui:
 
     def _draw_help(self) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
-        width = 45
+        width = 40
         [expanded, visible] = imgui.collapsing_header("Help")
         if expanded:
+            imgui.begin_child(
+                "Scrolling_help",
+                0,
+                250,
+                border=True,
+                flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE,
+            )
+
             imgui.bullet_text("NAVIGATION:")
             text_0 = "- Use the mouse to navigate the scene."
             text_1 = "- Press left mouse button to rotate the view."
@@ -514,14 +523,16 @@ class Gui:
             imgui.text(self.wrap_text(text_2, width))
 
             imgui.bullet_text("ADDITIONAL TIPS:")
-            text_0 = "- In shadow mode, the light source can be animated by checking the 'Animate light' checkbox."
-            text_1 = "- In shadow mode, press the 'S-'key to see the shadow map from the light source persepctive."
+            text_0 = "- If shadow display mode selected, the light source can be animated by checking the 'Animate light' checkbox."
+            text_1 = "- If shadow display mode selected, the 'S-'key can be pressed to toggle display of the shadow map from the light source persepctive."
             imgui.text(self.wrap_text(text_0, width))
             imgui.text(self.wrap_text(text_1, width))
 
             imgui.bullet_text("HELP:")
             text_0 = "- If you need further assistance, reach out on github."
             imgui.text(self.wrap_text(text_0, width))
+
+            imgui.end_child()
 
         self.draw_separator()
 
@@ -538,6 +549,10 @@ class Gui:
                 imgui.text(f"{n}: Some data")
             imgui.end_child()
         self.draw_separator()
+
+    def _draw_fps(self, guip: GuiParameters) -> None:
+        """Draw GUI elements for adjusting appearance settings like background color."""
+        imgui.text("FPS: " + str(guip.fps))
 
     def wrap_text(self, text, width):
         lines = []

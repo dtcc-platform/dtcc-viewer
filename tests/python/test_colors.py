@@ -1,6 +1,5 @@
 import numpy as np
 from dtcc_viewer import colors
-from dtcc_viewer.colors import color_maps
 from pprint import pp
 
 

@@ -4,7 +4,6 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from typing import Any
-from dtcc_viewer.colors import color_maps
 
 
 class PointCloudWrapper:

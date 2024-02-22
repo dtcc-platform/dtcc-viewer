@@ -2,14 +2,12 @@ import glfw
 import imgui
 import numpy as np
 from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
 from dtcc_viewer.opengl_viewer.gl_model import GlModel
-from dtcc_viewer.opengl_viewer.utils import Shading
 from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
 from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
@@ -66,8 +64,6 @@ class Window:
     pointclouds: list[GlPointCloud]
     roadnetworks: list[GlLineString]
     model: GlModel
-    mesh: GlMesh
-    pc: GlPointCloud
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
     win_width: int
@@ -211,7 +207,7 @@ class Window:
             # Render the GUI
             self.gui.render_gui(self.model, self.impl, self.guip)
 
-            self._calc_fps()
+            self.guip.calc_fps()
 
             glfw.swap_buffers(self.window)
 
@@ -233,44 +229,11 @@ class Window:
             if mguip.show:
                 rn.render(self.action, self.guip)
 
-    def _calc_fps(self, print_results=True):
-        """Perform FPS calculations.
-
-        This method calculates the frames per second (FPS) for the rendering loop.
-        It updates the FPS count and prints the results if specified.
-
-        Parameters
-        ----------
-        print_results : bool, optional
-            Whether to print the calculated FPS results (default is True).
-        """
-
-        new_time = glfw.get_time()
-        time_passed = new_time - self.time
-        self.time = new_time
-        self.time_acum += time_passed
-        self.fps += 1
-
-        if self.time_acum > 1:
-            self.time_acum = 0
-            if print_results:
-                info(f"FPS: {self.fps}")
-            self.fps = 0
-
     def _window_resize_callback(self, window, width, height):
         """Callback for window resize events.
 
         This method is a callback function that gets called when the window is resized.
         It updates the viewport size and interaction parameters.
-
-        Parameters
-        ----------
-        window : int
-            The GLFW window.
-        width : int
-            The new width of the window.
-        height : int
-            The new height of the window.
         """
 
         self._update_window_framebuffer_size()

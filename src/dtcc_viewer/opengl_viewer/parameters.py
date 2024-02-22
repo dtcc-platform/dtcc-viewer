@@ -1,11 +1,27 @@
 import numpy as np
+import glfw
 from dtcc_viewer.opengl_viewer.utils import invert_color
 from dtcc_viewer.opengl_viewer.utils import Shading
 from dtcc_viewer.opengl_viewer.utils import shader_cmaps
+from dtcc_viewer.logging import info, warning
 
 
 class GuiParameters:
     """Class representing GUI parameters for the viewer."""
+
+    color: list
+    text_color: list
+    gui_width: int
+    gui_height: int
+    single_date: bool
+    period: bool
+    clip_bool: list
+    clip_dir: list
+    clip_dist: list
+
+    time: float
+    time_acum: float
+    fps_counter: int
 
     def __init__(self):
         """Initialize the GuiParameters object."""
@@ -15,10 +31,32 @@ class GuiParameters:
         self.gui_height = 200
         self.single_date = True
         self.period = False
-
         self.clip_bool = [False, False, False]
         self.clip_dir = [1, 1, 1]
         self.clip_dist = [1, 1, 1]  # each variable has range [-1, 1]
+        self.fps_counter = 0
+        self.time = 0.0
+        self.time_acum = 0.0
+        self.fps_counter = 0
+        self.fps = 0
+
+    def calc_fps(self):
+        """Perform FPS calculations.
+
+        This method calculates the frames per second (FPS) for the rendering loop.
+        It updates the FPS count and prints the results if specified.
+        """
+
+        new_time = glfw.get_time()
+        time_passed = new_time - self.time
+        self.time = new_time
+        self.time_acum += time_passed
+        self.fps_counter += 1
+
+        if self.time_acum > 1:
+            self.time_acum = 0
+            self.fps = self.fps_counter
+            self.fps_counter = 0
 
 
 class GuiParametersObj:

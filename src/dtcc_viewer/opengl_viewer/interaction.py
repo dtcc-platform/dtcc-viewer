@@ -13,9 +13,13 @@ class Action:
 
     Attributes
     ----------
-    width : int
+    fbuf_width : int
+        The width of the frame buffer.
+    fbuf_height : int
+        The height of frame buffer.
+    win_width : int
         The width of the viewer window.
-    height : int
+    win_height : int
         The height of the viewer window.
     last_x : float
         The last known x-coordinate of the mouse cursor.
@@ -33,6 +37,26 @@ class Action:
         Flag indicating if the right mouse button is currently pressed.
     mouse_on_gui : bool
         Flag indicating if the mouse cursor is over the graphical user interface (GUI).
+    show_shadow_texture : bool
+        Flag indicating if the shadow texture should be drawn.
+    show_picking_texture : bool
+        Flag indicating if the picking texture should be drawn.
+    zoom_selected : bool
+        Flag indicating if the selected object should be zoomed in on.
+    picking : bool
+        Flag indicating if the user is currently picking an object.
+    picked_x : float
+        The x-coordinate in screen space of the picked object.
+    picked_y : float
+        The y-coordinate in screen space of the picked object.
+    picked_id : int
+        The ID of the picked object.
+    tic : float
+        The time at which the LMB was pressed.
+    toc : float
+        The time at which the LMB was released.
+    tictoc_duration : float
+        The duration between the LMB press and release.
     """
 
     fbuf_width: int  # Framwbuffer width
@@ -50,7 +74,6 @@ class Action:
 
     show_shadow_texture: bool
     show_picking_texture: bool
-
     zoom_selected: bool
 
     # Tracking mouse picking clicks

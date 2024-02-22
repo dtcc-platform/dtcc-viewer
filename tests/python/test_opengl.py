@@ -5,11 +5,10 @@ import os
 import numpy as np
 from pprint import pp
 from dtcc_viewer import *
-from dtcc_viewer.colors import color_maps
 from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
 from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
-from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
+from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 from dtcc_model import Mesh

@@ -1,9 +1,9 @@
 from .camera import Camera
 from .window import Window
-from .pointcloud_wrapper import PointCloudWrapper
+from .wrp_pointcloud import PointCloudWrapper
 from .gl_pointcloud import GlPointCloud
 from .gl_mesh import GlMesh
-from .mesh_wrapper import MeshWrapper
+from .wrp_mesh import MeshWrapper
 from .interaction import Action
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
