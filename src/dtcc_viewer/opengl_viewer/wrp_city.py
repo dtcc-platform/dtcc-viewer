@@ -98,11 +98,6 @@ class CityWrapper:
 
     def _get_terrain_mesh(self, city: NewCity):
         meshes = []
-        face_start_indices = []
-        face_end_indices = []
-        ids = []
-        tot_f_count = 0
-        counter = 0
         terrain_list = city.children[Terrain]
 
         for terrain in terrain_list:
@@ -110,79 +105,67 @@ class CityWrapper:
             if mesh is not None:
                 meshes.append(mesh)
 
-                # Stor face indices for this submesh to be used for picking
-                mesh_f_count = len(mesh.faces)
-                face_start_indices.append(tot_f_count)
-                face_end_indices.append(tot_f_count + mesh_f_count - 1)
-                tot_f_count += mesh_f_count
-
-                ids.append(counter)
-                counter += 1
-
         if len(meshes) == 0:
             info("No terrain mesh found in city model")
             return None, None
         else:
+            submeshes = Submeshes(meshes)
             mesh = concatenate_meshes(meshes)
-            submeshes = Submeshes(face_start_indices, face_end_indices, ids)
-            info(
-                f"Terrain mesh with {len(mesh.faces)} faces and {len(mesh.vertices)} vertices generated "
-            )
+            info(f"Terrain mesh with {len(mesh.faces)} faces was found")
             return mesh, submeshes
 
         return None, None
 
     def _generate_building_mesh(self, city: NewCity):
-        counter = 0
-        tot_f_count = 0
-        all_meshes = []
+        meshes = []
         results = []
-        face_start_index = []
-        face_end_index = []
-        ids = []
 
         # Generate mesh data for buildings
         for building in city.buildings:
             building_meshes = []
-            flat_geom = building.flatten_geometry(GeometryType.LOD2)
+            flat_geom = self.get_highest_lod_building(building)
             if isinstance(flat_geom, MultiSurface):
-                for s in flat_geom.surfaces:
-                    (mesh, result) = surface_2_mesh(s.vertices)
+                for srf in flat_geom.surfaces:
+                    (mesh, result) = surface_2_mesh(srf.vertices)
                     results.append(result)
                     if mesh is not None:
                         building_meshes.append(mesh)
 
             if len(building_meshes) > 0:
-                # Concatenate all building meshes into one mesh
+                # Concatenate all building mesh parts into one building mesh
                 building_mesh = concatenate_meshes(building_meshes)
-                all_meshes.append(building_mesh)
-
-                # Store face indices for this submesh to be used for picking
-                bld_f_count = len(building_mesh.faces)
-                face_start_index.append(tot_f_count)
-                face_end_index.append(tot_f_count + bld_f_count - 1)
-                tot_f_count += bld_f_count
-
-                ids.append(counter)
-                counter += 1
+                meshes.append(building_mesh)
 
         results_type_count = Counter(results)
         info("Results from triangluation:")
         for result_type, count in results_type_count.items():
             info(f" - {result_type.name}: {count}")
 
-        if len(all_meshes) == 0:
+        if len(meshes) == 0:
             info("No building meshes found in city model")
             return None, None
         else:
-            mesh = concatenate_meshes(all_meshes)
-            submeshes = Submeshes(face_start_index, face_end_index, ids)
-            info(
-                f"Mesh with {len(mesh.faces)} faces and {len(mesh.vertices)} vertices generated "
-            )
+            submeshes = Submeshes(meshes)
+            mesh = concatenate_meshes(meshes)
+            info(f"Mesh with {len(mesh.faces)} faces was retrieved from buildings")
             return mesh, submeshes
 
         return None, None
+
+    def get_highest_lod_building(self, building: NewBuilding):
+        lods = [
+            GeometryType.LOD3,
+            GeometryType.LOD2,
+            GeometryType.LOD1,
+            GeometryType.LOD0,
+        ]
+
+        for lod in lods:
+            flat_geom = building.flatten_geometry(lod)
+            if flat_geom is not None:
+                return flat_geom
+
+        return None
 
     def get_submesh_indices(self, new_mesh):
         pass

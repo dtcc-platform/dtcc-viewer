@@ -132,26 +132,27 @@ class Gui:
                 )
                 imgui.pop_id()
 
-            # Drawing mode combo box
-            imgui.push_id("Combo")
-            items = [
-                "wireframe",
-                "ambient",
-                "diffuse",
-                "wireshaded",
-                "shadows",
-                "picking",
-            ]
-            with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.shading
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.shading = i
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
+            if len(model.meshes) > 0:
+                # Display mode combo box
+                imgui.push_id("Combo")
+                items = [
+                    "wireframe",
+                    "ambient",
+                    "diffuse",
+                    "wireshaded",
+                    "shadows",
+                    "picking",
+                ]
+                with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
+                    if combo.opened:
+                        for i, item in enumerate(items):
+                            is_selected = guip.shading
+                            if imgui.selectable(item, is_selected)[0]:
+                                guip.shading = i
+                            # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                            if is_selected:
+                                imgui.set_item_default_focus()
+                imgui.pop_id()
 
             # Add individual ui for each mesh, pc, rn
             for i, mesh in enumerate(model.meshes):
@@ -367,9 +368,11 @@ class Gui:
             imgui.push_id("Color rn " + str(index))
             [changed, guip.color] = imgui.checkbox("Color", guip.color)
             imgui.pop_id()
-            imgui.push_id("Color rn " + str(index))
-            [changed, guip.scale] = imgui.slider_float(
-                "Scale factor", guip.scale, 0, 10
+
+            imgui.same_line()
+            imgui.push_id("InvertColors " + str(index))
+            [changed, guip.invert_cmap] = imgui.checkbox(
+                "Invert cmap", guip.invert_cmap
             )
             imgui.pop_id()
 

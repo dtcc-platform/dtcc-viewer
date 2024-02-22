@@ -68,22 +68,8 @@ class GlLineString:
         self.bb_local = rn_data_obj.bb_local
         self.bb_global = rn_data_obj.bb_global
 
-        self._calc_model_scale()
         self._create_lines()
         self._create_shader()
-
-    def _calc_model_scale(self) -> None:
-        """Calculate the model scale from vertex positions."""
-
-        xdom = self.bb_local.xdom
-        ydom = self.bb_local.ydom
-
-        if self.bb_global is not None:
-            xdom = self.bb_global.xdom
-            ydom = self.bb_global.ydom
-
-        self.diameter_xy = math.sqrt(xdom * xdom + ydom * ydom)
-        self.radius_xy = self.diameter_xy / 2.0
 
     def _create_lines(self) -> None:
         """Set up vertex and element buffers for line rendering."""
@@ -139,6 +125,7 @@ class GlLineString:
         self.uniform_locs["view"] = glGetUniformLocation(self.shader, "view")
         self.uniform_locs["project"] = glGetUniformLocation(self.shader, "project")
         self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
+        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
         self.uniform_locs["clip_x"] = glGetUniformLocation(self.shader, "clip_x")
         self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
         self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
@@ -168,6 +155,7 @@ class GlLineString:
         self._set_clipping_uniforms(gguip)
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
+        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)

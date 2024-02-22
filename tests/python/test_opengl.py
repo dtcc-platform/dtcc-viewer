@@ -33,15 +33,15 @@ class TestOpenGLViewer:
         self.edges = np.array([[0, 1], [1, 2], [2, 0], [2, 3], [3, 0], [0, 2]])
 
         # Vertices in the format of opengl functions (should be flattened first thou).
-        # [x, y, z, r, g, b, nx, ny, n z]
+        # [x, y, z, r, g, b, nx, ny, n z, id]
         self.vertices_gl = np.array(
             [
-                [0, 0, 0, 0, 0, 1, 0.57735026, 0.57735026, -0.57735026],
-                [0, 1, 1, 0, 0, 1, 0.57735026, 0.57735026, -0.57735026],
-                [1, 1, 2, 1, 0, 0, 0.57735026, 0.57735026, -0.57735026],
-                [1, 1, 2, 1, 0, 0, 0.90453404, -0.30151135, -0.30151135],
-                [1, 0, 3, 1, 0, 0, 0.90453404, -0.30151135, -0.30151135],
-                [0, 0, 0, 0, 0, 1, 0.90453404, -0.30151135, -0.30151135],
+                [0, 0, 0, 0, 0, 1, 0.57735026, 0.57735026, -0.57735026, 0],
+                [0, 1, 1, 0, 0, 1, 0.57735026, 0.57735026, -0.57735026, 0],
+                [1, 1, 2, 1, 0, 0, 0.57735026, 0.57735026, -0.57735026, 0],
+                [1, 1, 2, 1, 0, 0, 0.90453404, -0.30151135, -0.30151135, 1],
+                [1, 0, 3, 1, 0, 0, 0.90453404, -0.30151135, -0.30151135, 1],
+                [0, 0, 0, 0, 0, 1, 0.90453404, -0.30151135, -0.30151135, 1],
             ]
         )
 
@@ -51,16 +51,16 @@ class TestOpenGLViewer:
     def test_mesh_2(self):
         # Creating a dtcc_model mesh
         mesh = Mesh(vertices=self.vertices, faces=self.faces)
-        bb = BoundingBox(mesh.vertices)
+        bb = BoundingBox(mesh.vertices.flatten())
         data = mesh.vertices[:, 0]
         mesh_wrapper = MeshWrapper("name", mesh=mesh, data=data)
         mesh_wrapper.preprocess_drawing(bb)
         assert len(self.vertices_gl.flatten()) == len(mesh_wrapper.vertices)
 
-    def test_mesh_4(self):
+    def test_mesh_3(self):
         # Testing conversion from obj to MeshGL object
         mesh = meshes.load_mesh("data/models/cube.obj")
-        bb = BoundingBox(mesh.vertices)
+        bb = BoundingBox(mesh.vertices.flatten())
         data = mesh.vertices[:, 0]
         mesh_wrapper = MeshWrapper("name", mesh=mesh, data=data)
         mesh_wrapper.preprocess_drawing(bb)
@@ -95,7 +95,6 @@ if __name__ == "__main__":
     test = TestOpenGLViewer()
     test.setup_method()
 
-    # test.test_mesh_2()
-    # test.test_mesh_2()
-    test.test_mesh_4()
+    test.test_mesh_2()
+    test.test_mesh_3()
     # test.test_point_cloud()

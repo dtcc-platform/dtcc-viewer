@@ -16,13 +16,30 @@ class Submeshes:
     meta_data: dict
     id_offset: int
 
-    def __init__(self, face_start_indices, face_end_indices, submesh_ids):
+    def __init__(self, meshes: list[Mesh]):
+        self._extract_meshes_info(meshes)
+        self.id_offset = 0
+
+    def _extract_meshes_info(self, meshes: list[Mesh]):
+        face_start_indices = []
+        face_end_indices = []
+        tot_f_count = 0
+        counter = 0
+        ids = []
+
+        for mesh in meshes:
+            # Store face indices for this submesh to be used for picking
+            mesh_f_count = len(mesh.faces)
+            face_start_indices.append(tot_f_count)
+            face_end_indices.append(tot_f_count + mesh_f_count - 1)
+            tot_f_count += mesh_f_count
+
+            ids.append(counter)
+            counter += 1
+
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
-        self.ids = np.array(submesh_ids)
-        self.selected = np.zeros(len(submesh_ids), dtype=bool)
-        self.meta_data = {}
-        self.id_offset = 0
+        self.ids = np.array(ids)
 
     def add_meta_data(self, id, newdata_dict):
         self.meta_data[id] = newdata_dict

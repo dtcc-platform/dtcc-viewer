@@ -250,13 +250,10 @@ class MeshWrapper:
 
         # Restructure the face ids to the vertex structure
         ids_in_vertex_shape = np.repeat(ids_in_faces_shape, 3)
-
         n_vertices = len(self.vertices) // 10
 
         if len(ids_in_vertex_shape) != n_vertices:
-            warning(
-                f"Number of submesh ids and vertices do not match: {len(ids_in_vertex_shape)} != {n_vertices}"
-            )
+            warning(f"Submesh ids and vertices missmatch")
         else:
             # Replace default id with submesh id in the vertices
             info("Replacing default face ids with submesh ids in the vertices")

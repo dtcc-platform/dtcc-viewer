@@ -61,8 +61,8 @@ class Window:
     """
 
     meshes: list[GlMesh]
-    pointclouds: list[GlPointCloud]
-    roadnetworks: list[GlLineString]
+    pcs: list[GlPointCloud]
+    rns: list[GlLineString]
     model: GlModel
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
@@ -130,27 +130,12 @@ class Window:
         glfw.set_mouse_button_callback(self.window, self.action.mouse_input_callback)
         glfw.set_scroll_callback(self.window, self.action.scroll_input_callback)
 
-        self.time, self.time_acum, self.fps = 0.0, 0.0, 0
-
         self._update_window_framebuffer_size()
 
-    def render(self, scene: Scene):
-        """Render single or multiple MeshData and/or PointCloudData objects.
-
-        This method renders multiple meshes and point clouds in the window.
-        It updates the rendering loop, handles user interactions, and displays
-        the GUI elements for each rendered object.
-
-        Parameters
-        ----------
-            scene: Scene
-                The scene with objects to be rendered.
-        """
-
+    def _preprocess_model(self, scene: Scene):
         self.meshes = []
-        self.pointclouds = []
-        self.roadnetworks = []
-        scene.preprocess_drawing()
+        self.pcs = []
+        self.rns = []
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
@@ -166,16 +151,44 @@ class Window:
 
         for pc in scene.pcs_wrappers:
             pc_gl = GlPointCloud(pc)
-            self.pointclouds.append(pc_gl)
+            self.pcs.append(pc_gl)
 
         for rn in scene.rnd_wrappers:
             rn_gl = GlLineString(rn)
-            self.roadnetworks.append(rn_gl)
+            self.rns.append(rn_gl)
+
+        if len(self.meshes) == 0 and len(self.pcs) == 0 and len(self.rns) == 0:
+            warning("No meshes or point clouds or line strings found in the scene!")
+            return False
 
         # Create model from meshes
-        self.model = GlModel(self.meshes, self.pointclouds, self.roadnetworks, scene.bb)
-
+        self.model = GlModel(self.meshes, self.pcs, self.rns, scene.bb)
         self.model.create_picking_fbo(self.action)
+
+        return True
+
+    def render(self, scene: Scene):
+        """Render single or multiple MeshData and/or PointCloudData objects.
+
+        This method renders multiple meshes and point clouds in the window.
+        It updates the rendering loop, handles user interactions, and displays
+        the GUI elements for each rendered object.
+
+        Parameters
+        ----------
+            scene: Scene
+                The scene with objects to be rendered.
+        """
+
+        if not scene.preprocess_drawing():
+            warning("Scene preprocessing failed. Viewer aborted!")
+            glfw.terminate()
+            return False
+
+        if not self._preprocess_model(scene):
+            warning("Model preprocessing failed. Viewer aborted!")
+            glfw.terminate()
+            return False
 
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
@@ -218,13 +231,13 @@ class Window:
 
         This method renders all the point cloud objects in the window using OpenGL.
         """
-        for pc in self.pointclouds:
+        for pc in self.pcs:
             if pc.guip.show:
                 pc.render(self.action, self.guip)
 
     def _render_road_networks(self):
         """Render all the road networks in the window."""
-        for rn in self.roadnetworks:
+        for rn in self.rns:
             mguip = rn.guip
             if mguip.show:
                 rn.render(self.action, self.guip)

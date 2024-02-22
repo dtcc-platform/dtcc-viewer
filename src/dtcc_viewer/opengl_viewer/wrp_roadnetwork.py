@@ -60,7 +60,7 @@ class RoadNetworkWrapper:
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_rn_to_origin_multi(self.bb_global)
-        self.bb_local = BoundingBox(self.vertices)
+        self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
 
     def _move_rn_to_origin_multi(self, bb: BoundingBox = None):
@@ -141,9 +141,7 @@ class RoadNetworkWrapper:
 
     def get_vertex_positions(self):
         """Get the vertex positions"""
-        vertex_mask = np.array(
-            [True, True, True, False, False, False, False, False, False]
-        )
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
         v_count = len(self.vertices) // 9
         vertex_pos_mask = np.tile(vertex_mask, v_count)
         vertex_pos = self.vertices[vertex_pos_mask]

@@ -121,7 +121,11 @@ class Scene:
 
         # Calculate bounding box for the entire scene including the vector that is
         # used to center move everything to the origin.
-        self._calculate_bb()
+        self.bb = self._calculate_bb()
+
+        if self.bb is None:
+            warning("No bounding box found for scene.")
+            return False
 
         for obj in self.obj_wrappers:
             obj.preprocess_drawing(self.bb)
@@ -138,10 +142,8 @@ class Scene:
         for rn in self.rnd_wrappers:
             rn.preprocess_drawing(self.bb)
 
-        # Update the bounding box for the scene after all objects have been moved
-        # self._calculate_bb()
-
-        info(f"Scene preprocessing completed")
+        info(f"Scene preprocessing completed successfully")
+        return True
 
     def _calculate_bb(self):
         """Calculate bounding box of the scene"""
@@ -174,7 +176,12 @@ class Scene:
             vertex_pos = rn_w.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-        self.bb = BoundingBox(vertices)
+        if len(vertices) > 3:  # At least 1 vertex
+            bb = BoundingBox(vertices)
+            return bb
+        else:
+            warning("No vertices found in scene")
+            return None
 
     def _offset_picking_ids(self) -> None:
         id_offset = 0
