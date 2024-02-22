@@ -11,8 +11,8 @@ from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
 from dtcc_viewer.opengl_viewer.gl_model import GlModel
 from dtcc_viewer.opengl_viewer.utils import Shading
 from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
-from dtcc_viewer.opengl_viewer.mesh_wrapper import MeshWrapper
-from dtcc_viewer.opengl_viewer.pointcloud_wrapper import PointCloudWrapper
+from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl_viewer.scene import Scene
 from dtcc_viewer.opengl_viewer.gui import Gui
 from dtcc_viewer.opengl_viewer.parameters import GuiParameters
@@ -105,7 +105,7 @@ class Window:
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         self.window = glfw.create_window(
-            self.win_width, self.win_height, "OpenGL Window", None, None
+            self.win_width, self.win_height, "DTCC Viewer", None, None
         )  # Create window
 
         if not self.window:

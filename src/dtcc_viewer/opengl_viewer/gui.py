@@ -64,11 +64,11 @@ class Gui:
         )
         window_with = impl.io.display_size.x
         imgui.begin(
-            "DTCC Viewer",
+            "Controls",
             flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
         )
         imgui.set_window_position_labeled(
-            "DTCC Viewer", window_with - (self.gui_width + self.margin), self.margin
+            "Controls", window_with - (self.gui_width + self.margin), self.margin
         )
 
     def _draw_apperance_gui(self, guip: GuiParameters) -> None:
@@ -141,13 +141,12 @@ class Gui:
                 "shadows",
                 "picking",
             ]
-            with imgui.begin_combo("Shading", items[guip.shading]) as combo:
+            with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
                         is_selected = guip.shading
                         if imgui.selectable(item, is_selected)[0]:
                             guip.shading = i
-                            print(guip.shading)
                         # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                         if is_selected:
                             imgui.set_item_default_focus()
@@ -476,11 +475,11 @@ class Gui:
         )
 
         imgui.begin(
-            "Data Display",
+            "Properties",
             flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
         )
 
-        imgui.set_window_position_labeled("Data Display", self.margin, self.margin)
+        imgui.set_window_position_labeled("Properties", self.margin, self.margin)
 
     def _end_win_2(self) -> None:
         imgui.end()
