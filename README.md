@@ -2,7 +2,7 @@
 
 DTCC Viewer provides light-weight data visualization for DTCC Platform.
 
-This project is part the
+This project is part of the
 [Digital Twin Platform (DTCC Platform)](https://github.com/dtcc-platform/)
 developed at the
 [Digital Twin Cities Centre](https://dtcc.chalmers.se/)
