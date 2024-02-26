@@ -106,36 +106,6 @@ def mesh_point_cloud_example_3():
 
 
 def multi_geometry_example_1():
-    window = Window(1200, 800)
-    scene = Scene()
-
-    # Import meshes to be viewed
-    mesh_a = meshes.load_mesh("../../../data/models/CitySurfaceA.obj")
-    mesh_b = meshes.load_mesh("../../../data/models/CitySurfaceB.obj")
-
-    data_a = {}
-    data_a["vertex_x"] = mesh_a.vertices[:, 0]
-    data_a["vertex_y"] = mesh_a.vertices[:, 1]
-
-    data_b = {}
-    data_b["vertex_x"] = mesh_b.vertices[:, 0]
-    data_b["vertex_y"] = mesh_b.vertices[:, 1]
-
-    scene.add_mesh("mesh A", mesh_a, data_a)
-    scene.add_mesh("mesh B", mesh_b, data_b)
-
-    # Import point clodus to be viewed
-    pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
-    pc_b = pointcloud.load("../../../data/models/PointCloud_HQ_B.csv")
-    pc_data_a = pc_a.points[:, 0]
-    pc_data_b = pc_b.points[:, 1]
-    scene.add_pointcloud("pc A", pc_a, 0.2, pc_data_a)
-    scene.add_pointcloud("pc B", pc_b, 0.2, pc_data_b)
-
-    window.render(scene)
-
-
-def multi_geometry_example_2():
     filename_csv = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(filename_csv)
     all_pcs = split_pc_in_stripes(10, pc, Direction.x)
@@ -150,7 +120,7 @@ def multi_geometry_example_2():
     window.render(scene)
 
 
-def multi_geometry_example_3():
+def multi_geometry_example_2():
     filename_obj = "../../../data/models/CitySurface.obj"
     mesh_tri = trimesh.load_mesh(filename_obj)
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
@@ -165,7 +135,7 @@ def multi_geometry_example_3():
     window.render(scene)
 
 
-def multi_geometry_example_4():
+def multi_geometry_example_3():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
     all_pcs = split_pc_in_stripes(8, pc, Direction.x)
 
@@ -227,16 +197,16 @@ def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    # city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
-    # city_dhg.view()
+    city_dhg.view()
     # city_rwy.view()
-    city_nyc.view()
+    # city_nyc.view()
 
 
 if __name__ == "__main__":
@@ -254,7 +224,6 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
-    # multi_geometry_example_4()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()
