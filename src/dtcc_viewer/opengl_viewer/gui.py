@@ -66,7 +66,9 @@ class Gui:
         window_with = impl.io.display_size.x
         imgui.begin(
             "Controls",
-            flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
+            flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE
+            | imgui.WINDOW_NO_SAVED_SETTINGS
+            | imgui.WINDOW_NO_MOVE,
         )
         imgui.set_window_position_labeled(
             "Controls", window_with - (self.gui_width + self.margin), self.margin
@@ -480,7 +482,9 @@ class Gui:
 
         imgui.begin(
             "Properties",
-            flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS,
+            flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE
+            | imgui.WINDOW_NO_SAVED_SETTINGS
+            | imgui.WINDOW_NO_MOVE,
         )
 
         imgui.set_window_position_labeled("Properties", self.margin, self.margin)
@@ -541,17 +545,61 @@ class Gui:
 
     def _draw_data(self, model: GlModel) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
+        text_width = 40
         [expanded, visible] = imgui.collapsing_header("Data")
         if expanded:
-            imgui.begin_child(
-                "Scrolling", 0, 250, border=True, flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE
-            )
-            if model.guip.picked_id != -1:
-                imgui.text("Selected object id: " + str(model.guip.picked_id))
-            for n in range(0, 20):
-                imgui.text(f"{n}: Some data")
-            imgui.end_child()
+            self._draw_model_stats(model, text_width)
+            self._draw_model_data(model, text_width)
         self.draw_separator()
+
+    def _draw_model_stats(self, model: GlModel, text_width: int) -> None:
+        """Draw GUI elements for adjusting appearance settings like background color."""
+        imgui.begin_child("ModelStats", 0, 180, border=True)
+        imgui.text("MODEL STATS:")
+        v_count, f_count, p_count, l_count = 0, 0, 0, 0
+        for mesh in model.meshes:
+            text_0 = f"- Mesh called: '{mesh.name}' has {mesh.n_vertices} vertices and {mesh.n_faces} faces."
+            imgui.text(self.wrap_text(text_0, text_width))
+            v_count += mesh.n_vertices
+            f_count += mesh.n_faces
+            # print(v_count)
+        for pc in model.pointclouds:
+            n_particles = pc.n_points
+            n_vertices = (pc.n_sides + 1) * n_particles
+            n_faces = pc.n_sides * n_particles
+            text_0 = f"- PointCloud called: '{pc.name}' has {pc.n_points} points, which are drawn with {n_vertices} vertices and {n_faces} faces."
+            imgui.text(self.wrap_text(text_0, text_width))
+            v_count += n_vertices
+            f_count += n_faces
+            p_count += n_particles
+        for ls in model.linestrings:
+            text_0 = f"- LineString called: '{ls.name}' has {len(ls.points)} points."
+            imgui.text(self.wrap_text(text_0, text_width))
+            v_count += ls.n_vertices
+            l_count += ls.n_lines
+
+        imgui.text(f"----------------------------------------")
+        imgui.text("Visualisation stats:")
+        if v_count > 0:
+            imgui.text(f"Total vertex count: {v_count}")
+        if f_count > 0:
+            imgui.text(f"Total face count: {f_count}")
+        if p_count > 0:
+            imgui.text(f"Total particle count: {p_count}")
+        if l_count > 0:
+            imgui.text(f"Total line count: {l_count}")
+
+        imgui.end_child()
+
+    def _draw_model_data(self, model: GlModel, text_width: int) -> None:
+        imgui.begin_child("ModelData", 0, 250, border=True)
+        imgui.text("SELECTED OBJECT DATA:")
+        if model.guip.picked_id != -1:
+            text_0 = "- Object id: " + str(model.guip.picked_id)
+            imgui.text(self.wrap_text(text_0, text_width))
+        for n in range(0, 20):
+            imgui.text(f"{n}: Some data")
+        imgui.end_child()
 
     def _draw_fps(self, guip: GuiParameters) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""

@@ -51,7 +51,8 @@ class GlPointCloud:
 
     vertices: np.ndarray  # Vertices for one single instance of the particle mesh geometry
     face_indices: np.ndarray  # Face indices for one singel instance of particle mesh geometry
-    guip: GuiParametersPC
+    guip: GuiParametersPC  # GuiParametersPC object for managing GUI parameters
+    name: str  # Name of the point cloud
 
     # Settings for calc of particle mesh resolution
     low_count = 1000000  # Upp to 1M particles -> highest resolution
@@ -66,14 +67,16 @@ class GlPointCloud:
 
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
+    n_sides: int  # Number of sides for the particle mesh instance geometry
 
     def __init__(self, pc_wrapper: PointCloudWrapper):
         """Initialize the PointCloudGL object and set up rendering."""
 
         self.p_size = pc_wrapper.size
-        self.n_points = int(len(pc_wrapper.points) / 3)
+        self.n_points = len(pc_wrapper.points) // 3
         self.transforms = pc_wrapper.points
         self.data_dict = pc_wrapper.data_dict
+        self.name = pc_wrapper.name
 
         self.data = np.zeros((self.n_points, 3), dtype=np.float32)
         self.data[:, 0] = self.data_dict["slot0"]
@@ -136,7 +139,7 @@ class GlPointCloud:
         """Create a single instance of particle mesh geometry."""
 
         # Get vertices and face indices for one instance. The geometry resolution is related to number of particles.
-        [self.vertices, self.face_indices] = self._get_instance_geometry()
+        self.n_sides = self._get_instance_geometry()
 
         # Vertex structure is [x, y, z, r, g, b...]
         self.vertices = np.array(self.vertices, dtype=np.float32)
@@ -375,7 +378,7 @@ class GlPointCloud:
             n_sides = self._calc_n_sides()
             [self.vertices, self.face_indices] = self._create_circular_disc(n_sides)
 
-        return self.vertices, self.face_indices
+        return n_sides
 
     def _calc_n_sides(self):
         """Calculate the number of sides for particle mesh geometry.

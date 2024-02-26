@@ -66,9 +66,12 @@ class GlMesh:
     EBO_edge: int  # OpenGL Element buffer object for wireframe edges
 
     guip: GuiParametersMesh  # Information used by the Gui
-    vertices: np.ndarray  # [n_vertices x 9] each row has (x, y, z, r, g, b, nx, ny, nz)
+    vertices: np.ndarray  # [n_vertices x 10] each row (x, y, z, r, g, b, nx, ny, nz, id)
     faces: np.ndarray  # [n_faces x 3] each row has three vertex indices
     edges: np.ndarray  # [n_edges x 2] each row has
+
+    n_vertices: int  # Number of vertices
+    n_faces: int  # Number of faces
 
     bb: np.ndarray  # Bounding box [xmin, xmax, ymin, ymax, zmin, zmax]
     bb_local: BoundingBox
@@ -103,6 +106,9 @@ class GlMesh:
         self.vertices = mesh_wrapper.vertices
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
+
+        self.n_vertices = len(self.vertices) // 10
+        self.n_faces = len(self.faces) // 3
 
         self.dict_data = mesh_wrapper.dict_data
         self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, self.dict_data)

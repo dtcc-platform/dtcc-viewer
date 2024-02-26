@@ -36,6 +36,10 @@ class GlLineString:
     line_indices: np.ndarray  #  Line indices for roads [[2 x n_roads],]
     guip: GuiParametersLS
     dict_data: dict
+    name: str  # Name of the line string
+
+    n_vertices: int  # Number of vertices
+    n_lines: int  # Number of lines
 
     bb_local: BoundingBox
     bb_global: BoundingBox
@@ -54,19 +58,23 @@ class GlLineString:
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, rn_data_obj: RoadNetworkWrapper):
+    def __init__(self, ls_data_obj: RoadNetworkWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
-        self.vertices = rn_data_obj.vertices
-        self.line_indices = rn_data_obj.indices
-        self.dict_data = rn_data_obj.dict_data
+        self.vertices = ls_data_obj.vertices
+        self.line_indices = ls_data_obj.indices
+        self.dict_data = ls_data_obj.dict_data
+        self.name = ls_data_obj.name
+
+        self.n_vertices = len(self.vertices) // 3
+        self.n_lines = len(self.line_indices) // 2
 
         self.shader: int
         self.uniform_locs = {}
 
-        self.guip = GuiParametersLS(rn_data_obj.name, self.dict_data)
-        self.bb_local = rn_data_obj.bb_local
-        self.bb_global = rn_data_obj.bb_global
+        self.guip = GuiParametersLS(ls_data_obj.name, self.dict_data)
+        self.bb_local = ls_data_obj.bb_local
+        self.bb_global = ls_data_obj.bb_global
 
         self._create_lines()
         self._create_shader()
