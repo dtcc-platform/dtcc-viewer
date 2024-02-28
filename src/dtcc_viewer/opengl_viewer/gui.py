@@ -1,4 +1,5 @@
 import imgui
+import numpy as np
 from dtcc_viewer.opengl_viewer.utils import Shading
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl_viewer.utils import shader_cmaps
@@ -32,7 +33,7 @@ class Gui:
         """
         Initialize an instance of the Gui class.
         """
-        pass
+        np.set_printoptions(precision=1)
 
     def render_gui(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParameters):
         self._init_gui(impl)
@@ -595,10 +596,17 @@ class Gui:
         imgui.begin_child("ModelData", 0, 250, border=True)
         imgui.text("SELECTED OBJECT DATA:")
         if model.guip.picked_id != -1:
-            text_0 = "- Object id: " + str(model.guip.picked_id)
+            text_0 = "- id: " + str(model.guip.picked_id)
             imgui.text(self.wrap_text(text_0, text_width))
-        for n in range(0, 20):
-            imgui.text(f"{n}: Some data")
+            text_1 = "- uuid: " + str(model.guip.picked_uuid)
+            imgui.text(self.wrap_text(text_1, text_width))
+            text_2 = "- mesh: " + str(model.guip.picked_metadata)
+            imgui.text(self.wrap_text(text_2, text_width))
+            text_3 = "- center: " + str(model.guip.picked_cp)
+            imgui.text(self.wrap_text(text_3, text_width))
+            text_4 = "- size: " + str(model.guip.picked_size)
+            imgui.text(self.wrap_text(text_4, text_width))
+
         imgui.end_child()
 
     def _draw_fps(self, guip: GuiParameters) -> None:

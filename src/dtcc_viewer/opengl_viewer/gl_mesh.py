@@ -9,6 +9,7 @@ from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl_viewer.utils import Shading, BoundingBox
 from dtcc_viewer.opengl_viewer.environment import Environment
 from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl_viewer.utils import Submeshes
 
 from dtcc_viewer.opengl_viewer.parameters import (
     GuiParameters,
@@ -96,6 +97,8 @@ class GlMesh:
     light_color: np.ndarray  # color of scene light [1 x 3]
     loop_counter: int  # loop counter for animation of scene light source
 
+    submeshes: Submeshes  # Defines clickable objects and their metadata in the mesh
+
     cast_shadows: bool  # If the mesh should cast shadows
     recieve_shadows: bool  # If the mesh should recieve shadows
 
@@ -106,6 +109,7 @@ class GlMesh:
         self.vertices = mesh_wrapper.vertices
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
+        self.submeshes = mesh_wrapper.submeshes
 
         self.n_vertices = len(self.vertices) // 10
         self.n_faces = len(self.faces) // 3
@@ -132,6 +136,24 @@ class GlMesh:
         self._create_shader_diffuse()
         self._create_shader_shadow_map()
         self._create_shader_shadows()
+
+    def get_vertex_ids(self):
+        return self.vertices[9::10]
+
+    def get_average_vertex_position(self, indices):
+        if np.max(indices) > self.n_vertices or np.min(indices) < 0:
+            warning("Index out of bounds")
+            return None
+
+        x = self.vertices[indices * 10 + 0]
+        y = self.vertices[indices * 10 + 1]
+        z = self.vertices[indices * 10 + 2]
+
+        avrg_pt = np.array([np.mean(x), np.mean(y), np.mean(z)])
+        pts = np.column_stack((x, y, z))
+        radius = np.max(np.linalg.norm(pts - avrg_pt, axis=1))
+
+        return avrg_pt, radius
 
     def _create_lines(self) -> None:
         """Set up vertex and element buffers for wireframe rendering."""

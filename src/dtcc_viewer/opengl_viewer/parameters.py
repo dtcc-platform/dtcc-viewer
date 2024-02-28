@@ -141,6 +141,10 @@ class GuiParametersModel:
     shading: Shading
     animate_light: bool
     picked_id: int
+    picked_uuid: str
+    picked_metadata: str
+    picked_cp: np.ndarray
+    picked_size: float
 
     def __init__(self, name: str, shading: Shading) -> None:
         self.name = name
@@ -148,6 +152,10 @@ class GuiParametersModel:
         self.shading = shading
         self.animate_light = False
         self.picked_id = -1
+        self.picked_uuid = ""
+        self.picked_metadata = ""
+        self.picked_cp = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.picked_size = 0.0
 
 
 class GuiParametersPC:

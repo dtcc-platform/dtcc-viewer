@@ -76,14 +76,15 @@ class MeshWrapper:
         self.name = name
         self.shading = shading
         self.dict_data = {}
+        self.submeshes = submeshes
 
         self._restructure_data(mesh, data)
         self._restructure_mesh(mesh)
 
-        if submeshes is None:
+        if self.submeshes is None:
             info("Submesh is None faces are used as defualt submeshes")
         else:
-            self._create_ids_from_submeshes(submeshes)
+            self._create_ids_from_submeshes(self.submeshes)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -245,7 +246,7 @@ class MeshWrapper:
     def _create_ids_from_submeshes(self, submeshes: Submeshes):
         # Restructures submesh ids to the face index structure
         face_per_submesh = submeshes.face_end_indices - submeshes.face_start_indices + 1
-        ids_in_submesh_shape = submeshes.ids + submeshes.id_offset
+        ids_in_submesh_shape = submeshes.ids
         ids_in_faces_shape = np.repeat(ids_in_submesh_shape, face_per_submesh)
 
         # Restructure the face ids to the vertex structure

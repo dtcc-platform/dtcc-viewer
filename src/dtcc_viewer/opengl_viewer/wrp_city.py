@@ -74,8 +74,8 @@ class CityWrapper:
 
         # Set the global ids for the entire scene
         if t_submeshes is not None:
-            t_submeshes.id_offset = 0
-            b_submeshes.id_offset = np.max(t_submeshes.ids + t_submeshes.id_offset) + 1
+            offset = np.max(t_submeshes.ids) + 1
+            b_submeshes.offset_ids(offset)
 
         if t_mesh is not None:
             self.terrain_mw = MeshWrapper(
@@ -98,18 +98,21 @@ class CityWrapper:
 
     def _get_terrain_mesh(self, city: NewCity):
         meshes = []
+        uuids = []
         terrain_list = city.children[Terrain]
 
         for terrain in terrain_list:
             mesh = terrain.geometry.get(GeometryType.MESH, None)
+            uuid = terrain.id
             if mesh is not None:
                 meshes.append(mesh)
+                uuids.append(uuid)
 
         if len(meshes) == 0:
             info("No terrain mesh found in city model")
             return None, None
         else:
-            submeshes = Submeshes(meshes)
+            submeshes = Submeshes(meshes, uuids)
             mesh = concatenate_meshes(meshes)
             info(f"Terrain mesh with {len(mesh.faces)} faces was found")
             return mesh, submeshes
@@ -118,11 +121,13 @@ class CityWrapper:
 
     def _generate_building_mesh(self, city: NewCity):
         meshes = []
+        uuids = []
         results = []
 
         # Generate mesh data for buildings
         for building in city.buildings:
             building_meshes = []
+            uuid = building.id
             flat_geom = self.get_highest_lod_building(building)
             if isinstance(flat_geom, MultiSurface):
                 for srf in flat_geom.surfaces:
@@ -135,6 +140,7 @@ class CityWrapper:
                 # Concatenate all building mesh parts into one building mesh
                 building_mesh = concatenate_meshes(building_meshes)
                 meshes.append(building_mesh)
+                uuids.append(uuid)
 
         results_type_count = Counter(results)
         info("Results from triangluation:")
@@ -145,7 +151,7 @@ class CityWrapper:
             info("No building meshes found in city model")
             return None, None
         else:
-            submeshes = Submeshes(meshes)
+            submeshes = Submeshes(meshes, uuids)
             mesh = concatenate_meshes(meshes)
             info(f"Mesh with {len(mesh.faces)} faces was retrieved from buildings")
             return mesh, submeshes
@@ -166,6 +172,3 @@ class CityWrapper:
                 return flat_geom
 
         return None
-
-    def get_submesh_indices(self, new_mesh):
-        pass

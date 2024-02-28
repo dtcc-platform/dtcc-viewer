@@ -274,29 +274,41 @@ class GlModel:
             compileShader(fragment_shader_debug_picking, GL_FRAGMENT_SHADER),
         )
 
-    def evaluate_picking(self, action: Action):
+    def evaluate_picking(self, action: Action, gguip: GuiParameters) -> None:
         if not action.mouse_on_gui:
             self._draw_picking_texture(action)
-            self._evaluate_picking(action)
+            self._evaluate_picking(action, gguip)
         else:
             action.picking = False
 
-    def _evaluate_picking(self, action: Action) -> None:
+    def _evaluate_picking(self, action: Action, gguip: GuiParameters) -> None:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         x = action.picked_x
         y = action.picked_y
 
-        # print(x, y, interaction.width, interaction.height)
+        p_color = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
+        picked_id_new = color_to_id(p_color)
 
-        data = glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE)
-        picked_id_new = color_to_id(data)
+        # Background color
+        p_color = np.array([p_color[0], p_color[1], p_color[2]], dtype=int)
+        b_color = np.array(np.round(np.array(gguip.color) * 255), dtype=int)
 
-        if picked_id_new == action.picked_id:
+        print(b_color[0:3] == p_color[0:3])
+
+        background_click = False
+        if np.all(b_color[0:3] == p_color[0:3]):
+            background_click = True
+
+        if picked_id_new == action.picked_id or background_click:
             action.picked_id = -1
             self.guip.picked_id = -1
+            self.guip.picked_uuid = ""
+            self.guip.picked_metadata = ""
         else:
             action.picked_id = picked_id_new
             self.guip.picked_id = picked_id_new
+            self._find_object_from_id(picked_id_new)
+            self._find_metadata_from_id(picked_id_new)
 
         action.picking = False
 
@@ -477,3 +489,34 @@ class GlModel:
 
         for ls in self.linestrings:
             ls.update_color_caps()
+
+    def _find_object_from_id(self, id):
+        self.guip.picked_uuid = None
+        for mesh in self.meshes:
+            if mesh.submeshes is not None:
+                if mesh.submeshes.id_exists(id):
+                    uuid = mesh.submeshes.ids_2_uuids[id]
+                    self.guip.picked_uuid = uuid
+                    break
+
+    def _find_metadata_from_id(self, id):
+        sucess = False
+        for mesh in self.meshes:
+            vertex_ids = mesh.get_vertex_ids()
+            indices = np.where(vertex_ids == id)[0]
+            if len(indices) > 0:
+                v_counter = len(indices)
+                f_count = v_counter // 3
+                (avrg_pt, radius) = mesh.get_average_vertex_position(indices)
+                sucess = True
+                break
+
+        # Assign to
+        if sucess:
+            self.guip.picked_metadata = f" has {f_count} faces, {v_counter} vertices."
+            self.guip.picked_cp = avrg_pt
+            self.guip.picked_size = radius
+        else:
+            self.guip.picked_metadata = None
+            self.guip.picked_cp = None
+            self.guip.picked_size = None

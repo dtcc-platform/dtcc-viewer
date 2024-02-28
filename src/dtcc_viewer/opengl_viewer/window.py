@@ -211,7 +211,7 @@ class Window:
 
             # True if the user has clicked on the GUI
             if self.action.picking:
-                self.model.evaluate_picking(self.action)
+                self.model.evaluate_picking(self.action, self.guip)
 
             # Render the model
             if self.model.guip.show:

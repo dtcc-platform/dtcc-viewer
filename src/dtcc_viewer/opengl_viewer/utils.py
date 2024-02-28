@@ -14,18 +14,23 @@ class Submeshes:
     ids: np.ndarray
     selected: np.ndarray
     meta_data: dict
+    ids_2_uuids: dict  # Mapping between id (int) and uuid (str)
     id_offset: int
 
-    def __init__(self, meshes: list[Mesh]):
-        self._extract_meshes_info(meshes)
+    def __init__(self, meshes: list[Mesh], uuids: list[str]):
+        self._process_data(meshes, uuids)
         self.id_offset = 0
 
-    def _extract_meshes_info(self, meshes: list[Mesh]):
+    def _process_data(self, meshes: list[Mesh], uuids: list[str]):
         face_start_indices = []
         face_end_indices = []
         tot_f_count = 0
         counter = 0
         ids = []
+
+        if len(meshes) != len(uuids):
+            warning("Number of meshes and uuids do not match")
+            return
 
         for mesh in meshes:
             # Store face indices for this submesh to be used for picking
@@ -37,9 +42,19 @@ class Submeshes:
             ids.append(counter)
             counter += 1
 
+        self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
         self.ids = np.array(ids)
+
+    def offset_ids(self, id_offset):
+        self.ids = self.ids + id_offset
+        self.ids_2_uuids = {
+            key + id_offset: value for key, value in self.ids_2_uuids.items()
+        }
+
+    def id_exists(self, id):
+        return id in self.ids
 
     def add_meta_data(self, id, newdata_dict):
         self.meta_data[id] = newdata_dict
