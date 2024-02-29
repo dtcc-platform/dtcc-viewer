@@ -4,9 +4,11 @@ from dtcc_viewer.opengl_viewer.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl_viewer.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading
 from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
 from dtcc_viewer.logging import info, warning
+from shapely.geometry import LineString
 from typing import Any
 
 
@@ -35,6 +37,7 @@ class Scene:
     mesh_wrappers: list[MeshWrapper]
     pcs_wrappers: list[PointCloudWrapper]
     rnd_wrappers: list[RoadNetworkWrapper]
+    lss_wrappers: list[LineStringsWrapper]
     bb: BoundingBox
 
     def __init__(self):
@@ -43,6 +46,7 @@ class Scene:
         self.mesh_wrappers = []
         self.pcs_wrappers = []
         self.rnd_wrappers = []
+        self.lss_wrappers = []
 
     def add_mesh(
         self,
@@ -116,6 +120,22 @@ class Scene:
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
 
+    def add_linestrings(
+        self,
+        name: str,
+        lss: list[LineString],
+        data: Any = None,
+    ):
+        """Append a line strings list to the scene"""
+        if lss is not None:
+            info(f"List of LineStrings called - {name} - added to scene")
+            lss_w = LineStringsWrapper(name=name, lss=lss, data=data)
+            self.lss_wrappers.append(lss_w)
+        else:
+            warning(f"Road network called - {name} - is None and not added to scene")
+
+        pass
+
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
@@ -127,20 +147,23 @@ class Scene:
             warning("No bounding box found for scene.")
             return False
 
-        for obj in self.obj_wrappers:
-            obj.preprocess_drawing(self.bb)
+        for obj_w in self.obj_wrappers:
+            obj_w.preprocess_drawing(self.bb)
 
-        for city in self.city_wrappers:
-            city.preprocess_drawing(self.bb)
+        for city_w in self.city_wrappers:
+            city_w.preprocess_drawing(self.bb)
 
-        for mesh in self.mesh_wrappers:
-            mesh.preprocess_drawing(self.bb)
+        for mesh_w in self.mesh_wrappers:
+            mesh_w.preprocess_drawing(self.bb)
 
-        for pc in self.pcs_wrappers:
-            pc.preprocess_drawing(self.bb)
+        for pc_w in self.pcs_wrappers:
+            pc_w.preprocess_drawing(self.bb)
 
-        for rn in self.rnd_wrappers:
-            rn.preprocess_drawing(self.bb)
+        for rn_w in self.rnd_wrappers:
+            rn_w.preprocess_drawing(self.bb)
+
+        for lss_w in self.lss_wrappers:
+            lss_w.preprocess_drawing(self.bb)
 
         info(f"Scene preprocessing completed successfully")
         return True
@@ -174,6 +197,10 @@ class Scene:
 
         for rn_w in self.rnd_wrappers:
             vertex_pos = rn_w.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for lss_w in self.lss_wrappers:
+            vertex_pos = lss_w.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex

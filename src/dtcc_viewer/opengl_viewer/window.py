@@ -62,7 +62,7 @@ class Window:
 
     meshes: list[GlMesh]
     pcs: list[GlPointCloud]
-    rns: list[GlLineString]
+    lss: list[GlLineString]
     model: GlModel
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
@@ -135,7 +135,7 @@ class Window:
     def _preprocess_model(self, scene: Scene):
         self.meshes = []
         self.pcs = []
-        self.rns = []
+        self.lss = []
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
@@ -155,14 +155,18 @@ class Window:
 
         for rn in scene.rnd_wrappers:
             rn_gl = GlLineString(rn)
-            self.rns.append(rn_gl)
+            self.lss.append(rn_gl)
 
-        if len(self.meshes) == 0 and len(self.pcs) == 0 and len(self.rns) == 0:
+        for lss in scene.lss_wrappers:
+            lss_gl = GlLineString(lss)
+            self.lss.append(lss_gl)
+
+        if len(self.meshes) == 0 and len(self.pcs) == 0 and len(self.lss) == 0:
             warning("No meshes or point clouds or line strings found in the scene!")
             return False
 
         # Create model from meshes
-        self.model = GlModel(self.meshes, self.pcs, self.rns, scene.bb)
+        self.model = GlModel(self.meshes, self.pcs, self.lss, scene.bb)
         self.model.create_picking_fbo(self.action)
 
         return True
@@ -237,7 +241,7 @@ class Window:
 
     def _render_road_networks(self):
         """Render all the road networks in the window."""
-        for rn in self.rns:
+        for rn in self.lss:
             mguip = rn.guip
             if mguip.show:
                 rn.render(self.action, self.guip)

@@ -16,10 +16,16 @@ class RoadNetworkWrapper:
     ----------
     vertices : np.ndarray
         Array of vertex coordinates in the format [n_points x 3].
-    colors : np.ndarray
-        Array of colors associated with each vertex in the format [n_points x 3].
+    indices : np.ndarray
+        Array of indices for the road network in the format [n_roads x 2].
+    data : np.ndarray or dict
+        Data associated with each vertex.
     name : str
-        Name of road network.
+        Name of the road network.
+    bb_local : BoundingBox
+        Local bounding box for the road network.
+    bb_global : BoundingBox
+        Global bounding box for the entire scene.
     """
 
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]

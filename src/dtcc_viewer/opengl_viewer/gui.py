@@ -574,7 +574,7 @@ class Gui:
             f_count += n_faces
             p_count += n_particles
         for ls in model.linestrings:
-            text_0 = f"- LineString called: '{ls.name}' has {len(ls.points)} points."
+            text_0 = f"- LineString called: '{ls.name}' has {len(ls.vertices)} points."
             imgui.text(self.wrap_text(text_0, text_width))
             v_count += ls.n_vertices
             l_count += ls.n_lines

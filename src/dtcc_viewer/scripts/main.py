@@ -23,6 +23,7 @@ from dtcc_viewer.opengl_viewer.utils import *
 from dtcc_viewer.utils import *
 from dtcc_io import load_roadnetwork
 from dtcc_viewer.logging import set_log_level
+from shapely.geometry import LineString
 
 
 def pointcloud_example_1():
@@ -193,20 +194,34 @@ def roadnetwork_example_3():
     window.render(scene)
 
 
+def linestring_example_1():
+    linestring_1 = LineString([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 2, 0], [3, 1, 0]])
+    linestring_2 = LineString([[1, 2, 5], [1, 3, 0], [4, 6, 0], [8, 2, 0], [5, 6, 1]])
+    linestring_3 = LineString([[5, 2, 1], [0, 2, 1], [4, 2, 0], [7, 3, 0]])
+
+    linestrings = [linestring_1, linestring_2, linestring_3]
+
+    scene = Scene()
+    scene.add_linestrings("Linestrings", linestrings)
+
+    window = Window(1200, 800)
+    window.render(scene)
+
+
 def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    # city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
-    # city_dhg.view()
+    city_dhg.view()
     # city_rwy.view()
-    city_nyc.view()
+    # city_nyc.view()
 
 
 if __name__ == "__main__":
@@ -228,3 +243,4 @@ if __name__ == "__main__":
     # roadnetwork_example_2()
     # roadnetwork_example_3()
     city_example_1()
+    # linestring_example_1()
