@@ -293,8 +293,6 @@ class GlModel:
         p_color = np.array([p_color[0], p_color[1], p_color[2]], dtype=int)
         b_color = np.array(np.round(np.array(gguip.color) * 255), dtype=int)
 
-        print(b_color[0:3] == p_color[0:3])
-
         background_click = False
         if np.all(b_color[0:3] == p_color[0:3]):
             background_click = True
