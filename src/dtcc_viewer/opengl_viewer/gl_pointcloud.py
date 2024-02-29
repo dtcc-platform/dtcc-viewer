@@ -10,7 +10,7 @@ from dtcc_viewer.opengl_viewer.parameters import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
-from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
     color_map_inferno,
     color_map_black_body,
@@ -18,7 +18,7 @@ from dtcc_viewer.opengl_viewer.shaders_color_maps import (
     color_map_viridis,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_point_cloud import (
+from dtcc_viewer.shaders.shaders_point_cloud import (
     vertex_shader_pc,
     fragment_shader_pc,
 )

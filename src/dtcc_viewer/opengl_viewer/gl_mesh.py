@@ -17,29 +17,29 @@ from dtcc_viewer.opengl_viewer.parameters import (
     GuiParametersModel,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_mesh_shadows import (
+from dtcc_viewer.shaders.shaders_mesh_shadows import (
     vertex_shader_shadows,
     fragment_shader_shadows,
     vertex_shader_shadow_map,
     fragment_shader_shadow_map,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_mesh_diffuse import (
+from dtcc_viewer.shaders.shaders_mesh_diffuse import (
     vertex_shader_diffuse,
     fragment_shader_diffuse,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_mesh_ambient import (
+from dtcc_viewer.shaders.shaders_mesh_ambient import (
     vertex_shader_ambient,
     fragment_shader_ambient,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_lines import (
+from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
     color_map_inferno,
     color_map_black_body,

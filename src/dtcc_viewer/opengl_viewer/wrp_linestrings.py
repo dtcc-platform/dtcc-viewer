@@ -132,8 +132,8 @@ class LineStringsWrapper:
             indices[idx2 : (idx2 + l_count), 0] = indices1
             indices[idx2 : (idx2 + l_count), 1] = indices2
             vertices[idx1 : (idx1 + v_count), 0:3] = np.array(list(ls.coords))
-            idx2 += l_count
             idx1 += len(ls.coords[:])
+            idx2 += l_count
 
         vertices = vertices.flatten()
 

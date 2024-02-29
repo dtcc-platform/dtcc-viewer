@@ -13,14 +13,14 @@ from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
 from dtcc_viewer.opengl_viewer.environment import Environment
 from dtcc_viewer.opengl_viewer.parameters import GuiParameters, GuiParametersModel
 
-from dtcc_viewer.opengl_viewer.shaders_debug import (
+from dtcc_viewer.shaders.shaders_debug import (
     vertex_shader_debug_shadows,
     fragment_shader_debug_shadows,
     vertex_shader_debug_picking,
     fragment_shader_debug_picking,
 )
 
-from dtcc_viewer.opengl_viewer.shaders_mesh_picking import (
+from dtcc_viewer.shaders.shaders_mesh_picking import (
     vertex_shader_picking,
     fragment_shader_picking,
 )

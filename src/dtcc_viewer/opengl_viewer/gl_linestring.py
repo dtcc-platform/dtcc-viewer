@@ -7,7 +7,7 @@ import pyrr
 from string import Template
 from dtcc_viewer.opengl_viewer.interaction import Action
 from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.shaders_lines import (
+from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
@@ -15,7 +15,7 @@ from dtcc_viewer.opengl_viewer.parameters import GuiParametersLS, GuiParameters
 from dtcc_viewer.opengl_viewer.utils import BoundingBox
 from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
 
-from dtcc_viewer.opengl_viewer.shaders_color_maps import (
+from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
     color_map_inferno,
     color_map_black_body,
