@@ -1,10 +1,10 @@
 import imgui
 import numpy as np
-from dtcc_viewer.opengl_viewer.utils import Shading
+from dtcc_viewer.opengl.utils import Shading
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.opengl_viewer.utils import shader_cmaps
-from dtcc_viewer.opengl_viewer.gl_model import GlModel
-from dtcc_viewer.opengl_viewer.parameters import (
+from dtcc_viewer.opengl.utils import shader_cmaps
+from dtcc_viewer.opengl.gl_model import GlModel
+from dtcc_viewer.opengl.parameters import (
     GuiParameters,
     GuiParametersMesh,
     GuiParametersPC,

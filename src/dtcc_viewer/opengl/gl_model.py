@@ -4,14 +4,14 @@ import pyrr
 from pprint import pp
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl_viewer.interaction import Action
-from dtcc_viewer.opengl_viewer.utils import Shading, BoundingBox, color_to_id
+from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.utils import Shading, BoundingBox, color_to_id
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
-from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl_viewer.gl_linestring import GlLineString
-from dtcc_viewer.opengl_viewer.environment import Environment
-from dtcc_viewer.opengl_viewer.parameters import GuiParameters, GuiParametersModel
+from dtcc_viewer.opengl.gl_mesh import GlMesh
+from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.environment import Environment
+from dtcc_viewer.opengl.parameters import GuiParameters, GuiParametersModel
 
 from dtcc_viewer.shaders.shaders_debug import (
     vertex_shader_debug_shadows,

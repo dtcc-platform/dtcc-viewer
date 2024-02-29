@@ -1,7 +1,7 @@
 import triangle as tr
 import numpy as np
 from dtcc_model import Mesh, PointCloud
-from dtcc_viewer.opengl_viewer.utils import surface_2_mesh, concatenate_meshes
+from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
 import json
 import pprint
 import os

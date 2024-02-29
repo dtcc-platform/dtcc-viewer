@@ -1,7 +1,7 @@
 import numpy as np
 from dtcc_model import RoadNetwork
 from dtcc_viewer.utils import *
-from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
 

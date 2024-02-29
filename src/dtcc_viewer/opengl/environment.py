@@ -1,4 +1,4 @@
-from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.opengl.utils import BoundingBox
 import numpy as np
 import math
 

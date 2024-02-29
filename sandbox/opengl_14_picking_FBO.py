@@ -7,12 +7,12 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Action
+from dtcc_viewer.opengl.interaction import Action
 from picking_interaction import PickingInteraction
 from load_primitives import *
 from pprint import pp
 from dtcc_io import meshes
-from dtcc_viewer.opengl_viewer.utils import concatenate_meshes
+from dtcc_viewer.opengl.utils import concatenate_meshes
 
 window_w = 800
 window_h = 800

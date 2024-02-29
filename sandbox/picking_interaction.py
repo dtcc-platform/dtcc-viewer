@@ -3,7 +3,7 @@ import time
 import pyrr
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from dtcc_viewer.opengl_viewer.camera import Camera
+from dtcc_viewer.opengl.camera import Camera
 
 
 class PickingInteraction:

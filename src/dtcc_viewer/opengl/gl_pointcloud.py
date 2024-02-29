@@ -4,10 +4,10 @@ import numpy as np
 from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl_viewer.interaction import Action
-from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.parameters import GuiParametersPC, GuiParameters
-from dtcc_viewer.opengl_viewer.utils import BoundingBox
+from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParameters
+from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
 from dtcc_viewer.shaders.shaders_color_maps import (

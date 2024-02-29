@@ -1,10 +1,10 @@
 import numpy as np
 from dtcc_model import Mesh, RoadNetwork
 from dtcc_viewer.utils import *
-from dtcc_viewer.opengl_viewer.window import Window
-from dtcc_viewer.opengl_viewer.utils import *
-from dtcc_viewer.opengl_viewer.scene import Scene
-from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
+from dtcc_viewer.opengl.window import Window
+from dtcc_viewer.opengl.utils import *
+from dtcc_viewer.opengl.scene import Scene
+from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 
 
 def view(

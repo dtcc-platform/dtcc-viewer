@@ -1,8 +1,8 @@
-from .opengl_viewer import *
-from .pointcloud_opengl import view as view_pointcloud
-from .mesh_opengl import view as view_mesh
-from .roadnetwork_opengl import view as view_roadnetwork
-from .city_opengl import view as view_city
+from .opengl import *
+from .pointcloud import view as view_pointcloud
+from .mesh import view as view_mesh
+from .roadnetwork import view as view_roadnetwork
+from .city import view as view_city
 
 # from .citymodel import view as view_city
 

@@ -5,16 +5,16 @@ import os
 import numpy as np
 from pprint import pp
 from dtcc_viewer import *
-from dtcc_viewer.opengl_viewer.gl_mesh import GlMesh
-from dtcc_viewer.opengl_viewer.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.utils import *
+from dtcc_viewer.opengl.gl_mesh import GlMesh
+from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_model import Mesh
 from dtcc_io import pointcloud, meshes
 
-from dtcc_viewer.opengl_viewer.window import Window
+from dtcc_viewer.opengl.window import Window
 
 
 class TestOpenGLViewer:

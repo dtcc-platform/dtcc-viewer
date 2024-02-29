@@ -7,7 +7,7 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Action
+from dtcc_viewer.opengl.interaction import Action
 from picking_interaction import PickingInteraction
 from load_primitives import *
 

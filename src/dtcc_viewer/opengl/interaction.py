@@ -1,8 +1,8 @@
 import glfw
 import time
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl_viewer.camera import Camera
-from dtcc_viewer.opengl_viewer.environment import Environment
+from dtcc_viewer.opengl.camera import Camera
+from dtcc_viewer.opengl.environment import Environment
 
 
 class Action:

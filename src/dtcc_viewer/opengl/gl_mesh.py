@@ -4,14 +4,14 @@ from pprint import pp
 from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl_viewer.interaction import Action
-from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl_viewer.utils import Shading, BoundingBox
-from dtcc_viewer.opengl_viewer.environment import Environment
+from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.utils import Shading, BoundingBox
+from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl_viewer.utils import Submeshes
+from dtcc_viewer.opengl.utils import Submeshes
 
-from dtcc_viewer.opengl_viewer.parameters import (
+from dtcc_viewer.opengl.parameters import (
     GuiParameters,
     GuiParametersMesh,
     GuiParametersModel,

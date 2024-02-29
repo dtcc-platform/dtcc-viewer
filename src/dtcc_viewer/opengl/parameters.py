@@ -1,8 +1,8 @@
 import numpy as np
 import glfw
-from dtcc_viewer.opengl_viewer.utils import invert_color
-from dtcc_viewer.opengl_viewer.utils import Shading
-from dtcc_viewer.opengl_viewer.utils import shader_cmaps
+from dtcc_viewer.opengl.utils import invert_color
+from dtcc_viewer.opengl.utils import Shading
+from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.logging import info, warning
 
 

@@ -1,11 +1,11 @@
 import numpy as np
-from dtcc_viewer.opengl_viewer.wrp_city import CityWrapper
-from dtcc_viewer.opengl_viewer.wrp_object import ObjectWrapper
-from dtcc_viewer.opengl_viewer.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl_viewer.wrp_roadnetwork import RoadNetworkWrapper
-from dtcc_viewer.opengl_viewer.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl_viewer.wrp_linestrings import LineStringsWrapper
-from dtcc_viewer.opengl_viewer.utils import BoundingBox, Shading
+from dtcc_viewer.opengl.wrp_city import CityWrapper
+from dtcc_viewer.opengl.wrp_object import ObjectWrapper
+from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString

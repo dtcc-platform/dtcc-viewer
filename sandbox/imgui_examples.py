@@ -3,9 +3,9 @@ import glfw
 import copy
 import os
 from OpenGL.GL import *
-from dtcc_viewer.opengl_viewer.utils import Shading
+from dtcc_viewer.opengl.utils import Shading
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.opengl_viewer import GuiParametersDates, GuiParameters
+from dtcc_viewer.opengl import GuiParametersDates, GuiParameters
 
 
 class Gui:

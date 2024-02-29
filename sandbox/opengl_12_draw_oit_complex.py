@@ -5,7 +5,7 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Action
+from dtcc_viewer.opengl.interaction import Action
 
 window_w = 1200
 window_h = 800
