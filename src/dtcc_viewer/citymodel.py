@@ -7,8 +7,7 @@ import tempfile
 from dtcc_model.geometry import Bounds
 from dtcc_model.city import City
 from .notebook_functions import is_notebook
-
-from .random_colors import get_random_colors
+from .utils import get_random_colors
 from .logging import info
 
 
