@@ -1,11 +1,13 @@
 import pyrr
 import numpy as np
+import math
 from enum import IntEnum
 from dtcc_model import Mesh, PointCloud
 from pprint import pp
 import triangle as tr
 from dtcc_viewer.logging import info, warning
 from dtcc_model import MultiSurface, Surface
+from shapely.geometry import Point, LineString
 
 
 class Submeshes:
@@ -496,6 +498,69 @@ def invert_color(color):
     """Invert the color."""
     inv_color = [1 - color[0], 1 - color[1], 1 - color[2], 1]
     return inv_color
+
+
+def create_linestring_circle(center, radius, num_segments):
+    # Calculate the angle between each segment
+    angle_step = 2 * math.pi / num_segments
+
+    # Generate points around the circumference of the circle
+    points = []
+    for i in range(num_segments):
+        x = center.x + radius * math.cos(i * angle_step)
+        y = center.y + radius * math.sin(i * angle_step)
+        points.append(Point(x, y, 0))
+
+    points.append(points[0])
+    # Create a LineString from the points
+    circle_line = LineString(points)
+
+    return circle_line
+
+
+def create_cylinder(center, radius, height, num_segments):
+    vertices = []
+
+    # Calculate angle increment
+    angle_increment = 2 * math.pi / num_segments
+
+    # Generate vertices for the top circle
+    for i in range(num_segments):
+        x = center.x + radius * math.cos(i * angle_increment)
+        y = center.y + radius * math.sin(i * angle_increment)
+        z = center.z + height
+        vertices.append([x, y, z])
+
+    # Generate vertices for the bottom circle
+    for i in range(num_segments):
+        x = center.x + radius * math.cos(i * angle_increment)
+        y = center.y + radius * math.sin(i * angle_increment)
+        z = center.z
+        vertices.append([x, y, z])
+
+    # Generate the top and bottom surfaces
+    top_surface = Surface(vertices=np.array(vertices[:num_segments]))
+    bottom_surface = Surface(
+        vertices=np.array(vertices[num_segments:][::-1])
+    )  # Reverse the order for the bottom circle
+
+    # Generate the side surfaces
+    side_surfaces = []
+    for i in range(num_segments):
+        side_surface_vertices = [
+            vertices[i],
+            vertices[(i + 1) % num_segments],
+            vertices[(i + 1) % num_segments + num_segments],
+            vertices[i + num_segments],
+        ]
+        side_surface = Surface(vertices=np.array(side_surface_vertices))
+        side_surfaces.append(side_surface)
+
+    # Create the MultiSurface representing the cylinder
+    all_surfaces = [top_surface, bottom_surface] + side_surfaces
+    multisurface = MultiSurface(surfaces=all_surfaces)
+
+    return multisurface
 
 
 shader_cmaps = {

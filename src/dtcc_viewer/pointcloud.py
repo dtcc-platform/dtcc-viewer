@@ -8,14 +8,7 @@ from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.scene import Scene
 
 
-def view(
-    pc: PointCloud,
-    size: float = 0.2,
-    data: np.ndarray = None,
-    mesh: Mesh = None,
-    mesh_data: np.ndarray = None,
-    mesh_shading: Shading = Shading.wireshaded,
-):
+def view(pc: PointCloud, size: float = 0.2, data: np.ndarray = None):
     """
     View a point cloud in 3D with a GLFW window.
 
@@ -27,25 +20,11 @@ def view(
         Point cloud to be viewed (self).
     data : np.ndarray
         Data for coloring of point cloud. Data should match point count.
-    colors : np.ndarray
-        Points colors [[r,g,b],[r,g,b]..]. Colors should number of points in pc.
     size : float
-        Particle size in meters. Default value = 0.2 m
-    mesh : Mesh
-        Mesh to be viewed togheter with the point cloud.
-    mesh_data : np.ndarray
-        Data for coloring of mesh. Data should match vertex or face count.
-    mesh_colors : np.ndarray
-        Mesh colors [[r,g,b],[r,g,b]..]. Colors should match vertex or face count.
+        Particle size in meters. Default value = 0.2 m.
     """
 
     window = Window(1200, 800)
     scene = Scene()
-
-    if mesh is None:
-        scene.add_pointcloud("Point cloud", pc, size, data)
-        window.render(scene)
-    else:
-        scene.add_pointcloud("Point cloud", pc, size, data)
-        scene.add_mesh("Mesh", mesh, mesh_data, mesh_shading)
-        window.render(scene)
+    scene.add_pointcloud("Point cloud", pc, size, data)
+    window.render(scene)

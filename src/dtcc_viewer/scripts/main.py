@@ -14,7 +14,8 @@ from typing import List, Iterable
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 import dtcc_io
-from dtcc_model import City, Mesh, PointCloud
+from dtcc_model import City, Mesh, PointCloud, Object
+from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
@@ -23,7 +24,8 @@ from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_io import load_roadnetwork
 from dtcc_viewer.logging import set_log_level
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
+from dtcc_viewer.opengl.bundle import Bundle
 
 
 def pointcloud_example_1():
@@ -69,41 +71,6 @@ def mesh_example_3():
     data_dict["vertex_z"] = mesh.vertices[:, 2]
     data_dict["face_z"] = face_mid_pts[:, 2]
     mesh.view(data=data_dict)
-
-
-def mesh_point_cloud_example_1():
-    file_1 = "../../../data/models/CitySurface.obj"
-    file_2 = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(file_2)
-    mesh = meshes.load_mesh(file_1)
-    mesh.view(pc=pc, pc_size=1.0)
-
-
-def mesh_point_cloud_example_2():
-    file_1 = "../../../data/models/CitySurface.obj"
-    file_2 = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(file_2)
-    pc_data = pc.points[:, 0]
-    mesh = meshes.load_mesh(file_1)
-    mesh_data = mesh.vertices[:, 1]
-    pc.view(mesh=mesh, data=pc_data, mesh_data=mesh_data)
-
-
-def mesh_point_cloud_example_3():
-    file_1 = "../../../data/models/CitySurface.obj"
-    file_2 = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(file_2)
-    pc_data_dict = {}
-    pc_data_dict["point_x"] = pc.points[:, 0]
-    pc_data_dict["point_y"] = pc.points[:, 1]
-    pc_data_dict["point_z"] = pc.points[:, 2]
-
-    mesh = meshes.load_mesh(file_1)
-    mesh_data_dict = {}
-    mesh_data_dict["vertex_x"] = mesh.vertices[:, 0]
-    mesh_data_dict["vertex_y"] = mesh.vertices[:, 1]
-    mesh_data_dict["vertex_z"] = mesh.vertices[:, 2]
-    pc.view(data=pc_data_dict, mesh=mesh, mesh_data=mesh_data_dict)
 
 
 def multi_geometry_example_1():
@@ -208,6 +175,23 @@ def linestring_example_1():
     window.render(scene)
 
 
+def bundle_example_1():
+    mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
+    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
+    all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, face_mid_pts, Direction.y)
+
+    linestring_1 = LineString([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 2, 0], [3, 1, 0]])
+    linestring_2 = LineString([[1, 2, 5], [1, 3, 0], [4, 6, 0], [8, 2, 0], [5, 6, 1]])
+    linestring_3 = LineString([[5, 2, 1], [0, 2, 1], [4, 2, 0], [7, 3, 0]])
+
+    linestrings = [linestring_1, linestring_2, linestring_3]
+
+    bundle = Bundle()
+    bundle.add_meshes("Meshes", all_meshes)
+    bundle.add_linestrings("Linestrings", linestrings)
+    bundle.view()
+
+
 def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
@@ -224,6 +208,35 @@ def city_example_1():
     # city_nyc.view()
 
 
+def building_example_1():
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    building = city_dhg.buildings[5]
+    building.view()
+
+
+def building_example_2():
+    window = Window(1200, 800)
+    scene = Scene()
+
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    for i, building in enumerate(city_dhg.buildings):
+        if i < 10:
+            scene.add_building(f"building {i}", building)
+
+    window.render(scene)
+
+
+def object_example_1():
+    tree_mesh = dtcc_io.load_mesh("../../../data/models/tree.obj")
+    circle_ls = create_linestring_circle(Point(0, 0), 20, 20)
+    cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+    obj = Object()
+    obj.geometry[GeometryType.MESH] = tree_mesh
+    obj.geometry[GeometryType.LINESTRING] = circle_ls
+    obj.geometry[GeometryType.LOD2] = cylinder_ms
+    obj.view()
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -233,14 +246,14 @@ if __name__ == "__main__":
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
-    # mesh_point_cloud_example_1()
-    # mesh_point_cloud_example_2()
-    # mesh_point_cloud_example_3()
     # multi_geometry_example_1()
     # multi_geometry_example_2()
     # multi_geometry_example_3()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # roadnetwork_example_3()
-    city_example_1()
+    # city_example_1()
+    # building_example_1()
+    # building_example_2()
     # linestring_example_1()
+    object_example_1()

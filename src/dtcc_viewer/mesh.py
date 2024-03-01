@@ -14,9 +14,6 @@ def view(
     mesh: Mesh,
     data: Any = None,
     shading: Shading = Shading.wireshaded,
-    pc: PointCloud = None,
-    pc_data: np.ndarray = None,
-    pc_size: float = 0.2,
 ):
     """View a mesh in 3D with a GLFW window.
 
@@ -28,24 +25,11 @@ def view(
         Mesh to be viewed (self).
     data : np.ndarray
         Data for coloring of mesh. Data should match vertex or face count.
-    colors : np.ndarray
-        Mesh colors [[r,g,b],[r,g,b]..]. Colors should match vertex or face count.
-    pc : PointCloud
-        Point cloud to be viewed togheter with the mesh.
-    pc_data: np.ndarray
-        Data for coloring of point cloud.
-    pc_colors : np.ndarray
-        Points colors [[r,g,b],[r,g,b]..]. Colors should number of points in pc.
-
+    shading : MeshShading
+        Shading option for mesh drawing style.
     """
 
     window = Window(1200, 800)
     scene = Scene()
-
-    if pc is None:
-        scene.add_mesh("Mesh", mesh, data, shading)
-        window.render(scene)
-    else:
-        scene.add_mesh("Mesh", mesh, data, shading)
-        scene.add_pointcloud("Point cloud", pc, pc_size, pc_data)
-        window.render(scene)
+    scene.add_mesh("Mesh", mesh, data, shading)
+    window.render(scene)

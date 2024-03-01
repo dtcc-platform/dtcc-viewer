@@ -47,12 +47,7 @@ class CityWrapper:
     terrain_mw: MeshWrapper = None
     terrain_submeshes: Submeshes
 
-    def __init__(
-        self,
-        name: str,
-        city: NewCity,
-        shading: Shading = Shading.wireshaded,
-    ) -> None:
+    def __init__(self, name: str, city: NewCity) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -65,7 +60,7 @@ class CityWrapper:
             Shading option (default is MeshShading.wireshaded).
         """
         self.name = name
-        self.shading = shading
+        self.shading = Shading.wireshaded  # Default shading
         self.dict_data = {}
 
         # Read the city model and generate the mesh geometry for buildings and terrain
@@ -78,14 +73,10 @@ class CityWrapper:
             b_submeshes.offset_ids(offset)
 
         if t_mesh is not None:
-            self.terrain_mw = MeshWrapper(
-                "terrain", t_mesh, submeshes=t_submeshes, shading=shading
-            )
+            self.terrain_mw = MeshWrapper("terrain", t_mesh, submeshes=t_submeshes)
 
         if b_mesh is not None:
-            self.building_mw = MeshWrapper(
-                "buildings", b_mesh, submeshes=b_submeshes, shading=shading
-            )
+            self.building_mw = MeshWrapper("buildings", b_mesh, submeshes=b_submeshes)
 
         info("CityWrapper initialized")
 

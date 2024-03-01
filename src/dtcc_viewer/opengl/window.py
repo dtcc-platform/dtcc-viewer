@@ -137,6 +137,17 @@ class Window:
         self.pcs = []
         self.lss = []
 
+        for obj in scene.obj_wrappers:
+            if obj.mesh_wrp_1 is not None:
+                mesh_gl = GlMesh(obj.mesh_wrp_1)
+                self.meshes.append(mesh_gl)
+            if obj.mesh_wrp_2 is not None:
+                mesh_gl = GlMesh(obj.mesh_wrp_2)
+                self.meshes.append(mesh_gl)
+            if obj.lineStringsWrapper is not None:
+                lss_gl = GlLineString(obj.lineStringsWrapper)
+                self.lss.append(lss_gl)
+
         for city in scene.city_wrappers:
             if city.building_mw is not None:
                 mesh_gl_bld = GlMesh(city.building_mw)
@@ -144,6 +155,10 @@ class Window:
             if city.terrain_mw is not None:
                 mesh_gl_ter = GlMesh(city.terrain_mw)
                 self.meshes.append(mesh_gl_ter)
+
+        for building in scene.bld_wrappers:
+            mesh_gl = GlMesh(building.building_mw)
+            self.meshes.append(mesh_gl)
 
         for mesh in scene.mesh_wrappers:
             mesh_gl = GlMesh(mesh)

@@ -5,8 +5,11 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_building import BuildingWrapper
+from dtcc_viewer.opengl.wrp_bundle import BundleWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object
+from dtcc_viewer.opengl.bundle import Bundle
+from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object, Building
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString
 from typing import Any
@@ -38,6 +41,8 @@ class Scene:
     pcs_wrappers: list[PointCloudWrapper]
     rnd_wrappers: list[RoadNetworkWrapper]
     lss_wrappers: list[LineStringsWrapper]
+    bld_wrappers: list[BuildingWrapper]
+
     bb: BoundingBox
 
     def __init__(self):
@@ -47,6 +52,8 @@ class Scene:
         self.pcs_wrappers = []
         self.rnd_wrappers = []
         self.lss_wrappers = []
+        self.bld_wrappers = []
+        self.bud_wrappers = []
 
     def add_mesh(
         self,
@@ -63,30 +70,20 @@ class Scene:
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
 
-    def add_city(
-        self,
-        name: str,
-        city: City,
-        shading: Shading = Shading.wireshaded,
-    ):
+    def add_city(self, name: str, city: City):
         """Append a city with data and/or colors to the scene"""
         if city is not None:
             info(f"City called - {name} - added to scene")
-            city_w = CityWrapper(name=name, city=city, shading=shading)
+            city_w = CityWrapper(name=name, city=city)
             self.city_wrappers.append(city_w)
         else:
             warning(f"City called - {name} - is None and not added to scene")
 
-    def add_object(
-        self,
-        name: str,
-        obj: Object,
-        shading: Shading = Shading.wireshaded,
-    ):
+    def add_object(self, name: str, obj: Object):
         """Append a generic object with data and/or colors to the scene"""
         if obj is not None:
             info(f"Object called - {name} - added to scene")
-            obj_w = ObjectWrapper(name=name, obj=obj, shading=shading)
+            obj_w = ObjectWrapper(name=name, obj=obj)
             self.obj_wrappers.append(obj_w)
         else:
             warning(f"Object called - {name} - is None and not added to scene")
@@ -136,6 +133,23 @@ class Scene:
 
         pass
 
+    def add_bundle(self, bundle: Bundle):
+        """Append a bundle to the scene"""
+        if bundle is not None:
+            bld_w = BundleWrapper(name=bundle.name, bundle=bundle)
+            self.bud_wrappers.append(bld_w)
+            info(f"Bundle called - {bundle.name} - added to scene")
+        else:
+            warning(f"Bundle called - {bundle.name} - is None and not added to scene")
+
+    def add_building(self, name: str, building: Building):
+        if building is not None:
+            info(f"Building called - {name} - added to scene")
+            bld_w = BuildingWrapper(name=name, building=building)
+            self.bld_wrappers.append(bld_w)
+        else:
+            warning(f"Building called - {name} - is None and not added to scene")
+
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
@@ -165,6 +179,9 @@ class Scene:
         for lss_w in self.lss_wrappers:
             lss_w.preprocess_drawing(self.bb)
 
+        for bld_w in self.bld_wrappers:
+            bld_w.preprocess_drawing(self.bb)
+
         info(f"Scene preprocessing completed successfully")
         return True
 
@@ -175,8 +192,16 @@ class Scene:
         vertices = np.array([])
 
         for obj_w in self.obj_wrappers:
-            if obj_w.mesh_wrapper is not None:
-                vertex_pos = obj_w.mesh_wrapper.get_vertex_positions()
+            if obj_w.mesh_wrp_1 is not None:
+                vertex_pos = obj_w.mesh_wrp_1.get_vertex_positions()
+                vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+            if obj_w.mesh_wrp_2 is not None:
+                vertex_pos = obj_w.mesh_wrp_2.get_vertex_positions()
+                vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+            if obj_w.lineStringsWrapper is not None:
+                vertex_pos = obj_w.lineStringsWrapper.get_vertex_positions()
                 vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for city_w in self.city_wrappers:
@@ -201,6 +226,10 @@ class Scene:
 
         for lss_w in self.lss_wrappers:
             vertex_pos = lss_w.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for bld_w in self.bld_wrappers:
+            vertex_pos = bld_w.building_mw.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex
