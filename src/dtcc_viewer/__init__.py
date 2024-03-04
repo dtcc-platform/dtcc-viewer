@@ -29,5 +29,4 @@ __all__ = [
     "Window",
     "Scene",
     "Shading",
-    "Bundle",
 ]

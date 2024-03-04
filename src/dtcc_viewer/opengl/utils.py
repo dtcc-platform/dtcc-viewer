@@ -509,7 +509,8 @@ def create_linestring_circle(center, radius, num_segments):
     for i in range(num_segments):
         x = center.x + radius * math.cos(i * angle_step)
         y = center.y + radius * math.sin(i * angle_step)
-        points.append(Point(x, y, 0))
+        z = center.z
+        points.append(Point(x, y, z))
 
     points.append(points[0])
     # Create a LineString from the points
@@ -561,6 +562,43 @@ def create_cylinder(center, radius, height, num_segments):
     multisurface = MultiSurface(surfaces=all_surfaces)
 
     return multisurface
+
+
+def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=20):
+    vertices = []
+    faces = []
+
+    # Generate vertices
+    for lat in range(latitude_segments + 1):
+        theta = lat * np.pi / latitude_segments
+        sin_theta = np.sin(theta)
+        cos_theta = np.cos(theta)
+
+        for lon in range(longitude_segments + 1):
+            phi = lon * 2 * np.pi / longitude_segments
+            sin_phi = np.sin(phi)
+            cos_phi = np.cos(phi)
+
+            x = center.x + radius * sin_theta * cos_phi
+            y = center.y + radius * sin_theta * sin_phi
+            z = center.z + radius * cos_theta
+
+            vertices.append([x, y, z])
+
+    # Generate faces
+    for lat in range(latitude_segments):
+        for lon in range(longitude_segments):
+            first = lat * (longitude_segments + 1) + lon
+            second = first + longitude_segments + 1
+            faces.append([first, second, first + 1])
+            faces.append([second, second + 1, first + 1])
+
+    vertices = np.array(vertices)
+    faces = np.array(faces)
+
+    mesh = Mesh(vertices=vertices, faces=faces)
+
+    return mesh
 
 
 shader_cmaps = {

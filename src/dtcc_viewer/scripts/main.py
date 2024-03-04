@@ -5,6 +5,7 @@ import os
 import numpy as np
 import trimesh
 import time
+from affine import Affine
 
 from pprint import pp
 
@@ -14,7 +15,7 @@ from typing import List, Iterable
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 import dtcc_io
-from dtcc_model import City, Mesh, PointCloud, Object
+from dtcc_model import City, Mesh, PointCloud, Object, Raster
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
@@ -54,8 +55,8 @@ def mesh_example_2():
     file = "../../../data/models/CitySurface.obj"
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
-    color_data = face_mid_pts[:, 2]
-    mesh.view(data=color_data, shading=Shading.ambient)
+    data_array = face_mid_pts[:, 2]
+    mesh.view(data=data_array, shading=Shading.ambient)
 
 
 def mesh_example_3():
@@ -74,42 +75,12 @@ def mesh_example_3():
 
 
 def multi_geometry_example_1():
-    filename_csv = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(filename_csv)
-    all_pcs = split_pc_in_stripes(10, pc, Direction.x)
-
-    scene = Scene()
-    for i, pc in enumerate(all_pcs):
-        data = pc.points[:, Direction.x]
-        print(len(pc.points))
-        scene.add_pointcloud("pc" + str(i), pc, 0.1 + i * 0.1, data)
-
-    window = Window(1200, 800)
-    window.render(scene)
-
-
-def multi_geometry_example_2():
-    filename_obj = "../../../data/models/CitySurface.obj"
-    mesh_tri = trimesh.load_mesh(filename_obj)
-    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    split_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.x)
-
-    scene = Scene()
-    for i, mesh in enumerate(split_meshes):
-        data = mesh.vertices[:, Direction.x]
-        scene.add_mesh("Mesh " + str(i), mesh, data)
-
-    window = Window(1200, 800)
-    window.render(scene)
-
-
-def multi_geometry_example_3():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
-    all_pcs = split_pc_in_stripes(8, pc, Direction.x)
+    all_pcs = split_pc_in_stripes(4, pc, Direction.x)
 
     mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, face_mid_pts, Direction.y)
+    all_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.y)
 
     scene = Scene()
 
@@ -138,18 +109,6 @@ def roadnetwork_example_2():
     window = Window(1200, 800)
     scene = Scene()
 
-    filename = "../../../data/models/helsingborg_road_data.shp"
-    rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
-    data = rn.vertices[:, 0]
-
-    scene.add_roadnetwork("Road Network", rn, data)
-    window.render(scene)
-
-
-def roadnetwork_example_3():
-    window = Window(1200, 800)
-    scene = Scene()
-
     file_1 = "../../../data/models/helsingborg_vagslag.shp"
     file_3 = "../../../data/models/helsingborg_cykel.shp"
 
@@ -173,23 +132,6 @@ def linestring_example_1():
 
     window = Window(1200, 800)
     window.render(scene)
-
-
-def bundle_example_1():
-    mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
-    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    all_meshes = utils.split_mesh_in_stripes(8, mesh_tri, face_mid_pts, Direction.y)
-
-    linestring_1 = LineString([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 2, 0], [3, 1, 0]])
-    linestring_2 = LineString([[1, 2, 5], [1, 3, 0], [4, 6, 0], [8, 2, 0], [5, 6, 1]])
-    linestring_3 = LineString([[5, 2, 1], [0, 2, 1], [4, 2, 0], [7, 3, 0]])
-
-    linestrings = [linestring_1, linestring_2, linestring_3]
-
-    bundle = Bundle()
-    bundle.add_meshes("Meshes", all_meshes)
-    bundle.add_linestrings("Linestrings", linestrings)
-    bundle.view()
 
 
 def city_example_1():
@@ -227,14 +169,64 @@ def building_example_2():
 
 
 def object_example_1():
-    tree_mesh = dtcc_io.load_mesh("../../../data/models/tree.obj")
-    circle_ls = create_linestring_circle(Point(0, 0), 20, 20)
+    sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 10, 10)
+    circle_ls = create_linestring_circle(Point(0, 0), 20, 200)
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
     obj = Object()
-    obj.geometry[GeometryType.MESH] = tree_mesh
+
+    obj.geometry[GeometryType.MESH] = sphere_mesh
     obj.geometry[GeometryType.LINESTRING] = circle_ls
     obj.geometry[GeometryType.LOD2] = cylinder_ms
     obj.view()
+
+
+def object_example_2():
+    r, n = 20, 10
+    z1, z2, z3 = 0, 5, 10
+    a = 2 * math.pi / n
+    meshes, mss, lss, pts = [], [], [], []
+    for i in range(n):
+        x = r * math.cos(i * a)
+        y = r * math.sin(i * a)
+        mesh = create_sphere_mesh(Point(x, y, z1), 3, 10, 10)
+        ls = create_linestring_circle(Point(x, y, z2), 20, 200)
+        ms = create_cylinder(Point(x, y, z3), 3, 10, 100)
+        meshes.append(mesh)
+        lss.append(ls)
+        mss.append(ms)
+        pts.append([x, y, z1])
+
+    pts = np.array(pts)
+    pointcloud = PointCloud(pts)
+    obj = Object()
+    obj.geometry[GeometryType.MESH] = meshes
+    obj.geometry[GeometryType.LINESTRING] = lss
+    obj.geometry[GeometryType.LOD2] = mss
+    obj.geometry[GeometryType.POINT_CLOUD] = pointcloud
+    obj.view()
+
+
+def raster_example_1():
+    # Define the coordinate reference system (CRS)
+    crs = "EPSG:4326"  # For example, WGS84
+
+    # Create some sample data
+    data = np.random.rand(100, 100)
+    georef = Affine.identity()
+    raster = Raster(data=data, georef=georef, crs=crs)
+
+    # Print information about the raster
+    print(raster)
+    print("Shape:", raster.shape)
+    print("Height:", raster.height)
+    print("Width:", raster.width)
+    print("Channels:", raster.channels)
+    print("Bounds:", raster.bounds)
+    print("Cell Size:", raster.cell_size)
+
+    # Access a value at a specific coordinate
+    value = raster.get_value(x=10.0, y=20.0)
+    print("Value at (10.0, 20.0):", value)
 
 
 if __name__ == "__main__":
@@ -243,17 +235,16 @@ if __name__ == "__main__":
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
-    # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
     # multi_geometry_example_1()
-    # multi_geometry_example_2()
-    # multi_geometry_example_3()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
-    # roadnetwork_example_3()
-    # city_example_1()
-    # building_example_1()
     # building_example_2()
     # linestring_example_1()
-    object_example_1()
+    # mesh_example_1()
+    # city_example_1()
+    # building_example_1()
+    # object_example_1()
+    object_example_2()
+    # raster_example_1()
