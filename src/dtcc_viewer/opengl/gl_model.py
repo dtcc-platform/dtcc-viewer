@@ -10,6 +10,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.opengl.parameters import GuiParameters, GuiParametersModel
 
@@ -38,6 +39,7 @@ class GlModel:
     meshes: list[GlMesh]
     pointclouds: list[GlPointCloud]
     linestrings: list[GlLineString]
+    texquads: list[GlRaster]
 
     guip: GuiParametersModel  # Gui parameters for the model
     env: Environment  # Collection of environment data like light sources etc.
@@ -60,7 +62,9 @@ class GlModel:
 
     # The model calss also has the shader programs for shadow map and picking rendering
     # since these are "global" actions performed for the whole model
-    shader_shmp: int  # Shader program for rendering of the shadow map to the frame buffer
+    shader_shmp: (
+        int  # Shader program for rendering of the shadow map to the frame buffer
+    )
     shader_pick: int  # Shader program for picking
     shader_dbsh: int  # Shader program for debug rendering of the shadow map to a quad
     shader_dbpi: int  # Shader program for debug rendering of picking texture to a quad
@@ -76,11 +80,13 @@ class GlModel:
         msh: list[GlMesh],
         pcs: list[GlPointCloud],
         rns: list[GlLineString],
+        txq: list[GlRaster],
         bb_global: BoundingBox,
     ):
         self.meshes = msh
         self.pointclouds = pcs
         self.linestrings = rns
+        self.texquads = txq
 
         self.guip = GuiParametersModel("Model", shading=Shading.wireshaded)
         self.env = Environment(bb_global)
@@ -131,12 +137,10 @@ class GlModel:
             GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO
         )
 
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE:
-            info("Framebuffer for picking is complete")
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+            warning("Framebuffer for picking is failed")
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
-
-        pass
 
     def _create_debug_quad(self) -> None:
         tex_min = 0
@@ -354,6 +358,7 @@ class GlModel:
         self._render_meshes(action, gguip)
         self._render_pcs(action, gguip)
         self._render_rns(action, gguip)
+        self._render_txq(action, gguip)
 
         self._update_light_position()
         self._update_color_caps()
@@ -386,6 +391,12 @@ class GlModel:
             guip = rn_gl.guip
             if guip.show:
                 rn_gl.render(action, gguip)
+
+    def _render_txq(self, action: Action, gguip: GuiParameters) -> None:
+        for txq_gl in self.texquads:
+            guip = txq_gl.guip
+            if guip.show:
+                txq_gl.render(action, gguip)
 
     def _render_lines(self, action: Action, gguip: GuiParameters) -> None:
         for mesh in self.meshes:

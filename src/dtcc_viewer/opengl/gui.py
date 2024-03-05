@@ -294,13 +294,13 @@ class Gui:
             # Colormap selection combo box
             imgui.push_id("CmapSelectionCombo " + str(index))
             items = list(shader_cmaps.keys())
-            with imgui.begin_combo("Color map", items[guip.cmap_index]) as combo:
+            with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
-                        is_selected = guip.cmap_index
+                        is_selected = guip.cmap_idx
                         if imgui.selectable(item, is_selected)[0]:
                             guip.update_caps = True
-                            guip.cmap_index = i
+                            guip.cmap_idx = i
                             guip.cmap_key = item
 
                         # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -315,13 +315,13 @@ class Gui:
             # Data selection combobox
             imgui.push_id("DataSelectionCombo " + str(index))
             items = guip.data_keys
-            with imgui.begin_combo("Data", items[guip.data_index]) as combo:
+            with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
                 if combo.opened:
                     for i, item in enumerate(items):
-                        is_selected = guip.data_index
+                        is_selected = guip.data_idx
                         if imgui.selectable(item, is_selected)[0]:
                             guip.update_caps = True
-                            guip.data_index = i
+                            guip.data_idx = i
                             # For selection of new data, reset the slider caps
                             guip.dict_slider_caps[key][0] = 0.0
                             guip.dict_slider_caps[key][1] = 1.0

@@ -5,25 +5,22 @@ import os
 import numpy as np
 import trimesh
 import time
+import dtcc_io
+
 from affine import Affine
 
 from pprint import pp
 
-from dtcc_viewer import *
-from dtcc_viewer.colors import color_maps
-from typing import List, Iterable
+# from dtcc_viewer import *
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
-import dtcc_io
+from dtcc_io import load_roadnetwork
 from dtcc_model import City, Mesh, PointCloud, Object, Raster
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
-from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
-from dtcc_io import load_roadnetwork
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import LineString, Point
 from dtcc_viewer.opengl.bundle import Bundle
@@ -169,8 +166,8 @@ def building_example_2():
 
 
 def object_example_1():
-    sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 10, 10)
-    circle_ls = create_linestring_circle(Point(0, 0), 20, 200)
+    sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
+    circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
     obj = Object()
 
@@ -188,7 +185,7 @@ def object_example_2():
     for i in range(n):
         x = r * math.cos(i * a)
         y = r * math.sin(i * a)
-        mesh = create_sphere_mesh(Point(x, y, z1), 3, 10, 10)
+        mesh = create_sphere_mesh(Point(x, y, z1), 3, 30, 30)
         ls = create_linestring_circle(Point(x, y, z2), 20, 200)
         ms = create_cylinder(Point(x, y, z3), 3, 10, 100)
         meshes.append(mesh)
@@ -211,7 +208,7 @@ def raster_example_1():
     crs = "EPSG:4326"  # For example, WGS84
 
     # Create some sample data
-    data = np.random.rand(100, 100)
+    data = np.random.rand(10000, 10000)
     georef = Affine.identity()
     raster = Raster(data=data, georef=georef, crs=crs)
 
@@ -227,6 +224,8 @@ def raster_example_1():
     # Access a value at a specific coordinate
     value = raster.get_value(x=10.0, y=20.0)
     print("Value at (10.0, 20.0):", value)
+
+    raster.view()
 
 
 if __name__ == "__main__":
@@ -246,5 +245,5 @@ if __name__ == "__main__":
     # city_example_1()
     # building_example_1()
     # object_example_1()
-    object_example_2()
-    # raster_example_1()
+    # object_example_2()
+    raster_example_1()

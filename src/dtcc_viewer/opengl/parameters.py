@@ -170,10 +170,10 @@ class GuiParametersPC:
         self.pc_scale = 1.0
         self.update_caps = False
 
-        self.cmap_index = 0
+        self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
 
-        self.data_index = 0
+        self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
         self.data_keys = list(dict_data.keys())
@@ -184,7 +184,7 @@ class GuiParametersPC:
 
     def get_current_data_name(self):
         """Get the current color name."""
-        return self.data_keys[self.data_index]
+        return self.data_keys[self.data_idx]
 
     def calc_dict_value_caps(self, dict_data: dict):
         for key in dict_data.keys():
@@ -290,3 +290,48 @@ class GuiParametersDates:
         self.month_end = self.month_start
         self.day_end = self.day_start
         self.hour_end = self.hour_start
+
+
+class GuiParametersTexQuad:
+    def __init__(self, name) -> None:
+        self.name = name
+        self.show = True
+        self.color = True
+        self.invert_cmap = False
+        self.update_caps = False
+
+        self.cmap_idx = 0
+        self.cmap_key = list(shader_cmaps.keys())[0]
+
+        self.data_idx = 0
+        self.data_min = 0  # Min value for color clamp
+        self.data_max = 1.0  # Max value for color clamp
+        # self.data_keys = list(dict_data.keys())
+        # self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
+        # self.dict_value_caps = dict.fromkeys(self.data_keys, [])
+        # self.calc_dict_value_caps(dict_data)
+        # self.calc_data_min_max()
+
+    def get_current_data_name(self):
+        """Get the current color name."""
+        return self.data_keys[self.data_index]
+
+    def calc_dict_value_caps(self, dict_data: dict):
+        for key in dict_data.keys():
+            if dict_data[key] is not None:
+                min = np.min(dict_data[key])
+                max = np.max(dict_data[key])
+                self.dict_value_caps[key] = [min, max]
+            else:
+                self.dict_value_caps[key] = None
+
+    def calc_data_min_max(self):
+        key = self.get_current_data_name()
+        min = self.dict_value_caps[key][0]
+        max = self.dict_value_caps[key][1]
+        dom = max - min
+
+        lower_cap = self.dict_slider_caps[key][0]
+        upper_cap = self.dict_slider_caps[key][1]
+        self.data_min = min + dom * lower_cap
+        self.data_max = min + dom * upper_cap

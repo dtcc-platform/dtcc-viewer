@@ -1,8 +1,10 @@
 from pprint import pp
-from dtcc_viewer import *
+
+# from dtcc_viewer import *
 from dtcc_model import Mesh, PointCloud, Bounds
-from dtcc_viewer.colors import *
-from typing import List, Iterable
+
+# from dtcc_viewer.colors import *
+from typing import Iterable
 import trimesh
 import numpy as np
 import copy

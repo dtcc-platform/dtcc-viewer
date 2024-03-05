@@ -9,6 +9,7 @@ from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.scene import Scene
@@ -63,6 +64,7 @@ class Window:
     meshes: list[GlMesh]
     pcs: list[GlPointCloud]
     lss: list[GlLineString]
+    txq: list[GlRaster]
     model: GlModel
     gui: Gui
     guip: GuiParameters  # Gui parameters common for the whole window
@@ -136,6 +138,7 @@ class Window:
         self.meshes = []
         self.pcs = []
         self.lss = []
+        self.txq = []
 
         for obj in scene.obj_wrappers:
             if obj.mesh_wrp_1 is not None:
@@ -176,12 +179,21 @@ class Window:
             lss_gl = GlLineString(lss)
             self.lss.append(lss_gl)
 
-        if len(self.meshes) == 0 and len(self.pcs) == 0 and len(self.lss) == 0:
+        for rst in scene.rst_wrappers:
+            txq_gl = GlRaster(rst)
+            self.txq.append(txq_gl)
+
+        if (
+            len(self.meshes) == 0
+            and len(self.pcs) == 0
+            and len(self.lss) == 0
+            and len(self.txq) == 0
+        ):
             warning("No meshes or point clouds or line strings found in the scene!")
             return False
 
         # Create model from meshes
-        self.model = GlModel(self.meshes, self.pcs, self.lss, scene.bb)
+        self.model = GlModel(self.meshes, self.pcs, self.lss, self.txq, scene.bb)
         self.model.create_picking_fbo(self.action)
 
         return True
@@ -280,8 +292,6 @@ class Window:
         win_height = win_size[1]
         glViewport(0, 0, fb_width, fb_height)
         self.action.update_window_size(fb_width, fb_height, win_width, win_height)
-        info(f"Window size: {win_width} x {win_height}")
-        info(f"Frame bufffer size: {fb_width} x {fb_height}")
 
     def _clipping_planes(self):
         if self.guip.clip_bool[0]:

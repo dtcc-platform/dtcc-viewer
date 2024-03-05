@@ -114,8 +114,8 @@ class GlPointCloud:
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color_pc))
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
-        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_index)
-        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_index)
+        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
+        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
 

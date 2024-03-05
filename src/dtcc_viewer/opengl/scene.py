@@ -6,10 +6,10 @@ from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
-from dtcc_viewer.opengl.wrp_bundle import BundleWrapper
+from dtcc_viewer.opengl.wrp_raster import RasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.opengl.bundle import Bundle
-from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object, Building
+from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object, Building, Raster
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString
 from typing import Any
@@ -42,6 +42,7 @@ class Scene:
     rnd_wrappers: list[RoadNetworkWrapper]
     lss_wrappers: list[LineStringsWrapper]
     bld_wrappers: list[BuildingWrapper]
+    rst_wrappers: list[RasterWrapper]
 
     bb: BoundingBox
 
@@ -54,6 +55,7 @@ class Scene:
         self.lss_wrappers = []
         self.bld_wrappers = []
         self.bud_wrappers = []
+        self.rst_wrappers = []
 
     def add_mesh(
         self,
@@ -133,20 +135,19 @@ class Scene:
 
         pass
 
-    def add_bundle(self, bundle: Bundle):
-        """Append a bundle to the scene"""
-        if bundle is not None:
-            bld_w = BundleWrapper(name=bundle.name, bundle=bundle)
-            self.bud_wrappers.append(bld_w)
-            info(f"Bundle called - {bundle.name} - added to scene")
-        else:
-            warning(f"Bundle called - {bundle.name} - is None and not added to scene")
-
     def add_building(self, name: str, building: Building):
         if building is not None:
             info(f"Building called - {name} - added to scene")
             bld_w = BuildingWrapper(name=name, building=building)
             self.bld_wrappers.append(bld_w)
+        else:
+            warning(f"Building called - {name} - is None and not added to scene")
+
+    def add_raster(self, name: str, raster: Raster):
+        if raster is not None:
+            info(f"Raster called - {name} - added to scene")
+            rst_w = RasterWrapper(name=name, raster=raster)
+            self.rst_wrappers.append(rst_w)
         else:
             warning(f"Building called - {name} - is None and not added to scene")
 
@@ -181,6 +182,9 @@ class Scene:
 
         for bld_w in self.bld_wrappers:
             bld_w.preprocess_drawing(self.bb)
+
+        for rst_w in self.rst_wrappers:
+            rst_w.preprocess_drawing(self.bb)
 
         info(f"Scene preprocessing completed successfully")
         return True
@@ -230,6 +234,10 @@ class Scene:
 
         for bld_w in self.bld_wrappers:
             vertex_pos = bld_w.building_mw.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for rst_w in self.rst_wrappers:
+            vertex_pos = rst_w.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex

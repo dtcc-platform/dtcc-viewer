@@ -554,6 +554,7 @@ def create_cylinder(center, radius, height, num_segments):
             vertices[(i + 1) % num_segments + num_segments],
             vertices[i + num_segments],
         ]
+        side_surface_vertices = np.flip(side_surface_vertices, axis=0)
         side_surface = Surface(vertices=np.array(side_surface_vertices))
         side_surfaces.append(side_surface)
 
