@@ -10,13 +10,13 @@ from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.shaders.shaders_raster import (
     vertex_shader_raster,
-    fragment_shader_raster,
-    fragment_shader_checker,
-    fragment_shader_color_checker,
+    fragment_shader_raster_data,
+    fragment_shader_raster_rgb,
+    fragment_shader_raster_rgba,
 )
 
-from dtcc_viewer.opengl.parameters import GuiParametersTexQuad, GuiParameters
-from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.parameters import GuiParametersRaster, GuiParameters
+from dtcc_viewer.opengl.utils import BoundingBox, RasterType
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper
 from dtcc_viewer.shaders.shaders_color_maps import (
@@ -38,7 +38,7 @@ class GlRaster:
 
     vertices: np.ndarray  # All vertices in the road network
     indices: np.ndarray  #  Quad indices
-    guip: GuiParametersTexQuad  # GUI parameters for the texture quad
+    guip: GuiParametersRaster  # GUI parameters for the texture quad
     name: str  # Name of the line string
 
     n_vertices: int  # Number of vertices
@@ -46,6 +46,10 @@ class GlRaster:
 
     bb_local: BoundingBox
     bb_global: BoundingBox
+
+    type: RasterType  # Type of raster
+    data_texture: int  # Texture for the data
+    rgb_texture: int  # Texture for the color
 
     uniform_locs: dict  # Uniform locations for the shader program
     shader: int  # Shader program
@@ -60,22 +64,26 @@ class GlRaster:
         self.vertices = raster_w.vertices
         self.indices = raster_w.indices
 
+        self.type = raster_w.type
         self.data = raster_w.data
-        self.data_texture = None
         self.data_min = np.min(self.data)
         self.data_max = np.max(self.data)
+
+        self.data_texture = None
+        self.rgb_texture = None
+        self.rgba_texture = None
 
         self.shader: int
         self.uniform_locs = {}
 
-        self.guip = GuiParametersTexQuad(raster_w.name)
+        self.guip = GuiParametersRaster(raster_w.name, self.type)
         self.bb_local = raster_w.bb_local
         self.bb_global = raster_w.bb_global
 
         self._get_max_texture_size()
 
         self._create_triangels()
-        self._create_texture_2()
+        self._create_texture()
         self._create_shader()
 
     def _create_triangels(self) -> None:
@@ -110,11 +118,20 @@ class GlRaster:
         info(f"Max texture size: {max_texture_size} x {max_texture_size}")
         return max_texture_size
 
-    def _create_texture_2(self):
+    def _create_texture(self) -> None:
+
+        if self.type == RasterType.Data:
+            self._create_data_texture()
+        elif self.type == RasterType.RGB:
+            self._create_rgb_texture()
+        elif self.type == RasterType.RGBA:
+            self._create_rgba_texture()
+
+    def _create_data_texture(self):
 
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
-        width = self.data.shape[1]
-        height = self.data.shape[0]
+        width = self.data.shape[0]
+        height = self.data.shape[1]
 
         # Generate texture ID
         self.data_texture = glGenTextures(1)
@@ -136,17 +153,90 @@ class GlRaster:
         # Unbind the texture
         glBindTexture(GL_TEXTURE_2D, 0)
 
+    def _create_rgb_texture(self):
+
+        # Assuming your data is stored in a 2D array named data, with width and height dimensions
+        width = self.data.shape[0]
+        height = self.data.shape[1]
+
+        # Generate texture ID
+        self.rgb_texture = glGenTextures(1)
+
+        # Bind the texture
+        glBindTexture(GL_TEXTURE_2D, self.rgb_texture)
+
+        # Set texture parameters (e.g., wrapping and filtering modes)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        # Specify the texture image data
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGB,
+            width,
+            height,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            self.data,
+        )
+
+        # Unbind the texture
+        glBindTexture(GL_TEXTURE_2D, 0)
+
+    def _create_rgba_texture(self):
+
+        # Assuming your data is stored in a 2D array named data, with width and height dimensions
+        width = self.data.shape[0]
+        height = self.data.shape[1]
+
+        # Generate texture ID
+        self.rgba_texture = glGenTextures(1)
+
+        # Bind the texture
+        glBindTexture(GL_TEXTURE_2D, self.rgba_texture)
+
+        # Set texture parameters (e.g., wrapping and filtering modes)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        # Specify the texture image data
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            width,
+            height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            self.data,
+        )
+
+        # Unbind the texture
+        glBindTexture(GL_TEXTURE_2D, 0)
+
     def _create_shader(self) -> None:
         """Create and compile the shader program."""
+
+        if self.type == RasterType.Data:
+            self._create_data_shader()
+        elif self.type == RasterType.RGB:
+            self._create_rgb_shader()
+
+    def _create_data_shader(self) -> None:
 
         glBindVertexArray(self.VAO)
 
         vertex_shader = vertex_shader_raster
-        # fragment_shader = fragment_shader_raster
-        # fragment_shader = fragment_shader_checker
-        fragment_shader = fragment_shader_color_checker
+        fragment_shader = fragment_shader_raster_data
 
-        vertex_shader = Template(vertex_shader).substitute(
+        fragment_shader = Template(fragment_shader).substitute(
             color_map_0=color_map_rainbow,
             color_map_1=color_map_inferno,
             color_map_2=color_map_black_body,
@@ -154,6 +244,33 @@ class GlRaster:
             color_map_4=color_map_viridis,
         )
 
+        self._create_shader_common(vertex_shader, fragment_shader)
+
+        self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
+        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
+        self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
+        self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
+        self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
+        self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
+
+        # Set data based uniforms that won't change
+        glUniform1f(self.uniform_locs["data_min"], self.data_min)
+        glUniform1f(self.uniform_locs["data_max"], self.data_max)
+
+    def _create_rgb_shader(self) -> None:
+        glBindVertexArray(self.VAO)
+        vertex_shader = vertex_shader_raster
+        fragment_shader = fragment_shader_raster_rgb
+        self._create_shader_common(vertex_shader, fragment_shader)
+
+    def _create_rgba_shader(self) -> None:
+        glBindVertexArray(self.VAO)
+        vertex_shader = vertex_shader_raster
+        fragment_shader = fragment_shader_raster_rgba
+        self._create_shader_common(vertex_shader, fragment_shader)
+
+    def _create_shader_common(self, vertex_shader, fragment_shader) -> None:
+        # Shader function calls common for all shaders
         self.shader = compileProgram(
             compileShader(vertex_shader, GL_VERTEX_SHADER),
             compileShader(fragment_shader, GL_FRAGMENT_SHADER),
@@ -163,24 +280,14 @@ class GlRaster:
         self.uniform_locs["model"] = glGetUniformLocation(self.shader, "model")
         self.uniform_locs["view"] = glGetUniformLocation(self.shader, "view")
         self.uniform_locs["project"] = glGetUniformLocation(self.shader, "project")
-        self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
-        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
         self.uniform_locs["clip_x"] = glGetUniformLocation(self.shader, "clip_x")
         self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
         self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
-        self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
-        self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
-        self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
-        self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
-
         self.uniform_locs["data_tex"] = glGetUniformLocation(
             self.shader, "data_texture"
         )
 
-        # Set data based uniforms that won't change
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
-        glUniform1f(self.uniform_locs["data_min"], self.data_min)
-        glUniform1f(self.uniform_locs["data_max"], self.data_max)
 
     def update_color_caps(self):
         if self.guip.update_caps:
@@ -189,13 +296,56 @@ class GlRaster:
 
     def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render roads as lines in the road network."""
-        # self._render_pass_1(interaction, gguip)
+
+        if self.type == RasterType.Data:
+            self._render_data(interaction, gguip)
+        elif self.type == RasterType.RGB:
+            self._render_rgb(interaction, gguip)
+        elif self.type == RasterType.RGBA:
+            self._render_rgba(interaction, gguip)
+
+    def _render_data(self, interaction: Action, gguip: GuiParameters) -> None:
+
         glUseProgram(self.shader)
 
         # Bind the texture
         glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, self.data_texture)
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+
+        self._render_common(interaction, gguip)
+
+        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
+        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
+        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
+
+        self._draw_call()
+
+    def _render_rgb(self, interaction: Action, gguip: GuiParameters) -> None:
+
+        glUseProgram(self.shader)
+
+        # Bind the texture
+        glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, self.rgb_texture)
+        glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+
+        self._render_common(interaction, gguip)
+        self._draw_call()
+
+    def _render_rgba(self, interaction: Action, gguip: GuiParameters) -> None:
+
+        glUseProgram(self.shader)
+
+        # Bind the texture
+        glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, self.rgba_texture)
+        glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+
+        self._render_common(interaction, gguip)
+        self._draw_call()
+
+    def _render_common(self, interaction: Action, gguip: GuiParameters):
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -204,18 +354,13 @@ class GlRaster:
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
-
         self._set_clipping_uniforms(gguip)
+        pass
 
-        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
-        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
-        glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
-        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
-
+    def _draw_call(self):
         glBindVertexArray(self.VAO)
         glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
-
         glUseProgram(0)
 
     def _set_clipping_uniforms(self, gguip: GuiParameters):

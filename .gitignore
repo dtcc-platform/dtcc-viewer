@@ -11,6 +11,7 @@ dtcc-demo-data/
 *.qmd
 *.shp
 *.shx
+*.tif
 !cube_pc.csv
 
 *.city.json

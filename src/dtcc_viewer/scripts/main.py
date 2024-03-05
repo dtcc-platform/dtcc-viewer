@@ -11,9 +11,9 @@ from affine import Affine
 
 from pprint import pp
 
-# from dtcc_viewer import *
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
+from dtcc_io import load_raster
 from dtcc_io import load_roadnetwork
 from dtcc_model import City, Mesh, PointCloud, Object, Raster
 from dtcc_model.object.object import GeometryType
@@ -205,26 +205,48 @@ def object_example_2():
 
 def raster_example_1():
     # Define the coordinate reference system (CRS)
-    crs = "EPSG:4326"  # For example, WGS84
+    crs = "EPSG:4326"
 
     # Create some sample data
-    data = np.random.rand(10000, 10000)
+    data = np.random.rand(50, 100)
     georef = Affine.identity()
     raster = Raster(data=data, georef=georef, crs=crs)
 
     # Print information about the raster
-    print(raster)
     print("Shape:", raster.shape)
     print("Height:", raster.height)
     print("Width:", raster.width)
     print("Channels:", raster.channels)
     print("Bounds:", raster.bounds)
     print("Cell Size:", raster.cell_size)
+    raster.view()
 
-    # Access a value at a specific coordinate
-    value = raster.get_value(x=10.0, y=20.0)
-    print("Value at (10.0, 20.0):", value)
 
+def raster_example_2():
+    x_range = (-2 * np.pi, 3 * np.pi)
+    y_range = (-2 * np.pi, 3 * np.pi)
+    (x, y, z) = double_sine_wave_surface(x_range, y_range, 100, 100, 1, 1)
+    raster = Raster(data=z)
+
+    print("Shape:", raster.shape)
+    print("Height:", raster.height)
+    print("Width:", raster.width)
+    print("Channels:", raster.channels)
+    print("Bounds:", raster.bounds)
+    print("Cell Size:", raster.cell_size)
+    raster.view()
+
+
+def raster_example_3():
+
+    raster = load_raster("../../../data/models/672_61_7550_2017.tif")
+
+    print("Shape:", raster.shape)
+    print("Height:", raster.height)
+    print("Width:", raster.width)
+    print("Channels:", raster.channels)
+    print("Bounds:", raster.bounds)
+    print("Cell Size:", raster.cell_size)
     raster.view()
 
 
@@ -246,4 +268,6 @@ if __name__ == "__main__":
     # building_example_1()
     # object_example_1()
     # object_example_2()
-    raster_example_1()
+    # raster_example_1()
+    # raster_example_2()
+    raster_example_3()

@@ -1,7 +1,7 @@
 import numpy as np
 import glfw
 from dtcc_viewer.opengl.utils import invert_color
-from dtcc_viewer.opengl.utils import Shading
+from dtcc_viewer.opengl.utils import Shading, RasterType
 from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.logging import info, warning
 
@@ -292,13 +292,14 @@ class GuiParametersDates:
         self.hour_end = self.hour_start
 
 
-class GuiParametersTexQuad:
-    def __init__(self, name) -> None:
+class GuiParametersRaster:
+    def __init__(self, name, type: RasterType) -> None:
         self.name = name
         self.show = True
         self.color = True
         self.invert_cmap = False
         self.update_caps = False
+        self.type = type
 
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]

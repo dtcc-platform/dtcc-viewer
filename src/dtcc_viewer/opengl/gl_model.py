@@ -39,7 +39,7 @@ class GlModel:
     meshes: list[GlMesh]
     pointclouds: list[GlPointCloud]
     linestrings: list[GlLineString]
-    texquads: list[GlRaster]
+    rasters: list[GlRaster]
 
     guip: GuiParametersModel  # Gui parameters for the model
     env: Environment  # Collection of environment data like light sources etc.
@@ -86,7 +86,7 @@ class GlModel:
         self.meshes = msh
         self.pointclouds = pcs
         self.linestrings = rns
-        self.texquads = txq
+        self.rasters = txq
 
         self.guip = GuiParametersModel("Model", shading=Shading.wireshaded)
         self.env = Environment(bb_global)
@@ -393,7 +393,7 @@ class GlModel:
                 rn_gl.render(action, gguip)
 
     def _render_txq(self, action: Action, gguip: GuiParameters) -> None:
-        for txq_gl in self.texquads:
+        for txq_gl in self.rasters:
             guip = txq_gl.guip
             if guip.show:
                 txq_gl.render(action, gguip)

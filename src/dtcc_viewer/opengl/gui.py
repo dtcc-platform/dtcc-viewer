@@ -1,6 +1,6 @@
 import imgui
 import numpy as np
-from dtcc_viewer.opengl.utils import Shading
+from dtcc_viewer.opengl.utils import Shading, RasterType
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.opengl.gl_model import GlModel
@@ -9,6 +9,7 @@ from dtcc_viewer.opengl.parameters import (
     GuiParametersMesh,
     GuiParametersPC,
     GuiParametersLS,
+    GuiParametersRaster,
     GuiParametersDates,
 )
 
@@ -166,6 +167,9 @@ class Gui:
 
             for i, ls in enumerate(model.linestrings):
                 self._draw_ls_gui(ls.guip, i)
+
+            for i, rst in enumerate(model.rasters):
+                self._draw_rst_gui(rst.guip, i)
 
     def _end_win_1(self, impl: GlfwRenderer) -> None:
         imgui.end()
@@ -445,6 +449,41 @@ class Gui:
             imgui.pop_id()
 
         self.draw_separator()
+
+    def _draw_rst_gui(self, guip: GuiParametersRaster, index: int) -> None:
+        """Draw GUI for raster"""
+        [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
+        if expanded:
+            imgui.push_id("Show raster " + str(index))
+            [changed, guip.show] = imgui.checkbox("Show", guip.show)
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("Color raster " + str(index))
+            [changed, guip.color] = imgui.checkbox("Color", guip.color)
+            imgui.pop_id()
+
+            imgui.push_id("InvertRasterColors " + str(index))
+            imgui.same_line()
+            [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
+            imgui.pop_id()
+            
+            if guip.type == RasterType.Data:
+                # Colormap selection combo box
+                imgui.push_id("CmapSelectionCombo " + str(index))
+                items = list(shader_cmaps.keys())
+                with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
+                    if combo.opened:
+                        for i, item in enumerate(items):
+                            is_selected = guip.cmap_idx
+                            if imgui.selectable(item, is_selected)[0]:
+                                guip.update_caps = True
+                                guip.cmap_idx = i
+                                guip.cmap_key = item
+
+                            # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                            if is_selected:
+                                imgui.set_item_default_focus()
+                imgui.pop_id()
 
     def draw_separator(self) -> None:
         """Draw a separator between GUI elements."""

@@ -132,15 +132,27 @@ class Results(IntEnum):
     Success = 6
 
 
+class RasterType(IntEnum):
+    Data = 0
+    RGB = 1
+    RGBA = 2
+
+
 class UniformLocation:
     move: int
     view: int
     proj: int
     color_by: int
     light_color: int  # Uniform location for light color for diffuse shadow rendering
-    light_position: int  # Uniform location for light position for diffuse shadow rendering
-    view_position: int  # Uniform location for view position for diffuse shadow rendering
-    light_space_matrix: int  # Uniform location for light space matrix for diffuse shadow rendering
+    light_position: (
+        int  # Uniform location for light position for diffuse shadow rendering
+    )
+    view_position: (
+        int  # Uniform location for view position for diffuse shadow rendering
+    )
+    light_space_matrix: (
+        int  # Uniform location for light space matrix for diffuse shadow rendering
+    )
 
     def __init__():
         move = None
@@ -600,6 +612,16 @@ def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=
     mesh = Mesh(vertices=vertices, faces=faces)
 
     return mesh
+
+
+def double_sine_wave_surface(
+    x_range, y_range, num_points_x, num_points_y, frequency_x, frequency_y
+):
+    x = np.linspace(x_range[0], x_range[1], num_points_x)
+    y = np.linspace(y_range[0], y_range[1], num_points_y)
+    X, Y = np.meshgrid(x, y)
+    Z = np.sin(frequency_x * X) + np.sin(frequency_y * Y)
+    return X, Y, Z
 
 
 shader_cmaps = {

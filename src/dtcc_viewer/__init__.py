@@ -5,7 +5,7 @@ from .roadnetwork import view as view_roadnetwork
 from .city import view as view_city
 from .building import view as view_building
 from .object import view as view_object
-from .roster import view as view_raster
+from .raster import view as view_raster
 
 from dtcc_model import Mesh, PointCloud, Object, RoadNetwork
 from dtcc_model import Raster, NewCity, NewBuilding
