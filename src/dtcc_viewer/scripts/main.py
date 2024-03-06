@@ -250,6 +250,19 @@ def raster_example_3():
     raster.view()
 
 
+def raster_example_4():
+
+    raster = load_raster("../../../data/models/652_59_7550_2019.tif")
+    print("Shape:", raster.shape)
+    print("Height:", raster.height)
+    print("Width:", raster.width)
+    print("Channels:", raster.channels)
+    print("Bounds:", raster.bounds)
+    print("Cell Size:", raster.cell_size)
+
+    raster.view()
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -268,6 +281,7 @@ if __name__ == "__main__":
     # building_example_1()
     # object_example_1()
     # object_example_2()
-    # raster_example_1()
+    raster_example_1()
     # raster_example_2()
-    raster_example_3()
+    # raster_example_3()
+    # raster_example_4()

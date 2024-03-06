@@ -466,7 +466,7 @@ class Gui:
             imgui.same_line()
             [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
             imgui.pop_id()
-            
+
             if guip.type == RasterType.Data:
                 # Colormap selection combo box
                 imgui.push_id("CmapSelectionCombo " + str(index))
@@ -483,6 +483,26 @@ class Gui:
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                             if is_selected:
                                 imgui.set_item_default_focus()
+                imgui.pop_id()
+            elif guip.type == RasterType.RGB or guip.type == RasterType.RGBA:
+                imgui.text("Active channels: ")
+                imgui.same_line()
+                imgui.push_id("Draw r-channel " + str(index))
+                [c, guip.channels[0]] = imgui.checkbox("R", guip.channels[0])
+                imgui.pop_id()
+                imgui.same_line()
+                imgui.push_id("Draw g-channel " + str(index))
+                [c, guip.channels[1]] = imgui.checkbox("G", guip.channels[1])
+                imgui.pop_id()
+                imgui.same_line()
+                imgui.push_id("Draw b-channel " + str(index))
+                [c, guip.channels[2]] = imgui.checkbox("B", guip.channels[2])
+                imgui.pop_id()
+
+            if guip.type == RasterType.RGBA:
+                imgui.same_line()
+                imgui.push_id("Draw a-channel " + str(index))
+                [c, guip.channels[3]] = imgui.checkbox("A", guip.channels[3])
                 imgui.pop_id()
 
     def draw_separator(self) -> None:

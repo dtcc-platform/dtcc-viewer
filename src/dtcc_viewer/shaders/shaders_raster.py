@@ -98,13 +98,42 @@ in vec2 tex_coords;
 out vec4 frag_color;
 
 uniform sampler2D data_texture;
+uniform int color_inv;
+uniform int r_channel;
+uniform int g_channel;
+uniform int b_channel;
 
 void main()
 {
     // Sample the data texture at the current texture coordinates
     vec4 value = texture(data_texture, tex_coords);
-    vec3 color = vec3(value.r, value.g, value.b); 
-    frag_color = vec4(color, 1.0);
+    
+    float r = 0.0;
+    float g = 0.0;
+    float b = 0.0;
+    float a = 1.0; 
+
+    if(r_channel == 1)
+    {
+        r = value.r;
+    }
+    if(g_channel == 1)
+    {
+        g = value.g;
+    }
+    if(b_channel == 1)
+    {
+        b = value.b;
+    }
+    
+    vec3 color = vec3(r, g, b);
+
+    if(color_inv == 1)
+    {
+        color = vec3(1.0) - color;
+    }
+
+    frag_color = vec4(color, a);
 }
 
 """
@@ -117,12 +146,42 @@ in vec2 tex_coords;
 out vec4 frag_color;
 
 uniform sampler2D data_texture;
+uniform int color_inv;
+uniform int r_channel;
+uniform int g_channel;
+uniform int b_channel;
 
 void main()
 {
     // Sample the data texture at the current texture coordinates
     vec4 value = texture(data_texture, tex_coords);
-    frag_color = value;
+
+    float r = 0.0;
+    float g = 0.0;
+    float b = 0.0;
+    float a = value.a; 
+
+    if(r_channel == 1)
+    {
+        r = value.r;
+    }
+    if(g_channel == 1)
+    {
+        g = value.g;
+    }
+    if(b_channel == 1)
+    {
+        b = value.b;
+    }
+    
+    vec3 color = vec3(r, g, b);
+
+    if(color_inv == 1)
+    {
+        color = vec3(1.0) - color;
+    }
+
+    frag_color = vec4(color, a);
 }
 
 """

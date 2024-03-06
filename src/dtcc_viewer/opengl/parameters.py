@@ -301,6 +301,9 @@ class GuiParametersRaster:
         self.update_caps = False
         self.type = type
 
+        # 1 = draw, 0 = do not draw
+        self.channels = [1, 1, 1, 1]
+
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
 

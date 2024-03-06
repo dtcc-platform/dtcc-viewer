@@ -73,7 +73,7 @@ class GlRaster:
         self.rgb_texture = None
         self.rgba_texture = None
 
-        self.shader: int
+        self.shader = 0
         self.uniform_locs = {}
 
         self.guip = GuiParametersRaster(raster_w.name, self.type)
@@ -228,6 +228,8 @@ class GlRaster:
             self._create_data_shader()
         elif self.type == RasterType.RGB:
             self._create_rgb_shader()
+        elif self.type == RasterType.RGBA:
+            self._create_rgba_shader()
 
     def _create_data_shader(self) -> None:
 
@@ -247,7 +249,6 @@ class GlRaster:
         self._create_shader_common(vertex_shader, fragment_shader)
 
         self.uniform_locs["color_by"] = glGetUniformLocation(self.shader, "color_by")
-        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
         self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
         self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
         self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
@@ -283,6 +284,10 @@ class GlRaster:
         self.uniform_locs["clip_x"] = glGetUniformLocation(self.shader, "clip_x")
         self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
         self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
+        self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
+        self.uniform_locs["r_channel"] = glGetUniformLocation(self.shader, "r_channel")
+        self.uniform_locs["g_channel"] = glGetUniformLocation(self.shader, "g_channel")
+        self.uniform_locs["b_channel"] = glGetUniformLocation(self.shader, "b_channel")
         self.uniform_locs["data_tex"] = glGetUniformLocation(
             self.shader, "data_texture"
         )
@@ -316,7 +321,6 @@ class GlRaster:
         self._render_common(interaction, gguip)
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
-        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
 
         self._draw_call()
@@ -329,6 +333,9 @@ class GlRaster:
         glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, self.rgb_texture)
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+        glUniform1i(self.uniform_locs["r_channel"], self.guip.channels[0])
+        glUniform1i(self.uniform_locs["g_channel"], self.guip.channels[1])
+        glUniform1i(self.uniform_locs["b_channel"], self.guip.channels[2])
 
         self._render_common(interaction, gguip)
         self._draw_call()
@@ -337,10 +344,12 @@ class GlRaster:
 
         glUseProgram(self.shader)
 
-        # Bind the texture
         glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, self.rgba_texture)
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+        glUniform1i(self.uniform_locs["r_channel"], self.guip.channels[0])
+        glUniform1i(self.uniform_locs["g_channel"], self.guip.channels[1])
+        glUniform1i(self.uniform_locs["b_channel"], self.guip.channels[2])
 
         self._render_common(interaction, gguip)
         self._draw_call()
@@ -354,6 +363,7 @@ class GlRaster:
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
+        glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
         self._set_clipping_uniforms(gguip)
         pass
 
