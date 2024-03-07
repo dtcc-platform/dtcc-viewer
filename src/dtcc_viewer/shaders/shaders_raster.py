@@ -9,6 +9,8 @@ uniform mat4 view;
 uniform float clip_x;
 uniform float clip_y;
 uniform float clip_z;
+uniform float asp_rat;      // Aspect ratio of the raster
+
 
 out vec3 v_color;
 out vec2 tex_coords;
@@ -150,6 +152,7 @@ uniform int color_inv;
 uniform int r_channel;
 uniform int g_channel;
 uniform int b_channel;
+
 
 void main()
 {

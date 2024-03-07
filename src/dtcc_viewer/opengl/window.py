@@ -183,6 +183,11 @@ class Window:
             txq_gl = GlRaster(rst)
             self.txq.append(txq_gl)
 
+        for mrsr in scene.mrst_wrappers:
+            for rst in mrsr.raster_wrappers:
+                txq_gl = GlRaster(rst)
+                self.txq.append(txq_gl)
+
         if (
             len(self.meshes) == 0
             and len(self.pcs) == 0

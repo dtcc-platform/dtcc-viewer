@@ -18,15 +18,13 @@ class MeshWrapper:
 
     Attributes
     ----------
-    color_by : int
-        Color mode based on ColorBy enumeration (e.g., ColorBy.vertex_colors).
-    mesh_colors : np.ndarray
-        Array of vertex colors for the mesh.
+    data_dict : dict
+        Dictionary of data for color calculation.
     vertices : np.ndarray
-        Array of flattened vertex data with extended attributes (x, y, z, r, g, b, nx, ny, nz).
-    face_indices : np.ndarray
+        Array of flattened vertex data with extended attributes (x, y, z, d1, d2, d3, nx, ny, nz, id).
+    faces : np.ndarray
         Array of flattened face indices.
-    edge_indices : np.ndarray
+    edges : np.ndarray
         Array of flattened edge indices.
     name : str
         The name of the mesh data.
@@ -56,7 +54,7 @@ class MeshWrapper:
         submeshes: Submeshes = None,
         shading: Shading = Shading.wireshaded,
     ) -> None:
-        """Initialize the MeshData object.
+        """Initialize the MeshWrapper object.
 
         Parameters
         ----------
@@ -66,8 +64,6 @@ class MeshWrapper:
             The underlying Mesh object from which to generate the mesh data.
         data : Any, optional
             Additional mesh data (dict or array) for color calculation (default is None).
-        colors : np.ndarray, optional
-            Colors for vertices or faces (default is None).
         submeshes : Submeshes, optional
             Faces grouped into a submeshes object for clickability (default is None).
         shading : MeshShading, optional
@@ -215,7 +211,7 @@ class MeshWrapper:
         self.edges = new_edges
 
     def _move_mesh_to_origin(self, bb: BoundingBox):
-        # [x, y, z, r, g, b, nx, ny ,nz]
+        # [x, y, z, d1, d2, d3, nx, ny ,nz, id]
         v_count = len(self.vertices) // 10
         recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0, 0]), axis=0)
         recenter_vec = np.tile(recenter_vec, v_count)

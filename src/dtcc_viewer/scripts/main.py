@@ -208,7 +208,8 @@ def raster_example_1():
     crs = "EPSG:4326"
 
     # Create some sample data
-    data = np.random.rand(50, 100)
+    data = np.arange(0, 15000 * 15000, 1).reshape(15000, 15000)
+    # data = np.random.rand(150, 300)
     georef = Affine.identity()
     raster = Raster(data=data, georef=georef, crs=crs)
 
@@ -225,7 +226,7 @@ def raster_example_1():
 def raster_example_2():
     x_range = (-2 * np.pi, 3 * np.pi)
     y_range = (-2 * np.pi, 3 * np.pi)
-    (x, y, z) = double_sine_wave_surface(x_range, y_range, 100, 100, 1, 1)
+    (x, y, z) = double_sine_wave_surface(x_range, y_range, 200, 200, 1, 1)
     raster = Raster(data=z)
 
     print("Shape:", raster.shape)

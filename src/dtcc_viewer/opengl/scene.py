@@ -6,7 +6,7 @@ from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
-from dtcc_viewer.opengl.wrp_raster import RasterWrapper
+from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.opengl.bundle import Bundle
 from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object, Building, Raster
@@ -43,6 +43,7 @@ class Scene:
     lss_wrappers: list[LineStringsWrapper]
     bld_wrappers: list[BuildingWrapper]
     rst_wrappers: list[RasterWrapper]
+    mrst_wrappers: list[MultiRasterWrapper]
 
     bb: BoundingBox
 
@@ -56,6 +57,7 @@ class Scene:
         self.bld_wrappers = []
         self.bud_wrappers = []
         self.rst_wrappers = []
+        self.mrst_wrappers = []
 
     def add_mesh(
         self,
@@ -144,12 +146,18 @@ class Scene:
             warning(f"Building called - {name} - is None and not added to scene")
 
     def add_raster(self, name: str, raster: Raster):
+        max_size = 10000
         if raster is not None:
-            info(f"Raster called - {name} - added to scene")
-            rst_w = RasterWrapper(name=name, raster=raster)
-            self.rst_wrappers.append(rst_w)
+            if np.max(raster.data.shape) > max_size:
+                info(f"Multi raster called - {name} - added to scene")
+                mrst_w = MultiRasterWrapper(name=name, raster=raster, max_size=max_size)
+                self.mrst_wrappers.append(mrst_w)
+            else:
+                info(f"Raster called - {name} - added to scene")
+                rst_w = RasterWrapper(name=name, raster=raster)
+                self.rst_wrappers.append(rst_w)
         else:
-            warning(f"Building called - {name} - is None and not added to scene")
+            warning(f"Raster called - {name} - is None and not added to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
@@ -185,6 +193,9 @@ class Scene:
 
         for rst_w in self.rst_wrappers:
             rst_w.preprocess_drawing(self.bb)
+
+        for mrst_w in self.mrst_wrappers:
+            mrst_w.preprocess_drawing(self.bb)
 
         info(f"Scene preprocessing completed successfully")
         return True
@@ -238,6 +249,10 @@ class Scene:
 
         for rst_w in self.rst_wrappers:
             vertex_pos = rst_w.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for mrst_w in self.mrst_wrappers:
+            vertex_pos = mrst_w.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex

@@ -72,6 +72,7 @@ class GlRaster:
         self.data_texture = None
         self.rgb_texture = None
         self.rgba_texture = None
+        self.aspect_ratio = 1.0
 
         self.shader = 0
         self.uniform_locs = {}
@@ -81,7 +82,7 @@ class GlRaster:
         self.bb_global = raster_w.bb_global
 
         self._get_max_texture_size()
-
+        self._get_max_texture_slots()
         self._create_triangels()
         self._create_texture()
         self._create_shader()
@@ -116,7 +117,12 @@ class GlRaster:
     def _get_max_texture_size(self):
         max_texture_size = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         info(f"Max texture size: {max_texture_size} x {max_texture_size}")
-        return max_texture_size
+
+    def _get_max_texture_slots(self):
+        n_slots = glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)
+        n_slots_2 = glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS)
+        info(f"Max texture slots: {n_slots}")
+        info(f"Max texture slots: {n_slots_2}")
 
     def _create_texture(self) -> None:
 
@@ -127,11 +133,15 @@ class GlRaster:
         elif self.type == RasterType.RGBA:
             self._create_rgba_texture()
 
+        info(f"Raster texture size: {self.width} x {self.height}")
+        info(f"Data shape: {self.data.shape}")
+
     def _create_data_texture(self):
 
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
-        width = self.data.shape[0]
-        height = self.data.shape[1]
+        self.width = self.data.shape[0]
+        self.height = self.data.shape[1]
+        self.aspect_ratio = self.width / self.height
 
         # Generate texture ID
         self.data_texture = glGenTextures(1)
@@ -147,7 +157,15 @@ class GlRaster:
 
         # Specify the texture image data
         glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, self.data
+            GL_TEXTURE_2D,
+            0,
+            GL_RED,
+            self.width,
+            self.height,
+            0,
+            GL_RED,
+            GL_FLOAT,
+            self.data,
         )
 
         # Unbind the texture
@@ -156,8 +174,9 @@ class GlRaster:
     def _create_rgb_texture(self):
 
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
-        width = self.data.shape[0]
-        height = self.data.shape[1]
+        self.width = self.data.shape[0]
+        self.height = self.data.shape[1]
+        self.aspect_ratio = self.width / self.height
 
         # Generate texture ID
         self.rgb_texture = glGenTextures(1)
@@ -176,8 +195,8 @@ class GlRaster:
             GL_TEXTURE_2D,
             0,
             GL_RGB,
-            width,
-            height,
+            self.width,
+            self.height,
             0,
             GL_RGB,
             GL_UNSIGNED_BYTE,
@@ -190,8 +209,9 @@ class GlRaster:
     def _create_rgba_texture(self):
 
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
-        width = self.data.shape[0]
-        height = self.data.shape[1]
+        self.width = self.data.shape[0]
+        self.height = self.data.shape[1]
+        self.aspect_ratio = self.width / self.height
 
         # Generate texture ID
         self.rgba_texture = glGenTextures(1)
@@ -210,8 +230,8 @@ class GlRaster:
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            width,
-            height,
+            self.width,
+            self.height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
@@ -288,11 +308,13 @@ class GlRaster:
         self.uniform_locs["r_channel"] = glGetUniformLocation(self.shader, "r_channel")
         self.uniform_locs["g_channel"] = glGetUniformLocation(self.shader, "g_channel")
         self.uniform_locs["b_channel"] = glGetUniformLocation(self.shader, "b_channel")
+        self.uniform_locs["asp_rat"] = glGetUniformLocation(self.shader, "asp_rat")
         self.uniform_locs["data_tex"] = glGetUniformLocation(
             self.shader, "data_texture"
         )
 
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
+        glUniform1f(self.uniform_locs["asp_rat"], self.aspect_ratio)
 
     def update_color_caps(self):
         if self.guip.update_caps:

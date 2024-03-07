@@ -614,13 +614,11 @@ def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=
     return mesh
 
 
-def double_sine_wave_surface(
-    x_range, y_range, num_points_x, num_points_y, frequency_x, frequency_y
-):
-    x = np.linspace(x_range[0], x_range[1], num_points_x)
-    y = np.linspace(y_range[0], y_range[1], num_points_y)
+def double_sine_wave_surface(x_range, y_range, n_x, n_y, freq_x, freq_y):
+    x = np.linspace(x_range[0], x_range[1], n_x)
+    y = np.linspace(y_range[0], y_range[1], n_y)
     X, Y = np.meshgrid(x, y)
-    Z = np.sin(frequency_x * X) + np.sin(frequency_y * Y)
+    Z = np.sin(freq_x * X) + np.sin(freq_y * Y)
     return X, Y, Z
 
 
