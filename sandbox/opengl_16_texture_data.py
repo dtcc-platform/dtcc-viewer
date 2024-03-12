@@ -17,6 +17,7 @@ import trimesh
 from dtcc_model import Mesh
 from dtcc_viewer.utils import get_sub_mesh
 from pprint import pp
+import time
 
 window_w = 800
 window_h = 800
@@ -127,6 +128,42 @@ def window_resize(window, width, height):
     glUniformMatrix4fv(project_loc, 1, GL_FALSE, project)
 
 
+def reformat_texture_data(data: np.ndarray, max_texture_size: int):
+    d_count = len(data)
+
+    if d_count < max_texture_size:
+        data = np.reshape(data, (d_count, 1))
+    else:
+        row_count = math.ceil(len(data) / max_texture_size)
+        new_data = np.zeros((max_texture_size, row_count))
+        print(f"New data shape: {new_data.shape}")
+
+        new_data = new_data.flatten()
+        new_data[0:d_count] = data
+        data = np.reshape(new_data, (max_texture_size, row_count))
+
+    return data
+
+
+def subdivide_mesh(mesh: Mesh, target_edge_length: float = 2.0, max_iter: int = 6):
+    tri_mesh = trimesh.Trimesh(vertices=mesh.vertices, faces=mesh.faces)
+
+    vs, fs = trimesh.remesh.subdivide_to_size(
+        mesh.vertices,
+        mesh.faces,
+        max_edge=target_edge_length,
+        max_iter=max_iter,
+    )
+
+    subdee_mesh = Mesh(vertices=vs, faces=fs)
+
+    print("Subdee mesh: ")
+    print("Face count: " + str(len(subdee_mesh.faces)))
+    print("Vertex count: " + str(len(subdee_mesh.vertices)))
+
+    return subdee_mesh
+
+
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
 
@@ -159,7 +196,7 @@ mesh = meshes.load_mesh("../data/models/CitySurface.obj")
 
 # mesh = get_sub_mesh([-0.02, 0.02], [-0.02, 0.02], mesh)
 
-print(mesh)
+mesh = subdivide_mesh(mesh, 2.0, 6)
 
 print("Imported mesh")
 print("Face count: " + str(len(mesh.faces)))
@@ -167,7 +204,6 @@ print("Vertex count: " + str(len(mesh.vertices)))
 
 print(f"Mesh xdom: {mesh.vertices[:,0].min()} - {mesh.vertices[:,0].max()}")
 print(f"Mesh ydom: {mesh.vertices[:,1].min()} - {mesh.vertices[:,1].max()}")
-
 
 array_length = len(mesh.faces) * 3 * 8
 new_vertices = np.zeros(array_length)
@@ -193,7 +229,7 @@ max_texture_size = 16384  # glGetInteger(GL_MAX_TEXTURE_SIZE)
 print("Maximum texture size:", max_texture_size)
 
 if new_v_count < max_texture_size:
-    tex_coord_x = np.arange(0, new_v_count) / float(new_v_count)
+    tex_coord_x = np.arange(0, new_v_count) / float(new_v_count - 1)
     tex_coord_y = np.zeros(new_v_count)
 else:
     row_count = math.ceil(new_v_count / max_texture_size)
@@ -225,28 +261,22 @@ f_count = len(indices) // 3
 
 
 # Generate some data
-data = vertices[2::8]
-d_count = len(data)
+data_1 = vertices[0::8]
+data_2 = vertices[1::8]
+data_3 = vertices[2::8]
 
-if d_count < max_texture_size:
-    data = np.reshape(data, (d_count, 1))
-else:
-    row_count = math.ceil(len(data) / max_texture_size)
-    new_data = np.zeros((max_texture_size, row_count))
-    print(f"New data shape: {new_data.shape}")
+data_1 = reformat_texture_data(data_1, max_texture_size)
+data_2 = reformat_texture_data(data_2, max_texture_size)
+data_3 = reformat_texture_data(data_3, max_texture_size)
 
-    new_data = new_data.flatten()
-    new_data[0:d_count] = data
-    data = np.reshape(new_data, (max_texture_size, row_count))
 
-print(f"New data shape: {data.shape}")
+print(f"New data shape: {data_1.shape}")
 
 
 np.set_printoptions(precision=3, suppress=True)
 
-for i, v in enumerate(debug_vertices):
-    pp(v[:5])
-# pp(data[i])
+# for i, v in enumerate(debug_vertices):
+# pp(v[:5])
 
 print("Restructured mesh")
 print("Face count: " + str(f_count))
@@ -329,21 +359,43 @@ glTexImage2D(
     GL_TEXTURE_2D,
     0,
     GL_R32F,
-    data.shape[0],
-    data.shape[1],
+    data_1.shape[0],
+    data_1.shape[1],
     0,
     GL_RED,
     GL_FLOAT,
-    data,
+    data_1,
 )
 
+# ---------------------- Update texture data ----------------------#
 
-# glBindTexture(GL_TEXTURE_2D, 0)
+x_offset = 0
+y_offset = 0
+width = data_2.shape[0]
+height = data_2.shape[1]
+
+tic = time.perf_counter()
+
+glTexSubImage2D(
+    GL_TEXTURE_2D,
+    0,
+    x_offset,
+    y_offset,
+    width,
+    height,
+    GL_RED,
+    GL_FLOAT,
+    data_2,
+)
+
+toc = time.perf_counter()
+
+print(f"Texture update time: {toc - tic:0.4f} seconds")
 
 # ----------------------- Calc min max -------------------------#
 
-min = data.min()  # x values
-max = data.max()
+min = data_1.min()  # x values
+max = data_1.max()
 
 glUniform1f(min_loc, min)
 glUniform1f(max_loc, max)
