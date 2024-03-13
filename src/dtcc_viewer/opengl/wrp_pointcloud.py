@@ -27,7 +27,7 @@ class PointCloudWrapper:
 
     points: np.ndarray  # [n_points x 3]
     colors: np.ndarray  # [n_points x 3]
-    dict_colors: dict
+    data_dict: dict
     pc_avrg_pt: np.ndarray  # [1 x 3]
     size: float
     name: str

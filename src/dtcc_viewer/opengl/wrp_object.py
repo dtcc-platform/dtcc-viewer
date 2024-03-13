@@ -3,7 +3,6 @@ from dtcc_model import MultiSurface
 from dtcc_model import Bounds, Object
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *
-from dtcc_viewer.colors import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, Results
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import Submeshes, concatenate_meshes, surface_2_mesh
