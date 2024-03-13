@@ -11,7 +11,7 @@ class DataWrapper:
     as 2d textures.
     """
 
-    data: np.ndarray  # Data in a 2d array
+    data: np.ndarray  # Data in a 2d array to be mapped to a texture
     texel_ix: np.ndarray  # Texel indices for x
     texel_iy: np.ndarray  # Texel indices for y
 
@@ -40,20 +40,19 @@ class DataWrapper:
             return False
         return True
 
-    def _reformat_texture_data(self, data: np.ndarray, max_texture_size: int):
+    def _reformat_texture_data(self, data: np.ndarray, max_tex_size: int):
 
         d_count = len(data)
 
-        if d_count < max_texture_size:
-            data = np.reshape(data, (d_count, 1))
+        if d_count < max_tex_size:
+            data = np.reshape(data, (1, d_count))
         else:
-            row_count = math.ceil(len(data) / max_texture_size)
-            new_data = np.zeros((max_texture_size, row_count))
-            print(f"New data shape: {new_data.shape}")
-
+            row_count = math.ceil(len(data) / max_tex_size)
+            new_data = np.zeros((row_count, max_tex_size))
             new_data = new_data.flatten()
             new_data[0:d_count] = data
-            data = np.reshape(new_data, (max_texture_size, row_count))
+            data = np.reshape(new_data, (row_count, max_tex_size))
+            info(f"New data shape: {data.shape} for max texture size: {max_tex_size}")
 
         self.data = data
 

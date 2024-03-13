@@ -134,17 +134,31 @@ def reformat_texture_data(data: np.ndarray, max_texture_size: int):
     d_count = len(data)
 
     if d_count < max_texture_size:
-        data = np.reshape(data, (d_count, 1))
+        data = np.reshape(data, (1, d_count))
     else:
         row_count = math.ceil(len(data) / max_texture_size)
-        new_data = np.zeros((max_texture_size, row_count))
+        new_data = np.zeros((row_count, max_texture_size))
         print(f"New data shape: {new_data.shape}")
 
         new_data = new_data.flatten()
         new_data[0:d_count] = data
-        data = np.reshape(new_data, (max_texture_size, row_count))
+        data = np.reshape(new_data, (row_count, max_texture_size))
 
     return data
+
+
+def get_texel_indices(max_texture_size: int, new_v_count: int):
+    if new_v_count < max_texture_size:
+        tex_index_x = np.arange(0, new_v_count)
+        tex_index_y = np.zeros(new_v_count)
+    else:
+        row_count = math.ceil(new_v_count / max_texture_size)
+        tex_index_x = np.arange(0, max_texture_size)
+        tex_index_x = np.tile(tex_index_x, row_count)[:new_v_count]
+        tex_index_y = np.arange(0, row_count)
+        tex_index_y = np.repeat(tex_index_y, max_texture_size)[:new_v_count]
+
+    return tex_index_x, tex_index_y
 
 
 def subdivide_mesh(mesh: Mesh, target_edge_length: float = 2.0, max_iter: int = 6):
@@ -196,16 +210,13 @@ glfw.make_context_current(window)
 
 mesh = meshes.load_mesh("../data/models/CitySurface.obj")
 
-# mesh = get_sub_mesh([-0.02, 0.02], [-0.02, 0.02], mesh)
+mesh = get_sub_mesh([-0.02, 0.02], [-0.02, 0.02], mesh)
 
-mesh = subdivide_mesh(mesh, 2.0, 6)
+# mesh = subdivide_mesh(mesh, 2.0, 6)
 
 print("Imported mesh")
 print("Face count: " + str(len(mesh.faces)))
 print("Vertex count: " + str(len(mesh.vertices)))
-
-print(f"Mesh xdom: {mesh.vertices[:,0].min()} - {mesh.vertices[:,0].max()}")
-print(f"Mesh ydom: {mesh.vertices[:,1].min()} - {mesh.vertices[:,1].max()}")
 
 array_length = len(mesh.faces) * 3 * 8
 new_vertices = np.zeros(array_length)
@@ -222,23 +233,14 @@ vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0], dtype=bool)
 text_mask_x = np.array([0, 0, 0, 1, 0, 0, 0, 0], dtype=bool)
 text_mask_y = np.array([0, 0, 0, 0, 1, 0, 0, 0], dtype=bool)
 normal_mask = np.array([0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
+
 # Set coordinates
 mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
 new_vertices[mask] = face_verts.flatten()
 
-# Set texture coordinates
-max_texture_size = 16384  # glGetInteger(GL_MAX_TEXTURE_SIZE)
-print("Maximum texture size:", max_texture_size)
-
-if new_v_count < max_texture_size:
-    tex_index_x = np.arange(0, new_v_count)
-    tex_index_y = np.zeros(new_v_count)
-else:
-    row_count = math.ceil(new_v_count / max_texture_size)
-    tex_index_x = np.arange(0, max_texture_size)
-    tex_index_x = np.tile(tex_index_x, row_count)[:new_v_count]
-    tex_index_y = np.arange(0, row_count)
-    tex_index_y = np.repeat(tex_index_y, max_texture_size)[:new_v_count]
+# Set texel indices
+max_texture_size = 50  # 16384  # from -> glGetInteger(GL_MAX_TEXTURE_SIZE)
+tex_index_x, tex_index_y = get_texel_indices(max_texture_size, new_v_count)
 
 mask = np.tile(text_mask_x, array_length // len(text_mask_x) + 1)[:array_length]
 new_vertices[mask] = tex_index_x
@@ -246,21 +248,19 @@ new_vertices[mask] = tex_index_x
 mask = np.tile(text_mask_y, array_length // len(text_mask_y) + 1)[:array_length]
 new_vertices[mask] = tex_index_y
 
-
 # Set normals
 mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
 new_vertices[mask] = np.tile(cross_p, 3).flatten()
 new_faces = np.arange(array_length // 8)
 
 debug_vertices = np.reshape(new_vertices, (-1, 8))
-debug_faces = np.reshape(new_faces, (-1, 3))
+# debug_faces = np.reshape(new_faces, (-1, 3))
 
 vertices = np.array(new_vertices, dtype="float32").flatten()
 indices = np.array(new_faces, dtype="uint32").flatten()
 
 v_count = len(vertices) // 8
 f_count = len(indices) // 3
-
 
 # Generate some data
 data_1 = vertices[0::8]
@@ -275,8 +275,8 @@ print(f"New data shape: {data_1.shape}")
 
 np.set_printoptions(precision=3, suppress=True)
 
-# for i, v in enumerate(debug_vertices):
-#    pp(v[:5])
+for i, v in enumerate(debug_vertices):
+    pp(v[:5])
 
 print("Restructured mesh")
 print("Face count: " + str(f_count))
@@ -353,14 +353,16 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
+width = data_1.shape[1]
+height = data_1.shape[0]
 
 # Transfer data to the texture
 glTexImage2D(
     GL_TEXTURE_2D,
     0,
     GL_R32F,
-    data_1.shape[0],
-    data_1.shape[1],
+    width,
+    height,
     0,
     GL_RED,
     GL_FLOAT,
@@ -371,8 +373,8 @@ glTexImage2D(
 
 x_offset = 0
 y_offset = 0
-width = data_2.shape[0]
-height = data_2.shape[1]
+width = data_3.shape[1]
+height = data_3.shape[0]
 
 tic = time.perf_counter()
 
@@ -385,7 +387,7 @@ glTexSubImage2D(
     height,
     GL_RED,
     GL_FLOAT,
-    data_2,
+    data_3,
 )
 
 toc = time.perf_counter()
@@ -394,8 +396,8 @@ print(f"Texture update time: {toc - tic:0.4f} seconds")
 
 # ----------------------- Calc min max -------------------------#
 
-min = data_1.min()  # x values
-max = data_1.max()
+min = data_3.min()  # x values
+max = data_3.max()
 
 glUniform1f(min_loc, min)
 glUniform1f(max_loc, max)
