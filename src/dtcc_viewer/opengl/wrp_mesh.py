@@ -2,10 +2,10 @@ import numpy as np
 from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
-from dtcc_viewer.colors import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, Submeshes
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
+from typing import Any
 
 
 class MeshWrapper:
