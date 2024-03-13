@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import NewCity, MultiSurface, NewBuilding, Mesh
+from dtcc_model import City, MultiSurface, Building, Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.colors import *
@@ -38,7 +38,7 @@ class BuildingWrapper:
     def __init__(
         self,
         name: str,
-        building: NewBuilding,
+        building: Building,
         shading: Shading = Shading.wireshaded,
     ) -> None:
         """Initialize the MeshData object.
@@ -60,7 +60,7 @@ class BuildingWrapper:
 
         self.building_mw = MeshWrapper(name, mesh)
 
-    def _get_building_mesh(self, building: NewBuilding):
+    def _get_building_mesh(self, building: Building):
         flat_geom = self.get_highest_lod_building(building)
 
         building_meshes = []
@@ -82,13 +82,13 @@ class BuildingWrapper:
         if self.building_mw is not None:
             self.building_mw.preprocess_drawing(bb_global)
 
-    def _get_terrain_mesh(self, city: NewCity):
+    def _get_terrain_mesh(self, city: City):
         pass
 
-    def _generate_building_mesh(self, city: NewCity):
+    def _generate_building_mesh(self, city: City):
         pass
 
-    def get_highest_lod_building(self, building: NewBuilding):
+    def get_highest_lod_building(self, building: Building):
         lods = [
             GeometryType.LOD3,
             GeometryType.LOD2,

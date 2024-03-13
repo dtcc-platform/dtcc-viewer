@@ -1,6 +1,5 @@
 import numpy as np
-from collections import Counter
-from dtcc_model import NewCity, MultiSurface, Surface, NewBuilding, Mesh, Terrain
+from dtcc_model import MultiSurface
 from dtcc_model import Bounds, Object
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *

@@ -8,8 +8,9 @@ from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_viewer.opengl.bundle import Bundle
-from dtcc_model import Mesh, PointCloud, RoadNetwork, City, Object, Building, Raster
+from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster
+
+# from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString
 from typing import Any
@@ -110,7 +111,7 @@ class Scene:
     def add_roadnetwork(
         self,
         name: str,
-        rn: RoadNetwork,
+        rn: Any,
         data: np.ndarray = None,
     ):
         """Append a RoadNetwork object to the scene"""

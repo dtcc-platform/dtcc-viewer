@@ -1,8 +1,10 @@
 import numpy as np
-from dtcc_model import RoadNetwork
+
+# from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
+from typing import Any
 
 
 class RoadNetworkWrapper:
@@ -38,7 +40,7 @@ class RoadNetworkWrapper:
     def __init__(
         self,
         name: str,
-        rn: RoadNetwork,
+        rn: Any,
         data: np.ndarray = None,
     ) -> None:
         """Initialize a Road network wrapper object.
@@ -76,7 +78,7 @@ class RoadNetworkWrapper:
             recenter_vec_tiled = np.tile(recenter_vec, v_count)
             self.vertices += recenter_vec_tiled
 
-    def _restructure_data(self, rn: RoadNetwork, data: np.ndarray = None):
+    def _restructure_data(self, rn: Any, data: np.ndarray = None):
         """Generate colors for the point cloud based on the provided data."""
 
         n_points = len(rn.vertices)
@@ -98,7 +100,7 @@ class RoadNetworkWrapper:
             new_dict["slot1"] = rn.vertices[:, 1]
             self.dict_data = new_dict
 
-    def _restructure_data_dict(self, rn: RoadNetwork, data: dict, new_dict: dict):
+    def _restructure_data_dict(self, rn: Any, data: dict, new_dict: dict):
         n_vertices = len(rn.vertices)
         data_slots = len(new_dict)
         counter = 0
@@ -116,9 +118,7 @@ class RoadNetworkWrapper:
 
         return new_dict
 
-    def _restructure_data_array(
-        self, rn: RoadNetwork, data: np.ndarray, new_dict: dict
-    ):
+    def _restructure_data_array(self, rn: Any, data: np.ndarray, new_dict: dict):
         if len(data) == len(rn.vertices):
             new_dict["slot0"] = data
         else:
@@ -126,7 +126,7 @@ class RoadNetworkWrapper:
 
         return new_dict
 
-    def _restructure_road_network(self, roadnetwork: RoadNetwork):
+    def _restructure_road_network(self, roadnetwork: Any):
         new_indices = []
         for road in roadnetwork.roads:
             for i in range(len(road.road_vertices) - 1):

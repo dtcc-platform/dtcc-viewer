@@ -1,14 +1,16 @@
 import numpy as np
-from dtcc_model import Mesh, RoadNetwork
+
+# from dtcc_model import Mesh, RoadNetwork
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
+from typing import Any
 
 
 def view(
-    roadnetwork: RoadNetwork,
+    roadnetwork: Any,
     data: np.ndarray = None,
 ):
     """View a roadnetwork in 3D with a GLFW window.

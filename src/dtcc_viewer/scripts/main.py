@@ -14,7 +14,6 @@ from pprint import pp
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 from dtcc_io import load_raster
-from dtcc_io import load_roadnetwork
 from dtcc_model import City, Mesh, PointCloud, Object, Raster
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
@@ -24,6 +23,8 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import LineString, Point
 from dtcc_viewer.opengl.bundle import Bundle
+
+# from dtcc_io import load_roadnetwork
 
 
 def pointcloud_example_1():
@@ -93,6 +94,7 @@ def multi_geometry_example_1():
     window.render(scene)
 
 
+"""
 def roadnetwork_example_1():
     filename = "../../../data/models/helsingborg_road_data.shp"
     rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
@@ -115,6 +117,7 @@ def roadnetwork_example_2():
     scene.add_roadnetwork("Road Network", rn_1)
     scene.add_roadnetwork("Road Network", rn_3)
     window.render(scene)
+"""
 
 
 def linestring_example_1():
@@ -135,16 +138,16 @@ def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    # city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
-    # city_dhg.view()
+    city_dhg.view()
     # city_rwy.view()
-    city_nyc.view()
+    # city_nyc.view()
 
 
 def building_example_1():

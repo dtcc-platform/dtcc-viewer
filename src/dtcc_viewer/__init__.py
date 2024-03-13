@@ -7,17 +7,20 @@ from .building import view as view_building
 from .object import view as view_object
 from .new_raster import view as view_raster
 
-from dtcc_model import Mesh, PointCloud, Object, RoadNetwork
-from dtcc_model import Raster, NewCity, NewBuilding
+from dtcc_model import Mesh, PointCloud, Object
+from dtcc_model import Raster, City, Building
+
+# from dtcc_model.roadnetwork import RoadNetwork
 
 # Add model extensions
 PointCloud.add_methods(view_pointcloud, "view")
 Mesh.add_methods(view_mesh, "view")
-RoadNetwork.add_methods(view_roadnetwork, "view")
-NewCity.add_methods(view_city, "view")
-NewBuilding.add_methods(view_building, "view")
+City.add_methods(view_city, "view")
+Building.add_methods(view_building, "view")
 Object.add_methods(view_object, "view")
 Raster.add_methods(view_raster, "view")
+
+# RoadNetwork.add_methods(view_roadnetwork, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [
