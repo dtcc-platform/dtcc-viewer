@@ -47,7 +47,7 @@ class CityWrapper:
     terrain_mw: MeshWrapper = None
     terrain_submeshes: Submeshes
 
-    def __init__(self, name: str, city: City) -> None:
+    def __init__(self, name: str, city: City, mts: int) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -56,8 +56,8 @@ class CityWrapper:
             The name of the mesh data.
         city : City
             City object from which to generate the mesh data to view.
-        shading : MeshShading, optional
-            Shading option (default is MeshShading.wireshaded).
+        mts : int
+            Max texture size for the OpenGL context.
         """
         self.name = name
         self.shading = Shading.wireshaded  # Default shading

@@ -3,6 +3,7 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, Submeshes
+from dtcc_viewer.opengl.wrp_data import DataWrapper
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
 from typing import Any
@@ -36,23 +37,22 @@ class MeshWrapper:
         Bounding box all objects in the entire scene.
     """
 
-    dict_data: dict
     vertices: np.ndarray
     faces: np.ndarray
     edges: np.ndarray
     name: str
-    shading: Shading
     bb_local: BoundingBox
     bb_global: BoundingBox = None
     submeshes: Submeshes = None
+    data_wrapper: DataWrapper = None
 
     def __init__(
         self,
         name: str,
         mesh: Mesh,
+        mts: int,
         data: Any = None,  # Dict or np.ndarray
         submeshes: Submeshes = None,
-        shading: Shading = Shading.wireshaded,
     ) -> None:
         """Initialize the MeshWrapper object.
 
@@ -62,6 +62,8 @@ class MeshWrapper:
             The name of the mesh wrapper.
         mesh : Mesh
             The underlying Mesh object from which to generate the mesh data.
+        mts: int
+            Max texture size for the data.
         data : Any, optional
             Additional mesh data (dict or array) for color calculation (default is None).
         submeshes : Submeshes, optional
@@ -70,11 +72,12 @@ class MeshWrapper:
             Shading option (default is MeshShading.wireshaded).
         """
         self.name = name
-        self.shading = shading
         self.dict_data = {}
         self.submeshes = submeshes
+        self.data = []
+        self.data_wrapper = None
 
-        self._restructure_data(mesh, data)
+        self._restructure_data(mesh, mts, data)
         self._restructure_mesh(mesh)
 
         if self.submeshes is None:
@@ -88,80 +91,29 @@ class MeshWrapper:
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
-    def _restructure_data(self, mesh: Mesh, data: Any):
+    def _restructure_data(self, mesh: Mesh, mts: int, data: np.ndarray = None):
         # Structure the data in the dict so that there are three data slots for each
         # vertex, and three uniqie vertces for each face. This is necessary in order
         # to enable to color each face individually. This structure is also needed for
         # the vertices so that each face can have individual normals so that shading
         # can be computed correctly.
 
-        n_faces = len(mesh.faces)
+        self.data_wrapper = DataWrapper(mesh, mts)
 
-        new_dict = {
-            "slot0": np.zeros(n_faces * 3),
-            "slot1": np.zeros(n_faces * 3),
-            "slot2": np.zeros(n_faces * 3),
-        }
+        data_1 = mesh.vertices[:, 0]
+        data_2 = mesh.vertices[:, 1]
+        data_3 = mesh.vertices[:, 2]
 
-        if type(data) == dict:
-            self.dict_data = self._restructure_data_dict(mesh, data, new_dict)
-        elif type(data) == np.ndarray:
-            self.dict_data = self._restructure_data_array(mesh, data, new_dict)
-        else:
-            info("No data provided for mesh.")
-            info("Default (x ,y ,z) - coords per vertex data appended.")
-            face_verts = mesh.vertices[mesh.faces.flatten()]
-            new_dict["slot0"] = face_verts[:, 0]
-            new_dict["slot1"] = face_verts[:, 1]
-            new_dict["slot2"] = face_verts[:, 2]
-            self.dict_data = new_dict
+        data_1 = np.array(data_1, dtype="float32")
+        data_2 = np.array(data_2, dtype="float32")
+        data_3 = np.array(data_3, dtype="float32")
 
-    def _restructure_data_array(self, mesh: Mesh, data: np.ndarray, new_dict: dict):
-        n_vertices = len(mesh.vertices)
-        n_faces = len(mesh.faces)
-
-        if len(data) == n_vertices:
-            face_data = data[mesh.faces.flatten()]
-            new_dict["slot0"] = face_data
-        elif len(data) == n_faces:
-            face_indices = np.arange(0, len(mesh.faces))
-            face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
-            face_data = data[face_indices]
-            new_dict["slot0"] = face_data
-        else:
-            pass
-
-        return new_dict
-
-    def _restructure_data_dict(self, mesh: Mesh, data_dict: dict, new_dict: dict):
-        n_vertices = len(mesh.vertices)
-        n_faces = len(mesh.faces)
-        data_slots = len(new_dict)
-        counter = 0
-
-        for key in data_dict.keys():
-            data = data_dict[key]
-            if counter < data_slots:
-                if len(data) == n_vertices:
-                    # Data matching the number of vertices
-                    face_data = data[mesh.faces.flatten()]
-                    new_dict["slot" + str(counter)] = face_data
-                elif len(data) == n_faces:
-                    # Data matching the number of faces
-                    face_indices = np.arange(0, len(mesh.faces))
-                    face_indices = np.repeat(face_indices, 3)
-                    face_data = data[face_indices]
-                    new_dict["slot" + str(counter)] = face_data
-                else:
-                    info(f"Data for {key} does not match vertex or face count")
-            else:
-                info(f"Data for {key} does not fit in available slots")
-            counter += 1
-
-        return new_dict
+        self.data_wrapper.add_data("Vertex X", data_1)
+        self.data_wrapper.add_data("Vertex Y", data_2)
+        self.data_wrapper.add_data("Vertex Z", data_3)
 
     def _restructure_mesh(self, mesh: Mesh):
-        array_length = len(mesh.faces) * 3 * 10
+        array_length = len(mesh.faces) * 3 * 9
         new_vertices = np.zeros(array_length)
         face_verts = mesh.vertices[mesh.faces.flatten()]
 
@@ -172,31 +124,29 @@ class MeshWrapper:
         cross_vecs = (c2 - c1)[mask]  # (v2 - v1), (v3 - v2)
         cross_p = np.cross(cross_vecs[::2], cross_vecs[1::2])  # (v2 - v1) x (v3 - v2)
         cross_p = cross_p / np.linalg.norm(cross_p, axis=1)[:, np.newaxis]  # normalize
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0, 0], dtype=bool)
-        data_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0, 0], dtype=bool)
-        normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 0], dtype=bool)
-        id_mask = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=bool)
+
+        # Vertex coords
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
         mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
         new_vertices[mask] = face_verts.flatten()
-        mask = np.tile(data_mask, array_length // len(data_mask) + 1)[:array_length]
-        new_vertices[mask] = np.array([0.0, 0.0, 0.0] * len(mesh.faces) * 3).flatten()
+
+        # Texel indices
+        new_vertices[3::9] = self.data_wrapper.texel_x
+        new_vertices[4::9] = self.data_wrapper.texel_y
+
+        # Normal vecs
+        normal_mask = np.array([0, 0, 0, 0, 0, 1, 1, 1, 0], dtype=bool)
         mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
         new_vertices[mask] = np.tile(cross_p, 3).flatten()
-        new_faces = np.arange(array_length // 10)
+        new_faces = np.arange(array_length // 9)
 
-        # Add face index to vertices as a default id
+        # Ids - Add face index to vertices as a default id
         faces_indices = np.arange(len(mesh.faces))
         face_indices_in_vertex_shape = np.repeat(faces_indices, 3)
-        mask = np.tile(id_mask, array_length // len(normal_mask) + 1)[:array_length]
-        new_vertices[mask] = face_indices_in_vertex_shape
+        new_vertices[8::9] = face_indices_in_vertex_shape
 
         # np.set_printoptions(precision=3, suppress=True)
         # pp(new_vertices.reshape(-1, 10))
-
-        # Insert data from restructured dict
-        new_vertices[3::10] = self.dict_data["slot0"]
-        new_vertices[4::10] = self.dict_data["slot1"]
-        new_vertices[5::10] = self.dict_data["slot2"]
 
         new_edges = np.zeros(len(mesh.faces) * 6)
         new_edges[0::6] = new_faces[0::3]
@@ -212,15 +162,15 @@ class MeshWrapper:
 
     def _move_mesh_to_origin(self, bb: BoundingBox):
         # [x, y, z, d1, d2, d3, nx, ny ,nz, id]
-        v_count = len(self.vertices) // 10
-        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0, 0]), axis=0)
+        v_count = len(self.vertices) // 9
+        recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
         recenter_vec = np.tile(recenter_vec, v_count)
         self.vertices += recenter_vec
 
     def get_vertex_positions(self):
         """Get the vertex positions of the mesh."""
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0, 0], dtype=bool)
-        v_count = len(self.vertices) // 10
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 9
         vertex_pos_mask = np.tile(vertex_mask, v_count)
         vertex_pos = self.vertices[vertex_pos_mask]
         return vertex_pos
@@ -247,16 +197,14 @@ class MeshWrapper:
 
         # Restructure the face ids to the vertex structure
         ids_in_vertex_shape = np.repeat(ids_in_faces_shape, 3)
-        n_vertices = len(self.vertices) // 10
+        n_vertices = len(self.vertices) // 9
 
         if len(ids_in_vertex_shape) != n_vertices:
             warning(f"Submesh ids and vertices missmatch")
         else:
             # Replace default id with submesh id in the vertices
             info("Replacing default face ids with submesh ids in the vertices")
-            id_mask = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=bool)
-            mask = np.tile(id_mask, len(self.vertices) // 10)[: len(self.vertices)]
-            self.vertices[mask] = ids_in_vertex_shape
+            self.vertices[8::9] = ids_in_vertex_shape
 
     def _create_default_submeshes(self, mesh):
         # The default structure is such that each face is represented as a submesh

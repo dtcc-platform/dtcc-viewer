@@ -6,6 +6,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
 from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.wrp_data import DataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
@@ -52,11 +53,15 @@ class GlLineString:
     project_loc: int  # Uniform location for projection matrix
     color_by_loc: int  # Uniform location for color by variable
     scale_loc: int  # Uniform location for scaling parameter
-    cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
+    cp_locs: list[int]  # Uniform location for clipping plane [x,y,z]
 
     VAO: int  # Vertex array object
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
+
+    data_texture: int  # Texture for data
+    data_wrapper: DataWrapper  # Data wrapper for the mesh
+    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
 
     def __init__(self, ls_data_obj: RoadNetworkWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
@@ -142,7 +147,10 @@ class GlLineString:
         self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
 
-    def update_color_caps(self):
+    def update_color_data(self) -> None:
+        pass
+
+    def update_color_caps(self) -> None:
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False

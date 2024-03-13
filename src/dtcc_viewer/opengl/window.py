@@ -201,6 +201,10 @@ class Window:
         self.model = GlModel(self.meshes, self.pcs, self.lss, self.txq, scene.bb)
         self.model.create_picking_fbo(self.action)
 
+        if not self.model.distribute_texture_slots():
+            warning("Texture slots distribution failed!")
+            return False
+
         return True
 
     def render(self, scene: Scene):

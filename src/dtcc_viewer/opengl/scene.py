@@ -1,4 +1,5 @@
 import numpy as np
+from OpenGL.GL import *
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
@@ -34,6 +35,8 @@ class Scene:
         List of RoadNetworkWrapper objects representing road networks to be drawn.
     bb : BoundingBox
         Bounding box for the entire collection of objects in the scene.
+    max_tex_size : int
+        Maximum texture size allowed by the graphics card.
     """
 
     obj_wrappers: list[ObjectWrapper]
@@ -47,6 +50,7 @@ class Scene:
     mrst_wrappers: list[MultiRasterWrapper]
 
     bb: BoundingBox
+    mts: int
 
     def __init__(self):
         self.obj_wrappers = []
@@ -60,17 +64,14 @@ class Scene:
         self.rst_wrappers = []
         self.mrst_wrappers = []
 
-    def add_mesh(
-        self,
-        name: str,
-        mesh: Mesh,
-        data: Any = None,
-        shading: Shading = Shading.wireshaded,
-    ):
+        self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
+        info("Max texture size: " + str(self.mts))
+
+    def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """Append a mesh with data and/or colors to the scene"""
         if mesh is not None:
             info(f"Mesh called - {name} - added to scene")
-            mesh_w = MeshWrapper(name=name, mesh=mesh, data=data, shading=shading)
+            mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts, data=data)
             self.mesh_wrappers.append(mesh_w)
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")

@@ -5,6 +5,7 @@ from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.wrp_data import DataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl.utils import BoundingBox
@@ -49,8 +50,8 @@ class GlPointCloud:
         Edge count for highest resolution for discs.
     """
 
-    vertices: np.ndarray  # Vertices for one single instance of the particle mesh geometry
-    face_indices: np.ndarray  # Face indices for one singel instance of particle mesh geometry
+    vertices: np.ndarray  # Vertices for single instance of the particle mesh geometry
+    face_indices: np.ndarray  # Indices for singel instance of particle mesh geometry
     guip: GuiParametersPC  # GuiParametersPC object for managing GUI parameters
     name: str  # Name of the point cloud
 
@@ -68,6 +69,10 @@ class GlPointCloud:
     p_size: float  # Particle size
     n_points: int  # Number of particles in point cloud
     n_sides: int  # Number of sides for the particle mesh instance geometry
+
+    data_texture: int  # Texture for data
+    data_wrapper: DataWrapper  # Data wrapper for the mesh
+    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
 
     def __init__(self, pc_wrapper: PointCloudWrapper):
         """Initialize the PointCloudGL object and set up rendering."""
@@ -130,7 +135,10 @@ class GlPointCloud:
         self._unbind_vao()
         self._unbind_shader()
 
-    def update_color_caps(self):
+    def update_color_data(self) -> None:
+        pass
+
+    def update_color_caps(self) -> None:
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False

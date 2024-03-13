@@ -231,6 +231,7 @@ class Gui:
                             is_selected = guip.data_idx
                             if imgui.selectable(item, is_selected)[0]:
                                 guip.update_caps = True
+                                guip.update_data_tex = True
                                 guip.data_idx = i
                                 guip.dict_slider_caps[key][0] = 0.0
                                 guip.dict_slider_caps[key][1] = 1.0

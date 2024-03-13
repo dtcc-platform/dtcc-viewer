@@ -142,6 +142,27 @@ class GlModel:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 
+    def distribute_texture_slots(self) -> None:
+        """Distribute texture slots to all the meshes, pointclouds, linestrings."""
+
+        texture_slots = self._get_texture_slots()
+        entity_count = len(self.meshes) + len(self.pointclouds) + len(self.linestrings)
+
+        if entity_count > len(texture_slots):
+            warning("Not enough texture slots for all rendable entities.")
+            return False
+
+        for i, mesh in enumerate(self.meshes):
+            mesh.texture_slot = texture_slots[i]
+
+        for i, pc in enumerate(self.pointclouds):
+            pc.texture_slot = texture_slots[i]
+
+        for i, rn in enumerate(self.linestrings):
+            rn.texture_slot = texture_slots[i]
+
+        return True
+
     def _create_debug_quad(self) -> None:
         tex_min = 0
         tex_max = 1
@@ -362,6 +383,7 @@ class GlModel:
 
         self._update_light_position()
         self._update_color_caps()
+        self._update_color_data()
 
     def _render_meshes(self, action: Action, gguip: GuiParameters) -> None:
         if self.guip.shading == Shading.wireframe:
@@ -499,6 +521,16 @@ class GlModel:
         for ls in self.linestrings:
             ls.update_color_caps()
 
+    def _update_color_data(self):
+        for mesh in self.meshes:
+            mesh.update_color_data()
+
+        for pc in self.pointclouds:
+            pc.update_color_data()
+
+        for ls in self.linestrings:
+            ls.update_color_data()
+
     def _find_object_from_id(self, id):
         self.guip.picked_uuid = None
         for mesh in self.meshes:
@@ -529,3 +561,26 @@ class GlModel:
             self.guip.picked_metadata = None
             self.guip.picked_cp = None
             self.guip.picked_size = None
+
+    def _get_texture_slots(self):
+
+        texture_slots = [
+            GL_TEXTURE0,
+            GL_TEXTURE1,
+            GL_TEXTURE2,
+            GL_TEXTURE3,
+            GL_TEXTURE4,
+            GL_TEXTURE5,
+            GL_TEXTURE6,
+            GL_TEXTURE7,
+            GL_TEXTURE8,
+            GL_TEXTURE9,
+            GL_TEXTURE10,
+            GL_TEXTURE11,
+            GL_TEXTURE12,
+            GL_TEXTURE13,
+            GL_TEXTURE14,
+            GL_TEXTURE15,
+        ]
+
+        return texture_slots

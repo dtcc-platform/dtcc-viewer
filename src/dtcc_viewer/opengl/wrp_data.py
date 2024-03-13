@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from dtcc_viewer.logging import info, warning
+from dtcc_model import Mesh
 
 
 class DataWrapper:
@@ -11,63 +12,83 @@ class DataWrapper:
     as 2d textures.
     """
 
-    data: np.ndarray  # Data in a 2d array to be mapped to a texture
-    texel_ix: np.ndarray  # Texel indices for x
-    texel_iy: np.ndarray  # Texel indices for y
+    data_as_mat: list[np.ndarray]  # Data in a 2d array to be mapped to a texture
+    data_mat_dict: dict  # Dictionary of data matrices
+    texel_x: np.ndarray  # Texel indices for x
+    texel_y: np.ndarray  # Texel indices for y
+    row_count: int  # Number of rows in the data
+    col_count: int  # Number of columns in the data
+    v_count: int  # Number of vertices in the mesh
+    f_count: int  # Number of faces in the mesh
+    new_v_count: int  # Number of vertices in the restructured mesh
+    max_tex_size: int  # Max texture size
 
     def __init__(
         self,
-        data: np.ndarray,
-        max_tex_size: int,
-        v_count: int,
-        f_count: int,
+        mesh: Mesh,
+        mts: int,
     ) -> None:
 
-        # The number of vertices in the restructured mesh
-        new_v_count = f_count * 3
+        self.data_mat_dict = {}
+        self.max_tex_size = mts
+        self.v_count = len(mesh.vertices)
+        self.f_count = len(mesh.faces)
+        self.mesh = mesh
+        (self.row_count, self.col_count) = self._calc_matrix_format()
 
-        if not self._data_is_matching(data, v_count, f_count):
-            return
+        self._calc_texel_indices()
 
-        self._reformat_texture_data(data, max_tex_size)
-        self.get_texel_indices(max_tex_size, new_v_count)
+    def add_data(self, name: str, data: np.ndarray):
+        data_mat = self._process_data(data)
 
-    def _data_is_matching(self, data: np.ndarray, v_count: int, f_count: int):
+        if data_mat is not None:
+            self.data_mat_dict[name] = data_mat
+            info(f"Data called {name} was added to data dictionary.")
+        else:
+            warning(f"Data called {name} was not added to data dictionary.")
+
+    def get_keys(self) -> list[str]:
+        return list(self.data_mat_dict.keys())
+
+    def _calc_matrix_format(self):
+        nv_count = self.f_count * 3
+        row_count = math.ceil(nv_count / self.max_tex_size)
+        col_count = self.max_tex_size
+        return (row_count, col_count)
+
+    def _process_data(self, data: np.ndarray):
         """Check so the data count matches the vertex or face count."""
 
-        if len(data) != v_count and len(data) != f_count:
-            warning(f"Data count does not match vertex or face count")
-            return False
-        return True
-
-    def _reformat_texture_data(self, data: np.ndarray, max_tex_size: int):
-
-        d_count = len(data)
-
-        if d_count < max_tex_size:
-            data = np.reshape(data, (1, d_count))
+        if len(data) != self.v_count:  # TODO: Allow data to be associated with faces
+            warning(f"Data count does not match vertex or face count.")
+            return None
         else:
-            row_count = math.ceil(len(data) / max_tex_size)
-            new_data = np.zeros((row_count, max_tex_size))
-            new_data = new_data.flatten()
-            new_data[0:d_count] = data
-            data = np.reshape(new_data, (row_count, max_tex_size))
-            info(f"New data shape: {data.shape} for max texture size: {max_tex_size}")
+            data_res = data[self.mesh.faces.flatten()]  # Restructure the data
+            data_mat = self._reformat_data_for_texture(data_res)
+            return data_mat
 
-        self.data = data
+    def _reformat_data_for_texture(self, data: np.ndarray):
+        mts = self.max_tex_size
+        new_data = np.zeros((self.row_count, self.col_count))
+        new_data = new_data.flatten()
+        new_data[0 : len(data)] = data
+        new_data = np.reshape(new_data, (self.row_count, self.col_count))
+        new_data = np.array(new_data, dtype="float32")
+        info(f"New data shape: {new_data.shape} for max texture size: {mts}")
+        return new_data
 
-    def get_texel_indices(self, max_texture_size: int, new_v_count: int):
+    def _calc_texel_indices(self):
         # Set texture coordinates
-
-        if new_v_count < max_texture_size:
-            texel_indices_x = np.arange(0, new_v_count)
-            texel_indices_y = np.zeros(new_v_count)
+        nv_count = self.f_count * 3
+        print(nv_count)
+        if nv_count < self.max_tex_size:
+            texel_indices_x = np.arange(0, nv_count)
+            texel_indices_y = np.zeros(nv_count)
         else:
-            row_count = math.ceil(new_v_count / max_texture_size)
-            texel_indices_x = np.arange(0, max_texture_size)
-            texel_indices_x = np.tile(texel_indices_x, row_count)[:new_v_count]
-            texel_indices_y = np.arange(0, row_count)
-            texel_indices_y = np.repeat(texel_indices_y, max_texture_size)[:new_v_count]
+            texel_indices_x = np.arange(0, self.max_tex_size)
+            texel_indices_x = np.tile(texel_indices_x, self.row_count)[:nv_count]
+            texel_indices_y = np.arange(0, self.row_count)
+            texel_indices_y = np.repeat(texel_indices_y, self.max_tex_size)[:nv_count]
 
-        self.texel_ix = texel_indices_x
-        self.texel_iy = texel_indices_y
+        self.texel_x = texel_indices_x
+        self.texel_y = texel_indices_y
