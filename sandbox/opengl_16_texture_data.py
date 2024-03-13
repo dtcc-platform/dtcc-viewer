@@ -28,7 +28,7 @@ vertex_shader_normal = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
-layout(location = 1) in vec2 a_tex_coords;
+layout(location = 1) in vec2 a_tex_index;
 layout(location = 2) in vec3 a_normal;
 
 uniform mat4 model;
@@ -64,8 +64,10 @@ vec3 rainbow(float value)
 
 void main()
 {
-    vec4 data = texture(data_texture, a_tex_coords);
-
+    //vec4 data = texture(data_texture, a_tex_coords);
+    ivec2 texel_coords = ivec2(a_tex_index);
+    vec4 data = texelFetch(data_texture, texel_coords, 0);
+    
     gl_Position = project * view * model * vec4(a_position, 1.0);
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
     
@@ -229,20 +231,20 @@ max_texture_size = 16384  # glGetInteger(GL_MAX_TEXTURE_SIZE)
 print("Maximum texture size:", max_texture_size)
 
 if new_v_count < max_texture_size:
-    tex_coord_x = np.arange(0, new_v_count) / float(new_v_count - 1)
-    tex_coord_y = np.zeros(new_v_count)
+    tex_index_x = np.arange(0, new_v_count)
+    tex_index_y = np.zeros(new_v_count)
 else:
     row_count = math.ceil(new_v_count / max_texture_size)
-    tex_coord_x = np.arange(0, max_texture_size) / float(max_texture_size - 1)
-    tex_coord_x = np.tile(tex_coord_x, row_count)[:new_v_count]
-    tex_coord_y = np.arange(0, row_count) / float(row_count - 1)
-    tex_coord_y = np.repeat(tex_coord_y, max_texture_size)[:new_v_count]
+    tex_index_x = np.arange(0, max_texture_size)
+    tex_index_x = np.tile(tex_index_x, row_count)[:new_v_count]
+    tex_index_y = np.arange(0, row_count)
+    tex_index_y = np.repeat(tex_index_y, max_texture_size)[:new_v_count]
 
 mask = np.tile(text_mask_x, array_length // len(text_mask_x) + 1)[:array_length]
-new_vertices[mask] = tex_coord_x
+new_vertices[mask] = tex_index_x
 
 mask = np.tile(text_mask_y, array_length // len(text_mask_y) + 1)[:array_length]
-new_vertices[mask] = tex_coord_y
+new_vertices[mask] = tex_index_y
 
 
 # Set normals
@@ -269,14 +271,12 @@ data_1 = reformat_texture_data(data_1, max_texture_size)
 data_2 = reformat_texture_data(data_2, max_texture_size)
 data_3 = reformat_texture_data(data_3, max_texture_size)
 
-
 print(f"New data shape: {data_1.shape}")
-
 
 np.set_printoptions(precision=3, suppress=True)
 
 # for i, v in enumerate(debug_vertices):
-# pp(v[:5])
+#    pp(v[:5])
 
 print("Restructured mesh")
 print("Face count: " + str(f_count))
