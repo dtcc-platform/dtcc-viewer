@@ -3,7 +3,7 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, Submeshes
-from dtcc_viewer.opengl.wrp_data import DataWrapper
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
 from typing import Any
@@ -44,7 +44,7 @@ class MeshWrapper:
     bb_local: BoundingBox
     bb_global: BoundingBox = None
     submeshes: Submeshes = None
-    data_wrapper: DataWrapper = None
+    data_wrapper: MeshDataWrapper = None
 
     def __init__(
         self,
@@ -98,7 +98,7 @@ class MeshWrapper:
         # the vertices so that each face can have individual normals so that shading
         # can be computed correctly.
 
-        self.data_wrapper = DataWrapper(mesh, mts)
+        self.data_wrapper = MeshDataWrapper(mesh, mts)
 
         data_1 = mesh.vertices[:, 0]
         data_2 = mesh.vertices[:, 1]

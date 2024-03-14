@@ -1,11 +1,12 @@
 import math
 import pyrr
 import numpy as np
+import time
 from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl.interaction import Action
-from dtcc_viewer.opengl.wrp_data import DataWrapper
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PCDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl.utils import BoundingBox
@@ -71,7 +72,7 @@ class GlPointCloud:
     n_sides: int  # Number of sides for the particle mesh instance geometry
 
     data_texture: int  # Texture for data
-    data_wrapper: DataWrapper  # Data wrapper for the mesh
+    data_wrapper: PCDataWrapper  # Data wrapper for the mesh
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
     texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 
@@ -81,21 +82,24 @@ class GlPointCloud:
         self.p_size = pc_wrapper.size
         self.n_points = len(pc_wrapper.points) // 3
         self.transforms = pc_wrapper.points
-        self.data_dict = pc_wrapper.data_dict
         self.name = pc_wrapper.name
+        self.data_wrapper = pc_wrapper.data_wrapper
 
-        self.data = np.zeros((self.n_points, 3), dtype=np.float32)
-        self.data[:, 0] = self.data_dict["slot0"]
-        self.data[:, 1] = self.data_dict["slot1"]
-        self.data[:, 2] = self.data_dict["slot2"]
+        self.texels = np.zeros((self.n_points, 2), dtype="float32")
+        self.texels[:, 0] = self.data_wrapper.texel_x
+        self.texels[:, 1] = self.data_wrapper.texel_y
+        self.texels = np.array(self.texels, dtype="float32")
 
         self.uniform_locs = {}
 
-        self.guip = GuiParametersPC(pc_wrapper.name, self.data_dict)
+        data_mat_dict = self.data_wrapper.data_mat_dict
+        data_val_caps = self.data_wrapper.data_value_caps
+        self.guip = GuiParametersPC(pc_wrapper.name, data_mat_dict, data_val_caps)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
 
     def preprocess(self):
+        self._create_data_texture()
         self._create_single_instance()
         self._create_multiple_instances()
         self._create_shader()
@@ -105,6 +109,7 @@ class GlPointCloud:
 
         self._bind_vao()
         self._bind_shader()
+        self._bind_data_texture()
 
         proj = interaction.camera.get_perspective_matrix()
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
@@ -122,9 +127,9 @@ class GlPointCloud:
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color_pc))
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
-        glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
+        glUniform1i(self.uniform_locs["data_tex"], self.texture_int)
 
         sf = self.guip.pc_scale
         scale = pyrr.matrix44.create_from_scale([sf, sf, sf], dtype=np.float32)
@@ -136,14 +141,62 @@ class GlPointCloud:
 
         self._unbind_vao()
         self._unbind_shader()
+        self._unbind_data_texture()
 
     def update_color_data(self) -> None:
-        pass
+        if self.guip.update_data_tex:
+            self._update_data_texture()
+            self.guip.update_data_tex = False
 
     def update_color_caps(self) -> None:
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
+
+    def _update_data_texture(self):
+        index = self.guip.data_idx
+        key = self.data_wrapper.get_keys()[index]
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        data = self.data_wrapper.data_mat_dict[key]
+        tic = time.perf_counter()
+
+        self._bind_data_texture()
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
+        self._unbind_data_texture()
+
+        toc = time.perf_counter()
+        info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
+
+    def _create_data_texture(self) -> None:
+        """Create texture for data."""
+
+        self.data_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
+        # Configure texture filtering and wrapping options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        key = self.data_wrapper.get_keys()[0]
+        default_data = self.data_wrapper.data_mat_dict[key]
+
+        # Transfer data to the texture
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_R32F,
+            width,
+            height,
+            0,
+            GL_RED,
+            GL_FLOAT,
+            default_data,
+        )
 
     def _create_single_instance(self):
         """Create a single instance of particle mesh geometry."""
@@ -180,15 +233,7 @@ class GlPointCloud:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
 
     def _create_multiple_instances(self):
-        """Create multiple instances of a particle mesh geometry.
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Array containing the 3D coordinates of the points in the point cloud.
-        colors : np.ndarray
-            Array containing the RGB colors corresponding to each point.
-        """
+        """Create multiple instances of a particle mesh geometry."""
 
         self.transforms_VBO = glGenBuffers(1)
         size = self.transforms.nbytes
@@ -201,14 +246,15 @@ class GlPointCloud:
         # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).
         glVertexAttribDivisor(2, 1)
 
-        self.data_VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self.data_VBO)
-        glBufferData(GL_ARRAY_BUFFER, self.data.nbytes, self.data, GL_STATIC_DRAW)
+        self.texel_VBO = glGenBuffers(1)
+        size = self.texels.nbytes
+        glBindBuffer(GL_ARRAY_BUFFER, self.texel_VBO)
+        glBufferData(GL_ARRAY_BUFFER, size, self.texels, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(3)
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
 
-        # 3 is layout location, 1 means every instance will have it's own attribute (color in this case).
+        # 3 is layout location, 1 means every instance will have it's own attribute (texel incices in this case).
         glVertexAttribDivisor(3, 1)
 
     def _bind_vao(self) -> None:
@@ -249,14 +295,22 @@ class GlPointCloud:
         self.uniform_locs["clip_y"] = glGetUniformLocation(self.shader, "clip_y")
         self.uniform_locs["clip_z"] = glGetUniformLocation(self.shader, "clip_z")
         self.uniform_locs["cmap_idx"] = glGetUniformLocation(self.shader, "cmap_idx")
-        self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
         self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
         self.uniform_locs["color_inv"] = glGetUniformLocation(self.shader, "color_inv")
+        self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
     def _bind_shader(self) -> None:
         """Bind the shader program."""
         glUseProgram(self.shader)
+
+    def _bind_data_texture(self) -> None:
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
+    def _unbind_data_texture(self) -> None:
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
     def _unbind_shader(self) -> None:
         """Unbind the shader program."""

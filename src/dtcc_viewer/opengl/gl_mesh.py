@@ -11,7 +11,7 @@ from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import Submeshes
-from dtcc_viewer.opengl.wrp_data import DataWrapper
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 
 from dtcc_viewer.opengl.parameters import (
     GuiParameters,
@@ -107,7 +107,7 @@ class GlMesh:
     recieve_shadows: bool  # If the mesh should recieve shadows
 
     data_texture: int  # Texture for data
-    data_wrapper: DataWrapper  # Data wrapper for the mesh
+    data_wrapper: MeshDataWrapper  # Data wrapper for the mesh
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
     texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 

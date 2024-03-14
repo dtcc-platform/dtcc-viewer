@@ -6,7 +6,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
 from dtcc_viewer.opengl.interaction import Action
-from dtcc_viewer.opengl.wrp_data import DataWrapper
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
@@ -60,7 +60,7 @@ class GlLineString:
     EBO: int  # Element buffer object
 
     data_texture: int  # Texture for data
-    data_wrapper: DataWrapper  # Data wrapper for the mesh
+    data_wrapper: MeshDataWrapper  # Data wrapper for the mesh
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
     texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 

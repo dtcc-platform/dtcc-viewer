@@ -108,7 +108,7 @@ class Scene:
         """Append a pointcloud with data to color the scene"""
         if pc is not None:
             info(f"Point could called - {name} - added to scene")
-            pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data)
+            pc_w = PointCloudWrapper(name, pc, self.mts, size, data=data)
             self.pcs_wrappers.append(pc_w)
         else:
             warning(f"Point could called - {name} - is None and not added to scene")

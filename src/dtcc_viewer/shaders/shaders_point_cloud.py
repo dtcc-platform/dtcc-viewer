@@ -5,8 +5,8 @@ vertex_shader_pc = """
 
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec3 a_base_color;      //White in center, grey at border
-layout(location = 2) in vec3 a_offset;
-layout(location = 3) in vec3 a_idata;           //Data per instance
+layout(location = 2) in vec3 a_offset;          //Data per instance
+layout(location = 3) in vec2 a_texel;           //Data per instance
 
 uniform mat4 model;
 uniform mat4 project;
@@ -22,7 +22,8 @@ uniform float clip_z;
 uniform float data_min; 
 uniform float data_max;
 uniform int cmap_idx;
-uniform int data_idx;
+
+uniform sampler2D data_tex;
 
 $color_map_0
 $color_map_1
@@ -33,6 +34,10 @@ $color_map_4
 out vec3 v_color;
 void main()
 {   
+    ivec2 texel_coords = ivec2(a_texel);
+    vec4 data_from_texture = texelFetch(data_tex, texel_coords, 0);
+    float data = data_from_texture.r;
+
     vec4 clippingPlane1 = vec4(-1, 0, 0, clip_x);
 	vec4 clippingPlane2 = vec4(0, -1, 0, clip_y);
 	vec4 clippingPlane3 = vec4(0, 0, -1, clip_z);
@@ -56,23 +61,23 @@ void main()
 
         if(cmap_idx == 0)
         {
-            color_per_instance = rainbow(a_idata[data_idx]);
+            color_per_instance = rainbow(data);
         }
         else if(cmap_idx == 1)
         {
-            color_per_instance = inferno(a_idata[data_idx]);
+            color_per_instance = inferno(data);
         }
         else if(cmap_idx == 2)
         {
-            color_per_instance = black_body(a_idata[data_idx]);
+            color_per_instance = black_body(data);
         }
         else if(cmap_idx == 3)
         {
-            color_per_instance = turbo(a_idata[data_idx]);
+            color_per_instance = turbo(data);
         }
         else if(cmap_idx == 4)
         {
-            color_per_instance = viridis(a_idata[data_idx]);
+            color_per_instance = viridis(data);
         }
 
         if(color_inv == 1)

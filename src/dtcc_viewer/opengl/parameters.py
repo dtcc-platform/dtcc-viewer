@@ -97,17 +97,10 @@ class GuiParametersMesh:
         self.data_keys = list(dict_mat_data.keys())
         self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
         self.dict_value_caps = dict_val_caps
-        self.dict_has_data = dict.fromkeys(self.data_keys, False)
-        self.set_dict_has_data(dict_mat_data)
         self.calc_data_min_max()
 
     def get_current_data_name(self):
         return self.data_keys[self.data_idx]
-
-    def set_dict_has_data(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                self.dict_has_data[key] = True
 
     def calc_data_min_max(self):
         key = self.get_current_data_name()
@@ -147,7 +140,7 @@ class GuiParametersModel:
 class GuiParametersPC:
     """Class representing GUI parameters for point clouds."""
 
-    def __init__(self, name: str, dict_data: dict) -> None:
+    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         """Initialize the GuiParametersPC object."""
         self.name = name
         self.show = True
@@ -155,6 +148,7 @@ class GuiParametersPC:
         self.invert_cmap = False
         self.pc_scale = 1.0
         self.update_caps = False
+        self.update_data_tex = False
 
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
@@ -162,31 +156,20 @@ class GuiParametersPC:
         self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
-        self.data_keys = list(dict_data.keys())
+        self.data_keys = list(dict_mat_data.keys())
         self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
-        self.calc_dict_value_caps(dict_data)
+        self.dict_value_caps = dict_val_caps
         self.calc_data_min_max()
 
     def get_current_data_name(self):
         """Get the current color name."""
         return self.data_keys[self.data_idx]
 
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-            else:
-                self.dict_value_caps[key] = None
-
     def calc_data_min_max(self):
         key = self.get_current_data_name()
         min = self.dict_value_caps[key][0]
         max = self.dict_value_caps[key][1]
         dom = max - min
-
         lower_cap = self.dict_slider_caps[key][0]
         upper_cap = self.dict_slider_caps[key][1]
         self.data_min = min + dom * lower_cap
