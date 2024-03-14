@@ -12,8 +12,8 @@ class DataWrapper:
     as 2d textures.
     """
 
-    data_as_mat: list[np.ndarray]  # Data in a 2d array to be mapped to a texture
     data_mat_dict: dict  # Dictionary of data matrices
+    data_value_caps: dict  # Dictionary of data value caps
     texel_x: np.ndarray  # Texel indices for x
     texel_y: np.ndarray  # Texel indices for y
     row_count: int  # Number of rows in the data
@@ -30,6 +30,7 @@ class DataWrapper:
     ) -> None:
 
         self.data_mat_dict = {}
+        self.data_value_caps = {}
         self.max_tex_size = mts
         self.v_count = len(mesh.vertices)
         self.f_count = len(mesh.faces)
@@ -39,10 +40,11 @@ class DataWrapper:
         self._calc_texel_indices()
 
     def add_data(self, name: str, data: np.ndarray):
-        data_mat = self._process_data(data)
+        (data_mat, val_caps) = self._process_data(data)
 
-        if data_mat is not None:
+        if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
+            self.data_value_caps[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
         else:
             warning(f"Data called {name} was not added to data dictionary.")
@@ -61,11 +63,12 @@ class DataWrapper:
 
         if len(data) != self.v_count:  # TODO: Allow data to be associated with faces
             warning(f"Data count does not match vertex or face count.")
-            return None
+            return None, None
         else:
             data_res = data[self.mesh.faces.flatten()]  # Restructure the data
             data_mat = self._reformat_data_for_texture(data_res)
-            return data_mat
+            val_caps = (np.min(data_res), np.max(data_res))
+            return data_mat, val_caps
 
     def _reformat_data_for_texture(self, data: np.ndarray):
         mts = self.max_tex_size

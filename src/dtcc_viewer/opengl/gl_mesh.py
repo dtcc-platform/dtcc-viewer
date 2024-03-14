@@ -125,7 +125,8 @@ class GlMesh:
         self.n_faces = len(self.faces) // 3
 
         data_mat_dict = self.data_wrapper.data_mat_dict
-        self.guip = GuiParametersMesh(self.name, data_mat_dict)
+        data_val_caps = self.data_wrapper.data_value_caps
+        self.guip = GuiParametersMesh(self.name, data_mat_dict, data_val_caps)
 
         self.cast_shadows = True
         self.recieve_shadows = True

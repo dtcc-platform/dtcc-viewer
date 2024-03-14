@@ -77,7 +77,7 @@ class GuiParametersObj:
 class GuiParametersMesh:
     """Class representing GUI parameters for meshes."""
 
-    def __init__(self, name: str, dict_mat_data: dict) -> None:
+    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         """Initialize the GuiParametersMesh object."""
         self.name = name
         self.show = True
@@ -96,10 +96,9 @@ class GuiParametersMesh:
         self.data_max = 0  # Max value for color clamp
         self.data_keys = list(dict_mat_data.keys())
         self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
+        self.dict_value_caps = dict_val_caps
         self.dict_has_data = dict.fromkeys(self.data_keys, False)
         self.set_dict_has_data(dict_mat_data)
-        self.calc_dict_value_caps(dict_mat_data)
         self.calc_data_min_max()
 
     def get_current_data_name(self):
@@ -109,20 +108,6 @@ class GuiParametersMesh:
         for key in dict_data.keys():
             if dict_data[key] is not None:
                 self.dict_has_data[key] = True
-
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-                print(self.dict_value_caps[key])
-            else:
-                self.dict_value_caps[key] = None
-
-    def set_dict_value_caps(self, key: str, min: float, max: float):
-        if key in self.dict_value_caps:
-            self.dict_value_caps[key] = [min, max]
 
     def calc_data_min_max(self):
         key = self.get_current_data_name()
