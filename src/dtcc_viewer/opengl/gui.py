@@ -212,7 +212,6 @@ class Gui:
                                 guip.update_caps = True
                                 guip.cmap_idx = i
                                 guip.cmap_key = item
-                                print(guip.cmap_idx)
 
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                             if is_selected:

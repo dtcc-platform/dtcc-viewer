@@ -64,8 +64,12 @@ class Scene:
         self.rst_wrappers = []
         self.mrst_wrappers = []
 
+        print("2")
+
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         info("Max texture size: " + str(self.mts))
+
+        print("3")
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """Append a mesh with data and/or colors to the scene"""
@@ -80,7 +84,7 @@ class Scene:
         """Append a city with data and/or colors to the scene"""
         if city is not None:
             info(f"City called - {name} - added to scene")
-            city_w = CityWrapper(name=name, city=city)
+            city_w = CityWrapper(name=name, city=city, mts=self.mts)
             self.city_wrappers.append(city_w)
         else:
             warning(f"City called - {name} - is None and not added to scene")

@@ -81,6 +81,7 @@ class GlRaster:
         self.bb_local = raster_w.bb_local
         self.bb_global = raster_w.bb_global
 
+    def preprocess(self):
         self._get_max_texture_size()
         self._get_max_texture_slots()
         self._create_triangels()

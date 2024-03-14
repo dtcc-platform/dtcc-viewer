@@ -73,10 +73,12 @@ class CityWrapper:
             b_submeshes.offset_ids(offset)
 
         if t_mesh is not None:
-            self.terrain_mw = MeshWrapper("terrain", t_mesh, submeshes=t_submeshes)
+            name = "terrain"
+            self.terrain_mw = MeshWrapper(name, t_mesh, mts, submeshes=t_submeshes)
 
         if b_mesh is not None:
-            self.building_mw = MeshWrapper("buildings", b_mesh, submeshes=b_submeshes)
+            name = "buildings"
+            self.building_mw = MeshWrapper(name, b_mesh, mts, submeshes=b_submeshes)
 
         info("CityWrapper initialized")
 

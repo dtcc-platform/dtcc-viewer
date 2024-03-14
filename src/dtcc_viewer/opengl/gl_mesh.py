@@ -109,6 +109,7 @@ class GlMesh:
     data_texture: int  # Texture for data
     data_wrapper: DataWrapper  # Data wrapper for the mesh
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 
     def __init__(self, mesh_wrapper: MeshWrapper):
         """Initialize the MeshGL object with vertex, face, and edge information."""
@@ -138,6 +139,10 @@ class GlMesh:
         self.uloc_shdw = {}
         self.uloc_shmp = {}
 
+        self.texture_slot = None
+        self.texture_int = None
+
+    def preprocess(self):
         self._create_data_texture()
         self._create_lines()
         self._create_triangels()
@@ -155,9 +160,9 @@ class GlMesh:
             warning("Index out of bounds")
             return None
 
-        x = self.vertices[indices * 10 + 0]
-        y = self.vertices[indices * 10 + 1]
-        z = self.vertices[indices * 10 + 2]
+        x = self.vertices[indices * 9 + 0]
+        y = self.vertices[indices * 9 + 1]
+        z = self.vertices[indices * 9 + 2]
 
         avrg_pt = np.array([np.mean(x), np.mean(y), np.mean(z)])
         pts = np.column_stack((x, y, z))
@@ -461,12 +466,6 @@ class GlMesh:
         data = self.data_wrapper.data_mat_dict[key]
         tic = time.perf_counter()
 
-        print(index)
-        print(key)
-        print(width)
-        print(height)
-        print(data.shape)
-
         self._bind_data_texture()
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
         self._unbind_data_texture()
@@ -518,6 +517,7 @@ class GlMesh:
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_line["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_line["data_tex"], self.texture_int)
 
         self._lines_draw_call()
         self._unbind_shader()
@@ -550,6 +550,7 @@ class GlMesh:
         glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_ambi["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_ambi["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_ambi["data_tex"], self.texture_int)
 
         self.triangles_draw_call()
         self._unbind_shader()
@@ -584,6 +585,7 @@ class GlMesh:
         glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_diff["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_diff["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_diff["data_tex"], self.texture_int)
 
         view_pos = action.camera.position
         glUniform3fv(self.uloc_diff["view_pos"], 1, view_pos)
@@ -612,7 +614,7 @@ class GlMesh:
         self.render_lines(action, env, gguip, mguip, ws_pass=2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    def render_shadows_pass1(self, action: Action, env: Environment, lsm: np.ndarray):
+    def render_shadows_pass1(self, lsm: np.ndarray):
         glUseProgram(self.shader_shmp)
         glUniformMatrix4fv(self.uloc_shmp["lsm"], 1, GL_FALSE, lsm)
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -648,6 +650,7 @@ class GlMesh:
         glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_shdw["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_shdw["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_shdw["data_tex"], self.texture_int)
 
         # Set light uniforms
         glUniform3fv(self.uloc_shdw["view_pos"], 1, action.camera.position)

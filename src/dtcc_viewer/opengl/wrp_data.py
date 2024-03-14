@@ -80,7 +80,6 @@ class DataWrapper:
     def _calc_texel_indices(self):
         # Set texture coordinates
         nv_count = self.f_count * 3
-        print(nv_count)
         if nv_count < self.max_tex_size:
             texel_indices_x = np.arange(0, nv_count)
             texel_indices_y = np.zeros(nv_count)

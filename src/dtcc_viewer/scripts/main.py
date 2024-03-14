@@ -80,7 +80,10 @@ def multi_geometry_example_1():
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
     all_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.y)
 
+    window = Window(1200, 800)
     scene = Scene()
+
+    print("ascas")
 
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
@@ -90,7 +93,6 @@ def multi_geometry_example_1():
         data = mesh.vertices[:, Direction.y]
         scene.add_mesh("Mesh " + str(i), mesh, data)
 
-    window = Window(1200, 800)
     window.render(scene)
 
 
@@ -127,10 +129,10 @@ def linestring_example_1():
 
     linestrings = [linestring_1, linestring_2, linestring_3]
 
+    window = Window(1200, 800)
     scene = Scene()
     scene.add_linestrings("Linestrings", linestrings)
 
-    window = Window(1200, 800)
     window.render(scene)
 
 
@@ -274,14 +276,14 @@ if __name__ == "__main__":
     # pointcloud_example_1()
     # pointcloud_example_2()
     # mesh_example_2()
-    mesh_example_3()
+    # mesh_example_3()
     # multi_geometry_example_1()
     # roadnetwork_example_1()
     # roadnetwork_example_2()
     # building_example_2()
     # linestring_example_1()
     # mesh_example_1()
-    # city_example_1()
+    city_example_1()
     # building_example_1()
     # object_example_1()
     # object_example_2()

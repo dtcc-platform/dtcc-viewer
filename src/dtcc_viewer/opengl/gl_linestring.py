@@ -62,6 +62,7 @@ class GlLineString:
     data_texture: int  # Texture for data
     data_wrapper: DataWrapper  # Data wrapper for the mesh
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 
     def __init__(self, ls_data_obj: RoadNetworkWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
@@ -81,6 +82,7 @@ class GlLineString:
         self.bb_local = ls_data_obj.bb_local
         self.bb_global = ls_data_obj.bb_global
 
+    def preprocess(self):
         self._create_lines()
         self._create_shader()
 

@@ -75,6 +75,8 @@ class GlModel:
     shadow_border_color: np.ndarray  # color for the border of the shadow map
     lsm: np.ndarray  # Light space matrix for shadow map rendering
 
+    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+
     def __init__(
         self,
         msh: list[GlMesh],
@@ -96,6 +98,12 @@ class GlModel:
         self.uloc_dbpi = {}
         self.uloc_pick = {}
 
+    def preprocess(self):
+
+        if not self._distribute_texture_slots():
+            warning("Texture slots distribution failed!")
+            return False
+
         self._create_debug_quad()
         self._create_shadow_map()
         self._create_shader_picking()
@@ -103,7 +111,19 @@ class GlModel:
         self._create_shader_debug_picking()
         self._set_constats()
 
-        pass
+        for mesh in self.meshes:
+            mesh.preprocess()
+
+        for pc in self.pointclouds:
+            pc.preprocess()
+
+        for ls in self.linestrings:
+            ls.preprocess()
+
+        for txq in self.rasters:
+            txq.preprocess()
+
+        return True
 
     def _set_constats(self) -> None:
         """Set constant values like light position and color."""
@@ -142,24 +162,35 @@ class GlModel:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 
-    def distribute_texture_slots(self) -> None:
+    def _distribute_texture_slots(self) -> None:
         """Distribute texture slots to all the meshes, pointclouds, linestrings."""
 
         texture_slots = self._get_texture_slots()
         entity_count = len(self.meshes) + len(self.pointclouds) + len(self.linestrings)
 
-        if entity_count > len(texture_slots):
+        # The first slot GL_TEXTURE0 is reserved for the shadow map
+        self.texture_slot = texture_slots[0]
+
+        if entity_count > len(texture_slots) - 1:
             warning("Not enough texture slots for all rendable entities.")
             return False
 
-        for i, mesh in enumerate(self.meshes):
-            mesh.texture_slot = texture_slots[i]
+        next_index = 1
 
-        for i, pc in enumerate(self.pointclouds):
-            pc.texture_slot = texture_slots[i]
+        for mesh in self.meshes:
+            mesh.texture_slot = texture_slots[next_index]
+            mesh.texture_int = next_index
+            next_index += 1
 
-        for i, rn in enumerate(self.linestrings):
-            rn.texture_slot = texture_slots[i]
+        for pc in self.pointclouds:
+            pc.texture_slot = texture_slots[next_index]
+            pc.texture_int = next_index
+            next_index += 1
+
+        for ls in self.linestrings:
+            ls.texture_slot = texture_slots[next_index]
+            ls.texture_int = next_index
+            next_index += 1
 
         return True
 
@@ -235,6 +266,7 @@ class GlModel:
 
         # Creating a texture which will be used as the framebuffers depth buffer
         self.shadow_depth_map = glGenTextures(1)
+        glActiveTexture(self.texture_slot)
         glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
         self.shadow_map_resolution = 1024 * 8
         glTexImage2D(
@@ -468,13 +500,16 @@ class GlModel:
         glViewport(0, 0, self.shadow_map_resolution, self.shadow_map_resolution)
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_shadows)
 
+        # glActiveTexture(self.texture_slot) # GL_TEXTURE0
+        # glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
+
         # Only clearing depth buffer since there is no color attachement
         glClear(GL_DEPTH_BUFFER_BIT)
 
         for mesh in self.meshes:
             # In this pass, only meshes that should cast shadows are added.
             if mesh.guip.show and mesh.cast_shadows:
-                mesh.render_shadows_pass1(action, self.env, self.lsm)
+                mesh.render_shadows_pass1(self.lsm)
 
     def _render_shadows_pass2(self, action: Action, gguip: GuiParameters) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer."""

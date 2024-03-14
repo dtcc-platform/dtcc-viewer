@@ -199,11 +199,11 @@ class Window:
 
         # Create model from meshes
         self.model = GlModel(self.meshes, self.pcs, self.lss, self.txq, scene.bb)
-        self.model.create_picking_fbo(self.action)
 
-        if not self.model.distribute_texture_slots():
-            warning("Texture slots distribution failed!")
-            return False
+        if not self.model.preprocess():
+            warning("GLModel preprocessing failed!")
+
+        self.model.create_picking_fbo(self.action)
 
         return True
 
