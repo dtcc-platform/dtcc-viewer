@@ -166,16 +166,16 @@ def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    # city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
-    city_dhg.view()
+    # city_dhg.view()
     # city_rwy.view()
-    # city_nyc.view()
+    city_nyc.view()
 
 
 def building_example_1():
@@ -306,9 +306,9 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_1()
-    linestring_example_2()
+    # linestring_example_2()
     # mesh_example_1()
-    # city_example_1()
+    city_example_1()
     # building_example_1()
     # object_example_1()
     # object_example_2()
