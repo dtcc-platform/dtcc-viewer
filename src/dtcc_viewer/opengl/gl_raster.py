@@ -81,14 +81,15 @@ class GlRaster:
         self.bb_local = raster_w.bb_local
         self.bb_global = raster_w.bb_global
 
-    def preprocess(self):
         self._get_max_texture_size()
         self._get_max_texture_slots()
-        self._create_triangels()
-        self._create_texture()
-        self._create_shader()
 
-    def _create_triangels(self) -> None:
+    def preprocess(self):
+        self._create_textures()
+        self._create_geometry()
+        self._create_shaders()
+
+    def _create_geometry(self) -> None:
         """Set up vertex and element buffers for mesh rendering."""
         # ----------------- TRIANGLES for shaded display ------------------#
 
@@ -125,7 +126,7 @@ class GlRaster:
         info(f"Max texture slots: {n_slots}")
         info(f"Max texture slots: {n_slots_2}")
 
-    def _create_texture(self) -> None:
+    def _create_textures(self) -> None:
 
         if self.type == RasterType.Data:
             self._create_data_texture()
@@ -242,7 +243,7 @@ class GlRaster:
         # Unbind the texture
         glBindTexture(GL_TEXTURE_2D, 0)
 
-    def _create_shader(self) -> None:
+    def _create_shaders(self) -> None:
         """Create and compile the shader program."""
 
         if self.type == RasterType.Data:

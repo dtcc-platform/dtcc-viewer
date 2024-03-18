@@ -99,11 +99,9 @@ class GlPointCloud:
         self.bb_global = pc_wrapper.bb_global
 
     def preprocess(self):
-
-        self._create_data_texture()
-        self._create_single_instance()
-        self._create_multiple_instances()
-        self._create_shader()
+        self._create_textures()
+        self._create_geometry()
+        self._create_shaders()
 
     def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render the point cloud using provided interaction parameters."""
@@ -169,6 +167,10 @@ class GlPointCloud:
         toc = time.perf_counter()
         info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
 
+    def _create_textures(self) -> None:
+        """Create textures for data."""
+        self._create_data_texture()
+
     def _create_data_texture(self) -> None:
         """Create texture for data."""
 
@@ -198,6 +200,11 @@ class GlPointCloud:
             GL_FLOAT,
             default_data,
         )
+
+    def _create_geometry(self) -> None:
+        """Create the geometry for the point cloud."""
+        self._create_single_instance()
+        self._create_multiple_instances()
 
     def _create_single_instance(self):
         """Create a single instance of particle mesh geometry."""
@@ -266,7 +273,7 @@ class GlPointCloud:
         """Unbind the Vertex Array Object (VAO)."""
         glBindVertexArray(0)
 
-    def _create_shader(self) -> None:
+    def _create_shaders(self) -> None:
         """Create and compile the shader program."""
 
         vertex_shader = vertex_shader_pc
