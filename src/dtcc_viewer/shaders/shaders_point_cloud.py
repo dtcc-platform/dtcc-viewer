@@ -42,8 +42,6 @@ void main()
 	vec4 clippingPlane2 = vec4(0, -1, 0, clip_y);
 	vec4 clippingPlane3 = vec4(0, 0, -1, clip_z);
     
-    //vec4 world_pos = model * vec4(a_position, 1.0);
-    
     vec4 final_pos = (model * scale * vec4(a_position, 1.0)) + vec4(a_offset, 0.0);
     
     gl_ClipDistance[0] = dot(final_pos, clippingPlane1);

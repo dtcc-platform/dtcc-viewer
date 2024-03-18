@@ -68,7 +68,7 @@ class PointCloudWrapper:
         self.data_dict = {}
         self.n_points = len(pc.points)
         self.points = np.array(pc.points, dtype="float32").flatten()
-        self._restructure_data(pc, data)
+        self._append_data(pc, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -76,22 +76,25 @@ class PointCloudWrapper:
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 
-    def _restructure_data(self, pc: PointCloud, data: Any = None):
+    def _append_data(self, pc: PointCloud, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
         self.data_wrapper = PCDataWrapper(pc, self.mts)
+        results = []
 
-        data_1 = self.points[0::3]
-        data_2 = self.points[1::3]
-        data_3 = self.points[2::3]
+        if data is not None:
+            if type(data) == dict:
+                for key, value in data.items():
+                    success = self.data_wrapper.add_data(key, value)
+                    results.append(success)
+            elif type(data) == np.ndarray:
+                success = self.data_wrapper.add_data("Data", data)
+                results.append(success)
 
-        data_1 = np.array(data_1, dtype="float32")
-        data_2 = np.array(data_2, dtype="float32")
-        data_3 = np.array(data_3, dtype="float32")
-
-        self.data_wrapper.add_data("Vertex X", data_1)
-        self.data_wrapper.add_data("Vertex Y", data_2)
-        self.data_wrapper.add_data("Vertex Z", data_3)
+        if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex X", self.points[0::3])
+            self.data_wrapper.add_data("Vertex Y", self.points[1::3])
+            self.data_wrapper.add_data("Vertex Z", self.points[2::3])
 
     def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""

@@ -50,8 +50,6 @@ void main()
 
     gl_Position = project * view * world_pos;
 
-    //gl_Position = project * view * vec4(a_position, 1.0);
-    
     highp int id_int = int(a_id);
     if(picked_id == id_int)
     {

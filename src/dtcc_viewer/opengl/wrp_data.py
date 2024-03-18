@@ -94,20 +94,29 @@ class MeshDataWrapper(DataWrapper):
             self.data_mat_dict[name] = data_mat
             self.data_value_caps[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
+            return True
         else:
             warning(f"Data called {name} was not added to data dictionary.")
+            return False
 
     def _process_data(self, data: np.ndarray):
         """Check so the data count matches the vertex or face count."""
 
-        if len(data) != self.v_count:  # TODO: Allow data to be associated with faces
-            warning(f"Data count does not match vertex or face count.")
-            return None, None
-        else:
+        if len(data) == self.f_count:
+            face_indices = np.arange(0, len(self.mesh.faces))
+            face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
+            data_res = data[face_indices]
+            data_mat = self._reformat_data_for_texture(data_res)
+            val_caps = (np.min(data_res), np.max(data_res))
+            return data_mat, val_caps
+        elif len(data) == self.v_count:
             data_res = data[self.mesh.faces.flatten()]  # Restructure the data
             data_mat = self._reformat_data_for_texture(data_res)
             val_caps = (np.min(data_res), np.max(data_res))
             return data_mat, val_caps
+        else:
+            warning(f"Data count does not match vertex or face count.")
+            return None, None
 
 
 class PCDataWrapper(DataWrapper):
@@ -133,8 +142,10 @@ class PCDataWrapper(DataWrapper):
             self.data_mat_dict[name] = data_mat
             self.data_value_caps[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
+            return True
         else:
             warning(f"Data called {name} was not added to data dictionary.")
+            return False
 
     def _process_data(self, data: np.ndarray):
         """Check so the data count matches the vertex or face count."""
@@ -170,8 +181,10 @@ class LSDataWrapper(DataWrapper):
             self.data_mat_dict[name] = data_mat
             self.data_value_caps[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
+            return True
         else:
             warning(f"Data called {name} was not added to data dictionary.")
+            return False
 
     def _process_data(self, data: np.ndarray):
         """Check so the data count matches the vertex or face count."""

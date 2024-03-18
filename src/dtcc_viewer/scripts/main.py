@@ -30,7 +30,8 @@ from dtcc_viewer.opengl.bundle import Bundle
 def pointcloud_example_1():
     filename_csv = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(filename_csv)
-    pc.view()
+    data = pc.points[:, 0]
+    pc.view(data=data)
 
 
 def pointcloud_example_2():
@@ -125,13 +126,38 @@ def roadnetwork_example_2():
 def linestring_example_1():
     lss = []
 
-    for i in range(100):
-        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 200)
+    for i in range(20):
+        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 10)
         lss.append(ls)
+
+    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
 
     window = Window(1200, 800)
     scene = Scene()
-    scene.add_linestrings("Linestrings", lss)
+    scene.add_linestrings("Linestrings", lss, data=x_vals)
+
+    window.render(scene)
+
+
+def linestring_example_2():
+    lss = []
+
+    for i in range(100):
+        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 100)
+        lss.append(ls)
+
+    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
+    y_vals = np.array([pt[1] for ls in lss for pt in ls.coords])
+
+    data_dict = {}
+    data_dict["vertex_x"] = x_vals
+    data_dict["vertex_y"] = y_vals
+    data_dict["vertex_x2"] = x_vals * x_vals
+    data_dict["vertex_y2"] = y_vals * y_vals
+
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_linestrings("Linestrings", lss, data=data_dict)
 
     window.render(scene)
 
@@ -280,6 +306,7 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # building_example_2()
     linestring_example_1()
+    # linestring_example_2()
     # mesh_example_1()
     # city_example_1()
     # building_example_1()

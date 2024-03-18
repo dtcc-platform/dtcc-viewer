@@ -77,7 +77,7 @@ class MeshWrapper:
         self.data = []
         self.data_wrapper = None
 
-        self._restructure_data(mesh, mts, data)
+        self._append_data(mesh, mts, data)
         self._restructure_mesh(mesh)
 
         if self.submeshes is None:
@@ -91,7 +91,7 @@ class MeshWrapper:
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
-    def _restructure_data(self, mesh: Mesh, mts: int, data: np.ndarray = None):
+    def _append_data(self, mesh: Mesh, mts: int, data: Any = None):
         # Structure the data in the dict so that there are three data slots for each
         # vertex, and three uniqie vertces for each face. This is necessary in order
         # to enable to color each face individually. This structure is also needed for
@@ -100,17 +100,21 @@ class MeshWrapper:
 
         self.data_wrapper = MeshDataWrapper(mesh, mts)
 
-        data_1 = mesh.vertices[:, 0]
-        data_2 = mesh.vertices[:, 1]
-        data_3 = mesh.vertices[:, 2]
+        results = []
 
-        data_1 = np.array(data_1, dtype="float32")
-        data_2 = np.array(data_2, dtype="float32")
-        data_3 = np.array(data_3, dtype="float32")
+        if data is not None:
+            if type(data) == dict:
+                for key, value in data.items():
+                    success = self.data_wrapper.add_data(key, value)
+                    results.append(success)
+            elif type(data) == np.ndarray:
+                success = self.data_wrapper.add_data("Data", data)
+                results.append(success)
 
-        self.data_wrapper.add_data("Vertex X", data_1)
-        self.data_wrapper.add_data("Vertex Y", data_2)
-        self.data_wrapper.add_data("Vertex Z", data_3)
+        if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex X", mesh.vertices[:, 0])
+            self.data_wrapper.add_data("Vertex Y", mesh.vertices[:, 1])
+            self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
 
     def _restructure_mesh(self, mesh: Mesh):
         array_length = len(mesh.faces) * 3 * 9

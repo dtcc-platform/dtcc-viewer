@@ -52,7 +52,6 @@ void main()
 
     gl_Position = project * view * world_pos;
 
-    //gl_Position = project * view * model * vec4(a_position, 1.0);
     v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = a_normal;
 

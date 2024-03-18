@@ -54,7 +54,6 @@ void main()
 
     v_frag_pos = vec3(world_pos);
 
-    //v_frag_pos = vec3(model * vec4(a_position, 1.0));
     v_normal = transpose(inverse(mat3(model))) * a_normal;
     v_frag_pos_light_space = lsm * vec4(v_frag_pos, 1.0);
 
