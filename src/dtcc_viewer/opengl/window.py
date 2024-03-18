@@ -199,6 +199,10 @@ class Window:
 
         # Create model from meshes
         self.model = GlModel(self.meshes, self.pcs, self.lss, self.txq, scene.bb)
+
+        if not self.model.preprocess():
+            warning("GLModel preprocessing failed!")
+
         self.model.create_picking_fbo(self.action)
 
         return True

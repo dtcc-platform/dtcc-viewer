@@ -1,5 +1,6 @@
 import numpy as np
 import pyrr
+import time
 from pprint import pp
 from string import Template
 from OpenGL.GL import *
@@ -10,6 +11,7 @@ from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import Submeshes
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 
 from dtcc_viewer.opengl.parameters import (
     GuiParameters,
@@ -67,7 +69,9 @@ class GlMesh:
     EBO_edge: int  # OpenGL Element buffer object for wireframe edges
 
     guip: GuiParametersMesh  # Information used by the Gui
-    vertices: np.ndarray  # [n_vertices x 10] each row (x, y, z, r, g, b, nx, ny, nz, id)
+    vertices: (
+        np.ndarray
+    )  # [n_vertices x 10] each row (x, y, z, r, g, b, nx, ny, nz, id)
     faces: np.ndarray  # [n_faces x 3] each row has three vertex indices
     edges: np.ndarray  # [n_edges x 2] each row has
 
@@ -102,6 +106,11 @@ class GlMesh:
     cast_shadows: bool  # If the mesh should cast shadows
     recieve_shadows: bool  # If the mesh should recieve shadows
 
+    data_texture: int  # Texture for data
+    data_wrapper: MeshDataWrapper  # Data wrapper for the mesh
+    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
+
     def __init__(self, mesh_wrapper: MeshWrapper):
         """Initialize the MeshGL object with vertex, face, and edge information."""
 
@@ -110,12 +119,14 @@ class GlMesh:
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
         self.submeshes = mesh_wrapper.submeshes
+        self.data_wrapper = mesh_wrapper.data_wrapper
 
-        self.n_vertices = len(self.vertices) // 10
+        self.n_vertices = len(self.vertices) // 9
         self.n_faces = len(self.faces) // 3
 
-        self.dict_data = mesh_wrapper.dict_data
-        self.guip = GuiParametersMesh(self.name, mesh_wrapper.shading, self.dict_data)
+        data_mat_dict = self.data_wrapper.data_mat_dict
+        data_val_caps = self.data_wrapper.data_value_caps
+        self.guip = GuiParametersMesh(self.name, data_mat_dict, data_val_caps)
 
         self.cast_shadows = True
         self.recieve_shadows = True
@@ -129,6 +140,11 @@ class GlMesh:
         self.uloc_shdw = {}
         self.uloc_shmp = {}
 
+        self.texture_slot = None
+        self.texture_int = None
+
+    def preprocess(self):
+        self._create_data_texture()
         self._create_lines()
         self._create_triangels()
         self._create_shader_lines()
@@ -138,22 +154,52 @@ class GlMesh:
         self._create_shader_shadows()
 
     def get_vertex_ids(self):
-        return self.vertices[9::10]
+        return self.vertices[8::9]
 
     def get_average_vertex_position(self, indices):
         if np.max(indices) > self.n_vertices or np.min(indices) < 0:
             warning("Index out of bounds")
             return None
 
-        x = self.vertices[indices * 10 + 0]
-        y = self.vertices[indices * 10 + 1]
-        z = self.vertices[indices * 10 + 2]
+        x = self.vertices[indices * 9 + 0]
+        y = self.vertices[indices * 9 + 1]
+        z = self.vertices[indices * 9 + 2]
 
         avrg_pt = np.array([np.mean(x), np.mean(y), np.mean(z)])
         pts = np.column_stack((x, y, z))
         radius = np.max(np.linalg.norm(pts - avrg_pt, axis=1))
 
         return avrg_pt, radius
+
+    def _create_data_texture(self) -> None:
+        """Create texture for data."""
+
+        self.data_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
+        # Configure texture filtering and wrapping options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        key = self.data_wrapper.get_keys()[0]
+        default_data = self.data_wrapper.data_mat_dict[key]
+
+        # Transfer data to the texture
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_R32F,
+            width,
+            height,
+            0,
+            GL_RED,
+            GL_FLOAT,
+            default_data,
+        )
 
     def _create_lines(self) -> None:
         """Set up vertex and element buffers for wireframe rendering."""
@@ -175,11 +221,11 @@ class GlMesh:
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Data for color calculations
+        # Texel indices
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
         # Ignoring normals and id's
 
@@ -207,19 +253,19 @@ class GlMesh:
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Data for color calculations
+        # Texel indices for texture sampling
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
         # Normals
         glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(24))
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(20))
 
         # Id for clickability
         glEnableVertexAttribArray(3)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 40, ctypes.c_void_p(36))
+        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(32))
 
         glBindVertexArray(0)
 
@@ -258,6 +304,7 @@ class GlMesh:
         self.uloc_line["data_idx"] = glGetUniformLocation(self.shader_line, "data_idx")
         self.uloc_line["data_min"] = glGetUniformLocation(self.shader_line, "data_min")
         self.uloc_line["data_max"] = glGetUniformLocation(self.shader_line, "data_max")
+        self.uloc_line["data_tex"] = glGetUniformLocation(self.shader_line, "data_tex")
 
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
@@ -295,6 +342,7 @@ class GlMesh:
         self.uloc_ambi["data_idx"] = glGetUniformLocation(self.shader_ambi, "data_idx")
         self.uloc_ambi["data_min"] = glGetUniformLocation(self.shader_ambi, "data_min")
         self.uloc_ambi["data_max"] = glGetUniformLocation(self.shader_ambi, "data_max")
+        self.uloc_ambi["data_tex"] = glGetUniformLocation(self.shader_ambi, "data_tex")
         self.uloc_ambi["picked_id"] = glGetUniformLocation(
             self.shader_ambi, "picked_id"
         )
@@ -344,6 +392,7 @@ class GlMesh:
         self.uloc_diff["data_idx"] = glGetUniformLocation(self.shader_diff, "data_idx")
         self.uloc_diff["data_min"] = glGetUniformLocation(self.shader_diff, "data_min")
         self.uloc_diff["data_max"] = glGetUniformLocation(self.shader_diff, "data_max")
+        self.uloc_diff["data_tex"] = glGetUniformLocation(self.shader_diff, "data_tex")
         self.uloc_diff["picked_id"] = glGetUniformLocation(
             self.shader_diff, "picked_id"
         )
@@ -397,6 +446,7 @@ class GlMesh:
         self.uloc_shdw["data_idx"] = glGetUniformLocation(self.shader_shdw, "data_idx")
         self.uloc_shdw["data_min"] = glGetUniformLocation(self.shader_shdw, "data_min")
         self.uloc_shdw["data_max"] = glGetUniformLocation(self.shader_shdw, "data_max")
+        self.uloc_shdw["data_tex"] = glGetUniformLocation(self.shader_shdw, "data_tex")
         self.uloc_shdw["light_pos"] = glGetUniformLocation(
             self.shader_shdw, "light_pos"
         )
@@ -408,6 +458,26 @@ class GlMesh:
         self.uloc_shdw["picked_id"] = glGetUniformLocation(
             self.shader_shdw, "picked_id"
         )
+
+    def _update_data_texture(self):
+        index = self.guip.data_idx
+        key = self.data_wrapper.get_keys()[index]
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        data = self.data_wrapper.data_mat_dict[key]
+        tic = time.perf_counter()
+
+        self._bind_data_texture()
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
+        self._unbind_data_texture()
+
+        toc = time.perf_counter()
+        info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
+
+    def update_color_data(self):
+        if self.guip.update_data_tex:
+            self._update_data_texture()
+            self.guip.update_data_tex = False
 
     def update_color_caps(self):
         if self.guip.update_caps:
@@ -430,6 +500,7 @@ class GlMesh:
             The Interaction object containing camera and user interaction information.
         """
         self._bind_shader_lines()
+        self._bind_data_texture()
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -441,15 +512,17 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        glUniform1i(self.uloc_line["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_line["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_line["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_line["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_line["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_line["data_tex"], self.texture_int)
 
         self._lines_draw_call()
         self._unbind_shader()
+        self._unbind_data_texture()
 
     def render_ambient(
         self,
@@ -459,6 +532,7 @@ class GlMesh:
     ) -> None:
         """Render the mesh with ambient shading."""
         self._bind_shader_ambient()
+        self._bind_data_texture()
 
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         view = action.camera.get_view_matrix()
@@ -470,16 +544,18 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip)
 
-        glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_ambi["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_ambi["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_ambi["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_ambi["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_ambi["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_ambi["data_tex"], self.texture_int)
 
         self.triangles_draw_call()
         self._unbind_shader()
+        self._unbind_data_texture()
 
     def render_diffuse(
         self,
@@ -491,6 +567,7 @@ class GlMesh:
     ):
         """Render the mesh with diffuse shading."""
         self._bind_shader_diffuse()
+        self._bind_data_texture()
 
         # MVP calcs
         move = action.camera.get_move_matrix()
@@ -502,13 +579,14 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        glUniform1i(self.uloc_diff["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_diff["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_diff["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_diff["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_diff["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_diff["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_diff["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_diff["data_tex"], self.texture_int)
 
         view_pos = action.camera.position
         glUniform3fv(self.uloc_diff["view_pos"], 1, view_pos)
@@ -519,6 +597,7 @@ class GlMesh:
 
         self.triangles_draw_call()
         self._unbind_shader()
+        self._unbind_data_texture()
 
     def render_wireshaded(
         self,
@@ -536,7 +615,7 @@ class GlMesh:
         self.render_lines(action, env, gguip, mguip, ws_pass=2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    def render_shadows_pass1(self, action: Action, env: Environment, lsm: np.ndarray):
+    def render_shadows_pass1(self, lsm: np.ndarray):
         glUseProgram(self.shader_shmp)
         glUniformMatrix4fv(self.uloc_shmp["lsm"], 1, GL_FALSE, lsm)
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -552,7 +631,8 @@ class GlMesh:
         lsm: np.ndarray,
     ) -> None:
         # Setup uniforms for rendering with shadows
-        glUseProgram(self.shader_shdw)
+        self._bind_shader_shadows()
+        self._bind_data_texture()
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -564,13 +644,14 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip)
 
-        glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_shdw["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_shdw["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_shdw["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_shdw["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_shdw["picked_id"], action.picked_id)
+        glUniform1i(self.uloc_shdw["data_tex"], self.texture_int)
 
         # Set light uniforms
         glUniform3fv(self.uloc_shdw["view_pos"], 1, action.camera.position)
@@ -581,7 +662,8 @@ class GlMesh:
         glUniformMatrix4fv(self.uloc_shdw["lsm"], 1, GL_FALSE, lsm)
 
         self.triangles_draw_call()
-        glUseProgram(0)
+        self._unbind_shader()
+        self._unbind_data_texture()
 
     def triangles_draw_call(self):
         """Bind the vertex array object and calling draw function for triangles"""
@@ -595,6 +677,11 @@ class GlMesh:
         glDrawElements(GL_LINES, len(self.edges), GL_UNSIGNED_INT, None)
         self._unbind_vao()
 
+    def _bind_data_texture(self):
+        """Bind the data texture."""
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
     def _bind_vao_triangels(self) -> None:
         """Bind the vertex array object for triangle rendering."""
         glBindVertexArray(self.VAO_triangels)
@@ -602,6 +689,11 @@ class GlMesh:
     def _bind_vao_lines(self) -> None:
         """Bind the vertex array object for wireframe rendering."""
         glBindVertexArray(self.VAO_edge)
+
+    def _unbind_data_texture(self):
+        """Unbind the currently bound data texture."""
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
     def _unbind_vao(self) -> None:
         """Unbind the currently bound vertex array object."""

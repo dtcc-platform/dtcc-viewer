@@ -4,6 +4,7 @@ from dtcc_viewer.opengl.utils import invert_color
 from dtcc_viewer.opengl.utils import Shading, RasterType
 from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.logging import info, warning
+from abc import ABC, abstractmethod
 
 
 class GuiParameters:
@@ -41,11 +42,7 @@ class GuiParameters:
         self.fps = 0
 
     def calc_fps(self):
-        """Perform FPS calculations.
-
-        This method calculates the frames per second (FPS) for the rendering loop.
-        It updates the FPS count and prints the results if specified.
-        """
+        """Perform FPS calculations for the rendering loop."""
 
         new_time = glfw.get_time()
         time_passed = new_time - self.time
@@ -57,82 +54,6 @@ class GuiParameters:
             self.time_acum = 0
             self.fps = self.fps_counter
             self.fps_counter = 0
-
-
-class GuiParametersObj:
-    cmap_idx: int
-    cmap_key: str
-
-    data_idx: int
-    data_min: float
-    data_max: float
-    data_keys: list
-    dict_slider_caps: dict
-    dict_value_caps: dict
-
-    def __init__(self) -> None:
-        pass
-
-
-class GuiParametersMesh:
-    """Class representing GUI parameters for meshes."""
-
-    def __init__(self, name: str, shading: Shading, dict_data: dict) -> None:
-        """Initialize the GuiParametersMesh object."""
-        self.name = name
-        self.show = True
-        self.invert_cmap = False
-        self.color_mesh = True
-        self.animate_light = False
-        self.lower_cap = 0.0
-        self.upper_cap = 1.0
-        self.update_caps = False
-
-        self.cmap_idx = 0
-        self.cmap_key = list(shader_cmaps.keys())[0]
-
-        self.data_idx = 0
-        self.data_min = 0  # Min value for color clamp
-        self.data_max = 0  # Max value for color clamp
-        self.data_keys = list(dict_data.keys())
-        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
-        self.dict_has_data = dict.fromkeys(self.data_keys, False)
-        self.set_dict_has_data(dict_data)
-        self.calc_dict_value_caps(dict_data)
-        self.calc_data_min_max()
-
-    def get_current_data_name(self):
-        return self.data_keys[self.data_idx]
-
-    def set_dict_has_data(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                self.dict_has_data[key] = True
-
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-            else:
-                self.dict_value_caps[key] = None
-
-    def set_dict_value_caps(self, key: str, min: float, max: float):
-        if key in self.dict_value_caps:
-            self.dict_value_caps[key] = [min, max]
-
-    def calc_data_min_max(self):
-        key = self.get_current_data_name()
-        min = self.dict_value_caps[key][0]
-        max = self.dict_value_caps[key][1]
-        dom = max - min
-
-        lower_cap = self.dict_slider_caps[key][0]
-        upper_cap = self.dict_slider_caps[key][1]
-        self.data_min = min + dom * lower_cap
-        self.data_max = min + dom * upper_cap
 
 
 class GuiParametersModel:
@@ -158,92 +79,42 @@ class GuiParametersModel:
         self.picked_size = 0.0
 
 
-class GuiParametersPC:
-    """Class representing GUI parameters for point clouds."""
+class GuiParametersObj(ABC):
+    """Common parameters for object representation in the GUI."""
 
-    def __init__(self, name: str, dict_data: dict) -> None:
-        """Initialize the GuiParametersPC object."""
-        self.name = name
-        self.show = True
-        self.color_pc = True
-        self.invert_cmap = False
-        self.pc_scale = 1.0
-        self.update_caps = False
+    name: str
+    show: bool
+    color: bool
+    invert_cmap: bool
+    update_caps: bool
+    update_data_tex: bool
+    cmap_idx: int
+    cmap_key: str
+    data_idx: int
+    data_min: float
+    data_max: float
+    data_keys: list
+    dict_slider_caps: dict
+    dict_value_caps: dict
 
-        self.cmap_idx = 0
-        self.cmap_key = list(shader_cmaps.keys())[0]
-
-        self.data_idx = 0
-        self.data_min = 0  # Min value for color clamp
-        self.data_max = 0  # Max value for color clamp
-        self.data_keys = list(dict_data.keys())
-        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
-        self.calc_dict_value_caps(dict_data)
-        self.calc_data_min_max()
-
-    def get_current_data_name(self):
-        """Get the current color name."""
-        return self.data_keys[self.data_idx]
-
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-            else:
-                self.dict_value_caps[key] = None
-
-    def calc_data_min_max(self):
-        key = self.get_current_data_name()
-        min = self.dict_value_caps[key][0]
-        max = self.dict_value_caps[key][1]
-        dom = max - min
-
-        lower_cap = self.dict_slider_caps[key][0]
-        upper_cap = self.dict_slider_caps[key][1]
-        self.data_min = min + dom * lower_cap
-        self.data_max = min + dom * upper_cap
-
-
-class GuiParametersLS:
-    """Class representing GUI parameters for road networks."""
-
-    def __init__(self, name: str, dict_data: dict) -> None:
-        """Initialize the GuiParametersRN object."""
+    def set_default_values(self, name: str, dict_mat_data: dict, dict_val_caps: dict):
         self.name = name
         self.show = True
         self.color = True
-        self.scale = 1.0
-
         self.invert_cmap = False
         self.update_caps = False
-
+        self.update_data_tex = False
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
-
         self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
-        self.data_keys = list(dict_data.keys())
+        self.data_keys = list(dict_mat_data.keys())
         self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict.fromkeys(self.data_keys, [])
-        self.calc_dict_value_caps(dict_data)
-        self.calc_data_min_max()
+        self.dict_value_caps = dict_val_caps
 
     def get_current_data_name(self):
-        """Get the current color name."""
         return self.data_keys[self.data_idx]
-
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-            else:
-                self.dict_value_caps[key] = None
 
     def calc_data_min_max(self):
         key = self.get_current_data_name()
@@ -255,6 +126,33 @@ class GuiParametersLS:
         upper_cap = self.dict_slider_caps[key][1]
         self.data_min = min + dom * lower_cap
         self.data_max = min + dom * upper_cap
+
+
+class GuiParametersMesh(GuiParametersObj):
+    """Class representing GUI parameters for meshes."""
+
+    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
+        self.set_default_values(name, dict_mat_data, dict_val_caps)
+        self.calc_data_min_max()
+
+
+class GuiParametersPC(GuiParametersObj):
+    """Class representing GUI parameters for point clouds."""
+
+    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
+        """Initialize the GuiParametersPC object."""
+        self.set_default_values(name, dict_mat_data, dict_val_caps)
+        self.calc_data_min_max()
+        self.point_scale = 1.0
+
+
+class GuiParametersLS(GuiParametersObj):
+    """Class representing GUI parameters for road networks."""
+
+    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
+        self.set_default_values(name, dict_mat_data, dict_val_caps)
+        self.calc_data_min_max()
+        self.line_scale = 1.0
 
 
 class GuiParametersDates:
@@ -306,36 +204,3 @@ class GuiParametersRaster:
 
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
-
-        self.data_idx = 0
-        self.data_min = 0  # Min value for color clamp
-        self.data_max = 1.0  # Max value for color clamp
-        # self.data_keys = list(dict_data.keys())
-        # self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        # self.dict_value_caps = dict.fromkeys(self.data_keys, [])
-        # self.calc_dict_value_caps(dict_data)
-        # self.calc_data_min_max()
-
-    def get_current_data_name(self):
-        """Get the current color name."""
-        return self.data_keys[self.data_index]
-
-    def calc_dict_value_caps(self, dict_data: dict):
-        for key in dict_data.keys():
-            if dict_data[key] is not None:
-                min = np.min(dict_data[key])
-                max = np.max(dict_data[key])
-                self.dict_value_caps[key] = [min, max]
-            else:
-                self.dict_value_caps[key] = None
-
-    def calc_data_min_max(self):
-        key = self.get_current_data_name()
-        min = self.dict_value_caps[key][0]
-        max = self.dict_value_caps[key][1]
-        dom = max - min
-
-        lower_cap = self.dict_slider_caps[key][0]
-        upper_cap = self.dict_slider_caps[key][1]
-        self.data_min = min + dom * lower_cap
-        self.data_max = min + dom * upper_cap

@@ -4,6 +4,7 @@ import numpy as np
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl.wrp_data import RNDataWrapper
 from typing import Any
 
 
@@ -30,6 +31,7 @@ class RoadNetworkWrapper:
         Global bounding box for the entire scene.
     """
 
+    data_wrapper: RNDataWrapper
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
     dict_data: dict

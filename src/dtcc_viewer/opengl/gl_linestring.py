@@ -1,19 +1,23 @@
 import math
 import glfw
 import numpy as np
+import time
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
 from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParameters
+from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+
 from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
-from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParameters
-from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 
 from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
@@ -52,32 +56,77 @@ class GlLineString:
     project_loc: int  # Uniform location for projection matrix
     color_by_loc: int  # Uniform location for color by variable
     scale_loc: int  # Uniform location for scaling parameter
-    cp_locs: [int]  # Uniform location for clipping plane [x,y,z]
+    cp_locs: list[int]  # Uniform location for clipping plane [x,y,z]
 
     VAO: int  # Vertex array object
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, ls_data_obj: RoadNetworkWrapper):
+    data_texture: int  # Texture for data
+    data_wrapper: LSDataWrapper  # Data wrapper for the mesh
+    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
+
+    def __init__(self, lss_wrapper: LineStringsWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
-        self.vertices = ls_data_obj.vertices
-        self.line_indices = ls_data_obj.indices
-        self.dict_data = ls_data_obj.dict_data
-        self.name = ls_data_obj.name
+        self.vertices = lss_wrapper.vertices
+        self.line_indices = lss_wrapper.indices
+        self.dict_data = lss_wrapper.dict_data
+        self.name = lss_wrapper.name
+        self.data_wrapper = lss_wrapper.data_wrapper
 
-        self.n_vertices = len(self.vertices) // 3
+        self.n_vertices = len(self.vertices) // 9
         self.n_lines = len(self.line_indices) // 2
 
         self.shader: int
         self.uniform_locs = {}
 
-        self.guip = GuiParametersLS(ls_data_obj.name, self.dict_data)
-        self.bb_local = ls_data_obj.bb_local
-        self.bb_global = ls_data_obj.bb_global
+        data_mat_dict = self.data_wrapper.data_mat_dict
+        data_val_caps = self.data_wrapper.data_value_caps
+        self.guip = GuiParametersLS(lss_wrapper.name, data_mat_dict, data_val_caps)
+        self.bb_local = lss_wrapper.bb_local
+        self.bb_global = lss_wrapper.bb_global
 
+        self.texture_slot = None
+        self.texture_int = None
+
+    def preprocess(self):
+        self._create_data_texture()
         self._create_lines()
         self._create_shader()
+
+    def _create_data_texture(self) -> None:
+        """Create texture for data."""
+
+        self.data_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
+        # Configure texture filtering and wrapping options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        key = self.data_wrapper.get_keys()[0]
+        default_data = self.data_wrapper.data_mat_dict[key]
+
+        # Transfer data to the texture
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_R32F,
+            width,
+            height,
+            0,
+            GL_RED,
+            GL_FLOAT,
+            default_data,
+        )
+
+        info(f"Data texture created for {self.name}.")
 
     def _create_lines(self) -> None:
         """Set up vertex and element buffers for line rendering."""
@@ -101,9 +150,9 @@ class GlLineString:
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-        # Data
+        # Texel indices
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
         glBindVertexArray(0)
 
@@ -141,8 +190,29 @@ class GlLineString:
         self.uniform_locs["data_idx"] = glGetUniformLocation(self.shader, "data_idx")
         self.uniform_locs["data_min"] = glGetUniformLocation(self.shader, "data_min")
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
+        self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
-    def update_color_caps(self):
+    def _update_data_texture(self):
+        index = self.guip.data_idx
+        key = self.data_wrapper.get_keys()[index]
+        width = self.data_wrapper.col_count
+        height = self.data_wrapper.row_count
+        data = self.data_wrapper.data_mat_dict[key]
+        tic = time.perf_counter()
+
+        self._bind_data_texture()
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
+        self._unbind_data_texture()
+
+        toc = time.perf_counter()
+        info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
+
+    def update_color_data(self) -> None:
+        if self.guip.update_data_tex:
+            self._update_data_texture()
+            self.guip.update_data_tex = False
+
+    def update_color_caps(self) -> None:
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
@@ -150,7 +220,9 @@ class GlLineString:
     def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render roads as lines in the road network."""
 
+        self._bind_vao()
         self._bind_shader()
+        self._bind_data_texture()
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -168,12 +240,13 @@ class GlLineString:
         glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
+        glUniform1i(self.uniform_locs["data_tex"], self.texture_int)
 
-        self._bind_vao()
         glDrawElements(GL_LINES, len(self.line_indices), GL_UNSIGNED_INT, None)
-        self._unbind_vao()
 
+        self._unbind_vao()
         self._unbind_shader()
+        self._unbind_data_texture()
 
     def _bind_shader(self) -> None:
         """Bind the shader program."""
@@ -182,6 +255,16 @@ class GlLineString:
     def _unbind_shader(self) -> None:
         """Unbind the shader program."""
         glUseProgram(0)
+
+    def _bind_data_texture(self):
+        """Bind the data texture."""
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, self.data_texture)
+
+    def _unbind_data_texture(self):
+        """Unbind the currently bound data texture."""
+        glActiveTexture(self.texture_slot)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
     def _bind_vao(self) -> None:
         """Bind the Vertex Array Object (VAO)."""

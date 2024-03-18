@@ -2,6 +2,7 @@ import numpy as np
 from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PCDataWrapper
 from dtcc_viewer.logging import info, warning
 from typing import Any
 
@@ -25,9 +26,8 @@ class PointCloudWrapper:
         Name of the point cloud data.
     """
 
+    data_wrapper: MeshDataWrapper
     points: np.ndarray  # [n_points x 3]
-    colors: np.ndarray  # [n_points x 3]
-    dict_colors: dict
     pc_avrg_pt: np.ndarray  # [1 x 3]
     size: float
     name: str
@@ -38,6 +38,7 @@ class PointCloudWrapper:
         self,
         name: str,
         pc: PointCloud,
+        mts: int,
         size: float = 0.2,
         data: Any = None,
     ) -> None:
@@ -63,10 +64,11 @@ class PointCloudWrapper:
 
         self.name = name
         self.size = size
+        self.mts = mts
         self.data_dict = {}
         self.n_points = len(pc.points)
         self.points = np.array(pc.points, dtype="float32").flatten()
-        self._restructure_data(data=data)
+        self._append_data(pc, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -74,53 +76,25 @@ class PointCloudWrapper:
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 
-    def _restructure_data(self, data: Any = None):
+    def _append_data(self, pc: PointCloud, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
-        new_dict = {
-            "slot0": np.zeros(self.n_points),
-            "slot1": np.zeros(self.n_points),
-            "slot2": np.zeros(self.n_points),
-        }
+        self.data_wrapper = PCDataWrapper(pc, self.mts)
+        results = []
 
-        if isinstance(data, dict):
-            info("Provided color data is dict.")
-            self.data_dict = self._restructure_data_dict(data, self.n_points, new_dict)
-        elif isinstance(data, np.ndarray):
-            info("Provided color data is np.ndarray.")
-            self.data_dict = self._restructure_data_array(data, self.n_points, new_dict)
-        else:
-            info("No data provided for point cloud -> coloring per z-value")
-            z = self.points[2::3]  # Color by height if no data is provided
-            new_dict["slot0"] = self.points[0::3]
-            new_dict["slot1"] = self.points[1::3]
-            new_dict["slot2"] = self.points[2::3]
-            self.data_dict = new_dict
+        if data is not None:
+            if type(data) == dict:
+                for key, value in data.items():
+                    success = self.data_wrapper.add_data(key, value)
+                    results.append(success)
+            elif type(data) == np.ndarray:
+                success = self.data_wrapper.add_data("Data", data)
+                results.append(success)
 
-    def _restructure_data_array(self, data: np.ndarray, n_points: int, new_dict: dict):
-        if self.n_points == len(data):
-            new_dict["slot0"] = data
-        else:
-            warning("Provided data array does not match the particle count!")
-        return new_dict
-
-    def _restructure_data_dict(self, data_dict: dict, n_points: int, new_dict: dict):
-        """Check the data dict to math point count."""
-        keys = data_dict.keys()
-        counter = 0
-        slots = len(new_dict)
-        for key in keys:
-            data = data_dict[key]
-            if len(data) == n_points:
-                if counter < slots:
-                    new_dict[f"slot{counter}"] = data
-                else:
-                    warning("Data in for key {key} doesn't fit available data slots.")
-                counter += 1
-            else:
-                warning(f"Dict data in for key {key} doesn't match point count:")
-
-        return new_dict
+        if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex X", self.points[0::3])
+            self.data_wrapper.add_data("Vertex Y", self.points[1::3])
+            self.data_wrapper.add_data("Vertex Z", self.points[2::3])
 
     def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""

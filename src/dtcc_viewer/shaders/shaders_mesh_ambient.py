@@ -4,7 +4,7 @@ vertex_shader_ambient = """
 # version 330 core
 
 layout(location = 0) in vec3 a_position; 
-layout(location = 1) in vec3 a_data;
+layout(location = 1) in vec2 a_texel;
 layout(location = 2) in vec3 a_normal;
 layout(location = 3) in float a_id;
 
@@ -23,6 +23,8 @@ uniform int cmap_idx;
 uniform int data_idx;
 uniform int picked_id;
 
+uniform sampler2D data_tex;
+
 $color_map_0
 $color_map_1
 $color_map_2
@@ -32,6 +34,10 @@ $color_map_4
 out vec3 v_color;
 void main()
 {
+    ivec2 texel_coords = ivec2(a_texel);
+    vec4 data_from_texture = texelFetch(data_tex, texel_coords, 0);
+    float data = data_from_texture.r;
+
     vec4 clippingPlane1 = vec4(-1, 0, 0, clip_x);
 	vec4 clippingPlane2 = vec4(0, -1, 0, clip_y);
 	vec4 clippingPlane3 = vec4(0, 0, -1, clip_z);
@@ -44,8 +50,6 @@ void main()
 
     gl_Position = project * view * world_pos;
 
-    //gl_Position = project * view * vec4(a_position, 1.0);
-    
     highp int id_int = int(a_id);
     if(picked_id == id_int)
     {
@@ -56,23 +60,23 @@ void main()
         // Calculate the colors using the shader colormaps
         if(cmap_idx == 0)
         {
-            v_color = rainbow(a_data[data_idx]);
+            v_color = rainbow(data);
         }
         else if(cmap_idx == 1)
         {
-            v_color = inferno(a_data[data_idx]);
+            v_color = inferno(data);
         }
         else if(cmap_idx == 2)
         {
-            v_color = black_body(a_data[data_idx]);
+            v_color = black_body(data);
         }
         else if(cmap_idx == 3)
         {
-            v_color = turbo(a_data[data_idx]);
+            v_color = turbo(data);
         }
         else if(cmap_idx == 4)
         {
-            v_color = viridis(a_data[data_idx]);
+            v_color = viridis(data);
         }
 
         if(color_inv == 1)

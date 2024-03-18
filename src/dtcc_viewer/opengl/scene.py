@@ -1,4 +1,5 @@
 import numpy as np
+from OpenGL.GL import *
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
@@ -34,6 +35,8 @@ class Scene:
         List of RoadNetworkWrapper objects representing road networks to be drawn.
     bb : BoundingBox
         Bounding box for the entire collection of objects in the scene.
+    max_tex_size : int
+        Maximum texture size allowed by the graphics card.
     """
 
     obj_wrappers: list[ObjectWrapper]
@@ -47,6 +50,7 @@ class Scene:
     mrst_wrappers: list[MultiRasterWrapper]
 
     bb: BoundingBox
+    mts: int
 
     def __init__(self):
         self.obj_wrappers = []
@@ -60,17 +64,14 @@ class Scene:
         self.rst_wrappers = []
         self.mrst_wrappers = []
 
-    def add_mesh(
-        self,
-        name: str,
-        mesh: Mesh,
-        data: Any = None,
-        shading: Shading = Shading.wireshaded,
-    ):
+        self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
+        info("Max texture size: " + str(self.mts))
+
+    def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """Append a mesh with data and/or colors to the scene"""
         if mesh is not None:
             info(f"Mesh called - {name} - added to scene")
-            mesh_w = MeshWrapper(name=name, mesh=mesh, data=data, shading=shading)
+            mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts, data=data)
             self.mesh_wrappers.append(mesh_w)
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
@@ -79,7 +80,7 @@ class Scene:
         """Append a city with data and/or colors to the scene"""
         if city is not None:
             info(f"City called - {name} - added to scene")
-            city_w = CityWrapper(name=name, city=city)
+            city_w = CityWrapper(name=name, city=city, mts=self.mts)
             self.city_wrappers.append(city_w)
         else:
             warning(f"City called - {name} - is None and not added to scene")
@@ -103,7 +104,7 @@ class Scene:
         """Append a pointcloud with data to color the scene"""
         if pc is not None:
             info(f"Point could called - {name} - added to scene")
-            pc_w = PointCloudWrapper(name=name, pc=pc, size=size, data=data)
+            pc_w = PointCloudWrapper(name, pc, self.mts, size, data=data)
             self.pcs_wrappers.append(pc_w)
         else:
             warning(f"Point could called - {name} - is None and not added to scene")
@@ -131,7 +132,7 @@ class Scene:
         """Append a line strings list to the scene"""
         if lss is not None:
             info(f"List of LineStrings called - {name} - added to scene")
-            lss_w = LineStringsWrapper(name=name, lss=lss, data=data)
+            lss_w = LineStringsWrapper(name, lss, self.mts, data)
             self.lss_wrappers.append(lss_w)
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
@@ -141,7 +142,7 @@ class Scene:
     def add_building(self, name: str, building: Building):
         if building is not None:
             info(f"Building called - {name} - added to scene")
-            bld_w = BuildingWrapper(name=name, building=building)
+            bld_w = BuildingWrapper(name, building, self.mts)
             self.bld_wrappers.append(bld_w)
         else:
             warning(f"Building called - {name} - is None and not added to scene")

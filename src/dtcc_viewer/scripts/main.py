@@ -30,7 +30,8 @@ from dtcc_viewer.opengl.bundle import Bundle
 def pointcloud_example_1():
     filename_csv = "../../../data/models/PointCloud_HQ.csv"
     pc = pointcloud.load(filename_csv)
-    pc.view()
+    data = pc.points[:, 0]
+    pc.view(data=data)
 
 
 def pointcloud_example_2():
@@ -54,13 +55,13 @@ def mesh_example_2():
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     data_array = face_mid_pts[:, 2]
-    mesh.view(data=data_array, shading=Shading.ambient)
+    mesh.view(data=data_array)
 
 
 def mesh_example_3():
     file = "../../../data/models/CitySurface.obj"
     mesh = meshes.load_mesh(file)
-    mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
+    # mesh = utils.get_sub_mesh([0.45, 0.55], [0.45, 0.55], mesh)
     face_mid_pts = calc_face_mid_points(mesh)
     data_dict = {}
     data_dict["vertex_x"] = mesh.vertices[:, 0]
@@ -74,13 +75,16 @@ def mesh_example_3():
 
 def multi_geometry_example_1():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
-    all_pcs = split_pc_in_stripes(4, pc, Direction.x)
+    all_pcs = split_pc_in_stripes(3, pc, Direction.x)
 
     mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    all_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.y)
+    all_meshes = utils.split_mesh_in_stripes(3, mesh_tri, face_mid_pts, Direction.y)
 
+    window = Window(1200, 800)
     scene = Scene()
+
+    print("ascas")
 
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
@@ -90,7 +94,6 @@ def multi_geometry_example_1():
         data = mesh.vertices[:, Direction.y]
         scene.add_mesh("Mesh " + str(i), mesh, data)
 
-    window = Window(1200, 800)
     window.render(scene)
 
 
@@ -121,16 +124,41 @@ def roadnetwork_example_2():
 
 
 def linestring_example_1():
-    linestring_1 = LineString([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 2, 0], [3, 1, 0]])
-    linestring_2 = LineString([[1, 2, 5], [1, 3, 0], [4, 6, 0], [8, 2, 0], [5, 6, 1]])
-    linestring_3 = LineString([[5, 2, 1], [0, 2, 1], [4, 2, 0], [7, 3, 0]])
+    lss = []
 
-    linestrings = [linestring_1, linestring_2, linestring_3]
+    for i in range(20):
+        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 10)
+        lss.append(ls)
 
-    scene = Scene()
-    scene.add_linestrings("Linestrings", linestrings)
+    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
 
     window = Window(1200, 800)
+    scene = Scene()
+    scene.add_linestrings("Linestrings", lss, data=x_vals)
+
+    window.render(scene)
+
+
+def linestring_example_2():
+    lss = []
+
+    for i in range(100):
+        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 100)
+        lss.append(ls)
+
+    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
+    y_vals = np.array([pt[1] for ls in lss for pt in ls.coords])
+
+    data_dict = {}
+    data_dict["vertex_x"] = x_vals
+    data_dict["vertex_y"] = y_vals
+    data_dict["vertex_x2"] = x_vals * x_vals
+    data_dict["vertex_y2"] = y_vals * y_vals
+
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_linestrings("Linestrings", lss, data=data_dict)
+
     window.render(scene)
 
 
@@ -276,12 +304,11 @@ if __name__ == "__main__":
     # mesh_example_2()
     # mesh_example_3()
     # multi_geometry_example_1()
-    # roadnetwork_example_1()
-    # roadnetwork_example_2()
     # building_example_2()
     # linestring_example_1()
+    linestring_example_2()
     # mesh_example_1()
-    city_example_1()
+    # city_example_1()
     # building_example_1()
     # object_example_1()
     # object_example_2()

@@ -22,8 +22,6 @@ class CityWrapper:
     ----------
     name : str
         The name of the city
-    shading : MeshShading
-        Shading setting for the mesh.
     bb_local : BoundingBox
         Bounding box for this mesh.
     bb_global: BoundingBox
@@ -39,14 +37,13 @@ class CityWrapper:
     """
 
     name: str
-    shading: Shading
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
     building_submeshes: Submeshes
     terrain_mw: MeshWrapper = None
     terrain_submeshes: Submeshes
 
-    def __init__(self, name: str, city: City) -> None:
+    def __init__(self, name: str, city: City, mts: int) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -55,11 +52,10 @@ class CityWrapper:
             The name of the mesh data.
         city : City
             City object from which to generate the mesh data to view.
-        shading : MeshShading, optional
-            Shading option (default is MeshShading.wireshaded).
+        mts : int
+            Max texture size for the OpenGL context.
         """
         self.name = name
-        self.shading = Shading.wireshaded  # Default shading
         self.dict_data = {}
 
         # Read the city model and generate the mesh geometry for buildings and terrain
@@ -72,10 +68,12 @@ class CityWrapper:
             b_submeshes.offset_ids(offset)
 
         if t_mesh is not None:
-            self.terrain_mw = MeshWrapper("terrain", t_mesh, submeshes=t_submeshes)
+            name = "terrain"
+            self.terrain_mw = MeshWrapper(name, t_mesh, mts, submeshes=t_submeshes)
 
         if b_mesh is not None:
-            self.building_mw = MeshWrapper("buildings", b_mesh, submeshes=b_submeshes)
+            name = "buildings"
+            self.building_mw = MeshWrapper(name, b_mesh, mts, submeshes=b_submeshes)
 
         info("CityWrapper initialized")
 
