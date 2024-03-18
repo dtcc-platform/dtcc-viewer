@@ -106,16 +106,6 @@ class LineStringsWrapper:
         self.vertices = np.array(vertices, dtype="float32")
         self.indices = np.array(indices, dtype="uint32")
 
-        debug_indices = np.reshape(self.indices, (-1, 2))
-        debug_vertices = np.reshape(self.vertices, (-1, 9))
-        np.set_printoptions(precision=3, suppress=True)
-
-        for v in debug_vertices:
-            info(f"Vertex: {v}")
-
-        for i in debug_indices:
-            info(f"Index: {i}")
-
     def _append_data(self, lss: list[LineString], data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
