@@ -145,13 +145,8 @@ class GlMesh:
 
     def preprocess(self):
         self._create_data_texture()
-        self._create_lines()
-        self._create_triangels()
-        self._create_shader_lines()
-        self._create_shader_ambient()
-        self._create_shader_diffuse()
-        self._create_shader_shadow_map()
-        self._create_shader_shadows()
+        self._create_geometry()
+        self._create_shaders()
 
     def get_vertex_ids(self):
         return self.vertices[8::9]
@@ -200,6 +195,11 @@ class GlMesh:
             GL_FLOAT,
             default_data,
         )
+
+    def _create_geometry(self) -> None:
+        """Create vertex and element buffers for the mesh."""
+        self._create_lines()
+        self._create_triangels()
 
     def _create_lines(self) -> None:
         """Set up vertex and element buffers for wireframe rendering."""
@@ -268,6 +268,13 @@ class GlMesh:
         glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(32))
 
         glBindVertexArray(0)
+
+    def _create_shaders(self) -> None:
+        self._create_shader_lines()
+        self._create_shader_ambient()
+        self._create_shader_diffuse()
+        self._create_shader_shadow_map()
+        self._create_shader_shadows()
 
     def _create_shader_lines(self) -> None:
         """Create shader for wireframe rendering."""

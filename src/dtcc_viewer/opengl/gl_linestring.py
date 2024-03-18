@@ -93,8 +93,8 @@ class GlLineString:
 
     def preprocess(self):
         self._create_data_texture()
-        self._create_lines()
-        self._create_shader()
+        self._create_geometry()
+        self._create_shaders()
 
     def _create_data_texture(self) -> None:
         """Create texture for data."""
@@ -128,7 +128,7 @@ class GlLineString:
 
         info(f"Data texture created for {self.name}.")
 
-    def _create_lines(self) -> None:
+    def _create_geometry(self) -> None:
         """Set up vertex and element buffers for line rendering."""
 
         self.VAO = glGenVertexArrays(1)
@@ -156,7 +156,7 @@ class GlLineString:
 
         glBindVertexArray(0)
 
-    def _create_shader(self) -> None:
+    def _create_shaders(self) -> None:
         """Create and compile the shader program."""
 
         self._bind_vao()
