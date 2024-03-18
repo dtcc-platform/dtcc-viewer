@@ -64,12 +64,8 @@ class Scene:
         self.rst_wrappers = []
         self.mrst_wrappers = []
 
-        print("2")
-
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         info("Max texture size: " + str(self.mts))
-
-        print("3")
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """Append a mesh with data and/or colors to the scene"""
@@ -136,7 +132,7 @@ class Scene:
         """Append a line strings list to the scene"""
         if lss is not None:
             info(f"List of LineStrings called - {name} - added to scene")
-            lss_w = LineStringsWrapper(name=name, lss=lss, data=data)
+            lss_w = LineStringsWrapper(name, lss, self.mts, data)
             self.lss_wrappers.append(lss_w)
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
@@ -146,7 +142,7 @@ class Scene:
     def add_building(self, name: str, building: Building):
         if building is not None:
             info(f"Building called - {name} - added to scene")
-            bld_w = BuildingWrapper(name=name, building=building)
+            bld_w = BuildingWrapper(name, building, self.mts)
             self.bld_wrappers.append(bld_w)
         else:
             warning(f"Building called - {name} - is None and not added to scene")

@@ -189,7 +189,7 @@ class Gui:
             imgui.pop_id()
             imgui.same_line()
             imgui.push_id("ColorMesh " + str(index))
-            [changed, guip.color_mesh] = imgui.checkbox("Color", guip.color_mesh)
+            [changed, guip.color] = imgui.checkbox("Color", guip.color)
             imgui.pop_id()
 
             imgui.push_id("InvertColors " + str(index))
@@ -279,7 +279,7 @@ class Gui:
             imgui.pop_id()
             imgui.same_line()
             imgui.push_id("Color pc " + str(index))
-            [changed, guip.color_pc] = imgui.checkbox("Color", guip.color_pc)
+            [changed, guip.color] = imgui.checkbox("Color", guip.color)
             imgui.pop_id()
 
             imgui.push_id("InvertColors " + str(index))
@@ -288,8 +288,8 @@ class Gui:
             imgui.pop_id()
 
             imgui.push_id("Color pc " + str(index))
-            [changed, guip.pc_scale] = imgui.slider_float(
-                "Scale factor", guip.pc_scale, 0, 10
+            [changed, guip.point_scale] = imgui.slider_float(
+                "Scale factor", guip.point_scale, 0, 10
             )
             imgui.pop_id()
 
@@ -410,6 +410,7 @@ class Gui:
                         is_selected = guip.data_idx
                         if imgui.selectable(item, is_selected)[0]:
                             guip.update_caps = True
+                            guip.update_data_tex = True
                             guip.data_idx = i
                             # For selection of new data, reset the slider caps
                             guip.dict_slider_caps[key][0] = 0.0

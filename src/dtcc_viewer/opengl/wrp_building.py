@@ -21,8 +21,6 @@ class BuildingWrapper:
     ----------
     name : str
         The name of the city
-    shading : MeshShading
-        Shading setting for the mesh.
     bb_global: BoundingBox
         Bounding box all objects in the entire scene.
     mesh_wrapper : MeshWrapper
@@ -30,17 +28,11 @@ class BuildingWrapper:
     """
 
     name: str
-    shading: Shading
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
     building_submeshes: Submeshes
 
-    def __init__(
-        self,
-        name: str,
-        building: Building,
-        shading: Shading = Shading.wireshaded,
-    ) -> None:
+    def __init__(self, name: str, building: Building, mts: int) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -49,16 +41,15 @@ class BuildingWrapper:
             The name of the mesh data.
         city : City
             City object from which to generate the mesh data to view.
-        shading : MeshShading, optional
-            Shading option (default is MeshShading.wireshaded).
+        mts : int
+            Max texture size for the OpenGL context.
         """
         self.name = name
-        self.shading = shading
         self.dict_data = {}
 
         mesh = self._get_building_mesh(building)
 
-        self.building_mw = MeshWrapper(name, mesh)
+        self.building_mw = MeshWrapper(name, mesh, mts)
 
     def _get_building_mesh(self, building: Building):
         flat_geom = self.get_highest_lod_building(building)

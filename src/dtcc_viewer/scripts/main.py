@@ -54,7 +54,7 @@ def mesh_example_2():
     mesh = meshes.load_mesh(file)
     face_mid_pts = utils.calc_face_mid_points(mesh)
     data_array = face_mid_pts[:, 2]
-    mesh.view(data=data_array, shading=Shading.ambient)
+    mesh.view(data=data_array)
 
 
 def mesh_example_3():
@@ -74,11 +74,11 @@ def mesh_example_3():
 
 def multi_geometry_example_1():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
-    all_pcs = split_pc_in_stripes(4, pc, Direction.x)
+    all_pcs = split_pc_in_stripes(3, pc, Direction.x)
 
     mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
     face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    all_meshes = utils.split_mesh_in_stripes(4, mesh_tri, face_mid_pts, Direction.y)
+    all_meshes = utils.split_mesh_in_stripes(3, mesh_tri, face_mid_pts, Direction.y)
 
     window = Window(1200, 800)
     scene = Scene()
@@ -123,15 +123,15 @@ def roadnetwork_example_2():
 
 
 def linestring_example_1():
-    linestring_1 = LineString([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 2, 0], [3, 1, 0]])
-    linestring_2 = LineString([[1, 2, 5], [1, 3, 0], [4, 6, 0], [8, 2, 0], [5, 6, 1]])
-    linestring_3 = LineString([[5, 2, 1], [0, 2, 1], [4, 2, 0], [7, 3, 0]])
+    lss = []
 
-    linestrings = [linestring_1, linestring_2, linestring_3]
+    for i in range(100):
+        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 200)
+        lss.append(ls)
 
     window = Window(1200, 800)
     scene = Scene()
-    scene.add_linestrings("Linestrings", linestrings)
+    scene.add_linestrings("Linestrings", lss)
 
     window.render(scene)
 
@@ -273,15 +273,13 @@ if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
     set_log_level("INFO")
-    pointcloud_example_1()
+    # pointcloud_example_1()
     # pointcloud_example_2()
     # mesh_example_2()
     # mesh_example_3()
     # multi_geometry_example_1()
-    # roadnetwork_example_1()
-    # roadnetwork_example_2()
     # building_example_2()
-    # linestring_example_1()
+    linestring_example_1()
     # mesh_example_1()
     # city_example_1()
     # building_example_1()

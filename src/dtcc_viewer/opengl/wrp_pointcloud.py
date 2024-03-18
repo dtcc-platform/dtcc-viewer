@@ -28,8 +28,6 @@ class PointCloudWrapper:
 
     data_wrapper: MeshDataWrapper
     points: np.ndarray  # [n_points x 3]
-    colors: np.ndarray  # [n_points x 3]
-    data_dict: dict
     pc_avrg_pt: np.ndarray  # [1 x 3]
     size: float
     name: str

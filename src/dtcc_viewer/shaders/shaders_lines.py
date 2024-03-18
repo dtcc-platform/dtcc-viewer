@@ -48,8 +48,6 @@ void main()
 
     gl_Position = project * view * world_pos;
     
-    //gl_Position = project * view * model * vec4(a_position, 1.0);
-    
     if(color_by == 1)
     {
         //v_color = a_color;

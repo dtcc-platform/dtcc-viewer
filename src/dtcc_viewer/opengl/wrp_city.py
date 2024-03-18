@@ -23,8 +23,6 @@ class CityWrapper:
     ----------
     name : str
         The name of the city
-    shading : MeshShading
-        Shading setting for the mesh.
     bb_local : BoundingBox
         Bounding box for this mesh.
     bb_global: BoundingBox
@@ -40,7 +38,6 @@ class CityWrapper:
     """
 
     name: str
-    shading: Shading
     bb_global: BoundingBox = None
     building_mw: MeshWrapper = None
     building_submeshes: Submeshes
@@ -60,7 +57,6 @@ class CityWrapper:
             Max texture size for the OpenGL context.
         """
         self.name = name
-        self.shading = Shading.wireshaded  # Default shading
         self.dict_data = {}
 
         # Read the city model and generate the mesh geometry for buildings and terrain

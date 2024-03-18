@@ -512,7 +512,7 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        glUniform1i(self.uloc_line["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_line["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_line["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_line["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
@@ -544,7 +544,7 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip)
 
-        glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_ambi["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_ambi["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_ambi["data_idx"], self.guip.data_idx)
@@ -579,7 +579,7 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip, ws_pass)
 
-        glUniform1i(self.uloc_diff["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_diff["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_diff["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_diff["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_diff["data_idx"], self.guip.data_idx)
@@ -644,7 +644,7 @@ class GlMesh:
 
         self._set_clipping_uniforms(gguip, mguip)
 
-        glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color_mesh))
+        glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_shdw["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uloc_shdw["cmap_idx"], self.guip.cmap_idx)
         glUniform1i(self.uloc_shdw["data_idx"], self.guip.data_idx)

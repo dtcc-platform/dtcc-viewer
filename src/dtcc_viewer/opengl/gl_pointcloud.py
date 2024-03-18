@@ -99,6 +99,7 @@ class GlPointCloud:
         self.bb_global = pc_wrapper.bb_global
 
     def preprocess(self):
+
         self._create_data_texture()
         self._create_single_instance()
         self._create_multiple_instances()
@@ -124,14 +125,14 @@ class GlPointCloud:
 
         self._set_clipping_uniforms(gguip)
 
-        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color_pc))
+        glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
         glUniform1i(self.uniform_locs["data_tex"], self.texture_int)
 
-        sf = self.guip.pc_scale
+        sf = self.guip.point_scale
         scale = pyrr.matrix44.create_from_scale([sf, sf, sf], dtype=np.float32)
         glUniformMatrix4fv(self.uniform_locs["scale"], 1, GL_FALSE, scale)
 

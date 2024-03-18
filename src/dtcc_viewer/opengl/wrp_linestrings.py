@@ -3,6 +3,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString
+from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 
 
 class LineStringsWrapper:
@@ -28,9 +29,9 @@ class LineStringsWrapper:
         Global bounding box for the entire scene.
     """
 
+    data_wrapper: LSDataWrapper
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
-    dict_data: dict
     name: str
     bb_local: BoundingBox
     bb_global: BoundingBox
@@ -39,13 +40,18 @@ class LineStringsWrapper:
         self,
         name: str,
         lss: list[LineString],
+        mts: int,
         data: np.ndarray = None,
     ) -> None:
         """Initialize a line string wrapper object."""
         self.dict_data = {}
         self.name = name
-        self._restructure_data(lss, data)
+        self.mts = mts
+
+        v_count = self._get_vertex_count(lss)
+        self.data_wrapper = LSDataWrapper(lss, v_count, self.mts)
         self._restructure_linestring(lss)
+        self._restructure_data(lss, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -69,56 +75,12 @@ class LineStringsWrapper:
     def _get_vertices(self, lss: list[LineString]):
         return np.array([coord for ls in lss for coord in ls.coords]).flatten()
 
-    def _restructure_data(self, lss: list[LineString], data: np.ndarray = None):
-        """Generate colors for the point cloud based on the provided data."""
-
-        n_vert = self._get_vertex_count(lss)
-
-        new_dict = {
-            "slot0": np.zeros(n_vert),
-            "slot1": np.zeros(n_vert),
-            "slot2": np.zeros(n_vert),
-        }
-
-        if type(data) == dict:
-            self.dict_data = self._restructure_data_dict(lss, data, new_dict, n_vert)
-        elif type(data) == np.ndarray:
-            self.dict_data = self._restructure_data_array(lss, data, new_dict)
-        else:
-            info("No data provided for mesh.")
-            info("Default (x, y, z) - coords per vertex data appended.")
-            vertices = self._get_vertices(lss)
-            new_dict["slot0"] = vertices[0::3]
-            new_dict["slot1"] = vertices[1::3]
-            self.dict_data = new_dict
-
-    def _restructure_data_dict(self, data: dict, new_dict: dict, n_vert: int):
-        data_slots = len(new_dict)
-        counter = 0
-
-        for key in data.keys():
-            data = data[key]
-            if counter < data_slots:
-                if len(data) == n_vert:
-                    new_dict["slot" + str(counter)] = data
-                else:
-                    info(f"Data for {key} does not match vertex count")
-            else:
-                info(f"Data for {key} does not fit in available slots")
-            counter += 1
-
-        return new_dict
-
-    def _restructure_data_array(self, data: np.ndarray, new_dict: dict, n_vert: int):
-        if len(data) == n_vert:
-            new_dict["slot0"] = data
-
-        return new_dict
-
     def _restructure_linestring(self, linestrings: list[LineString]):
         l_count_tot = self._get_segment_count(linestrings)
         v_count_tot = self._get_vertex_count(linestrings)
         indices = np.zeros([l_count_tot, 2], dtype=int)
+
+        # vertices = [x, y, z, tx, ty, 0, nx, ny, nz, ...]
         vertices = np.zeros([v_count_tot, 9])
 
         idx1 = 0
@@ -134,16 +96,29 @@ class LineStringsWrapper:
             idx1 += len(ls.coords[:])
             idx2 += l_count
 
+        indices = indices.flatten()
         vertices = vertices.flatten()
-
-        # Add data
-        vertices[3::9] = self.dict_data["slot0"]
-        vertices[4::9] = self.dict_data["slot1"]
-        vertices[5::9] = self.dict_data["slot2"]
+        vertices[3::9] = self.data_wrapper.texel_x
+        vertices[4::9] = self.data_wrapper.texel_y
 
         # Format and flatten the vertices and indices
-        self.vertices = np.array(vertices, dtype="float32").flatten()
-        self.indices = np.array(indices, dtype="uint32").flatten()
+        self.vertices = np.array(vertices, dtype="float32")
+        self.indices = np.array(indices, dtype="uint32")
+
+    def _restructure_data(self, lss: list[LineString], data: np.ndarray = None):
+        """Generate colors for the point cloud based on the provided data."""
+
+        data_1 = self.vertices[0::9]
+        data_2 = self.vertices[1::9]
+        data_3 = self.vertices[2::9]
+
+        data_1 = np.array(data_1, dtype="float32")
+        data_2 = np.array(data_2, dtype="float32")
+        data_3 = np.array(data_3, dtype="float32")
+
+        self.data_wrapper.add_data("Vertex X", data_1)
+        self.data_wrapper.add_data("Vertex Y", data_2)
+        self.data_wrapper.add_data("Vertex Z", data_3)
 
     def get_vertex_positions(self):
         """Get the vertex positions"""

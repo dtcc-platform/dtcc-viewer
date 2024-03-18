@@ -81,13 +81,13 @@ class GlModel:
         self,
         msh: list[GlMesh],
         pcs: list[GlPointCloud],
-        rns: list[GlLineString],
+        lss: list[GlLineString],
         txq: list[GlRaster],
         bb_global: BoundingBox,
     ):
         self.meshes = msh
         self.pointclouds = pcs
-        self.linestrings = rns
+        self.linestrings = lss
         self.rasters = txq
 
         self.guip = GuiParametersModel("Model", shading=Shading.wireshaded)
