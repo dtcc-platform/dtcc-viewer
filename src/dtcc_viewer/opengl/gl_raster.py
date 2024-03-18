@@ -8,6 +8,8 @@ from string import Template
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.gl_object import GlObject
+
 from dtcc_viewer.shaders.shaders_raster import (
     vertex_shader_raster,
     fragment_shader_raster_data,
@@ -28,7 +30,7 @@ from dtcc_viewer.shaders.shaders_color_maps import (
 )
 
 
-class GlRaster:
+class GlRaster(GlObject):
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.
@@ -318,7 +320,7 @@ class GlRaster:
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
         glUniform1f(self.uniform_locs["asp_rat"], self.aspect_ratio)
 
-    def update_color_caps(self):
+    def update_data_caps(self):
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False

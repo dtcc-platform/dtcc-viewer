@@ -11,6 +11,7 @@ from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParameters
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl.gl_object import GlObject
 
 from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
@@ -26,7 +27,7 @@ from dtcc_viewer.shaders.shaders_point_cloud import (
 )
 
 
-class GlPointCloud:
+class GlPointCloud(GlObject):
     """A class for rendering point cloud data using OpenGL.
 
     This class handles the rendering of point cloud data using OpenGL.
@@ -71,11 +72,6 @@ class GlPointCloud:
     n_points: int  # Number of particles in point cloud
     n_sides: int  # Number of sides for the particle mesh instance geometry
 
-    data_texture: int  # Texture for data
-    data_wrapper: PCDataWrapper  # Data wrapper for the mesh
-    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
-    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
-
     def __init__(self, pc_wrapper: PointCloudWrapper):
         """Initialize the PointCloudGL object and set up rendering."""
 
@@ -97,11 +93,6 @@ class GlPointCloud:
         self.guip = GuiParametersPC(pc_wrapper.name, data_mat_dict, data_val_caps)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
-
-    def preprocess(self):
-        self._create_textures()
-        self._create_geometry()
-        self._create_shaders()
 
     def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render the point cloud using provided interaction parameters."""
@@ -142,64 +133,9 @@ class GlPointCloud:
         self._unbind_shader()
         self._unbind_data_texture()
 
-    def update_color_data(self) -> None:
-        if self.guip.update_data_tex:
-            self._update_data_texture()
-            self.guip.update_data_tex = False
-
-    def update_color_caps(self) -> None:
-        if self.guip.update_caps:
-            self.guip.calc_data_min_max()
-            self.guip.update_caps = False
-
-    def _update_data_texture(self):
-        index = self.guip.data_idx
-        key = self.data_wrapper.get_keys()[index]
-        width = self.data_wrapper.col_count
-        height = self.data_wrapper.row_count
-        data = self.data_wrapper.data_mat_dict[key]
-        tic = time.perf_counter()
-
-        self._bind_data_texture()
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
-        self._unbind_data_texture()
-
-        toc = time.perf_counter()
-        info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
-
     def _create_textures(self) -> None:
         """Create textures for data."""
         self._create_data_texture()
-
-    def _create_data_texture(self) -> None:
-        """Create texture for data."""
-
-        self.data_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.data_texture)
-
-        # Configure texture filtering and wrapping options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-        width = self.data_wrapper.col_count
-        height = self.data_wrapper.row_count
-        key = self.data_wrapper.get_keys()[0]
-        default_data = self.data_wrapper.data_mat_dict[key]
-
-        # Transfer data to the texture
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_R32F,
-            width,
-            height,
-            0,
-            GL_RED,
-            GL_FLOAT,
-            default_data,
-        )
 
     def _create_geometry(self) -> None:
         """Create the geometry for the point cloud."""
@@ -311,14 +247,6 @@ class GlPointCloud:
     def _bind_shader(self) -> None:
         """Bind the shader program."""
         glUseProgram(self.shader)
-
-    def _bind_data_texture(self) -> None:
-        glActiveTexture(self.texture_slot)
-        glBindTexture(GL_TEXTURE_2D, self.data_texture)
-
-    def _unbind_data_texture(self) -> None:
-        glActiveTexture(self.texture_slot)
-        glBindTexture(GL_TEXTURE_2D, 0)
 
     def _unbind_shader(self) -> None:
         """Unbind the shader program."""

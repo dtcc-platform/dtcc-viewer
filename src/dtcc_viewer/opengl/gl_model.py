@@ -11,6 +11,7 @@ from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
+from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.opengl.parameters import GuiParameters, GuiParametersModel
 
@@ -36,6 +37,7 @@ class GlModel:
 
     """
 
+    gl_objects: list[GlObject]
     meshes: list[GlMesh]
     pointclouds: list[GlPointCloud]
     linestrings: list[GlLineString]
@@ -414,8 +416,8 @@ class GlModel:
         self._render_txq(action, gguip)
 
         self._update_light_position()
-        self._update_color_caps()
-        self._update_color_data()
+        self._update_data_caps()
+        self._update_data_textures()
 
     def _render_meshes(self, action: Action, gguip: GuiParameters) -> None:
         if self.guip.shading == Shading.wireframe:
@@ -546,25 +548,25 @@ class GlModel:
         if self.guip.animate_light:
             self.env._calc_light_position()
 
-    def _update_color_caps(self):
+    def _update_data_caps(self):
         for mesh in self.meshes:
-            mesh.update_color_caps()
+            mesh.update_data_caps()
 
         for pc in self.pointclouds:
-            pc.update_color_caps()
+            pc.update_data_caps()
 
         for ls in self.linestrings:
-            ls.update_color_caps()
+            ls.update_data_caps()
 
-    def _update_color_data(self):
+    def _update_data_textures(self):
         for mesh in self.meshes:
-            mesh.update_color_data()
+            mesh.update_data_texture()
 
         for pc in self.pointclouds:
-            pc.update_color_data()
+            pc.update_data_texture()
 
         for ls in self.linestrings:
-            ls.update_color_data()
+            ls.update_data_texture()
 
     def _find_object_from_id(self, id):
         self.guip.picked_uuid = None

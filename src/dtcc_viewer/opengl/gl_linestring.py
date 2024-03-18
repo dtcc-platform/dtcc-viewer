@@ -13,6 +13,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParameters
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.gl_object import GlObject
 
 from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
@@ -28,7 +29,7 @@ from dtcc_viewer.shaders.shaders_color_maps import (
 )
 
 
-class GlLineString:
+class GlLineString(GlObject):
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.
@@ -62,11 +63,6 @@ class GlLineString:
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    data_texture: int  # Texture for data
-    data_wrapper: LSDataWrapper  # Data wrapper for the mesh
-    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
-    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
-
     def __init__(self, lss_wrapper: LineStringsWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
@@ -91,46 +87,9 @@ class GlLineString:
         self.texture_slot = None
         self.texture_int = None
 
-    def preprocess(self):
-        self._create_textures()
-        self._create_geometry()
-        self._create_shaders()
-
     def _create_textures(self) -> None:
         """Create textures for data."""
         self._create_data_texture()
-
-    def _create_data_texture(self) -> None:
-        """Create texture for data."""
-
-        self.data_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.data_texture)
-
-        # Configure texture filtering and wrapping options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-        width = self.data_wrapper.col_count
-        height = self.data_wrapper.row_count
-        key = self.data_wrapper.get_keys()[0]
-        default_data = self.data_wrapper.data_mat_dict[key]
-
-        # Transfer data to the texture
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_R32F,
-            width,
-            height,
-            0,
-            GL_RED,
-            GL_FLOAT,
-            default_data,
-        )
-
-        info(f"Data texture created for {self.name}.")
 
     def _create_geometry(self) -> None:
         """Set up vertex and element buffers for line rendering."""
@@ -196,31 +155,6 @@ class GlLineString:
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
         self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
-    def _update_data_texture(self):
-        index = self.guip.data_idx
-        key = self.data_wrapper.get_keys()[index]
-        width = self.data_wrapper.col_count
-        height = self.data_wrapper.row_count
-        data = self.data_wrapper.data_mat_dict[key]
-        tic = time.perf_counter()
-
-        self._bind_data_texture()
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data)
-        self._unbind_data_texture()
-
-        toc = time.perf_counter()
-        info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
-
-    def update_color_data(self) -> None:
-        if self.guip.update_data_tex:
-            self._update_data_texture()
-            self.guip.update_data_tex = False
-
-    def update_color_caps(self) -> None:
-        if self.guip.update_caps:
-            self.guip.calc_data_min_max()
-            self.guip.update_caps = False
-
     def render(self, interaction: Action, gguip: GuiParameters) -> None:
         """Render roads as lines in the road network."""
 
@@ -259,16 +193,6 @@ class GlLineString:
     def _unbind_shader(self) -> None:
         """Unbind the shader program."""
         glUseProgram(0)
-
-    def _bind_data_texture(self):
-        """Bind the data texture."""
-        glActiveTexture(self.texture_slot)
-        glBindTexture(GL_TEXTURE_2D, self.data_texture)
-
-    def _unbind_data_texture(self):
-        """Unbind the currently bound data texture."""
-        glActiveTexture(self.texture_slot)
-        glBindTexture(GL_TEXTURE_2D, 0)
 
     def _bind_vao(self) -> None:
         """Bind the Vertex Array Object (VAO)."""
