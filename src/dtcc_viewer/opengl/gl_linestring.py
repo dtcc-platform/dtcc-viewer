@@ -10,7 +10,7 @@ from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParameters
+from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
@@ -155,7 +155,7 @@ class GlLineString(GlObject):
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
         self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
-    def render(self, interaction: Action, gguip: GuiParameters) -> None:
+    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
         """Render roads as lines in the road network."""
 
         self._bind_vao()
@@ -202,7 +202,7 @@ class GlLineString(GlObject):
         """Unbind the currently bound vertex array object."""
         glBindVertexArray(0)
 
-    def _set_clipping_uniforms(self, gguip: GuiParameters):
+    def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

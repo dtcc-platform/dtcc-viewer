@@ -4,8 +4,12 @@ from dtcc_viewer.opengl.utils import Shading, RasterType
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.opengl.gl_model import GlModel
+from dtcc_viewer.opengl.gl_mesh import GlMesh
+from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_raster import GlRaster
+from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.parameters import (
-    GuiParameters,
+    GuiParametersGlobal,
     GuiParametersMesh,
     GuiParametersPC,
     GuiParametersLS,
@@ -36,7 +40,9 @@ class Gui:
         """
         np.set_printoptions(precision=1)
 
-    def render_gui(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParameters):
+    def render_gui(
+        self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal
+    ):
         self._init_gui(impl)
 
         # Draw window with GUI controls
@@ -76,7 +82,7 @@ class Gui:
             "Controls", window_with - (self.gui_width + self.margin), self.margin
         )
 
-    def _draw_apperance_gui(self, guip: GuiParameters) -> None:
+    def _draw_apperance_gui(self, guip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
@@ -120,6 +126,11 @@ class Gui:
 
     def _draw_model_gui(self, model: GlModel) -> None:
         """Draw GUI for model."""
+        meshes = model.filter_gl_type(GlMesh)
+        pointclouds = model.filter_gl_type(GlPointCloud)
+        linestrings = model.filter_gl_type(GlLineString)
+        rasters = model.filter_gl_type(GlRaster)
+
         [expanded, visible] = imgui.collapsing_header(model.guip.name)
         if expanded:
             guip = model.guip
@@ -128,7 +139,7 @@ class Gui:
             [changed, guip.show] = imgui.checkbox("Show", guip.show)
             imgui.pop_id()
 
-            if guip.shading == Shading.shadows:
+            if guip.shading == Shading.SHADOWS:
                 imgui.same_line()
                 imgui.push_id("Animate light")
                 [changed, guip.animate_light] = imgui.checkbox(
@@ -136,7 +147,7 @@ class Gui:
                 )
                 imgui.pop_id()
 
-            if len(model.meshes) > 0:
+            if len(meshes) > 0:
                 # Display mode combo box
                 imgui.push_id("Combo")
                 items = [
@@ -159,16 +170,16 @@ class Gui:
                 imgui.pop_id()
 
             # Add individual ui for each mesh, pc, rn
-            for i, mesh in enumerate(model.meshes):
+            for i, mesh in enumerate(meshes):
                 self._draw_mesh_gui(mesh.guip, i)
 
-            for i, pc in enumerate(model.pointclouds):
+            for i, pc in enumerate(pointclouds):
                 self._draw_pc_gui(pc.guip, i)
 
-            for i, ls in enumerate(model.linestrings):
+            for i, ls in enumerate(linestrings):
                 self._draw_ls_gui(ls.guip, i)
 
-            for i, rst in enumerate(model.rasters):
+            for i, rst in enumerate(rasters):
                 self._draw_rst_gui(rst.guip, i)
 
     def _end_win_1(self, impl: GlfwRenderer) -> None:
@@ -607,23 +618,34 @@ class Gui:
         """Draw GUI elements for adjusting appearance settings like background color."""
         text_width = 40
         [expanded, visible] = imgui.collapsing_header("Data")
+        mhs = model.filter_gl_type(GlMesh)
+        pcs = model.filter_gl_type(GlPointCloud)
+        lss = model.filter_gl_type(GlLineString)
+        rst = model.filter_gl_type(GlRaster)
+
         if expanded:
-            self._draw_model_stats(model, text_width)
+            self._draw_model_stats(mhs, pcs, lss, text_width)
             self._draw_model_data(model, text_width)
         self.draw_separator()
 
-    def _draw_model_stats(self, model: GlModel, text_width: int) -> None:
+    def _draw_model_stats(
+        self,
+        mhs: list[GlMesh],
+        pcs: list[GlPointCloud],
+        lss: list[GlLineString],
+        text_width: int,
+    ) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         imgui.begin_child("ModelStats", 0, 180, border=True)
         imgui.text("MODEL STATS:")
         v_count, f_count, p_count, l_count = 0, 0, 0, 0
-        for mesh in model.meshes:
+        for mesh in mhs:
             text_0 = f"- Mesh called: '{mesh.name}' has {mesh.n_vertices} vertices and {mesh.n_faces} faces."
             imgui.text(self.wrap_text(text_0, text_width))
             v_count += mesh.n_vertices
             f_count += mesh.n_faces
             # print(v_count)
-        for pc in model.pointclouds:
+        for pc in pcs:
             n_particles = pc.n_points
             n_vertices = (pc.n_sides + 1) * n_particles
             n_faces = pc.n_sides * n_particles
@@ -632,7 +654,7 @@ class Gui:
             v_count += n_vertices
             f_count += n_faces
             p_count += n_particles
-        for ls in model.linestrings:
+        for ls in lss:
             text_0 = f"- LineString called: '{ls.name}' has {len(ls.vertices)} points."
             imgui.text(self.wrap_text(text_0, text_width))
             v_count += ls.n_vertices
@@ -668,7 +690,7 @@ class Gui:
 
         imgui.end_child()
 
-    def _draw_fps(self, guip: GuiParameters) -> None:
+    def _draw_fps(self, guip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         imgui.text("FPS: " + str(guip.fps))
 

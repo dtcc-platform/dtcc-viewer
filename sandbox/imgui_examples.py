@@ -5,7 +5,7 @@ import os
 from OpenGL.GL import *
 from dtcc_viewer.opengl.utils import Shading
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.opengl import GuiParametersDates, GuiParameters
+from dtcc_viewer.opengl import GuiParametersDates, GuiParametersGlobal
 
 
 class Gui:
@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
     gui = Gui()
     guid = GuiParametersDates()
-    guip = GuiParameters()
+    guip = GuiParametersGlobal()
 
     while not glfw.window_should_close(window):
         glfw.poll_events()

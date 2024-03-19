@@ -7,7 +7,7 @@ from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
 
 
-class GuiParameters:
+class GuiParametersGlobal:
     """Class representing GUI parameters for the viewer."""
 
     color: list

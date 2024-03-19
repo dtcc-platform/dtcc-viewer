@@ -8,7 +8,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PCDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParameters
+from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.gl_object import GlObject
@@ -94,7 +94,7 @@ class GlPointCloud(GlObject):
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
 
-    def render(self, interaction: Action, gguip: GuiParameters) -> None:
+    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
         """Render the point cloud using provided interaction parameters."""
 
         self._bind_vao()
@@ -403,7 +403,7 @@ class GlPointCloud(GlObject):
 
         return int(n_sides)
 
-    def _set_clipping_uniforms(self, gguip: GuiParameters):
+    def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

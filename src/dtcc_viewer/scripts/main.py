@@ -308,7 +308,7 @@ if __name__ == "__main__":
     # linestring_example_1()
     # linestring_example_2()
     # mesh_example_1()
-    city_example_1()
+    # city_example_1()
     # building_example_1()
     # object_example_1()
     # object_example_2()

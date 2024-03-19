@@ -15,7 +15,7 @@ from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 
 from dtcc_viewer.opengl.parameters import (
-    GuiParameters,
+    GuiParametersGlobal,
     GuiParametersMesh,
     GuiParametersModel,
 )
@@ -435,7 +435,7 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParameters,
+        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         ws_pass=0,
     ):
@@ -474,7 +474,7 @@ class GlMesh(GlObject):
     def render_ambient(
         self,
         action: Action,
-        gguip: GuiParameters,
+        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
     ) -> None:
         """Render the mesh with ambient shading."""
@@ -508,7 +508,7 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParameters,
+        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         ws_pass=0,
     ):
@@ -550,7 +550,7 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParameters,
+        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
     ) -> None:
         glEnable(GL_POLYGON_OFFSET_FILL)
@@ -573,7 +573,7 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParameters,
+        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         lsm: np.ndarray,
     ) -> None:
@@ -657,25 +657,28 @@ class GlMesh(GlObject):
         glUseProgram(0)
 
     def _set_clipping_uniforms(
-        self, gguip: GuiParameters, mguip: GuiParametersModel, ws_pass: int = 0
+        self,
+        gguip: GuiParametersGlobal,
+        mguip: GuiParametersModel,
+        ws_pass: int = 0,
     ):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
-        if mguip.shading == Shading.wireframe or ws_pass == 2:
+        if mguip.shading == Shading.WIREFRAME or ws_pass == 2:
             glUniform1f(self.uloc_line["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_line["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_line["clip_z"], (zdom * gguip.clip_dist[2]))
-        elif mguip.shading == Shading.ambient:
+        elif mguip.shading == Shading.AMBIENT:
             glUniform1f(self.uloc_ambi["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_ambi["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_ambi["clip_z"], (zdom * gguip.clip_dist[2]))
-        elif mguip.shading == Shading.diffuse or ws_pass == 1:
+        elif mguip.shading == Shading.DIFFUSE or ws_pass == 1:
             glUniform1f(self.uloc_diff["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_diff["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_diff["clip_z"], (zdom * gguip.clip_dist[2]))
-        elif mguip.shading == Shading.shadows:
+        elif mguip.shading == Shading.SHADOWS:
             glUniform1f(self.uloc_shdw["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_shdw["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_shdw["clip_z"], (zdom * gguip.clip_dist[2]))
