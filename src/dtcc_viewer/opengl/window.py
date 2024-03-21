@@ -185,7 +185,7 @@ class Window:
         self.model = GlModel(self.gl_objects, scene.bb)
 
         if not self.model.preprocess():
-            warning("GLModel preprocessing failed!")
+            warning("GlModel preprocessing failed!")
 
         self.model.create_picking_fbo(self.action)
 
@@ -242,7 +242,7 @@ class Window:
                 self.model.render(self.action, self.guip)
 
             # Render the GUI
-            self.gui.render_gui(self.model, self.impl, self.guip)
+            self.gui.render(self.model, self.impl, self.guip)
 
             self.guip.calc_fps()
 
