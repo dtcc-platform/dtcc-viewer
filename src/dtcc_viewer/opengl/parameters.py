@@ -2,7 +2,6 @@ import numpy as np
 import glfw
 from dtcc_viewer.opengl.utils import invert_color
 from dtcc_viewer.opengl.utils import Shading, RasterType
-from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.opengl.utils import ColorMaps
 from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
@@ -201,9 +200,7 @@ class GuiParametersRaster:
 
         # 1 = draw, 0 = do not draw
         self.channels = [1, 1, 1, 1]
-
         self.cmap_idx = 0
-        self.cmap_key = list(shader_cmaps.keys())[0]
 
     def calc_data_min_max(self):
         pass
