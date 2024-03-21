@@ -7,7 +7,7 @@ from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
 
 
-class GuiParameters:
+class GuiParametersGlobal:
     """Class representing GUI parameters for the viewer."""
 
     color: list
@@ -116,7 +116,7 @@ class GuiParametersObj(ABC):
     def get_current_data_name(self):
         return self.data_keys[self.data_idx]
 
-    def calc_data_min_max(self):
+    def calc_min_max(self):
         key = self.get_current_data_name()
         min = self.dict_value_caps[key][0]
         max = self.dict_value_caps[key][1]
@@ -133,7 +133,7 @@ class GuiParametersMesh(GuiParametersObj):
 
     def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         self.set_default_values(name, dict_mat_data, dict_val_caps)
-        self.calc_data_min_max()
+        self.calc_min_max()
 
 
 class GuiParametersPC(GuiParametersObj):
@@ -142,7 +142,7 @@ class GuiParametersPC(GuiParametersObj):
     def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         """Initialize the GuiParametersPC object."""
         self.set_default_values(name, dict_mat_data, dict_val_caps)
-        self.calc_data_min_max()
+        self.calc_min_max()
         self.point_scale = 1.0
 
 
@@ -151,7 +151,7 @@ class GuiParametersLS(GuiParametersObj):
 
     def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         self.set_default_values(name, dict_mat_data, dict_val_caps)
-        self.calc_data_min_max()
+        self.calc_min_max()
         self.line_scale = 1.0
 
 
@@ -198,9 +198,13 @@ class GuiParametersRaster:
         self.invert_cmap = False
         self.update_caps = False
         self.type = type
+        self.update_data_tex = False
 
         # 1 = draw, 0 = do not draw
         self.channels = [1, 1, 1, 1]
 
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
+
+    def calc_data_min_max(self):
+        pass

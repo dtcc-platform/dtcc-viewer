@@ -8,6 +8,8 @@ from string import Template
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.gl_object import GlObject
+
 from dtcc_viewer.shaders.shaders_raster import (
     vertex_shader_raster,
     fragment_shader_raster_data,
@@ -15,7 +17,7 @@ from dtcc_viewer.shaders.shaders_raster import (
     fragment_shader_raster_rgba,
 )
 
-from dtcc_viewer.opengl.parameters import GuiParametersRaster, GuiParameters
+from dtcc_viewer.opengl.parameters import GuiParametersRaster, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox, RasterType
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper
@@ -28,7 +30,7 @@ from dtcc_viewer.shaders.shaders_color_maps import (
 )
 
 
-class GlRaster:
+class GlRaster(GlObject):
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.
@@ -318,12 +320,12 @@ class GlRaster:
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
         glUniform1f(self.uniform_locs["asp_rat"], self.aspect_ratio)
 
-    def update_color_caps(self):
+    def update_data_caps(self):
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
 
-    def render(self, interaction: Action, gguip: GuiParameters) -> None:
+    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
         """Render roads as lines in the road network."""
 
         if self.type == RasterType.Data:
@@ -333,7 +335,7 @@ class GlRaster:
         elif self.type == RasterType.RGBA:
             self._render_rgba(interaction, gguip)
 
-    def _render_data(self, interaction: Action, gguip: GuiParameters) -> None:
+    def _render_data(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
 
         glUseProgram(self.shader)
 
@@ -349,7 +351,7 @@ class GlRaster:
 
         self._draw_call()
 
-    def _render_rgb(self, interaction: Action, gguip: GuiParameters) -> None:
+    def _render_rgb(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
 
         glUseProgram(self.shader)
 
@@ -364,7 +366,7 @@ class GlRaster:
         self._render_common(interaction, gguip)
         self._draw_call()
 
-    def _render_rgba(self, interaction: Action, gguip: GuiParameters) -> None:
+    def _render_rgba(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
 
         glUseProgram(self.shader)
 
@@ -378,7 +380,7 @@ class GlRaster:
         self._render_common(interaction, gguip)
         self._draw_call()
 
-    def _render_common(self, interaction: Action, gguip: GuiParameters):
+    def _render_common(self, interaction: Action, gguip: GuiParametersGlobal):
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -397,7 +399,7 @@ class GlRaster:
         glBindVertexArray(0)
         glUseProgram(0)
 
-    def _set_clipping_uniforms(self, gguip: GuiParameters):
+    def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

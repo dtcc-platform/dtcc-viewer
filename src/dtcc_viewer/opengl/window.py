@@ -10,11 +10,12 @@ from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
+from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.gui import Gui
-from dtcc_viewer.opengl.parameters import GuiParameters
+from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 
 
 class Window:
@@ -33,14 +34,8 @@ class Window:
 
     Attributes
     ----------
-    meshes : list[MeshGL]
-        List of MeshGL objects representing rendered meshes.
-    point_clouds : list[PointCloudGL]
-        List of PointCloudGL objects representing rendered point clouds.
-    mesh : MeshGL
-        The currently displayed MeshGL object.
-    pc : PointCloudGL
-        The currently displayed PointCloudGL object.
+    gl_objects : list[GlObject]
+        List of GlObject instances to be rendered in the window.
     gui : Gui
         An instance of the GUI for interacting with the rendering.
     guip : GuiParameters
@@ -61,13 +56,10 @@ class Window:
         Accumulated time for FPS calculation.
     """
 
-    meshes: list[GlMesh]
-    pcs: list[GlPointCloud]
-    lss: list[GlLineString]
-    txq: list[GlRaster]
+    gl_objects: list[GlObject]
     model: GlModel
     gui: Gui
-    guip: GuiParameters  # Gui parameters common for the whole window
+    guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
     win_height: int
     action: Action
@@ -92,7 +84,7 @@ class Window:
 
         imgui.create_context()
         self.gui = Gui()
-        self.guip = GuiParameters()
+        self.guip = GuiParametersGlobal()
         self.io = imgui.get_io()
 
         if not glfw.init():
@@ -135,70 +127,62 @@ class Window:
         self._update_window_framebuffer_size()
 
     def _preprocess_model(self, scene: Scene):
-        self.meshes = []
-        self.pcs = []
-        self.lss = []
-        self.txq = []
+        self.gl_objects = []
 
         for obj in scene.obj_wrappers:
             if obj.mesh_wrp_1 is not None:
                 mesh_gl = GlMesh(obj.mesh_wrp_1)
-                self.meshes.append(mesh_gl)
+                self.gl_objects.append(mesh_gl)
             if obj.mesh_wrp_2 is not None:
                 mesh_gl = GlMesh(obj.mesh_wrp_2)
-                self.meshes.append(mesh_gl)
+                self.gl_objects.append(mesh_gl)
             if obj.lineStringsWrapper is not None:
                 lss_gl = GlLineString(obj.lineStringsWrapper)
-                self.lss.append(lss_gl)
+                self.gl_objects.append(lss_gl)
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
                 mesh_gl_bld = GlMesh(city.building_mw)
-                self.meshes.append(mesh_gl_bld)
+                self.gl_objects.append(mesh_gl_bld)
             if city.terrain_mw is not None:
                 mesh_gl_ter = GlMesh(city.terrain_mw)
-                self.meshes.append(mesh_gl_ter)
+                self.gl_objects.append(mesh_gl_ter)
 
         for building in scene.bld_wrappers:
             mesh_gl = GlMesh(building.building_mw)
-            self.meshes.append(mesh_gl)
+            self.gl_objects.append(mesh_gl)
 
         for mesh in scene.mesh_wrappers:
             mesh_gl = GlMesh(mesh)
-            self.meshes.append(mesh_gl)
+            self.gl_objects.append(mesh_gl)
 
         for pc in scene.pcs_wrappers:
             pc_gl = GlPointCloud(pc)
-            self.pcs.append(pc_gl)
+            self.gl_objects.append(pc_gl)
 
         for rn in scene.rnd_wrappers:
             rn_gl = GlLineString(rn)
-            self.lss.append(rn_gl)
+            self.gl_objects.append(rn_gl)
 
         for lss in scene.lss_wrappers:
             lss_gl = GlLineString(lss)
-            self.lss.append(lss_gl)
+            self.gl_objects.append(lss_gl)
 
         for rst in scene.rst_wrappers:
             txq_gl = GlRaster(rst)
-            self.txq.append(txq_gl)
+            self.gl_objects.append(txq_gl)
 
         for mrsr in scene.mrst_wrappers:
             for rst in mrsr.raster_wrappers:
                 txq_gl = GlRaster(rst)
-                self.txq.append(txq_gl)
+                self.gl_objects.append(txq_gl)
 
-        if (
-            len(self.meshes) == 0
-            and len(self.pcs) == 0
-            and len(self.lss) == 0
-            and len(self.txq) == 0
-        ):
+        if len(self.gl_objects) == 0:
             warning("No meshes or point clouds or line strings found in the scene!")
             return False
 
         # Create model from meshes
-        self.model = GlModel(self.meshes, self.pcs, self.lss, self.txq, scene.bb)
+        self.model = GlModel(self.gl_objects, scene.bb)
 
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")

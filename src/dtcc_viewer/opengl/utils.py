@@ -97,12 +97,12 @@ class Submesh:
 
 
 class Shading(IntEnum):
-    wireframe = 0
-    ambient = 1
-    diffuse = 2
-    wireshaded = 3
-    shadows = 4
-    picking = 5
+    WIREFRAME = 0
+    AMBIENT = 1
+    DIFFUSE = 2
+    WIRESHADED = 3
+    SHADOWS = 4
+    PICKING = 5
 
 
 class ColorSchema(IntEnum):

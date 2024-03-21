@@ -54,7 +54,7 @@ class ObjectWrapper:
             City object from which to generate the mesh data to view.
         """
         self.name = name
-        self.shading = Shading.wireshaded
+        self.shading = Shading.WIRESHADED
         self.dict_data = {}
 
         # Extract meshes from the object and its children

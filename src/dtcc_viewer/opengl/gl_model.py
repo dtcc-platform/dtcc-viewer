@@ -11,8 +11,9 @@ from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
+from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.environment import Environment
-from dtcc_viewer.opengl.parameters import GuiParameters, GuiParametersModel
+from dtcc_viewer.opengl.parameters import GuiParametersGlobal, GuiParametersModel
 
 from dtcc_viewer.shaders.shaders_debug import (
     vertex_shader_debug_shadows,
@@ -36,10 +37,7 @@ class GlModel:
 
     """
 
-    meshes: list[GlMesh]
-    pointclouds: list[GlPointCloud]
-    linestrings: list[GlLineString]
-    rasters: list[GlRaster]
+    gl_objects: list[GlObject]
 
     guip: GuiParametersModel  # Gui parameters for the model
     env: Environment  # Collection of environment data like light sources etc.
@@ -77,20 +75,10 @@ class GlModel:
 
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
 
-    def __init__(
-        self,
-        msh: list[GlMesh],
-        pcs: list[GlPointCloud],
-        lss: list[GlLineString],
-        txq: list[GlRaster],
-        bb_global: BoundingBox,
-    ):
-        self.meshes = msh
-        self.pointclouds = pcs
-        self.linestrings = lss
-        self.rasters = txq
+    def __init__(self, gl_objects: list[GlObject], bb_global: BoundingBox):
+        self.gl_objects = gl_objects
 
-        self.guip = GuiParametersModel("Model", shading=Shading.wireshaded)
+        self.guip = GuiParametersModel("Model", shading=Shading.WIRESHADED)
         self.env = Environment(bb_global)
 
         self.uloc_shmp = {}
@@ -111,19 +99,22 @@ class GlModel:
         self._create_shader_debug_picking()
         self._set_constats()
 
-        for mesh in self.meshes:
-            mesh.preprocess()
-
-        for pc in self.pointclouds:
-            pc.preprocess()
-
-        for ls in self.linestrings:
-            ls.preprocess()
-
-        for txq in self.rasters:
-            txq.preprocess()
+        for obj in self.gl_objects:
+            obj.preprocess()
 
         return True
+
+    def filter_gl_type(self, gl_type):
+        if gl_type == GlMesh:
+            return [mesh for mesh in self.gl_objects if isinstance(mesh, GlMesh)]
+        elif gl_type == GlPointCloud:
+            return [pc for pc in self.gl_objects if isinstance(pc, GlPointCloud)]
+        elif gl_type == GlLineString:
+            return [lss for lss in self.gl_objects if isinstance(lss, GlLineString)]
+        elif gl_type == GlRaster:
+            return [rst for rst in self.gl_objects if isinstance(rst, GlRaster)]
+        else:
+            raise ValueError("Invalid gl_type")
 
     def _set_constats(self) -> None:
         """Set constant values like light position and color."""
@@ -166,30 +157,19 @@ class GlModel:
         """Distribute texture slots to all the meshes, pointclouds, linestrings."""
 
         texture_slots = self._get_texture_slots()
-        entity_count = len(self.meshes) + len(self.pointclouds) + len(self.linestrings)
 
         # The first slot GL_TEXTURE0 is reserved for the shadow map
         self.texture_slot = texture_slots[0]
 
-        if entity_count > len(texture_slots) - 1:
+        if len(self.gl_objects) > len(texture_slots) - 1:
             warning("Not enough texture slots for all rendable entities.")
             return False
 
         next_index = 1
 
-        for mesh in self.meshes:
-            mesh.texture_slot = texture_slots[next_index]
-            mesh.texture_int = next_index
-            next_index += 1
-
-        for pc in self.pointclouds:
-            pc.texture_slot = texture_slots[next_index]
-            pc.texture_int = next_index
-            next_index += 1
-
-        for ls in self.linestrings:
-            ls.texture_slot = texture_slots[next_index]
-            ls.texture_int = next_index
+        for obj in self.gl_objects:
+            obj.texture_slot = texture_slots[next_index]
+            obj.texture_int = next_index
             next_index += 1
 
         return True
@@ -331,14 +311,14 @@ class GlModel:
             compileShader(fragment_shader_debug_picking, GL_FRAGMENT_SHADER),
         )
 
-    def evaluate_picking(self, action: Action, gguip: GuiParameters) -> None:
+    def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if not action.mouse_on_gui:
             self._draw_picking_texture(action)
             self._evaluate_picking(action, gguip)
         else:
             action.picking = False
 
-    def _evaluate_picking(self, action: Action, gguip: GuiParameters) -> None:
+    def _evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         x = action.picked_x
         y = action.picked_y
@@ -389,10 +369,11 @@ class GlModel:
         glUniformMatrix4fv(self.uloc_pick["project"], 1, GL_FALSE, proj)
 
         # Draw meshes to the texture
-        for mesh_gl in self.meshes:
-            mesh_gl.triangles_draw_call()
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                obj.triangles_draw_call()
 
-    def _render_pick_texture(self, action: Action, gguip: GuiParameters) -> None:
+    def _render_pick_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
         self._draw_picking_texture(action)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -407,72 +388,79 @@ class GlModel:
         self._debug_quad_draw_call()
         glEnable(GL_DEPTH_TEST)
 
-    def render(self, action: Action, gguip: GuiParameters) -> None:
+    def render(self, action: Action, gguip: GuiParametersGlobal) -> None:
         self._render_meshes(action, gguip)
         self._render_pcs(action, gguip)
-        self._render_rns(action, gguip)
+        self._render_lss(action, gguip)
         self._render_txq(action, gguip)
 
         self._update_light_position()
-        self._update_color_caps()
-        self._update_color_data()
+        self._update_data_caps()
+        self._update_data_textures()
 
-    def _render_meshes(self, action: Action, gguip: GuiParameters) -> None:
-        if self.guip.shading == Shading.wireframe:
+    def _render_meshes(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        if self.guip.shading == Shading.WIREFRAME:
             self._render_lines(action, gguip)
-        elif self.guip.shading == Shading.ambient:
+        elif self.guip.shading == Shading.AMBIENT:
             self._render_ambient(action, gguip)
-        elif self.guip.shading == Shading.diffuse:
+        elif self.guip.shading == Shading.DIFFUSE:
             self._render_diffuse(action, gguip)
-        elif self.guip.shading == Shading.wireshaded:
+        elif self.guip.shading == Shading.WIRESHADED:
             self._render_wireshaded(action, gguip)
-        elif self.guip.shading == Shading.shadows:
+        elif self.guip.shading == Shading.SHADOWS:
             self._render_shadows(action, gguip)
-        elif self.guip.shading == Shading.picking:
+        elif self.guip.shading == Shading.PICKING:
             self._render_pick_texture(action, gguip)
         else:
             warning("Shading not set for model instance")
         pass
 
-    def _render_pcs(self, action: Action, gguip: GuiParameters) -> None:
-        for pc in self.pointclouds:
-            guip = pc.guip
-            if guip.show:
-                pc.render(action, gguip)
+    def _render_pcs(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlPointCloud):
+                guip = obj.guip
+                if guip.show:
+                    obj.render(action, gguip)
 
-    def _render_rns(self, action: Action, gguip: GuiParameters) -> None:
-        for rn_gl in self.linestrings:
-            guip = rn_gl.guip
-            if guip.show:
-                rn_gl.render(action, gguip)
+    def _render_lss(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlLineString):
+                guip = obj.guip
+                if guip.show:
+                    obj.render(action, gguip)
 
-    def _render_txq(self, action: Action, gguip: GuiParameters) -> None:
-        for txq_gl in self.rasters:
-            guip = txq_gl.guip
-            if guip.show:
-                txq_gl.render(action, gguip)
+    def _render_txq(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlRaster):
+                guip = obj.guip
+                if guip.show:
+                    obj.render(action, gguip)
 
-    def _render_lines(self, action: Action, gguip: GuiParameters) -> None:
-        for mesh in self.meshes:
-            if mesh.guip.show:
-                mesh.render_lines(action, self.env, gguip, self.guip)
+    def _render_lines(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_lines(action, self.env, gguip, self.guip)
 
-    def _render_ambient(self, action: Action, gguip: GuiParameters) -> None:
-        for mesh in self.meshes:
-            if mesh.guip.show:
-                mesh.render_ambient(action, gguip, self.guip)
+    def _render_ambient(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_ambient(action, gguip, self.guip)
 
-    def _render_diffuse(self, action: Action, gguip: GuiParameters) -> None:
-        for mesh in self.meshes:
-            if mesh.guip.show:
-                mesh.render_diffuse(action, self.env, gguip, self.guip)
+    def _render_diffuse(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_diffuse(action, self.env, gguip, self.guip)
 
-    def _render_wireshaded(self, action: Action, gguip: GuiParameters) -> None:
-        for mesh in self.meshes:
-            if mesh.guip.show:
-                mesh.render_wireshaded(action, self.env, gguip, self.guip)
+    def _render_wireshaded(self, action: Action, gguip: GuiParametersGlobal) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_wireshaded(action, self.env, gguip, self.guip)
 
-    def _render_shadows(self, action: Action, gguip: GuiParameters) -> None:
+    def _render_shadows(self, action: Action, gguip: GuiParametersGlobal) -> None:
         """Generates a shadow map and renders the mesh with shadows by sampling that
         shadow map.
         """
@@ -506,12 +494,13 @@ class GlModel:
         # Only clearing depth buffer since there is no color attachement
         glClear(GL_DEPTH_BUFFER_BIT)
 
-        for mesh in self.meshes:
-            # In this pass, only meshes that should cast shadows are added.
-            if mesh.guip.show and mesh.cast_shadows:
-                mesh.render_shadows_pass1(self.lsm)
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                # In this pass, only meshes that should cast shadows are added.
+                if obj.guip.show and obj.cast_shadows:
+                    obj.render_shadows_pass1(self.lsm)
 
-    def _render_shadows_pass2(self, action: Action, gguip: GuiParameters) -> None:
+    def _render_shadows_pass2(self, action: Action, gguip: GuiParametersGlobal) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer."""
         # Second pass: Render objects with the shadow map computed in the first pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
@@ -523,9 +512,12 @@ class GlModel:
         glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
 
         # Set up individual mesh parameters and uniforms for rendering
-        for mesh in self.meshes:
-            if mesh.guip.show:
-                mesh.render_shadows_pass2(action, self.env, gguip, self.guip, self.lsm)
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_shadows_pass2(
+                        action, self.env, gguip, self.guip, self.lsm
+                    )
 
     def _render_debug_shadow_map(self, interaction: Action) -> None:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -546,46 +538,36 @@ class GlModel:
         if self.guip.animate_light:
             self.env._calc_light_position()
 
-    def _update_color_caps(self):
-        for mesh in self.meshes:
-            mesh.update_color_caps()
+    def _update_data_caps(self):
+        for obj in self.gl_objects:
+            obj.update_data_caps()
 
-        for pc in self.pointclouds:
-            pc.update_color_caps()
-
-        for ls in self.linestrings:
-            ls.update_color_caps()
-
-    def _update_color_data(self):
-        for mesh in self.meshes:
-            mesh.update_color_data()
-
-        for pc in self.pointclouds:
-            pc.update_color_data()
-
-        for ls in self.linestrings:
-            ls.update_color_data()
+    def _update_data_textures(self):
+        for obj in self.gl_objects:
+            obj.update_data_texture()
 
     def _find_object_from_id(self, id):
         self.guip.picked_uuid = None
-        for mesh in self.meshes:
-            if mesh.submeshes is not None:
-                if mesh.submeshes.id_exists(id):
-                    uuid = mesh.submeshes.ids_2_uuids[id]
-                    self.guip.picked_uuid = uuid
-                    break
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.submeshes is not None:
+                    if obj.submeshes.id_exists(id):
+                        uuid = obj.submeshes.ids_2_uuids[id]
+                        self.guip.picked_uuid = uuid
+                        break
 
     def _find_metadata_from_id(self, id):
         sucess = False
-        for mesh in self.meshes:
-            vertex_ids = mesh.get_vertex_ids()
-            indices = np.where(vertex_ids == id)[0]
-            if len(indices) > 0:
-                v_counter = len(indices)
-                f_count = v_counter // 3
-                (avrg_pt, radius) = mesh.get_average_vertex_position(indices)
-                sucess = True
-                break
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                vertex_ids = obj.get_vertex_ids()
+                indices = np.where(vertex_ids == id)[0]
+                if len(indices) > 0:
+                    v_counter = len(indices)
+                    f_count = v_counter // 3
+                    (avrg_pt, radius) = obj.get_average_vertex_position(indices)
+                    sucess = True
+                    break
 
         # Assign to
         if sucess:

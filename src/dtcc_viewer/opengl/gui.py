@@ -4,8 +4,13 @@ from dtcc_viewer.opengl.utils import Shading, RasterType
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.opengl.gl_model import GlModel
+from dtcc_viewer.opengl.gl_mesh import GlMesh
+from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_raster import GlRaster
+from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.parameters import (
-    GuiParameters,
+    GuiParametersGlobal,
+    GuiParametersObj,
     GuiParametersMesh,
     GuiParametersPC,
     GuiParametersLS,
@@ -22,13 +27,14 @@ class Gui:
 
     """
 
-    gui_width: int
-    gui_min_width: int
-    gui_max_width: int
+    min_width: int
+    min_width: int
+    max_width: int
     gui_height: int
-    gui_min_height: int
-    gui_max_height: int
+    min_height: int
+    max_height: int
     margin: int
+    id: int
 
     def __init__(self) -> None:
         """
@@ -36,7 +42,9 @@ class Gui:
         """
         np.set_printoptions(precision=1)
 
-    def render_gui(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParameters):
+    def render_gui(
+        self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal
+    ):
         self._init_gui(impl)
 
         # Draw window with GUI controls
@@ -55,7 +63,11 @@ class Gui:
         self._end_gui(impl)
 
     def _init_gui(self, impl: GlfwRenderer) -> None:
-        self.gui_width = 320
+        self.min_width = 320
+        self.max_width = 320
+        self.min_height = 20
+        self.max_height = 1200
+        self.text_width = 40
         self.margin = 30
         impl.process_inputs()
         imgui.new_frame()
@@ -63,7 +75,7 @@ class Gui:
     def _init_win_1(self, impl: GlfwRenderer) -> None:
         """Initialize the GUI drawing environment."""
         imgui.set_next_window_size_constraints(
-            (self.gui_width, 20), (self.gui_width, 1200)
+            (self.min_width, self.min_height), (self.max_width, self.max_height)
         )
         window_with = impl.io.display_size.x
         imgui.begin(
@@ -73,10 +85,10 @@ class Gui:
             | imgui.WINDOW_NO_MOVE,
         )
         imgui.set_window_position_labeled(
-            "Controls", window_with - (self.gui_width + self.margin), self.margin
+            "Controls", window_with - (self.min_width + self.margin), self.margin
         )
 
-    def _draw_apperance_gui(self, guip: GuiParameters) -> None:
+    def _draw_apperance_gui(self, guip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
@@ -116,10 +128,15 @@ class Gui:
             )
             imgui.pop_id()
 
-        self.draw_separator()
+        self._draw_separator()
 
     def _draw_model_gui(self, model: GlModel) -> None:
         """Draw GUI for model."""
+        meshes = model.filter_gl_type(GlMesh)
+        pointclouds = model.filter_gl_type(GlPointCloud)
+        linestrings = model.filter_gl_type(GlLineString)
+        rasters = model.filter_gl_type(GlRaster)
+
         [expanded, visible] = imgui.collapsing_header(model.guip.name)
         if expanded:
             guip = model.guip
@@ -128,7 +145,7 @@ class Gui:
             [changed, guip.show] = imgui.checkbox("Show", guip.show)
             imgui.pop_id()
 
-            if guip.shading == Shading.shadows:
+            if guip.shading == Shading.SHADOWS:
                 imgui.same_line()
                 imgui.push_id("Animate light")
                 [changed, guip.animate_light] = imgui.checkbox(
@@ -136,7 +153,7 @@ class Gui:
                 )
                 imgui.pop_id()
 
-            if len(model.meshes) > 0:
+            if len(meshes) > 0:
                 # Display mode combo box
                 imgui.push_id("Combo")
                 items = [
@@ -158,18 +175,26 @@ class Gui:
                                 imgui.set_item_default_focus()
                 imgui.pop_id()
 
+            # Reset id. This is needed to ensure that each gui comonent has a unique
+            # identifyer while they may have the same name
+            self.id = 0
+
             # Add individual ui for each mesh, pc, rn
-            for i, mesh in enumerate(model.meshes):
-                self._draw_mesh_gui(mesh.guip, i)
+            for mesh in meshes:
+                self._draw_mesh_gui(mesh.guip, self._get_id())
 
-            for i, pc in enumerate(model.pointclouds):
-                self._draw_pc_gui(pc.guip, i)
+            for pc in pointclouds:
+                self._draw_pc_gui(pc.guip, self._get_id())
 
-            for i, ls in enumerate(model.linestrings):
-                self._draw_ls_gui(ls.guip, i)
+            for ls in linestrings:
+                self._draw_ls_gui(ls.guip, self._get_id())
 
-            for i, rst in enumerate(model.rasters):
-                self._draw_rst_gui(rst.guip, i)
+            for rst in rasters:
+                self._draw_rst_gui(rst.guip, self._get_id())
+
+    def _get_id(self):
+        self.id += 1
+        return self.id
 
     def _end_win_1(self, impl: GlfwRenderer) -> None:
         imgui.end()
@@ -184,271 +209,42 @@ class Gui:
         """Draw GUI for mesh."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
-            imgui.push_id("ShowMesh " + str(index))
-            [changed, guip.show] = imgui.checkbox("Show", guip.show)
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("ColorMesh " + str(index))
-            [changed, guip.color] = imgui.checkbox("Color", guip.color)
-            imgui.pop_id()
+            self._create_cbxs(index, guip)
+            self._create_combo_cmaps(index, guip)
+            self._create_cobmo_data(index, guip)
+            self._create_range_sliders(index, guip)
 
-            imgui.push_id("InvertColors " + str(index))
-            imgui.same_line()
-            [changed, guip.invert_cmap] = imgui.checkbox(
-                "Invert cmap", guip.invert_cmap
-            )
-            imgui.pop_id()
-
-            key = guip.get_current_data_name()
-            # Color maps combo box
-            imgui.push_id("CmapCombo " + str(index))
-            items = list(shader_cmaps.keys())
-            with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.cmap_idx
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.update_caps = True
-                            guip.cmap_idx = i
-                            guip.cmap_key = item
-
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
-
-            # Add combobox for selecting data to color by
-            if len(guip.data_keys) > 1:
-                # Drawing colors
-                key = guip.get_current_data_name()
-                imgui.push_id("ColorsCombo " + str(index))
-                items = guip.data_keys
-                with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
-                    if combo.opened:
-                        for i, item in enumerate(items):
-                            is_selected = guip.data_idx
-                            if imgui.selectable(item, is_selected)[0]:
-                                guip.update_caps = True
-                                guip.update_data_tex = True
-                                guip.data_idx = i
-                                guip.dict_slider_caps[key][0] = 0.0
-                                guip.dict_slider_caps[key][1] = 1.0
-
-                            # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                            if is_selected:
-                                imgui.set_item_default_focus()
-                imgui.pop_id()
-
-            key = guip.get_current_data_name()
-
-            # Range sliders to cap data
-            imgui.push_id("lower_cap" + str(index))
-            value = guip.dict_slider_caps[key][0]
-            [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
-            if changed:
-                guip.dict_slider_caps[key][0] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
-                    guip.dict_slider_caps[key][1] = (
-                        guip.dict_slider_caps[key][0] + 0.001
-                    )
-
-            imgui.pop_id()
-
-            imgui.push_id("upper_cap" + str(index))
-            value = guip.dict_slider_caps[key][1]
-            [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
-            if changed:
-                guip.dict_slider_caps[key][1] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
-                    guip.dict_slider_caps[key][0] = (
-                        guip.dict_slider_caps[key][1] - 0.001
-                    )
-
-            imgui.pop_id()
-
-        self.draw_separator()
+        self._draw_separator()
 
     def _draw_pc_gui(self, guip: GuiParametersPC, index: int) -> None:
         """Draw GUI for point clouds."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
-            imgui.push_id("Show pc " + str(index))
-            [changed, guip.show] = imgui.checkbox("Show", guip.show)
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("Color pc " + str(index))
-            [changed, guip.color] = imgui.checkbox("Color", guip.color)
-            imgui.pop_id()
 
-            imgui.push_id("InvertColors " + str(index))
-            imgui.same_line()
-            [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
-            imgui.pop_id()
+            self._create_cbxs(index, guip)
 
-            imgui.push_id("Color pc " + str(index))
+            imgui.push_id("Size" + str(index))
             [changed, guip.point_scale] = imgui.slider_float(
                 "Scale factor", guip.point_scale, 0, 10
             )
             imgui.pop_id()
 
-            # Colormap selection combo box
-            imgui.push_id("CmapSelectionCombo " + str(index))
-            items = list(shader_cmaps.keys())
-            with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.cmap_idx
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.update_caps = True
-                            guip.cmap_idx = i
-                            guip.cmap_key = item
+            self._create_combo_cmaps(index, guip)
+            self._create_cobmo_data(index, guip)
+            self._create_range_sliders(index, guip)
 
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
-
-            key = guip.get_current_data_name()
-
-            # Add combobox for selecting data for color calcs
-
-            # Data selection combobox
-            imgui.push_id("DataSelectionCombo " + str(index))
-            items = guip.data_keys
-            with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.data_idx
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.update_caps = True
-                            guip.update_data_tex = True
-                            guip.data_idx = i
-                            # For selection of new data, reset the slider caps
-                            guip.dict_slider_caps[key][0] = 0.0
-                            guip.dict_slider_caps[key][1] = 1.0
-
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
-
-            # Range sliders to cap data
-            imgui.push_id("lower_cap" + str(index))
-            value = guip.dict_slider_caps[key][0]
-            [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
-            if changed:
-                guip.dict_slider_caps[key][0] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
-                    guip.dict_slider_caps[key][1] = (
-                        guip.dict_slider_caps[key][0] + 0.001
-                    )
-
-            imgui.pop_id()
-
-            imgui.push_id("upper_cap" + str(index))
-            value = guip.dict_slider_caps[key][1]
-            [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
-            if changed:
-                guip.dict_slider_caps[key][1] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
-                    guip.dict_slider_caps[key][0] = (
-                        guip.dict_slider_caps[key][1] - 0.001
-                    )
-
-            imgui.pop_id()
-
-        self.draw_separator()
+        self._draw_separator()
 
     def _draw_ls_gui(self, guip: GuiParametersLS, index: int) -> None:
         """Draw GUI for road networks."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
-            imgui.push_id("Show rn " + str(index))
-            [changed, guip.show] = imgui.checkbox("Show", guip.show)
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("Color rn " + str(index))
-            [changed, guip.color] = imgui.checkbox("Color", guip.color)
-            imgui.pop_id()
+            self._create_cbxs(index, guip)
+            self._create_combo_cmaps(index, guip)
+            self._create_cobmo_data(index, guip)
+            self._create_range_sliders(index, guip)
 
-            imgui.same_line()
-            imgui.push_id("InvertColors " + str(index))
-            [changed, guip.invert_cmap] = imgui.checkbox(
-                "Invert cmap", guip.invert_cmap
-            )
-            imgui.pop_id()
-
-            # Colormap selection combo box
-            imgui.push_id("CmapSelectionCombo " + str(index))
-            items = list(shader_cmaps.keys())
-            with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.cmap_idx
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.update_caps = True
-                            guip.cmap_idx = i
-                            guip.cmap_key = item
-
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
-
-            key = guip.get_current_data_name()
-
-            # Data selection combobox
-            imgui.push_id("DataSelectionCombo " + str(index))
-            items = guip.data_keys
-            with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
-                if combo.opened:
-                    for i, item in enumerate(items):
-                        is_selected = guip.data_idx
-                        if imgui.selectable(item, is_selected)[0]:
-                            guip.update_caps = True
-                            guip.update_data_tex = True
-                            guip.data_idx = i
-                            # For selection of new data, reset the slider caps
-                            guip.dict_slider_caps[key][0] = 0.0
-                            guip.dict_slider_caps[key][1] = 1.0
-
-                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if is_selected:
-                            imgui.set_item_default_focus()
-            imgui.pop_id()
-
-            # Range sliders to cap data
-            imgui.push_id("lower_cap" + str(index))
-            value = guip.dict_slider_caps[key][0]
-            [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
-            if changed:
-                guip.dict_slider_caps[key][0] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
-                    guip.dict_slider_caps[key][1] = (
-                        guip.dict_slider_caps[key][0] + 0.001
-                    )
-
-            imgui.pop_id()
-
-            imgui.push_id("upper_cap" + str(index))
-            value = guip.dict_slider_caps[key][1]
-            [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
-            if changed:
-                guip.dict_slider_caps[key][1] = value
-                guip.update_caps = True
-                if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
-                    guip.dict_slider_caps[key][0] = (
-                        guip.dict_slider_caps[key][1] - 0.001
-                    )
-
-            imgui.pop_id()
-
-        self.draw_separator()
+        self._draw_separator()
 
     def _draw_rst_gui(self, guip: GuiParametersRaster, index: int) -> None:
         """Draw GUI for raster"""
@@ -476,7 +272,7 @@ class Gui:
                         for i, item in enumerate(items):
                             is_selected = guip.cmap_idx
                             if imgui.selectable(item, is_selected)[0]:
-                                guip.update_caps = True
+                                # guip.update_caps = True
                                 guip.cmap_idx = i
                                 guip.cmap_key = item
 
@@ -484,6 +280,7 @@ class Gui:
                             if is_selected:
                                 imgui.set_item_default_focus()
                 imgui.pop_id()
+
             elif guip.type == RasterType.RGB or guip.type == RasterType.RGBA:
                 imgui.text("Active channels: ")
                 imgui.same_line()
@@ -505,20 +302,104 @@ class Gui:
                 [c, guip.channels[3]] = imgui.checkbox("A", guip.channels[3])
                 imgui.pop_id()
 
-    def draw_separator(self) -> None:
+    def _draw_separator(self) -> None:
         """Draw a separator between GUI elements."""
         imgui.spacing()
         imgui.separator()
         imgui.spacing()
 
-    def draw_example_gui(self, guip: GuiParametersDates) -> None:
-        """Draw an example GUI using provided parameters."""
-        self.styles(guip)
-        self.buttons_example(guip)
-        self.checkbox_example(guip)
-        self.combo_example(guip)
-        self.add_date_controls(guip)
-        self.draw_apperance_example(guip)
+    def _create_cbxs(self, index: int, guip: GuiParametersDates) -> None:
+        """Create checkboxes for common visualisation options."""
+
+        # Toggle visualisation on and off
+        imgui.push_id("Show" + str(index))
+        [changed, guip.show] = imgui.checkbox("Show", guip.show)
+        imgui.pop_id()
+
+        # Toggle color on and off
+        imgui.same_line()
+        imgui.push_id("Color" + str(index))
+        [changed, guip.color] = imgui.checkbox("Color", guip.color)
+        imgui.pop_id()
+
+        # Toggle color map inversion
+        imgui.same_line()
+        imgui.push_id("Invert" + str(index))
+        [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
+        imgui.pop_id()
+
+    def _create_combo_cmaps(self, index: int, guip: GuiParametersObj) -> None:
+        """Create a combo box for selecting color maps."""
+
+        key = guip.get_current_data_name()
+        # Color maps combo box
+        imgui.push_id("CmapCombo " + str(index))
+        items = list(shader_cmaps.keys())
+        with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
+            if combo.opened:
+                for i, item in enumerate(items):
+                    is_selected = guip.cmap_idx
+                    if imgui.selectable(item, is_selected)[0]:
+                        guip.update_caps = True
+                        guip.cmap_idx = i
+                        guip.cmap_key = item
+
+                    # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if is_selected:
+                        imgui.set_item_default_focus()
+        imgui.pop_id()
+
+    def _create_cobmo_data(self, index: int, guip: GuiParametersObj) -> None:
+        """Create a combo box for selecting data."""
+
+        if len(guip.data_keys) > 1:
+            # Drawing colors
+            key = guip.get_current_data_name()
+            imgui.push_id("ColorsCombo " + str(index))
+            items = guip.data_keys
+            with imgui.begin_combo("Data", items[guip.data_idx]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = guip.data_idx
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.update_caps = True
+                            guip.update_data_tex = True
+                            guip.data_idx = i
+                            guip.dict_slider_caps[key][0] = 0.0
+                            guip.dict_slider_caps[key][1] = 1.0
+
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
+
+    def _create_range_sliders(self, index: int, guip: GuiParametersObj) -> None:
+        """Create range sliders for adjusting data range."""
+
+        key = guip.get_current_data_name()
+
+        # Range sliders to cap data
+        imgui.push_id("lower_cap" + str(index))
+        value = guip.dict_slider_caps[key][0]
+        [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
+        if changed:
+            guip.dict_slider_caps[key][0] = value
+            guip.update_caps = True
+            if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
+                guip.dict_slider_caps[key][1] = guip.dict_slider_caps[key][0] + 0.001
+
+        imgui.pop_id()
+
+        imgui.push_id("upper_cap" + str(index))
+        value = guip.dict_slider_caps[key][1]
+        [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
+        if changed:
+            guip.dict_slider_caps[key][1] = value
+            guip.update_caps = True
+            if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
+                guip.dict_slider_caps[key][0] = guip.dict_slider_caps[key][1] - 0.001
+
+        imgui.pop_id()
 
     def styles(self, guip: GuiParametersDates) -> None:
         """Apply custom GUI styling based on provided parameters."""
@@ -537,7 +418,7 @@ class Gui:
 
     def _init_win_2(self, impl: GlfwRenderer) -> None:
         imgui.set_next_window_size_constraints(
-            (self.gui_width, 20), (self.gui_width, 1200)
+            (self.min_width, self.min_height), (self.max_width, self.max_height)
         )
 
         imgui.begin(
@@ -554,7 +435,7 @@ class Gui:
 
     def _draw_help(self) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
-        width = 40
+        width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Help")
         if expanded:
             imgui.begin_child(
@@ -601,29 +482,40 @@ class Gui:
 
             imgui.end_child()
 
-        self.draw_separator()
+        self._draw_separator()
 
     def _draw_data(self, model: GlModel) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
-        text_width = 40
+        width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Data")
-        if expanded:
-            self._draw_model_stats(model, text_width)
-            self._draw_model_data(model, text_width)
-        self.draw_separator()
+        mhs = model.filter_gl_type(GlMesh)
+        pcs = model.filter_gl_type(GlPointCloud)
+        lss = model.filter_gl_type(GlLineString)
+        rst = model.filter_gl_type(GlRaster)
 
-    def _draw_model_stats(self, model: GlModel, text_width: int) -> None:
+        if expanded:
+            self._draw_model_stats(mhs, pcs, lss, width)
+            self._draw_model_data(model, width)
+        self._draw_separator()
+
+    def _draw_model_stats(
+        self,
+        mhs: list[GlMesh],
+        pcs: list[GlPointCloud],
+        lss: list[GlLineString],
+        text_width: int,
+    ) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         imgui.begin_child("ModelStats", 0, 180, border=True)
         imgui.text("MODEL STATS:")
         v_count, f_count, p_count, l_count = 0, 0, 0, 0
-        for mesh in model.meshes:
+        for mesh in mhs:
             text_0 = f"- Mesh called: '{mesh.name}' has {mesh.n_vertices} vertices and {mesh.n_faces} faces."
             imgui.text(self.wrap_text(text_0, text_width))
             v_count += mesh.n_vertices
             f_count += mesh.n_faces
             # print(v_count)
-        for pc in model.pointclouds:
+        for pc in pcs:
             n_particles = pc.n_points
             n_vertices = (pc.n_sides + 1) * n_particles
             n_faces = pc.n_sides * n_particles
@@ -632,7 +524,7 @@ class Gui:
             v_count += n_vertices
             f_count += n_faces
             p_count += n_particles
-        for ls in model.linestrings:
+        for ls in lss:
             text_0 = f"- LineString called: '{ls.name}' has {len(ls.vertices)} points."
             imgui.text(self.wrap_text(text_0, text_width))
             v_count += ls.n_vertices
@@ -668,7 +560,7 @@ class Gui:
 
         imgui.end_child()
 
-    def _draw_fps(self, guip: GuiParameters) -> None:
+    def _draw_fps(self, guip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         imgui.text("FPS: " + str(guip.fps))
 

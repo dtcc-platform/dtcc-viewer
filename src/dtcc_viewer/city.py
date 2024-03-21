@@ -5,7 +5,7 @@ from dtcc_viewer.opengl.scene import Scene
 from typing import Any
 
 
-def view(city: City, shading: Shading = Shading.wireshaded):
+def view(city: City):
     """View a mesh in 3D with a GLFW window.
 
     This function is added to the Mesh class in dtcc_model.
