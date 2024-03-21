@@ -8,9 +8,7 @@ import time
 import dtcc_io
 
 from affine import Affine
-
 from pprint import pp
-
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 from dtcc_io import load_raster
@@ -84,8 +82,6 @@ def multi_geometry_example_1():
     window = Window(1200, 800)
     scene = Scene()
 
-    print("ascas")
-
     for i, pc in enumerate(all_pcs):
         data = pc.points[:, Direction.x]
         scene.add_pointcloud("pc " + str(i), pc, 0.2, data)
@@ -95,32 +91,6 @@ def multi_geometry_example_1():
         scene.add_mesh("Mesh " + str(i), mesh, data)
 
     window.render(scene)
-
-
-"""
-def roadnetwork_example_1():
-    filename = "../../../data/models/helsingborg_road_data.shp"
-    rn = load_roadnetwork(filename, type_field="Gcm_typ", name_field="id")
-    data_dict = {}
-    data_dict["vertex_x"] = rn.vertices[:, 0]
-    data_dict["vertex_y"] = rn.vertices[:, 1]
-    rn.view()
-
-
-def roadnetwork_example_2():
-    window = Window(1200, 800)
-    scene = Scene()
-
-    file_1 = "../../../data/models/helsingborg_vagslag.shp"
-    file_3 = "../../../data/models/helsingborg_cykel.shp"
-
-    rn_1 = load_roadnetwork(file_1, type_field="Typ", name_field="id")
-    rn_3 = load_roadnetwork(file_3, type_field="ELEMENT_ID", name_field="id")
-
-    scene.add_roadnetwork("Road Network", rn_1)
-    scene.add_roadnetwork("Road Network", rn_3)
-    window.render(scene)
-"""
 
 
 def linestring_example_1():

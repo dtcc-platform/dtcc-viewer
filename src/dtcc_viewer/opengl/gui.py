@@ -42,9 +42,7 @@ class Gui:
         """
         np.set_printoptions(precision=1)
 
-    def render_gui(
-        self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal
-    ):
+    def render(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal):
         self._init_gui(impl)
 
         # Draw window with GUI controls

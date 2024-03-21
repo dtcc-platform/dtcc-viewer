@@ -242,7 +242,7 @@ class Window:
                 self.model.render(self.action, self.guip)
 
             # Render the GUI
-            self.gui.render_gui(self.model, self.impl, self.guip)
+            self.gui.render(self.model, self.impl, self.guip)
 
             self.guip.calc_fps()
 
