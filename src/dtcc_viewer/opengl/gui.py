@@ -27,12 +27,12 @@ class Gui:
 
     """
 
-    gui_width: int
-    gui_min_width: int
-    gui_max_width: int
+    min_width: int
+    min_width: int
+    max_width: int
     gui_height: int
-    gui_min_height: int
-    gui_max_height: int
+    min_height: int
+    max_height: int
     margin: int
     id: int
 
@@ -63,7 +63,11 @@ class Gui:
         self._end_gui(impl)
 
     def _init_gui(self, impl: GlfwRenderer) -> None:
-        self.gui_width = 320
+        self.min_width = 320
+        self.max_width = 320
+        self.min_height = 20
+        self.max_height = 1200
+        self.text_width = 40
         self.margin = 30
         impl.process_inputs()
         imgui.new_frame()
@@ -71,7 +75,7 @@ class Gui:
     def _init_win_1(self, impl: GlfwRenderer) -> None:
         """Initialize the GUI drawing environment."""
         imgui.set_next_window_size_constraints(
-            (self.gui_width, 20), (self.gui_width, 1200)
+            (self.min_width, self.min_height), (self.max_width, self.max_height)
         )
         window_with = impl.io.display_size.x
         imgui.begin(
@@ -81,7 +85,7 @@ class Gui:
             | imgui.WINDOW_NO_MOVE,
         )
         imgui.set_window_position_labeled(
-            "Controls", window_with - (self.gui_width + self.margin), self.margin
+            "Controls", window_with - (self.min_width + self.margin), self.margin
         )
 
     def _draw_apperance_gui(self, guip: GuiParametersGlobal) -> None:
@@ -304,15 +308,6 @@ class Gui:
         imgui.separator()
         imgui.spacing()
 
-    def draw_example_gui(self, guip: GuiParametersDates) -> None:
-        """Draw an example GUI using provided parameters."""
-        self.styles(guip)
-        self.buttons_example(guip)
-        self.checkbox_example(guip)
-        self.combo_example(guip)
-        self.add_date_controls(guip)
-        self.draw_apperance_example(guip)
-
     def _create_cbxs(self, index: int, guip: GuiParametersDates) -> None:
         """Create checkboxes for common visualisation options."""
 
@@ -423,7 +418,7 @@ class Gui:
 
     def _init_win_2(self, impl: GlfwRenderer) -> None:
         imgui.set_next_window_size_constraints(
-            (self.gui_width, 20), (self.gui_width, 1200)
+            (self.min_width, self.min_height), (self.max_width, self.max_height)
         )
 
         imgui.begin(
@@ -440,7 +435,7 @@ class Gui:
 
     def _draw_help(self) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
-        width = 40
+        width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Help")
         if expanded:
             imgui.begin_child(
@@ -491,7 +486,7 @@ class Gui:
 
     def _draw_data(self, model: GlModel) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
-        text_width = 40
+        width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Data")
         mhs = model.filter_gl_type(GlMesh)
         pcs = model.filter_gl_type(GlPointCloud)
@@ -499,8 +494,8 @@ class Gui:
         rst = model.filter_gl_type(GlRaster)
 
         if expanded:
-            self._draw_model_stats(mhs, pcs, lss, text_width)
-            self._draw_model_data(model, text_width)
+            self._draw_model_stats(mhs, pcs, lss, width)
+            self._draw_model_data(model, width)
         self._draw_separator()
 
     def _draw_model_stats(
