@@ -303,7 +303,7 @@ if __name__ == "__main__":
     # pointcloud_example_2()
     # mesh_example_2()
     # mesh_example_3()
-    # multi_geometry_example_1()
+    multi_geometry_example_1()
     # building_example_2()
     # linestring_example_1()
     # linestring_example_2()

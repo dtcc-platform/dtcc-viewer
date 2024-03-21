@@ -198,9 +198,13 @@ class GuiParametersRaster:
         self.invert_cmap = False
         self.update_caps = False
         self.type = type
+        self.update_data_tex = False
 
         # 1 = draw, 0 = do not draw
         self.channels = [1, 1, 1, 1]
 
         self.cmap_idx = 0
         self.cmap_key = list(shader_cmaps.keys())[0]
+
+    def calc_data_min_max(self):
+        pass
