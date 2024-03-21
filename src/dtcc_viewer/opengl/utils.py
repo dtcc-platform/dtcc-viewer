@@ -105,6 +105,14 @@ class Shading(IntEnum):
     PICKING = 5
 
 
+class ColorMaps(IntEnum):
+    RAINBOW = 0
+    INFERNO = 1
+    BLACKBODY = 2
+    TURBO = 3
+    VIRIDIS = 4
+
+
 class ColorSchema(IntEnum):
     initial = 0
     red = 1

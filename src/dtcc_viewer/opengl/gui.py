@@ -1,8 +1,7 @@
 import imgui
 import numpy as np
-from dtcc_viewer.opengl.utils import Shading, RasterType
+from dtcc_viewer.opengl.utils import Shading, ColorMaps, RasterType
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.opengl.utils import shader_cmaps
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
@@ -16,6 +15,7 @@ from dtcc_viewer.opengl.parameters import (
     GuiParametersLS,
     GuiParametersRaster,
     GuiParametersDates,
+    GuiParametersModel,
 )
 
 
@@ -36,11 +36,16 @@ class Gui:
     margin: int
     id: int
 
+    shading: list[str]
+    cmaps: list[str]
+
     def __init__(self) -> None:
         """
         Initialize an instance of the Gui class.
         """
         np.set_printoptions(precision=1)
+        self.shading = [style.name.lower() for style in Shading]
+        self.cmaps = [cmap.name.lower() for cmap in ColorMaps]
 
     def render(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal):
         self._init_gui(impl)
@@ -96,37 +101,30 @@ class Gui:
             )
             imgui.spacing()
 
-            imgui.push_id("CbxClipX")
-            [changed, guip.clip_bool[0]] = imgui.checkbox("Clip X", guip.clip_bool[0])
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("ClipX")
-            [changed, guip.clip_dist[0]] = imgui.slider_float(
-                "", guip.clip_dist[0], -1.0, 1.0
+            (guip.clip_bool[0], guip.clip_dist[0]) = self._create_clip_slider(
+                "Clip X", guip.clip_bool[0], guip.clip_dist[0]
             )
-            imgui.pop_id()
 
-            imgui.push_id("CbxClipY")
-            [changed, guip.clip_bool[1]] = imgui.checkbox("Clip Y", guip.clip_bool[1])
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("ClipY")
-            [changed, guip.clip_dist[1]] = imgui.slider_float(
-                "", guip.clip_dist[1], -1.0, 1.0
+            (guip.clip_bool[1], guip.clip_dist[1]) = self._create_clip_slider(
+                "Clip Y", guip.clip_bool[1], guip.clip_dist[1]
             )
-            imgui.pop_id()
 
-            imgui.push_id("CbxClipZ")
-            [changed, guip.clip_bool[2]] = imgui.checkbox("Clip Z", guip.clip_bool[2])
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("ClipZ")
-            [changed, guip.clip_dist[2]] = imgui.slider_float(
-                "", guip.clip_dist[2], -1.0, 1.0
+            (guip.clip_bool[2], guip.clip_dist[2]) = self._create_clip_slider(
+                "Clip Z", guip.clip_bool[2], guip.clip_dist[2]
             )
-            imgui.pop_id()
 
         self._draw_separator()
+
+    def _create_clip_slider(self, name: str, clip_bool: bool, clip_dist: float):
+        imgui.push_id(name + "1")
+        [changed, clip_bool] = imgui.checkbox(name, clip_bool)
+        imgui.pop_id()
+        imgui.same_line()
+        imgui.push_id(name + "2")
+        [changed, clip_dist] = imgui.slider_float("", clip_dist, -1.0, 1.0)
+        imgui.pop_id()
+
+        return clip_bool, clip_dist
 
     def _draw_model_gui(self, model: GlModel) -> None:
         """Draw GUI for model."""
@@ -151,30 +149,11 @@ class Gui:
                 )
                 imgui.pop_id()
 
-            if len(meshes) > 0:
-                # Display mode combo box
-                imgui.push_id("Combo")
-                items = [
-                    "wireframe",
-                    "ambient",
-                    "diffuse",
-                    "wireshaded",
-                    "shadows",
-                    "picking",
-                ]
-                with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
-                    if combo.opened:
-                        for i, item in enumerate(items):
-                            is_selected = guip.shading
-                            if imgui.selectable(item, is_selected)[0]:
-                                guip.shading = i
-                            # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                            if is_selected:
-                                imgui.set_item_default_focus()
-                imgui.pop_id()
+            # Display mode combo box
+            self._create_combo_display(meshes, guip)
 
-            # Reset id. This is needed to ensure that each gui comonent has a unique
-            # identifyer while they may have the same name
+            # The id ensures gui component has a unique identifyer while they may have
+            # the same name
             self.id = 0
 
             # Add individual ui for each mesh, pc, rn
@@ -255,7 +234,6 @@ class Gui:
             imgui.push_id("Color raster " + str(index))
             [changed, guip.color] = imgui.checkbox("Color", guip.color)
             imgui.pop_id()
-
             imgui.push_id("InvertRasterColors " + str(index))
             imgui.same_line()
             [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
@@ -264,15 +242,13 @@ class Gui:
             if guip.type == RasterType.Data:
                 # Colormap selection combo box
                 imgui.push_id("CmapSelectionCombo " + str(index))
-                items = list(shader_cmaps.keys())
+                items = self.cmaps
                 with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
                             is_selected = guip.cmap_idx
                             if imgui.selectable(item, is_selected)[0]:
-                                # guip.update_caps = True
                                 guip.cmap_idx = i
-                                guip.cmap_key = item
 
                             # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                             if is_selected:
@@ -306,6 +282,24 @@ class Gui:
         imgui.separator()
         imgui.spacing()
 
+    def _create_combo_display(self, meshes: list[GlMesh], guip: GuiParametersModel):
+        if len(meshes) > 0:
+            # Display mode combo box
+            imgui.push_id("Combo")
+
+            items = self.shading
+
+            with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = guip.shading
+                        if imgui.selectable(item, is_selected)[0]:
+                            guip.shading = i
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
+
     def _create_cbxs(self, index: int, guip: GuiParametersDates) -> None:
         """Create checkboxes for common visualisation options."""
 
@@ -328,11 +322,8 @@ class Gui:
 
     def _create_combo_cmaps(self, index: int, guip: GuiParametersObj) -> None:
         """Create a combo box for selecting color maps."""
-
-        key = guip.get_current_data_name()
-        # Color maps combo box
         imgui.push_id("CmapCombo " + str(index))
-        items = list(shader_cmaps.keys())
+        items = self.cmaps
         with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
             if combo.opened:
                 for i, item in enumerate(items):
@@ -340,7 +331,6 @@ class Gui:
                     if imgui.selectable(item, is_selected)[0]:
                         guip.update_caps = True
                         guip.cmap_idx = i
-                        guip.cmap_key = item
 
                     # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                     if is_selected:
@@ -348,10 +338,9 @@ class Gui:
         imgui.pop_id()
 
     def _create_cobmo_data(self, index: int, guip: GuiParametersObj) -> None:
-        """Create a combo box for selecting data."""
+        """Create a combo box for data selection."""
 
         if len(guip.data_keys) > 1:
-            # Drawing colors
             key = guip.get_current_data_name()
             imgui.push_id("ColorsCombo " + str(index))
             items = guip.data_keys
@@ -399,7 +388,7 @@ class Gui:
 
         imgui.pop_id()
 
-    def styles(self, guip: GuiParametersDates) -> None:
+    def _styles(self, guip: GuiParametersDates) -> None:
         """Apply custom GUI styling based on provided parameters."""
         style = imgui.get_style()
         style.colors[imgui.COLOR_BORDER] = (0, 0.5, 1, 1)

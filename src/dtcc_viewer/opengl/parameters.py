@@ -3,6 +3,7 @@ import glfw
 from dtcc_viewer.opengl.utils import invert_color
 from dtcc_viewer.opengl.utils import Shading, RasterType
 from dtcc_viewer.opengl.utils import shader_cmaps
+from dtcc_viewer.opengl.utils import ColorMaps
 from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
 
@@ -89,7 +90,6 @@ class GuiParametersObj(ABC):
     update_caps: bool
     update_data_tex: bool
     cmap_idx: int
-    cmap_key: str
     data_idx: int
     data_min: float
     data_max: float
@@ -105,7 +105,6 @@ class GuiParametersObj(ABC):
         self.update_caps = False
         self.update_data_tex = False
         self.cmap_idx = 0
-        self.cmap_key = list(shader_cmaps.keys())[0]
         self.data_idx = 0
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
