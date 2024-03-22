@@ -32,7 +32,7 @@ class GuiParametersGlobal:
         self.gui_height = 200
         self.single_date = True
         self.period = False
-        self.clip_bool = [False, False, False]
+        self.clip_bool = [True, True, True]
         self.clip_dir = [1, 1, 1]
         self.clip_dist = [1, 1, 1]  # each variable has range [-1, 1]
         self.fps_counter = 0
