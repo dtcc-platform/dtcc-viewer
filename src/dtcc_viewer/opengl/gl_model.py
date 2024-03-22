@@ -73,7 +73,7 @@ class GlModel:
     shadow_border_color: np.ndarray  # color for the border of the shadow map
     lsm: np.ndarray  # Light space matrix for shadow map rendering
 
-    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    tex_slot_shadow_map: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
 
     def __init__(self, gl_objects: list[GlObject], bb_global: BoundingBox):
         self.gl_objects = gl_objects
@@ -130,6 +130,7 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)  # Bind our frame buffer
 
         self.pick_texture = glGenTextures(1)
+        glActiveTexture(self.tex_slot_picking)
         glBindTexture(GL_TEXTURE_2D, self.pick_texture)
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB, window_w, window_h, 0, GL_RGB, GL_FLOAT, None
@@ -159,18 +160,21 @@ class GlModel:
         texture_slots = self._get_texture_slots()
 
         # The first slot GL_TEXTURE0 is reserved for the shadow map
-        self.texture_slot = texture_slots[0]
+        self.tex_slot_shadow_map = texture_slots[0]
+        self.tex_idx_shadow_map = 0
+        self.tex_slot_picking = texture_slots[1]
+        self.tex_idx_picking = 1
 
-        if len(self.gl_objects) > len(texture_slots) - 1:
+        if len(self.gl_objects) > len(texture_slots) - 2:
             warning("Not enough texture slots for all rendable entities.")
             return False
 
-        next_index = 1
+        next_idx = 2
 
         for obj in self.gl_objects:
-            obj.texture_slot = texture_slots[next_index]
-            obj.texture_int = next_index
-            next_index += 1
+            obj.texture_slot = texture_slots[next_idx]
+            obj.texture_idx = next_idx
+            next_idx += 1
 
         return True
 
@@ -246,7 +250,7 @@ class GlModel:
 
         # Creating a texture which will be used as the framebuffers depth buffer
         self.shadow_depth_map = glGenTextures(1)
-        glActiveTexture(self.texture_slot)
+        glActiveTexture(self.tex_slot_shadow_map)
         glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
         self.shadow_map_resolution = 1024 * 8
         glTexImage2D(
@@ -311,12 +315,40 @@ class GlModel:
             compileShader(fragment_shader_debug_picking, GL_FRAGMENT_SHADER),
         )
 
+        self.uloc_dbpi["screenTex"] = glGetUniformLocation(
+            self.shader_dbpi, "screenTex"
+        )
+
     def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if not action.mouse_on_gui:
             self._draw_picking_texture(action)
             self._evaluate_picking(action, gguip)
         else:
             action.picking = False
+
+    def _draw_picking_texture(self, action: Action) -> None:
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        # Camera input
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix()
+        proj = action.camera.get_perspective_matrix()
+
+        # Picking pass
+        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)
+        glEnable(GL_DEPTH_TEST)
+        # glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glUseProgram(self.shader_pick)
+
+        glUniformMatrix4fv(self.uloc_pick["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.uloc_pick["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_pick["project"], 1, GL_FALSE, proj)
+
+        # Draw meshes to the texture
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                obj.triangles_draw_call()
 
     def _evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
@@ -349,30 +381,6 @@ class GlModel:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-    def _draw_picking_texture(self, action: Action) -> None:
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        # Camera input
-        move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
-
-        # Picking pass
-        glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)
-        glEnable(GL_DEPTH_TEST)
-        # glClearColor(1.0, 1.0, 1.0, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(self.shader_pick)
-
-        glUniformMatrix4fv(self.uloc_pick["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.uloc_pick["view"], 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.uloc_pick["project"], 1, GL_FALSE, proj)
-
-        # Draw meshes to the texture
-        for obj in self.gl_objects:
-            if isinstance(obj, GlMesh):
-                obj.triangles_draw_call()
-
     def _render_pick_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
         self._draw_picking_texture(action)
 
@@ -382,7 +390,10 @@ class GlModel:
         glDisable(GL_DEPTH_TEST)
         glUseProgram(self.shader_dbpi)  # Use the debug picking shader
         glBindVertexArray(self.VAO_debug)
+
+        glActiveTexture(self.tex_slot_picking)
         glBindTexture(GL_TEXTURE_2D, self.pick_texture)
+        glUniform1i(self.uloc_dbpi["screenTex"], self.tex_idx_picking)
 
         # Draw the quad
         self._debug_quad_draw_call()

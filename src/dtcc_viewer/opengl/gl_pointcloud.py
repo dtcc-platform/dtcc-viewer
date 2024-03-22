@@ -119,7 +119,7 @@ class GlPointCloud(GlObject):
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
-        glUniform1i(self.uniform_locs["data_tex"], self.texture_int)
+        glUniform1i(self.uniform_locs["data_tex"], self.texture_idx)
 
         sf = self.guip.point_scale
         scale = pyrr.matrix44.create_from_scale([sf, sf, sf], dtype=np.float32)

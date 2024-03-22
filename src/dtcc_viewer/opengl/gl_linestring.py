@@ -85,7 +85,7 @@ class GlLineString(GlObject):
         self.bb_global = lss_wrapper.bb_global
 
         self.texture_slot = None
-        self.texture_int = None
+        self.texture_idx = None
 
     def _create_textures(self) -> None:
         """Create textures for data."""
@@ -178,7 +178,7 @@ class GlLineString(GlObject):
         glUniform1i(self.uniform_locs["data_idx"], self.guip.data_idx)
         glUniform1f(self.uniform_locs["data_min"], self.guip.data_min)
         glUniform1f(self.uniform_locs["data_max"], self.guip.data_max)
-        glUniform1i(self.uniform_locs["data_tex"], self.texture_int)
+        glUniform1i(self.uniform_locs["data_tex"], self.texture_idx)
 
         glDrawElements(GL_LINES, len(self.line_indices), GL_UNSIGNED_INT, None)
 

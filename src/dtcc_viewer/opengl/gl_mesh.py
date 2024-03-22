@@ -137,7 +137,7 @@ class GlMesh(GlObject):
         self.uloc_shmp = {}
 
         self.texture_slot = None
-        self.texture_int = None
+        self.texture_idx = None
 
     def get_vertex_ids(self):
         return self.vertices[8::9]
@@ -465,7 +465,7 @@ class GlMesh(GlObject):
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_line["data_max"], self.guip.data_max)
-        glUniform1i(self.uloc_line["data_tex"], self.texture_int)
+        glUniform1i(self.uloc_line["data_tex"], self.texture_idx)
 
         self._lines_draw_call()
         self._unbind_shader()
@@ -498,7 +498,7 @@ class GlMesh(GlObject):
         glUniform1f(self.uloc_ambi["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_ambi["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_ambi["picked_id"], action.picked_id)
-        glUniform1i(self.uloc_ambi["data_tex"], self.texture_int)
+        glUniform1i(self.uloc_ambi["data_tex"], self.texture_idx)
 
         self.triangles_draw_call()
         self._unbind_shader()
@@ -533,7 +533,7 @@ class GlMesh(GlObject):
         glUniform1f(self.uloc_diff["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_diff["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_diff["picked_id"], action.picked_id)
-        glUniform1i(self.uloc_diff["data_tex"], self.texture_int)
+        glUniform1i(self.uloc_diff["data_tex"], self.texture_idx)
 
         view_pos = action.camera.position
         glUniform3fv(self.uloc_diff["view_pos"], 1, view_pos)
@@ -598,7 +598,7 @@ class GlMesh(GlObject):
         glUniform1f(self.uloc_shdw["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_shdw["data_max"], self.guip.data_max)
         glUniform1i(self.uloc_shdw["picked_id"], action.picked_id)
-        glUniform1i(self.uloc_shdw["data_tex"], self.texture_int)
+        glUniform1i(self.uloc_shdw["data_tex"], self.texture_idx)
 
         # Set light uniforms
         glUniform3fv(self.uloc_shdw["view_pos"], 1, action.camera.position)

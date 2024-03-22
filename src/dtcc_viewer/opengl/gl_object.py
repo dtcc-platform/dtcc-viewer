@@ -21,7 +21,7 @@ class GlObject(ABC):
     data_wrapper: DataWrapper  # Data wrapper for the mesh
     data_texture: int  # Texture for data
     texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
-    texture_int: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
+    texture_idx: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
 
     def preprocess(self):
         self._create_textures()
