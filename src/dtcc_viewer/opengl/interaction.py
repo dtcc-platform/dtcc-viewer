@@ -112,6 +112,10 @@ class Action:
         self.picked_y = 0
         self.picked_id = -1
 
+    def set_camera_distance_to_target(self, distance_to_target):
+        self.camera.distance_to_target = distance_to_target
+        self.camera.update_camera_vectors()
+
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
 

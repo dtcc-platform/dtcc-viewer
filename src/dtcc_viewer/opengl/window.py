@@ -1,5 +1,6 @@
 import glfw
 import imgui
+import math
 import numpy as np
 from OpenGL.GL import *
 from imgui.integrations.glfw import GlfwRenderer
@@ -181,6 +182,9 @@ class Window:
 
         # Create model from meshes
         self.model = GlModel(self.gl_objects, scene.bb)
+
+        size_scene = math.sqrt(pow(scene.bb.xdom, 2) + pow(scene.bb.ydom, 2))
+        self.action.set_camera_distance_to_target(1.5 * size_scene)
 
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")

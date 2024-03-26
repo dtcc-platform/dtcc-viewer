@@ -47,6 +47,23 @@ class Camera:
         The pitch rotation angle.
     """
 
+    postion: Vector3
+    front: Vector3
+    up: Vector3
+    right: Vector3
+    target: Vector3
+    direction: Vector3
+
+    distance_to_target: float
+    aspect_ratio: float
+    near_plane: float
+    far_plane: float
+    fov: float
+    mouse_sensitivity: float
+    scroll_sensitivity: float
+    jaw: float
+    pitch: float
+
     def __init__(self, width, height):
         """Initialize the Camera object with the provided width and height.
 
@@ -58,26 +75,38 @@ class Camera:
             The height of the viewport.
         """
 
-        self.position = Vector3([0.0, 10.0, 3.0])
+        self.position = Vector3([0.0, 10.0, 10.0])
         self.front = Vector3([0.0, 0.0, -1.0])
         self.up = Vector3([0.0, 0.0, 1.0])
         self.right = Vector3([1.0, 0.0, 0.0])
         self.target = Vector3([0.0, 0.0, 0.0])
         self.direction = Vector3([0.0, 0.0, 0.0])
-        self.distance_to_target = 100.0
 
-        # self.width = width
-        # self.heigh = height
         self.aspect_ratio = float(width) / float(height)
         self.near_plane = 0.1
         self.far_plane = 1000000
         self.fov = 25
         self.mouse_sensitivity = -0.25
         self.scroll_sensitivity = -0.1
+
+        # Set initial view properties
+        self.distance_to_target = 500.0
         self.jaw = -90
-        self.pitch = 0
+        self.pitch = 30
 
         self.update_camera_vectors()
+
+    def print(self):
+        print("Camera settings:")
+        print(f"Camera position: {self.position}")
+        print(f"Camera front vector: {self.front}")
+        print(f"Camera up vector: {self.up}")
+        print(f"Camera right vector: {self.front}")
+        print(f"Camera target: {self.target}")
+        print(f"Camera direction vector: {self.direction}")
+        print(f"Camera distance to target: {self.distance_to_target}")
+        print(f"Camera jaw angle: {self.jaw}")
+        print(f"Camera pitch angle: {self.pitch}")
 
     def update_window_aspect_ratio(self, width, height) -> None:
         """Update the camera's viewport dimensions.
@@ -89,8 +118,6 @@ class Camera:
         height : int
             The new height of the viewport.
         """
-        # self.width = width
-        # self.heigh = height
         self.aspect_ratio = float(width) / float(height)
 
     def set_aspect_ratio(self, aspect_ratio) -> None:
@@ -211,17 +238,15 @@ class Camera:
         -------
         None
         """
+        z_vec = Vector3([0.0, 0.0, 1.0])
+        dtt = self.distance_to_target
+
         new_direction = Vector3([0.0, 0.0, 0.0])
         new_direction.x = cos(radians(self.jaw)) * cos(radians(self.pitch))
         new_direction.z = sin(radians(self.pitch))
         new_direction.y = sin(radians(self.jaw)) * cos(radians(self.pitch))
 
-        self.position = (
-            self.distance_to_target * vector.normalise(new_direction) + self.target
-        )
-
+        self.position = dtt * vector.normalise(new_direction) + self.target
         self.direction = vector.normalise(self.target - self.position)
-        self.right = vector.normalise(
-            vector3.cross(self.direction, Vector3([0.0, 0.0, 1.0]))
-        )
+        self.right = vector.normalise(vector3.cross(self.direction, z_vec))
         self.up = vector.normalise(vector3.cross(self.right, self.direction))
