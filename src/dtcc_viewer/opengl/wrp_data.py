@@ -6,6 +6,7 @@ from dtcc_model import PointCloud
 from abc import ABC, abstractmethod
 from shapely.geometry import LineString
 from typing import Any
+from dtcc_viewer.opengl.utils import Submeshes
 
 
 class DataWrapper(ABC):
@@ -68,8 +69,8 @@ class MeshDataWrapper(DataWrapper):
     as 2d textures.
     """
 
-    v_count: int  # Number of vertices in the mesh
-    f_count: int  # Number of faces in the mesh
+    v_count: int  # Number of vertices in the original mesh
+    f_count: int  # Number of faces in the original mesh
     new_v_count: int  # Number of vertices in the restructured mesh
 
     def __init__(self, mesh: Mesh, mts: int) -> None:
@@ -99,18 +100,59 @@ class MeshDataWrapper(DataWrapper):
             warning(f"Data called {name} was not added to data dictionary.")
             return False
 
+    def add_submeshes_data(self, name: str, data: np.ndarray, submeshes: Submeshes):
+        (data_mat, val_caps) = self._process_submeshes_data(data, submeshes)
+
+        if (data_mat is not None) and (val_caps is not None):
+            self.data_mat_dict[name] = data_mat
+            self.data_value_caps[name] = val_caps
+            info(f"Data called {name} was added to data dictionary.")
+            return True
+        else:
+            warning(f"Data called {name} was not added to data dictionary.")
+            return False
+
+    def _process_submeshes_data(self, data: np.ndarray, submeshes: Submeshes):
+
+        if submeshes.f_count != len(self.mesh.faces):
+            warning(f"Submesh count does not match data count.")
+            return None, None
+
+        # For example, if data is per building and submeshes are used to define building
+        if len(data) == submeshes.count:
+            f_counts = submeshes.face_count_per_submesh
+            face_data = []
+            # repeat the data for each face in the submesh => n_data = n_faces
+            for i in range(len(data)):
+                d = np.repeat(data[i], f_counts[i]).tolist()
+                face_data.extend(d)
+
+            # Restructure the data to match the vertex structure
+            data_res = self._face_data_2_new_vertex_structure(face_data)
+            data_mat = self._reformat_data_for_texture(data_res)
+            val_caps = (np.min(data_res), np.max(data_res))
+            return data_mat, val_caps
+
+    def _face_data_2_new_vertex_structure(self, data: np.ndarray):
+        """Restructure per face data to match vertex structure with 3 unique vertices per face."""
+        face_indices = np.arange(0, len(self.mesh.faces))
+        face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
+        data_res = data[face_indices]
+        return data_res
+
+    def _vertex_data_2_new_vertex_structure(self, data: np.ndarray):
+        data_res = data[self.mesh.faces.flatten()]  # Restructure the data
+        return data_res
+
     def _process_data(self, data: np.ndarray):
         """Check so the data count matches the vertex or face count."""
-
         if len(data) == self.f_count:
-            face_indices = np.arange(0, len(self.mesh.faces))
-            face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
-            data_res = data[face_indices]
+            data_res = self._face_data_2_new_vertex_structure(data)
             data_mat = self._reformat_data_for_texture(data_res)
             val_caps = (np.min(data_res), np.max(data_res))
             return data_mat, val_caps
         elif len(data) == self.v_count:
-            data_res = data[self.mesh.faces.flatten()]  # Restructure the data
+            data_res = self._vertex_data_2_new_vertex_structure(data)
             data_mat = self._reformat_data_for_texture(data_res)
             val_caps = (np.min(data_res), np.max(data_res))
             return data_mat, val_caps

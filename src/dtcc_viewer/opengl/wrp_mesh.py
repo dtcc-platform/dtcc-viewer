@@ -5,6 +5,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, Submeshes
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
+from dtcc_model.quantity import Quantity
 from pprint import PrettyPrinter
 from typing import Any
 
@@ -51,7 +52,7 @@ class MeshWrapper:
         name: str,
         mesh: Mesh,
         mts: int,
-        data: Any = None,  # Dict or np.ndarray
+        data: Any = None,  # Dict, np.ndarray, Quantity or list[Quantity]
         submeshes: Submeshes = None,
     ) -> None:
         """Initialize the MeshWrapper object.
@@ -77,13 +78,13 @@ class MeshWrapper:
         self.data = []
         self.data_wrapper = None
 
-        self._append_data(mesh, mts, data)
+        self._append_data(mesh, mts, data, submeshes)
         self._restructure_mesh(mesh)
 
         if self.submeshes is None:
-            info("Submesh is None faces are used as defualt submeshes")
+            info("Submesh is None -> faces are used as defualt submeshes")
         else:
-            self._create_ids_from_submeshes(self.submeshes)
+            self._create_ids_from_submeshes(self.submeshes)  # Picking ids
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -91,15 +92,11 @@ class MeshWrapper:
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
-    def _append_data(self, mesh: Mesh, mts: int, data: Any = None):
-        # Structure the data in the dict so that there are three data slots for each
-        # vertex, and three uniqie vertces for each face. This is necessary in order
-        # to enable to color each face individually. This structure is also needed for
-        # the vertices so that each face can have individual normals so that shading
-        # can be computed correctly.
+    def _append_data(
+        self, mesh: Mesh, mts: int, data: Any = None, submeshes: Submeshes = None
+    ):
 
         self.data_wrapper = MeshDataWrapper(mesh, mts)
-
         results = []
 
         if data is not None:
@@ -110,11 +107,29 @@ class MeshWrapper:
             elif type(data) == np.ndarray:
                 success = self.data_wrapper.add_data("Data", data)
                 results.append(success)
+            elif type(data) == Quantity:
+                success = self._add_quantity_data(mesh, quantity, submeshes)
+                results.append(success)
+            elif type(data) == list[Quantity]:
+                for quantity in data:
+                    success = self._add_quantity_data(mesh, quantity, submeshes)
+                    results.append(success)
 
         if data is None or not np.any(results):
             self.data_wrapper.add_data("Vertex X", mesh.vertices[:, 0])
             self.data_wrapper.add_data("Vertex Y", mesh.vertices[:, 1])
             self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
+
+    def _add_quantity_data(self, mesh: Mesh, q: Quantity, submeshes: Submeshes):
+        n = len(q.values)
+        if submeshes is not None:
+            if n == len(submeshes):
+                self.data_wrapper.add_submeshes_data(q.name, q.values, submeshes)
+                return True
+        elif n == len(mesh.vertices) or n == len(mesh.faces):
+            self.data_wrapper.add_data(q.name, q.values)
+        else:
+            warning(f"Attempt to add quantity data {q.name} failed")
 
     def _restructure_mesh(self, mesh: Mesh):
         array_length = len(mesh.faces) * 3 * 9

@@ -7,6 +7,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_builder import *
 
 
 class CityWrapper:
@@ -61,6 +62,8 @@ class CityWrapper:
         (t_mesh, t_submeshes) = self._get_terrain_mesh(city)
         (b_mesh, b_submeshes) = self._generate_building_mesh(city)
 
+        quantities = self._get_quantities(city)
+
         # Set the global ids for the entire scene
         if t_submeshes is not None:
             offset = np.max(t_submeshes.ids) + 1
@@ -68,11 +71,11 @@ class CityWrapper:
 
         if t_mesh is not None:
             name = "terrain"
-            self.terrain_mw = MeshWrapper(name, t_mesh, mts, submeshes=t_submeshes)
+            self.terrain_mw = MeshWrapper(name, t_mesh, mts, quantities, t_submeshes)
 
         if b_mesh is not None:
             name = "buildings"
-            self.building_mw = MeshWrapper(name, b_mesh, mts, submeshes=b_submeshes)
+            self.building_mw = MeshWrapper(name, b_mesh, mts, quantities, b_submeshes)
 
         info("CityWrapper initialized")
 
@@ -109,30 +112,15 @@ class CityWrapper:
     def _generate_building_mesh(self, city: City):
         meshes = []
         uuids = []
-        results = []
-
         # Generate mesh data for buildings
         for building in city.buildings:
-            building_meshes = []
             uuid = building.id
-            flat_geom = self.get_highest_lod_building(building)
-            if isinstance(flat_geom, MultiSurface):
-                for srf in flat_geom.surfaces:
-                    (mesh, result) = surface_2_mesh(srf.vertices)
-                    results.append(result)
-                    if mesh is not None:
-                        building_meshes.append(mesh)
-
-            if len(building_meshes) > 0:
-                # Concatenate all building mesh parts into one building mesh
-                building_mesh = concatenate_meshes(building_meshes)
-                meshes.append(building_mesh)
-                uuids.append(uuid)
-
-        results_type_count = Counter(results)
-        info("Results from triangluation:")
-        for result_type, count in results_type_count.items():
-            info(f" - {result_type.name}: {count}")
+            ms = self.get_highest_lod_building(building)
+            if isinstance(ms, MultiSurface):
+                building_mesh = ms.mesh()
+                if building_mesh is not None:
+                    meshes.append(building_mesh)
+                    uuids.append(uuid)
 
         if len(meshes) == 0:
             info("No building meshes found in city model")
@@ -144,6 +132,10 @@ class CityWrapper:
             return mesh, submeshes
 
         return None, None
+
+    def _get_quantities(self, city: City):
+
+        quantities = city.quantities
 
     def get_highest_lod_building(self, building: Building):
         lods = [

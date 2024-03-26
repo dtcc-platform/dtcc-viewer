@@ -21,6 +21,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import LineString, Point
 from dtcc_viewer.opengl.bundle import Bundle
+from dtcc_model.quantity import Quantity
 
 # from dtcc_io import load_roadnetwork
 
@@ -134,18 +135,25 @@ def linestring_example_2():
 
 def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
-    # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
+    city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
     # city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
-
+    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
     # city_rot.view()
-    # city_mon.view()
+    city_mon.view()
     # city_vie.view()
     # city_dhg.view()
     # city_rwy.view()
-    city_nyc.view()
+    # city_nyc.view()
+
+
+def city_example_2():
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    bld_number = np.arange(city.num_buildings)
+    bld_quantity = Quantity("Building number", "Int", "None", "building", bld_number)
+    city.add_quantity(bld_quantity)
+    city.view()
 
 
 def building_example_1():
@@ -171,7 +179,6 @@ def object_example_1():
     circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
     obj = Object()
-
     obj.geometry[GeometryType.MESH] = sphere_mesh
     obj.geometry[GeometryType.LINESTRING] = circle_ls
     obj.geometry[GeometryType.LOD2] = cylinder_ms
@@ -277,8 +284,9 @@ if __name__ == "__main__":
     # building_example_2()
     # linestring_example_1()
     # linestring_example_2()
-    # mesh_example_1()
-    city_example_1()
+    mesh_example_1()
+    # city_example_1()
+    # city_example_2()
     # building_example_1()
     # object_example_1()
     # object_example_2()
