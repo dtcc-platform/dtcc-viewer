@@ -4,18 +4,16 @@ import numpy as np
 from OpenGL.GL import *
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.logging import info, warning
+from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.interaction import Action
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl.gl_mesh import GlMesh
-from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
-from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.gl_model import GlModel
+from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.gui import Gui
-from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 
 
 class Window:

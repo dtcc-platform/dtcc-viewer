@@ -10,7 +10,7 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.utils import Submeshes
+from dtcc_viewer.opengl.submeshes import Submeshes
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 

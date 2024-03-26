@@ -1,14 +1,15 @@
 import numpy as np
 from dtcc_model import MultiSurface
-from dtcc_model import Bounds, Object
+from dtcc_model import Object
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *
-from dtcc_viewer.opengl.utils import BoundingBox, Shading, Results
+from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.utils import Submeshes, concatenate_meshes, surface_2_mesh
+from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.submeshes import Submeshes
 from shapely.geometry import LineString
 
 

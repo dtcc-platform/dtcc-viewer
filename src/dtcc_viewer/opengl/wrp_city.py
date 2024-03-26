@@ -1,13 +1,16 @@
 import numpy as np
+import time
 from collections import Counter
-from dtcc_model import City, MultiSurface, Surface, Building, Mesh, Terrain
+from dtcc_model import City, MultiSurface, Building, Mesh, Terrain
 from dtcc_viewer.utils import *
-from dtcc_viewer.opengl.utils import BoundingBox, Shading, Results, Submeshes
+from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.submeshes import Submeshes
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
+from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_builder import *
+from dtcc_builder.meshing import mesh_multisurfaces
 
 
 class CityWrapper:
@@ -112,7 +115,9 @@ class CityWrapper:
     def _generate_building_mesh(self, city: City):
         meshes = []
         uuids = []
+        tic = time.perf_counter()
         # Generate mesh data for buildings
+        # if True:
         for building in city.buildings:
             uuid = building.id
             ms = self.get_highest_lod_building(building)
@@ -121,6 +126,18 @@ class CityWrapper:
                 if building_mesh is not None:
                     meshes.append(building_mesh)
                     uuids.append(uuid)
+        # else:
+        #    mss = []
+        #    for building in city.buildings:
+        #        uuid = building.id
+        #        ms = self.get_highest_lod_building(building)
+        #        if isinstance(ms, MultiSurface):
+        #            mss.append(ms)
+        #            uuids.append(uuid)
+        #    meshes = mesh_multisurfaces(mss)
+
+        toc = time.perf_counter()
+        info(f"Meshing completed. Time elapsed: {toc - tic:0.4f} seconds")
 
         if len(meshes) == 0:
             info("No building meshes found in city model")

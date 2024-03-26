@@ -1,8 +1,8 @@
 import numpy as np
 from dtcc_model import Mesh
-from dtcc_model import Bounds
 from dtcc_viewer.utils import *
-from dtcc_viewer.opengl.utils import BoundingBox, Shading, Submeshes
+from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.submeshes import Submeshes
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_model.quantity import Quantity

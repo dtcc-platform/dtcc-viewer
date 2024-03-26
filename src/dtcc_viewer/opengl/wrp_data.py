@@ -5,8 +5,8 @@ from dtcc_model import Mesh
 from dtcc_model import PointCloud
 from abc import ABC, abstractmethod
 from shapely.geometry import LineString
+from dtcc_viewer.opengl.submeshes import Submeshes
 from typing import Any
-from dtcc_viewer.opengl.utils import Submeshes
 
 
 class DataWrapper(ABC):
