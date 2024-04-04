@@ -1,6 +1,6 @@
 import imgui
 import numpy as np
-from dtcc_viewer.opengl.utils import Shading, ColorMaps, RasterType
+from dtcc_viewer.opengl.utils import Shading, ColorMaps, RasterType, CameraProjection
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
@@ -39,6 +39,8 @@ class Gui:
     shading: list[str]
     cmaps: list[str]
 
+    selected: int
+
     def __init__(self) -> None:
         """
         Initialize an instance of the Gui class.
@@ -46,6 +48,7 @@ class Gui:
         np.set_printoptions(precision=1)
         self.shading = [style.name.lower() for style in Shading]
         self.cmaps = [cmap.name.lower() for cmap in ColorMaps]
+        self.selected = 0
 
     def render(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal):
         self._init_gui(impl)
@@ -95,11 +98,27 @@ class Gui:
         """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
-            imgui.spacing()
-            [changed, guip.color] = imgui.color_edit4(
-                "color", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
+
+            # Visualisation settings box
+            imgui.begin_child("Box1", 0, 37, border=True)
+            # Testing radio buttons
+            options = ["Perspective", "Ortho projection"]
+            self.selected = self._create_radiobuttons(
+                options, self.selected, guip, True
             )
+            imgui.end_child()
+
             imgui.spacing()
+
+            imgui.begin_child("Box2", 0, 37, border=True)
+            [changed, guip.color] = imgui.color_edit4(
+                "Background", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
+            )
+            imgui.end_child()
+
+            imgui.spacing()
+
+            imgui.begin_child("Box3", 0, 81, border=True)
 
             (guip.clip_bool[0], guip.clip_dist[0]) = self._create_clip_slider(
                 "Clip X", guip.clip_bool[0], guip.clip_dist[0]
@@ -112,6 +131,8 @@ class Gui:
             (guip.clip_bool[2], guip.clip_dist[2]) = self._create_clip_slider(
                 "Clip Z", guip.clip_bool[2], guip.clip_dist[2]
             )
+
+            imgui.end_child()
 
         self._draw_separator()
 
@@ -186,10 +207,12 @@ class Gui:
         """Draw GUI for mesh."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
+            imgui.begin_child("BoxMesh" + str(index), 0, 128, border=True)
             self._create_cbxs(index, guip)
             self._create_combo_cmaps(index, guip)
             self._create_cobmo_data(index, guip)
             self._create_range_sliders(index, guip)
+            imgui.end_child()
 
         self._draw_separator()
 
@@ -281,6 +304,26 @@ class Gui:
         imgui.spacing()
         imgui.separator()
         imgui.spacing()
+
+    def _create_radiobuttons(
+        self,
+        options: list[str],
+        selected: int,
+        guip: GuiParametersGlobal,
+        same_line: bool,
+    ) -> int:
+        """Create a set of radio buttons for selecting an option."""
+        for i, option in enumerate(options):
+            is_selected = selected == i
+            imgui.radio_button(option, is_selected)
+            if same_line and i < len(options) - 1:
+                imgui.same_line()
+
+            if imgui.is_item_clicked():
+                selected = i
+                guip.camera_projection = CameraProjection(i)
+
+        return selected
 
     def _create_combo_display(self, meshes: list[GlMesh], guip: GuiParametersModel):
         if len(meshes) > 0:

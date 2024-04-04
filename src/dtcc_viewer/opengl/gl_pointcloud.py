@@ -101,10 +101,10 @@ class GlPointCloud(GlObject):
         self._bind_shader()
         self._bind_data_texture()
 
-        proj = interaction.camera.get_perspective_matrix()
+        proj = interaction.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
 
-        view = interaction.camera.get_view_matrix()
+        view = interaction.camera.get_view_matrix(gguip)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
 
         cam_pos = interaction.camera.position

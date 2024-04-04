@@ -450,9 +450,9 @@ class GlMesh(GlObject):
         self._bind_data_texture()
 
         # MVP Calculations
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uloc_line["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_line["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_line["project"], 1, GL_FALSE, proj)
@@ -481,9 +481,9 @@ class GlMesh(GlObject):
         self._bind_shader_ambient()
         self._bind_data_texture()
 
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
 
         glUniformMatrix4fv(self.uloc_ambi["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_ambi["view"], 1, GL_FALSE, view)
@@ -518,8 +518,8 @@ class GlMesh(GlObject):
 
         # MVP calcs
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uloc_diff["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_diff["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_diff["project"], 1, GL_FALSE, proj)
@@ -582,9 +582,9 @@ class GlMesh(GlObject):
         self._bind_data_texture()
 
         # MVP Calculations
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uloc_shdw["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_shdw["project"], 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.uloc_shdw["view"], 1, GL_FALSE, view)

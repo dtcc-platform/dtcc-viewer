@@ -1,6 +1,8 @@
 import numpy as np
 from pyrr import Vector3, vector, vector3, matrix44
 from math import sin, cos, radians
+from dtcc_viewer.opengl.parameters import GuiParametersGlobal
+from dtcc_viewer.opengl.utils import CameraProjection
 
 
 class Camera:
@@ -130,7 +132,7 @@ class Camera:
         """
         self.aspect_ratio = aspect_ratio
 
-    def get_view_matrix(self) -> None:
+    def _get_perspective_view_matrix(self) -> None:
         """Get the view matrix of the camera.
 
         Returns
@@ -140,7 +142,26 @@ class Camera:
         """
         return matrix44.create_look_at(self.position, self.target, self.up)
 
-    def get_perspective_matrix(self) -> np.ndarray[any]:
+    def _get_orthographic_view_matrix(self) -> None:
+        """Get the view matrix of the camera.
+
+        Returns
+        -------
+        matrix44
+            The view matrix of the camera.
+        """
+        # return matrix44.inverse(matrix44.create_from_translation(-self.position))
+        return matrix44.create_look_at(self.position, self.target, self.up)
+
+    def get_view_matrix(self, guip: GuiParametersGlobal):
+        if guip.camera_projection == CameraProjection.PERSPECTIVE:
+            return self._get_perspective_view_matrix()
+        elif guip.camera_projection == CameraProjection.ORTHOGRAPHIC:
+            return self._get_orthographic_view_matrix()
+        else:
+            return None
+
+    def _get_perspective_matrix(self) -> np.ndarray[any]:
         """Get the perspective projection matrix of the camera.
 
         Returns
@@ -149,8 +170,45 @@ class Camera:
             The perspective projection matrix of the camera.
         """
         return matrix44.create_perspective_projection(
-            self.fov, self.aspect_ratio, self.near_plane, self.far_plane
+            self.fov,
+            self.aspect_ratio,
+            self.near_plane,
+            self.far_plane,
         )
+
+    def _get_orthographic_matrix(self) -> np.ndarray[any]:
+        """Get the orthographic projection matrix of the camera.
+
+        Returns
+        -------
+        matrix44
+            The orthographic projection matrix of the camera.
+        """
+        size = self.distance_to_target / 5.0
+
+        return matrix44.create_orthogonal_projection(
+            -self.aspect_ratio * size,
+            self.aspect_ratio * size,
+            -1.0 * size,
+            1.0 * size,
+            self.near_plane * size,
+            self.far_plane * size,
+        )
+
+    def get_projection_matrix(self, guip: GuiParametersGlobal) -> np.ndarray[any]:
+        """Get the projection matrix of the camera.
+
+        Returns
+        -------
+        matrix44
+            The projection matrix of the camera.
+        """
+        if guip.camera_projection == CameraProjection.PERSPECTIVE:
+            return self._get_perspective_matrix()
+        elif guip.camera_projection == CameraProjection.ORTHOGRAPHIC:
+            return self._get_orthographic_matrix()
+        else:
+            return None
 
     def get_move_matrix(self):
         """Get the move matrix which positions the object around the origin.

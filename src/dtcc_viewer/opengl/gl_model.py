@@ -331,8 +331,8 @@ class GlModel:
 
         # Camera input
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        view = action.camera._get_perspective_view_matrix()
+        proj = action.camera._get_perspective_matrix()
 
         # Picking pass
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)

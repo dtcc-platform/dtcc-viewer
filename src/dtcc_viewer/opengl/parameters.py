@@ -1,7 +1,7 @@
 import numpy as np
 import glfw
 from dtcc_viewer.opengl.utils import invert_color
-from dtcc_viewer.opengl.utils import Shading, RasterType
+from dtcc_viewer.opengl.utils import Shading, RasterType, CameraProjection
 from dtcc_viewer.opengl.utils import ColorMaps
 from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
@@ -23,6 +23,7 @@ class GuiParametersGlobal:
     time: float
     time_acum: float
     fps_counter: int
+    camera_projection: CameraProjection
 
     def __init__(self):
         """Initialize the GuiParameters object."""
@@ -40,6 +41,7 @@ class GuiParametersGlobal:
         self.time_acum = 0.0
         self.fps_counter = 0
         self.fps = 0
+        self.camera_projection = CameraProjection.PERSPECTIVE
 
     def calc_fps(self):
         """Perform FPS calculations for the rendering loop."""

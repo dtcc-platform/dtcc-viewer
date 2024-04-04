@@ -430,8 +430,8 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0)
 while not glfw.window_should_close(window):
     # ---------------------- Camera Update ------------------------------------#
 
-    view = action.camera.get_view_matrix()
-    proj = action.camera.get_perspective_matrix()
+    view = action.camera._get_perspective_view_matrix()
+    proj = action.camera._get_perspective_matrix()
 
     # -------------------- Opaque pass (drawing solid objects) -------------------------#
     # Configure render states

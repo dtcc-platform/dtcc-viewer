@@ -164,8 +164,8 @@ class GlLineString(GlObject):
 
         # MVP Calculations
         move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = interaction.camera.get_view_matrix()
-        proj = interaction.camera.get_perspective_matrix()
+        view = interaction.camera.get_view_matrix(gguip)
+        proj = interaction.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)

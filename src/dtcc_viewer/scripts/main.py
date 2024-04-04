@@ -96,13 +96,11 @@ def multi_geometry_example_1():
 
 def linestring_example_1():
     lss = []
-
     for i in range(20):
         ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 10)
         lss.append(ls)
 
     x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
-
     window = Window(1200, 800)
     scene = Scene()
     scene.add_linestrings("Linestrings", lss, data=x_vals)

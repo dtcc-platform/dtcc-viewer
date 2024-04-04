@@ -419,8 +419,8 @@ while not glfw.window_should_close(window):
     glUniform1i(cmap_loc, action.cmap_index)
 
     # Camera input
-    view = action.camera.get_view_matrix()
-    proj = action.camera.get_perspective_matrix()
+    view = action.camera._get_perspective_view_matrix()
+    proj = action.camera._get_perspective_matrix()
 
     # Normal pass
     glClearColor(0, 0.1, 0, 1)

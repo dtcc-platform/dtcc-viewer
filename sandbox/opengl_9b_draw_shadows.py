@@ -681,8 +681,8 @@ while not glfw.window_should_close(window):
         model_loc = glGetUniformLocation(shader_fancy, "model")
 
         # Camera input
-        view = action.camera.get_view_matrix()
-        proj = action.camera.get_perspective_matrix()
+        view = action.camera._get_perspective_view_matrix()
+        proj = action.camera._get_perspective_matrix()
         glUniformMatrix4fv(project_loc, 1, GL_FALSE, proj)
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
 

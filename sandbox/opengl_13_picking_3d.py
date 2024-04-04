@@ -446,8 +446,8 @@ while not glfw.window_should_close(window):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Camera input
-    view = action.camera.get_view_matrix()
-    proj = action.camera.get_perspective_matrix()
+    view = action.camera._get_perspective_view_matrix()
+    proj = action.camera._get_perspective_matrix()
 
     # Picking pass
     if action.picking:

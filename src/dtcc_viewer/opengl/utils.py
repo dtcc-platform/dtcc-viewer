@@ -42,6 +42,11 @@ class RasterType(IntEnum):
     RGBA = 2
 
 
+class CameraProjection(IntEnum):
+    PERSPECTIVE = 0
+    ORTHOGRAPHIC = 1
+
+
 class BoundingBox:
     xmin: float
     xmax: float
