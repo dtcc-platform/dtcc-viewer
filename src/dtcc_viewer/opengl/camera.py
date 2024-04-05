@@ -191,8 +191,8 @@ class Camera:
             self.aspect_ratio * size,
             -1.0 * size,
             1.0 * size,
-            self.near_plane * size,
-            self.far_plane * size,
+            -self.far_plane,
+            self.far_plane,
         )
 
     def get_projection_matrix(self, guip: GuiParametersGlobal) -> np.ndarray[any]:
