@@ -175,7 +175,6 @@ class Action:
             info(f"Draw picking texture: {self.show_picking_texture}")
         elif key == glfw.KEY_Z and action == glfw.PRESS:
             self.zoom_selected = True
-            info(f"Zoom selected")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         """Callback function for handling mouse scroll input.

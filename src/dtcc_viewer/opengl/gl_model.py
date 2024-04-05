@@ -321,10 +321,11 @@ class GlModel:
 
     def zoom_selected(self, action: Action) -> None:
         if self.guip.picked_cp is None or self.guip.picked_size is None:
+            action.zoom_selected = False
             info("Zoom selected: No object selected for zooming")
             return
 
-        distance_to_target = 1.5 * self.guip.picked_size
+        distance_to_target = 5.0 * self.guip.picked_size
         target = self.guip.picked_cp
         action.zoom_selected_object(distance_to_target, target)
         action.zoom_selected = False
@@ -332,18 +333,18 @@ class GlModel:
 
     def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if not action.mouse_on_gui:
-            self._draw_picking_texture(action)
+            self._draw_picking_texture(action, gguip)
             self._evaluate_picking(action, gguip)
         else:
             action.picking = False
 
-    def _draw_picking_texture(self, action: Action) -> None:
+    def _draw_picking_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Camera input
         move = action.camera.get_move_matrix()
-        view = action.camera._get_perspective_view_matrix()
-        proj = action.camera._get_perspective_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
 
         # Picking pass
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)
@@ -380,6 +381,7 @@ class GlModel:
         if picked_id_new == action.picked_id or background_click:
             action.picked_id = -1
             self.guip.picked_id = -1
+            self.guip.picked_cp = None
             self.guip.picked_uuid = ""
             self.guip.picked_metadata = ""
         else:
@@ -393,7 +395,7 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def _render_pick_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
-        self._draw_picking_texture(action)
+        self._draw_picking_texture(action, gguip)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
