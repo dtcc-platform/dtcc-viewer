@@ -4,7 +4,7 @@ import pyrr
 from pprint import pp
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.utils import Shading, BoundingBox, color_to_id
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.gl_mesh import GlMesh
@@ -319,6 +319,17 @@ class GlModel:
             self.shader_dbpi, "screenTex"
         )
 
+    def zoom_selected(self, action: Action) -> None:
+        if self.guip.picked_cp is None or self.guip.picked_size is None:
+            info("Zoom selected: No object selected for zooming")
+            return
+
+        distance_to_target = 1.5 * self.guip.picked_size
+        target = self.guip.picked_cp
+        action.zoom_selected_object(distance_to_target, target)
+        action.zoom_selected = False
+        info(f"Zoom selected: New camera position for object {self.guip.picked_id}")
+
     def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if not action.mouse_on_gui:
             self._draw_picking_texture(action)
@@ -560,7 +571,7 @@ class GlModel:
     def _find_object_from_id(self, id):
         self.guip.picked_uuid = None
         for obj in self.gl_objects:
-            if isinstance(obj, GlMesh):
+            if isinstance(obj, GlMesh):  # Only meshes are pickable atm
                 if obj.submeshes is not None:
                     if obj.submeshes.id_exists(id):
                         uuid = obj.submeshes.ids_2_uuids[id]

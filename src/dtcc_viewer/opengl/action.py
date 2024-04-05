@@ -111,8 +111,14 @@ class Action:
         self.picked_x = 0
         self.picked_y = 0
         self.picked_id = -1
+        self.zoom_selected = False
 
     def set_camera_distance_to_target(self, distance_to_target):
+        self.camera.distance_to_target = distance_to_target
+        self.camera.update_camera_vectors()
+
+    def zoom_selected_object(self, distance_to_target, new_target):
+        self.camera.target = new_target
         self.camera.distance_to_target = distance_to_target
         self.camera.update_camera_vectors()
 

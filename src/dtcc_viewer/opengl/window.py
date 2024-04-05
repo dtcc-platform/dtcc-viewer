@@ -6,7 +6,7 @@ from OpenGL.GL import *
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
@@ -234,6 +234,9 @@ class Window:
 
             # Check if the mouse is on the GUI or on the model
             self.action.set_mouse_on_gui(self.io.want_capture_mouse)
+
+            if self.action.zoom_selected:
+                self.model.zoom_selected(self.action)
 
             # True if the user has clicked on the GUI
             if self.action.picking:
