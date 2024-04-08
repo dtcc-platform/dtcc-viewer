@@ -186,6 +186,9 @@ class MeshWrapper:
         recenter_vec = np.tile(recenter_vec, v_count)
         self.vertices += recenter_vec
 
+    def _move_mesh_to_zero_z(self, bb: BoundingBox):
+        self.vertices[2::9] -= bb.zmin
+
     def get_vertex_positions(self):
         """Get the vertex positions of the mesh."""
         vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)

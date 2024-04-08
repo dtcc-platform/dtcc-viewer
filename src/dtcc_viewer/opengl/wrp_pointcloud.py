@@ -72,7 +72,7 @@ class PointCloudWrapper:
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self._move_pc_to_origin_multi(self.bb_global)
+        self._move_pc_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 
@@ -96,11 +96,14 @@ class PointCloudWrapper:
             self.data_wrapper.add_data("Vertex Y", self.points[1::3])
             self.data_wrapper.add_data("Vertex Z", self.points[2::3])
 
-    def _move_pc_to_origin_multi(self, bb: BoundingBox = None):
+    def _move_pc_to_origin(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""
         move_vec = np.tile(bb.center_vec, self.n_points)
         if bb is not None:
             self.points += move_vec
+
+    def _move_pc_to_zero_z(self, bb: BoundingBox):
+        self.points[2::3] -= bb.zmin
 
     def _reformat_pc(self):
         """Flatten the point cloud data arrays for further processing."""

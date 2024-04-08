@@ -8,7 +8,7 @@ from typing import Any
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.wrp_data import DataWrapper
 from dtcc_viewer.opengl.parameters import GuiParametersObj
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.utils import Shading
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.environment import Environment

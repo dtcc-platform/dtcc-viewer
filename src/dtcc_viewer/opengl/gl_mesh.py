@@ -5,7 +5,7 @@ from pprint import pp
 from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment

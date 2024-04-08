@@ -11,6 +11,7 @@ from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
+from dtcc_viewer.opengl.gl_grid import GlGrid
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.scene import Scene
@@ -57,6 +58,7 @@ class Window:
 
     gl_objects: list[GlObject]
     model: GlModel
+    gl_grid: GlGrid
     gui: Gui
     guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
@@ -191,6 +193,9 @@ class Window:
 
         self.model.create_picking_fbo(self.action)
 
+        # Create grid
+        self.gl_grid = GlGrid(scene.bb)
+
         return True
 
     def render(self, scene: Scene):
@@ -235,6 +240,7 @@ class Window:
             # Check if the mouse is on the GUI or on the model
             self.action.set_mouse_on_gui(self.io.want_capture_mouse)
 
+            # Update camera for selected objects
             if self.action.zoom_selected:
                 self.model.zoom_selected(self.action)
 
@@ -245,6 +251,9 @@ class Window:
             # Render the model
             if self.model.guip.show:
                 self.model.render(self.action, self.guip)
+
+            # Draw grid
+            self.gl_grid.render(self.action, self.guip)
 
             # Render the GUI
             self.gui.render(self.model, self.impl, self.guip)

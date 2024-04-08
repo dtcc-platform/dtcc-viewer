@@ -4,7 +4,7 @@ from .wrp_pointcloud import PointCloudWrapper
 from .gl_pointcloud import GlPointCloud
 from .gl_mesh import GlMesh
 from .wrp_mesh import MeshWrapper
-from .interaction import Action
+from .action import Action
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
 from .gui import GuiParametersLS, GuiParametersGlobal, GuiParametersDates

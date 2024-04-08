@@ -40,7 +40,7 @@ class RasterWrapper:
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self._move_mesh_to_origin(self.bb_global)
+        self._move_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
@@ -109,12 +109,15 @@ class RasterWrapper:
         self.vertices = np.array(self.vertices, dtype="float32")
         self.indices = np.array(self.indices, dtype="uint32")
 
-    def _move_mesh_to_origin(self, bb: BoundingBox):
-        # [x, y, z, r, g, b, nx, ny ,nz]
+    def _move_to_origin(self, bb: BoundingBox):
+        # [x, y, z, tx, ty]
         v_count = len(self.vertices) // 5
         recenter_vec = np.concatenate((bb.center_vec, [0, 0]), axis=0)
         recenter_vec = np.tile(recenter_vec, v_count)
         self.vertices += recenter_vec
+
+    def _move_to_zero_z(self, bb: BoundingBox):
+        self.vertices[2::5] -= bb.zmin
 
     def get_vertex_positions(self):
         """Get the vertex positions of the mesh."""

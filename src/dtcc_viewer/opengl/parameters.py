@@ -19,7 +19,10 @@ class GuiParametersGlobal:
     clip_bool: list
     clip_dir: list
     clip_dist: list
-
+    show_grid: bool
+    show_axes: bool
+    grid_sf: float
+    zoom_scale: bool
     time: float
     time_acum: float
     fps_counter: int
@@ -42,6 +45,10 @@ class GuiParametersGlobal:
         self.fps_counter = 0
         self.fps = 0
         self.camera_projection = CameraProjection.PERSPECTIVE
+        self.show_grid = False
+        self.show_axes = False
+        self.grid_sf = 1.0
+        self.zoom_scale = True
 
     def calc_fps(self):
         """Perform FPS calculations for the rendering loop."""

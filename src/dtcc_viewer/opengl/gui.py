@@ -134,6 +134,22 @@ class Gui:
 
             imgui.end_child()
 
+            # Grid settings
+            imgui.begin_child("Box4", 0, 57, border=True)
+            imgui.push_id("grid")
+            [changed, guip.show_grid] = imgui.checkbox("grid", guip.show_grid)
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("axes")
+            [changed, guip.show_axes] = imgui.checkbox("axes", guip.show_axes)
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("zoom")
+            [changed, guip.zoom_scale] = imgui.checkbox("rescale", guip.zoom_scale)
+            imgui.pop_id()
+            imgui.text(f"Grid spacing: {guip.grid_sf} m")
+            imgui.end_child()
+
         self._draw_separator()
 
     def _create_clip_slider(self, name: str, clip_bool: bool, clip_dist: float):

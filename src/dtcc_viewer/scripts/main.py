@@ -72,6 +72,14 @@ def mesh_example_3():
     mesh.view(data=data_dict)
 
 
+def mesh_example_4():
+    p = np.array([0, 0, 0])
+    v = np.array([1, 1, 1])
+    radius = 0.5
+    height = 2.0
+    create_cylinder_2(p, v, radius, height)
+
+
 def multi_geometry_example_1():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
     all_pcs = split_pc_in_stripes(3, pc, Direction.x)
@@ -96,7 +104,7 @@ def multi_geometry_example_1():
 
 def linestring_example_1():
     lss = []
-    for i in range(20):
+    for i in range(2):
         ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 10)
         lss.append(ls)
 
@@ -276,13 +284,14 @@ if __name__ == "__main__":
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
+    # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
+    # mesh_example_4()
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_1()
     # linestring_example_2()
-    # mesh_example_1()
     city_example_1()
     # city_example_2()
     # building_example_1()

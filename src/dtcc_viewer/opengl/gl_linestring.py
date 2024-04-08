@@ -2,11 +2,12 @@ import math
 import glfw
 import numpy as np
 import time
+from pprint import pp
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.logging import info, warning
@@ -155,7 +156,7 @@ class GlLineString(GlObject):
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
         self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
-    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def render(self, action: Action, gguip: GuiParametersGlobal) -> None:
         """Render roads as lines in the road network."""
 
         self._bind_vao()
@@ -163,9 +164,9 @@ class GlLineString(GlObject):
         self._bind_data_texture()
 
         # MVP Calculations
-        move = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
-        view = interaction.camera.get_view_matrix(gguip)
-        proj = interaction.camera.get_projection_matrix(gguip)
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(gguip)
+        proj = action.camera.get_projection_matrix(gguip)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)

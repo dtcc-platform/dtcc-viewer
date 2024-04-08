@@ -6,7 +6,7 @@ import pyrr
 from enum import Enum
 import math
 from load_primitives import *
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 
 window_w = 1000
 window_h = 1000

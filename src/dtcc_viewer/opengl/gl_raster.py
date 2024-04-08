@@ -6,7 +6,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.interaction import Action
+from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 

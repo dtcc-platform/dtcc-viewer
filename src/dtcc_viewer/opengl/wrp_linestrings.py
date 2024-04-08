@@ -56,16 +56,19 @@ class LineStringsWrapper:
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self._move_rn_to_origin_multi(self.bb_global)
+        self._move_lss_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
 
-    def _move_rn_to_origin_multi(self, bb: BoundingBox = None):
+    def _move_lss_to_origin(self, bb: BoundingBox = None):
         if bb is not None:
             v_count = len(self.vertices) // 9
             recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
             recenter_vec_tiled = np.tile(recenter_vec, v_count)
             self.vertices += recenter_vec_tiled
+
+    def _move_lss_to_zero_z(self, bb: BoundingBox):
+        self.vertices[2::9] -= bb.zmin
 
     def _get_vertex_count(self, lss: list[LineString]):
         return sum(len(ls.coords) for ls in lss)

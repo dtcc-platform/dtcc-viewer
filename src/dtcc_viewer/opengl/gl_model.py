@@ -29,12 +29,11 @@ from dtcc_viewer.shaders.shaders_mesh_picking import (
 
 
 class GlModel:
-    """Holds a collection of meshes for rendering with multi-mesh dependent features.
+    """Holds a collection of GlObjects for rendering with multi-obj dependent features.
 
-    This class contains a collection of meshes and related features for rendering of
-    effects lite shadows and coloring for object picking. ModelGL extens the features
-    of the mesh_gl with more shading options.
-
+    This class contains a collection of meshes, point clouds, line stings, rasters and
+    related features for rendering of effects lite shadows and coloring for object
+    picking.
     """
 
     gl_objects: list[GlObject]

@@ -427,3 +427,21 @@ def double_sine_wave_surface(x_range, y_range, n_x, n_y, freq_x, freq_y):
     X, Y = np.meshgrid(x, y)
     Z = np.sin(freq_x * X) + np.sin(freq_y * Y)
     return X, Y, Z
+
+
+def create_cylinder_2(p, w, radius, height, num_segments=20):
+
+    w = w / np.linalg.norm(w)
+
+    # (0, c, -b)
+    u = np.array([0, w[2], -w[1]])
+    u = u / np.linalg.norm(u)
+
+    # (-c, 0, a)
+    v = np.array([-w[2], 0, w[0]])
+    v = v / np.linalg.norm(v)
+
+    # (b, -a, 0)
+    # v = np.array([-w[2], 0, w[0]])
+
+    
