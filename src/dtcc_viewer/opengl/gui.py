@@ -129,36 +129,40 @@ class Gui:
             )
 
             (guip.clip_bool[2], guip.clip_dist[2]) = self._create_clip_slider(
-                "Clip Z", guip.clip_bool[2], guip.clip_dist[2]
+                "Clip Z", guip.clip_bool[2], guip.clip_dist[2], min=0, max=1.0
             )
 
             imgui.end_child()
 
             # Grid settings
-            imgui.begin_child("Box4", 0, 57, border=True)
+            imgui.begin_child("Box4", 0, 37, border=True)
             imgui.push_id("grid")
             [changed, guip.show_grid] = imgui.checkbox("grid", guip.show_grid)
             imgui.pop_id()
             imgui.same_line()
-            imgui.push_id("axes")
-            [changed, guip.show_axes] = imgui.checkbox("axes", guip.show_axes)
+            imgui.push_id("cs")
+            [changed, guip.show_axes] = imgui.checkbox("cs", guip.show_axes)
             imgui.pop_id()
             imgui.same_line()
-            imgui.push_id("zoom")
-            [changed, guip.zoom_scale] = imgui.checkbox("rescale", guip.zoom_scale)
+            imgui.push_id("adaptive")
+            [changed, guip.grid_adapt] = imgui.checkbox("adapt", guip.grid_adapt)
             imgui.pop_id()
-            imgui.text(f"Grid spacing: {guip.grid_sf} m")
+
+            imgui.same_line()
+            imgui.text(f"spacing: {guip.grid_sf} m")
             imgui.end_child()
 
         self._draw_separator()
 
-    def _create_clip_slider(self, name: str, clip_bool: bool, clip_dist: float):
+    def _create_clip_slider(
+        self, name: str, clip_bool: bool, clip_dist: float, min=-1.0, max=1.0
+    ):
         imgui.push_id(name + "1")
         [changed, clip_bool] = imgui.checkbox(name, clip_bool)
         imgui.pop_id()
         imgui.same_line()
         imgui.push_id(name + "2")
-        [changed, clip_dist] = imgui.slider_float("", clip_dist, -1.0, 1.0)
+        [changed, clip_dist] = imgui.slider_float("", clip_dist, min, max)
         imgui.pop_id()
 
         return clip_bool, clip_dist

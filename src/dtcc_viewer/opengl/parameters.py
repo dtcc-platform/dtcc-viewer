@@ -22,7 +22,7 @@ class GuiParametersGlobal:
     show_grid: bool
     show_axes: bool
     grid_sf: float
-    zoom_scale: bool
+    grid_adapt: bool
     time: float
     time_acum: float
     fps_counter: int
@@ -30,7 +30,7 @@ class GuiParametersGlobal:
 
     def __init__(self):
         """Initialize the GuiParameters object."""
-        self.color = [0.1, 0.2, 0.5, 1]
+        self.color = [0.05, 0.1, 0.25, 1]
         self.text_color = invert_color(self.color)
         self.gui_width = 320
         self.gui_height = 200
@@ -38,17 +38,17 @@ class GuiParametersGlobal:
         self.period = False
         self.clip_bool = [True, True, True]
         self.clip_dir = [1, 1, 1]
-        self.clip_dist = [1, 1, 1]  # each variable has range [-1, 1]
+        self.clip_dist = [1, 1, 1]  # x,y has range [-1, 1], z has range [0, 1]
         self.fps_counter = 0
         self.time = 0.0
         self.time_acum = 0.0
         self.fps_counter = 0
         self.fps = 0
         self.camera_projection = CameraProjection.PERSPECTIVE
-        self.show_grid = False
+        self.show_grid = True
         self.show_axes = False
         self.grid_sf = 1.0
-        self.zoom_scale = True
+        self.grid_adapt = True
 
     def calc_fps(self):
         """Perform FPS calculations for the rendering loop."""

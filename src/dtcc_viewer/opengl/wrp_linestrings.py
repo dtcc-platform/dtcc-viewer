@@ -57,6 +57,8 @@ class LineStringsWrapper:
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_lss_to_origin(self.bb_global)
+        # self._move_lss_to_zero_z(self.bb_global)
+        # self.bb_global.move_to_zero_z()
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
 

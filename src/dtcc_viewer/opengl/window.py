@@ -14,6 +14,7 @@ from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.gl_grid import GlGrid
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
+from dtcc_viewer.opengl.gl_quad import GlQuad
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.gui import Gui
 
@@ -59,6 +60,7 @@ class Window:
     gl_objects: list[GlObject]
     model: GlModel
     gl_grid: GlGrid
+    gl_quad: GlQuad
     gui: Gui
     guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
@@ -137,8 +139,8 @@ class Window:
             if obj.mesh_wrp_2 is not None:
                 mesh_gl = GlMesh(obj.mesh_wrp_2)
                 self.gl_objects.append(mesh_gl)
-            if obj.lineStringsWrapper is not None:
-                lss_gl = GlLineString(obj.lineStringsWrapper)
+            if obj.ls_wrapper is not None:
+                lss_gl = GlLineString(obj.ls_wrapper)
                 self.gl_objects.append(lss_gl)
 
         for city in scene.city_wrappers:
@@ -194,7 +196,9 @@ class Window:
         self.model.create_picking_fbo(self.action)
 
         # Create grid
-        self.gl_grid = GlGrid(scene.bb)
+        self.gl_grid = GlGrid(scene.bb, self.guip)
+
+        self.gl_quad = GlQuad(500)
 
         return True
 
@@ -224,6 +228,7 @@ class Window:
         glClearColor(0.0, 0.0, 0.0, 1)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
+        glDepthFunc(GL_LESS)
 
         info(f"Rendering scene...")
 
@@ -315,3 +320,15 @@ class Window:
             glEnable(GL_CLIP_DISTANCE2)
         else:
             glDisable(GL_CLIP_DISTANCE2)
+
+        # Grid clipping planes
+        if self.guip.show_grid:
+            glEnable(GL_CLIP_DISTANCE3)
+            glEnable(GL_CLIP_DISTANCE4)
+            glEnable(GL_CLIP_DISTANCE5)
+            glEnable(GL_CLIP_DISTANCE6)
+        else:
+            glDisable(GL_CLIP_DISTANCE3)
+            glDisable(GL_CLIP_DISTANCE4)
+            glDisable(GL_CLIP_DISTANCE5)
+            glDisable(GL_CLIP_DISTANCE6)

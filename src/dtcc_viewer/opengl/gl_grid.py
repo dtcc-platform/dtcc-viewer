@@ -42,10 +42,10 @@ class GlGrid:
     grid_coords: np.ndarray  # Coordinates for the grid lines
     grid_indices: np.ndarray  # Indices for the grid lines
 
-    grid_sizes: np.ndarray  # Grid sizes for the grid lines
+    size: np.ndarray  # Grid sizes for the grid lines
     grid_spaces: np.ndarray  # Grid spacings for the grid lines
 
-    def __init__(self, bb_global: BoundingBox):
+    def __init__(self, bb_global: BoundingBox, gguip: GuiParametersGlobal):
 
         self.bb_global = bb_global
         self.bb_local = bb_global
@@ -53,12 +53,12 @@ class GlGrid:
         self.ulocs_grid = {}
         self.ulocs_axes = {}
 
-        self.grid_spaces = np.array([0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500])
+        self.grid_spaces = np.array([1, 2, 5, 10, 20, 50, 100, 200, 500, 1000])
 
-        size = np.min([bb_global.xdom, bb_global.ydom])
+        self.size = 10.0 * np.max([bb_global.xdom, bb_global.ydom])
 
-        grid_size = (size, size)
-        axes_size = size * 2
+        grid_size = (self.size, self.size)
+        axes_size = self.size / 50.0
         grid_spacing = (1, 1)
         self._create_grid(grid_size, grid_spacing)
         self._create_axes(axes_size)
@@ -70,9 +70,9 @@ class GlGrid:
     def _update_grid_size(self, action: Action, gguip: GuiParametersGlobal) -> None:
 
         dtt = action.camera.distance_to_target
-        # dtt2 = dtt * dtt
+        dtt = dtt * dtt
         dtt_min = 10
-        dtt_max = 10000
+        dtt_max = 10000 * 10000
         normalized_dtt = (dtt - dtt_min) / (dtt_max - dtt_min)
 
         spc_min = np.min(self.grid_spaces)
@@ -226,6 +226,18 @@ class GlGrid:
         self.ulocs_grid["project"] = glGetUniformLocation(self.shader_grid, "project")
         self.ulocs_grid["scale"] = glGetUniformLocation(self.shader_grid, "scale")
         self.ulocs_grid["color"] = glGetUniformLocation(self.shader_grid, "color")
+        self.ulocs_grid["clip_xy"] = glGetUniformLocation(self.shader_grid, "clip_xy")
+
+        self.ulocs_grid["fog_start"] = glGetUniformLocation(
+            self.shader_grid, "fog_start"
+        )
+        self.ulocs_grid["fog_end"] = glGetUniformLocation(self.shader_grid, "fog_end")
+        self.ulocs_grid["fog_color"] = glGetUniformLocation(
+            self.shader_grid, "fog_color"
+        )
+
+        glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.1)
+        glUniform1f(self.ulocs_grid["fog_end"], self.size * 1.0)
 
     def _create_shader_axes(self) -> None:
         """Create and compile the shader program."""
@@ -246,7 +258,9 @@ class GlGrid:
             self._update_grid_size(action, gguip)
             self._render_grid(action, gguip)
         if gguip.show_axes:
+            glEnable(GL_LINE_SMOOTH)
             self._render_axes(action, gguip)
+            glDisable(GL_LINE_SMOOTH)
 
     def _render_grid(self, action: Action, gguip: GuiParametersGlobal) -> None:
 
@@ -261,9 +275,12 @@ class GlGrid:
         glUniformMatrix4fv(self.ulocs_grid["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ulocs_grid["project"], 1, GL_FALSE, proj)
 
-        c = self.adjust_color_brightness(gguip.color, 0.25)
+        bc = gguip.color
+        c = self.adjust_color_brightness(bc, 0.25)
         glUniform3f(self.ulocs_grid["color"], c[0], c[1], c[2])
         glUniform1f(self.ulocs_grid["scale"], gguip.grid_sf)
+        glUniform1f(self.ulocs_grid["clip_xy"], self.size)
+        glUniform3f(self.ulocs_grid["fog_color"], bc[0], bc[1], bc[2])
 
         glDrawElements(GL_LINES, len(self.grid_indices), GL_UNSIGNED_INT, None)
 
@@ -291,15 +308,6 @@ class GlGrid:
     def adjust_color_brightness(self, color, factor):
         new_color = [min(max(component + factor, 0), 1) for component in color]
         return new_color
-
-    def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
-        xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
-        ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
-
-        glUniform1f(self.ulocs_grid["clip_x"], (xdom * gguip.clip_dist[0]))
-        glUniform1f(self.ulocs_grid["clip_y"], (ydom * gguip.clip_dist[1]))
-        glUniform1f(self.ulocs_grid["clip_z"], (zdom * gguip.clip_dist[2]))
 
     def find_nearest(self, array, value):
         array = np.asarray(array)

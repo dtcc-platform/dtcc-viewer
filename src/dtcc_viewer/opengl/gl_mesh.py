@@ -664,7 +664,7 @@ class GlMesh(GlObject):
     ):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
         if mguip.shading == Shading.WIREFRAME or ws_pass == 2:
             glUniform1f(self.uloc_line["clip_x"], (xdom * gguip.clip_dist[0]))

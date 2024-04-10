@@ -406,7 +406,7 @@ class GlPointCloud(GlObject):
     def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
         glUniform1f(self.uniform_locs["clip_x"], (xdom * gguip.clip_dist[0]))
         glUniform1f(self.uniform_locs["clip_y"], (ydom * gguip.clip_dist[1]))

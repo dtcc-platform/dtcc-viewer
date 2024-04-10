@@ -44,7 +44,7 @@ class ObjectWrapper:
     mesh_wrp_2: MeshWrapper = None
     lsw: LineStringsWrapper = None
 
-    def __init__(self, name: str, obj: Object) -> None:
+    def __init__(self, name: str, obj: Object, mts: int) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -53,6 +53,8 @@ class ObjectWrapper:
             The name of the mesh data.
         city : City
             City object from which to generate the mesh data to view.
+        mts : int
+            Max texture size for the OpenGL context.
         """
         self.name = name
         self.shading = Shading.WIRESHADED
@@ -60,18 +62,20 @@ class ObjectWrapper:
 
         # Extract meshes from the object and its children
         (mesh_1, submeshes_1) = self._extract_mesh_from_mesh(obj)
-        (mesh_2, submeshes_2) = self._extract_mesh_from_multisuface(obj)
+        (mesh_2, submeshes_2) = self._extract_mesh_from_ms(obj)
+
+        quantities = obj.quantities
 
         if mesh_1 is not None:
-            self.mesh_wrp_1 = MeshWrapper("Mesh", mesh_1, submeshes_1)
+            self.mesh_wrp_1 = MeshWrapper("Mesh", mesh_1, mts, quantities, submeshes_1)
         if mesh_2 is not None:
-            self.mesh_wrp_2 = MeshWrapper("Multi surface", mesh_2, submeshes_2)
+            self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, quantities, submeshes_2)
 
         # Extract line strings from the object and its children
         lineStrings = self._extract_linestrings(obj)
 
         if lineStrings is not None:
-            self.lineStringsWrapper = LineStringsWrapper("LineStrings", lineStrings)
+            self.ls_wrapper = LineStringsWrapper("LineStrings", lineStrings, mts)
 
         warning("ObjectWrapper not yet implemented!")
 
@@ -80,8 +84,8 @@ class ObjectWrapper:
             self.mesh_wrp_1.preprocess_drawing(bb_global)
         if self.mesh_wrp_2 is not None:
             self.mesh_wrp_2.preprocess_drawing(bb_global)
-        if self.lineStringsWrapper is not None:
-            self.lineStringsWrapper.preprocess_drawing(bb_global)
+        if self.ls_wrapper is not None:
+            self.ls_wrapper.preprocess_drawing(bb_global)
 
     def _extract_linestrings(self, obj: Object):
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)
@@ -105,7 +109,7 @@ class ObjectWrapper:
 
         return None, None
 
-    def _extract_mesh_from_multisuface(self, obj: Object):
+    def _extract_mesh_from_ms(self, obj: Object):
         ms_list = self.get_highest_lod_ms_list(obj)
         if ms_list is None:
             return None, None

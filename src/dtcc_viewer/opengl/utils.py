@@ -69,18 +69,6 @@ class BoundingBox:
         self.calc_mid_point()
         self.calc_center_vec()
 
-    def calc_bounds(self, vertices: np.ndarray):
-        self.xmin = vertices[:, 0].min()
-        self.xmax = vertices[:, 0].max()
-        self.ymin = vertices[:, 1].min()
-        self.ymax = vertices[:, 1].max()
-        self.zmin = vertices[:, 2].min()
-        self.zmax = vertices[:, 2].max()
-
-        self.xdom = self.xmax - self.xmin
-        self.ydom = self.ymax - self.ymin
-        self.zdom = self.zmax - self.zmin
-
     def calc_bounds_flat(self, vertices: np.ndarray):
         self.xmin = vertices[0::3].min()
         self.xmax = vertices[0::3].max()
@@ -101,6 +89,14 @@ class BoundingBox:
 
     def calc_center_vec(self):
         self.center_vec = self.origin - self.mid_pt
+
+    def move_to_zero_z(self):
+        """Move the bounding box so everything is positive z."""
+        self.zmax -= self.zmin
+        self.zmin -= self.zmin
+        self.mid_pt[2] -= self.zmin
+        self.origin = np.array([0, 0, (self.zmax + self.zmin) / 2.0])
+        self.calc_center_vec()
 
     def print(self):
         print("Bounds: ")
@@ -443,5 +439,3 @@ def create_cylinder_2(p, w, radius, height, num_segments=20):
 
     # (b, -a, 0)
     # v = np.array([-w[2], 0, w[0]])
-
-    

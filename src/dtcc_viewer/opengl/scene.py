@@ -9,7 +9,7 @@ from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster
+from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster, Geometry
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
@@ -89,7 +89,7 @@ class Scene:
         """Append a generic object with data and/or colors to the scene"""
         if obj is not None:
             info(f"Object called - {name} - added to scene")
-            obj_w = ObjectWrapper(name=name, obj=obj)
+            obj_w = ObjectWrapper(name=name, obj=obj, mts=self.mts)
             self.obj_wrappers.append(obj_w)
         else:
             warning(f"Object called - {name} - is None and not added to scene")
@@ -161,12 +161,19 @@ class Scene:
         else:
             warning(f"Raster called - {name} - is None and not added to scene")
 
+    # def add_geometries(list: list[Geometry]):
+    #    pass
+
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
         # Calculate bounding box for the entire scene including the vector that is
         # used to center move everything to the origin.
         self.bb = self._calculate_bb()
+
+        # Move the bounding box so that everything is in positive z-space. This move
+        # will impact all the preprocessing below.
+        self.bb.move_to_zero_z()
 
         if self.bb is None:
             warning("No bounding box found for scene.")
@@ -217,8 +224,8 @@ class Scene:
                 vertex_pos = obj_w.mesh_wrp_2.get_vertex_positions()
                 vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-            if obj_w.lineStringsWrapper is not None:
-                vertex_pos = obj_w.lineStringsWrapper.get_vertex_positions()
+            if obj_w.ls_wrapper is not None:
+                vertex_pos = obj_w.ls_wrapper.get_vertex_positions()
                 vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for city_w in self.city_wrappers:

@@ -85,7 +85,7 @@ class Camera:
         self.direction = Vector3([0.0, 0.0, 0.0])
 
         self.aspect_ratio = float(width) / float(height)
-        self.near_plane = 0.1
+        self.near_plane = 10.0
         self.far_plane = 1000000
         self.fov = 25
         self.mouse_sensitivity = -0.25
