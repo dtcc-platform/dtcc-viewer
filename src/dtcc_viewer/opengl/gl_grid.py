@@ -58,7 +58,7 @@ class GlGrid:
         self.size = 10.0 * np.max([bb_global.xdom, bb_global.ydom])
 
         grid_size = (self.size, self.size)
-        axes_size = self.size / 50.0
+        axes_size = self.size / 100.0
         grid_spacing = (1, 1)
         self._create_grid(grid_size, grid_spacing)
         self._create_axes(axes_size)
@@ -69,18 +69,19 @@ class GlGrid:
 
     def _update_grid_size(self, action: Action, gguip: GuiParametersGlobal) -> None:
 
-        dtt = action.camera.distance_to_target
-        dtt = dtt * dtt
-        dtt_min = 10
-        dtt_max = 10000 * 10000
-        normalized_dtt = (dtt - dtt_min) / (dtt_max - dtt_min)
+        if gguip.grid_adapt:
+            dtt = action.camera.distance_to_target
+            dtt = dtt * dtt
+            dtt_min = 10
+            dtt_max = 10000 * 10000
+            normalized_dtt = (dtt - dtt_min) / (dtt_max - dtt_min)
 
-        spc_min = np.min(self.grid_spaces)
-        spc_max = np.max(self.grid_spaces)
-        spc = spc_min + normalized_dtt * (spc_max - spc_min)
-        spc = self.find_nearest(self.grid_spaces, spc)
+            spc_min = np.min(self.grid_spaces)
+            spc_max = np.max(self.grid_spaces)
+            spc = spc_min + normalized_dtt * (spc_max - spc_min)
+            spc = self.find_nearest(self.grid_spaces, spc)
 
-        gguip.grid_sf = spc
+            gguip.grid_sf = spc
 
     def _create_grid(self, size: tuple, spacing: tuple) -> None:
         """Create a grid for rendering."""
@@ -236,8 +237,8 @@ class GlGrid:
             self.shader_grid, "fog_color"
         )
 
-        glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.1)
-        glUniform1f(self.ulocs_grid["fog_end"], self.size * 1.0)
+        glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.2)
+        glUniform1f(self.ulocs_grid["fog_end"], self.size * 0.5)
 
     def _create_shader_axes(self) -> None:
         """Create and compile the shader program."""

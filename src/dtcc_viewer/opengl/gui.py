@@ -145,7 +145,7 @@ class Gui:
             imgui.pop_id()
             imgui.same_line()
             imgui.push_id("adaptive")
-            [changed, guip.grid_adapt] = imgui.checkbox("adapt", guip.grid_adapt)
+            [changed, guip.grid_adapt] = imgui.checkbox("adaptive", guip.grid_adapt)
             imgui.pop_id()
 
             imgui.same_line()

@@ -37,7 +37,7 @@ from dtcc_viewer.shaders.shaders_mesh_ambient import (
     fragment_shader_ambient,
 )
 
-from dtcc_viewer.shaders.shaders_lines import (
+from dtcc_viewer.shaders.shaders_mesh_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )
@@ -191,7 +191,13 @@ class GlMesh(GlObject):
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
-        # Ignoring normals and id's
+        # Normals indices
+        glEnableVertexAttribArray(2)  # 2 is the layout location for the vertex shader
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(20))
+
+        # Ids
+        glEnableVertexAttribArray(3)  # 2 is the layout location for the vertex shader
+        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(32))
 
         glBindVertexArray(0)
 
@@ -277,6 +283,9 @@ class GlMesh(GlObject):
         self.uloc_line["data_min"] = glGetUniformLocation(self.shader_line, "data_min")
         self.uloc_line["data_max"] = glGetUniformLocation(self.shader_line, "data_max")
         self.uloc_line["data_tex"] = glGetUniformLocation(self.shader_line, "data_tex")
+        self.uloc_line["picked_id"] = glGetUniformLocation(
+            self.shader_line, "picked_id"
+        )
 
     def _create_shader_ambient(self) -> None:
         """Create shader for ambient shading."""
@@ -465,6 +474,7 @@ class GlMesh(GlObject):
         glUniform1i(self.uloc_line["data_idx"], self.guip.data_idx)
         glUniform1f(self.uloc_line["data_min"], self.guip.data_min)
         glUniform1f(self.uloc_line["data_max"], self.guip.data_max)
+        glUniform1i(self.uloc_line["picked_id"], action.picked_id)
         glUniform1i(self.uloc_line["data_tex"], self.texture_idx)
 
         self._lines_draw_call()
