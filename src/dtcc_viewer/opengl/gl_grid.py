@@ -53,9 +53,13 @@ class GlGrid:
         self.ulocs_grid = {}
         self.ulocs_axes = {}
 
-        self.grid_spaces = np.array([1, 2, 5, 10, 20, 50, 100, 200, 500, 1000])
+        self.grid_spaces = np.array(
+            [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+        )
 
-        self.size = 10.0 * np.max([bb_global.xdom, bb_global.ydom])
+        self.size = 2.0 * np.max([bb_global.xdom, bb_global.ydom])
+
+        info(f"Grid size: {self.size}")
 
         grid_size = (self.size, self.size)
         axes_size = self.size / 100.0
@@ -71,9 +75,9 @@ class GlGrid:
 
         if gguip.grid_adapt:
             dtt = action.camera.distance_to_target
-            dtt = dtt * dtt
+            # dtt = dtt * dtt
             dtt_min = 10
-            dtt_max = 10000 * 10000
+            dtt_max = 100000  # * 20000
             normalized_dtt = (dtt - dtt_min) / (dtt_max - dtt_min)
 
             spc_min = np.min(self.grid_spaces)
@@ -237,8 +241,8 @@ class GlGrid:
             self.shader_grid, "fog_color"
         )
 
-        glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.2)
-        glUniform1f(self.ulocs_grid["fog_end"], self.size * 0.5)
+        glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.4)
+        glUniform1f(self.ulocs_grid["fog_end"], self.size * 0.8)
 
     def _create_shader_axes(self) -> None:
         """Create and compile the shader program."""
