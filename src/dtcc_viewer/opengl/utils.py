@@ -324,7 +324,7 @@ def create_linestring_circle(center, radius, num_segments):
     for i in range(num_segments):
         x = center.x + radius * math.cos(i * angle_step)
         y = center.y + radius * math.sin(i * angle_step)
-        z = center.z
+        z = center.z + math.sin(i * angle_step * 2) * 10
         points.append(Point(x, y, z))
 
     points.append(points[0])

@@ -57,20 +57,18 @@ class LineStringsWrapper:
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_lss_to_origin(self.bb_global)
-        # self._move_lss_to_zero_z(self.bb_global)
-        # self.bb_global.move_to_zero_z()
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
 
     def _move_lss_to_origin(self, bb: BoundingBox = None):
         if bb is not None:
-            v_count = len(self.vertices) // 9
-            recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
+            v_count = len(self.vertices) // 6
+            recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0]), axis=0)
             recenter_vec_tiled = np.tile(recenter_vec, v_count)
             self.vertices += recenter_vec_tiled
 
     def _move_lss_to_zero_z(self, bb: BoundingBox):
-        self.vertices[2::9] -= bb.zmin
+        self.vertices[2::6] -= bb.zmin
 
     def _get_vertex_count(self, lss: list[LineString]):
         return sum(len(ls.coords) for ls in lss)
@@ -86,8 +84,8 @@ class LineStringsWrapper:
         v_count_tot = self._get_vertex_count(linestrings)
         indices = np.zeros([l_count_tot, 2], dtype=int)
 
-        # vertices = [x, y, z, tx, ty, 0, nx, ny, nz, ...]
-        vertices = np.zeros([v_count_tot, 9])
+        # vertices = [x, y, z, tx, ty, id, x, y, z ...]
+        vertices = np.zeros([v_count_tot, 6])
 
         idx1 = 0
         idx2 = 0
@@ -104,8 +102,8 @@ class LineStringsWrapper:
 
         indices = indices.flatten()
         vertices = vertices.flatten()
-        vertices[3::9] = self.data_wrapper.texel_x
-        vertices[4::9] = self.data_wrapper.texel_y
+        vertices[3::6] = self.data_wrapper.texel_x
+        vertices[4::6] = self.data_wrapper.texel_y
 
         # Format and flatten the vertices and indices
         self.vertices = np.array(vertices, dtype="float32")
@@ -132,8 +130,8 @@ class LineStringsWrapper:
 
     def get_vertex_positions(self):
         """Get the vertex positions"""
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
-        v_count = len(self.vertices) // 9
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 6
         vertex_pos_mask = np.tile(vertex_mask, v_count)
         vertex_pos = self.vertices[vertex_pos_mask]
         return vertex_pos

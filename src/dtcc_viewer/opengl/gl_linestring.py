@@ -73,7 +73,7 @@ class GlLineString(GlObject):
         self.name = lss_wrapper.name
         self.data_wrapper = lss_wrapper.data_wrapper
 
-        self.n_vertices = len(self.vertices) // 9
+        self.n_vertices = len(self.vertices) // 6
         self.n_lines = len(self.line_indices) // 2
 
         self.shader: int
@@ -112,11 +112,15 @@ class GlLineString(GlObject):
 
         # Position
         glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
 
         # Texel indices
         glEnableVertexAttribArray(1)  # 1 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+
+        # Id
+        glEnableVertexAttribArray(2)  # 1 is the layout location for the vertex shader
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(20))
 
         glBindVertexArray(0)
 
@@ -206,7 +210,7 @@ class GlLineString(GlObject):
     def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
         glUniform1f(self.uniform_locs["clip_x"], (xdom * gguip.clip_dist[0]))
         glUniform1f(self.uniform_locs["clip_y"], (ydom * gguip.clip_dist[1]))

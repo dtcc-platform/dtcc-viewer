@@ -5,6 +5,7 @@ vertex_shader_lines = """
 
 layout(location = 0) in vec3 a_position; 
 layout(location = 1) in vec2 a_texel;
+layout(location = 2) in float a_id;
 
 uniform mat4 model;
 uniform mat4 view;
