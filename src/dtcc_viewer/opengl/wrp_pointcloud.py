@@ -73,8 +73,6 @@ class PointCloudWrapper:
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_pc_to_origin(self.bb_global)
-        # self._move_pc_to_zero_z(self.bb_global)
-        # self.bb_global.move_to_zero_z()
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 

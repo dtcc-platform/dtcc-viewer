@@ -47,6 +47,15 @@ class CameraProjection(IntEnum):
     ORTHOGRAPHIC = 1
 
 
+class CameraView(IntEnum):
+    PERSPECTIVE = 0
+    TOP = 1
+    FRONT = 2
+    BACK = 3
+    LEFT = 4
+    RIGHT = 5
+
+
 class BoundingBox:
     xmin: float
     xmax: float

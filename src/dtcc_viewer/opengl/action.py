@@ -3,6 +3,8 @@ import time
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.camera import Camera
 from dtcc_viewer.opengl.environment import Environment
+from dtcc_viewer.opengl.utils import CameraView
+from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 
 
 class Action:
@@ -117,7 +119,15 @@ class Action:
         self.camera.distance_to_target = distance_to_target
         self.camera.update_camera_vectors()
 
-    def zoom_selected_object(self, distance_to_target, new_target):
+    def save_init_camera(self):
+        self.camera.save_init_camera()
+
+    def update_view(self, gguip: GuiParametersGlobal):
+        self.camera.update_view(gguip.camera_view)
+        gguip.update_camera = False
+
+    def zoom_selected_object(self, distance_to_target, new_target, view: CameraView):
+        # if view == CameraView.FRONT:
         self.camera.target = new_target
         self.camera.distance_to_target = distance_to_target
         self.camera.update_camera_vectors()
@@ -175,6 +185,30 @@ class Action:
             info(f"Draw picking texture: {self.show_picking_texture}")
         elif key == glfw.KEY_Z and action == glfw.PRESS:
             self.zoom_selected = True
+        elif key == glfw.KEY_X and action == glfw.PRESS:
+            self.camera.reset_init_camera()
+            info("Camera reset to initial position")
+        elif key == glfw.KEY_R and action == glfw.PRESS:
+            self.camera.toggle_rotation_lock()
+            info("Rotation lock toggled")
+        elif key == glfw.KEY_1 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.PERSPECTIVE)
+            info("Perspective view set")
+        elif key == glfw.KEY_2 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.TOP)
+            info("Top view set")
+        elif key == glfw.KEY_3 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.FRONT)
+            info("Front view set")
+        elif key == glfw.KEY_4 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.BACK)
+            info("Back view set")
+        elif key == glfw.KEY_5 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.LEFT)
+            info("Left view set")
+        elif key == glfw.KEY_6 and action == glfw.PRESS:
+            self.camera.update_view(CameraView.RIGHT)
+            info("Right view set")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
         """Callback function for handling mouse scroll input.

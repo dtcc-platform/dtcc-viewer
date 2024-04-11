@@ -270,6 +270,12 @@ def raster_example_4():
     raster.view()
 
 
+def empty_scene_example():
+    window = Window(1200, 800)
+    scene = Scene()
+    window.render(scene)
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -292,3 +298,4 @@ if __name__ == "__main__":
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
+    # empty_scene_example()

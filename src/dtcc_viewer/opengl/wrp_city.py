@@ -66,7 +66,7 @@ class CityWrapper:
         (t_mesh, t_submeshes) = self._get_terrain_mesh(city)
         (b_mesh, b_submeshes) = self._generate_building_mesh(city)
 
-        quantities = self._get_quantities(city)
+        quantities = city.quantities
 
         # Set the global ids for the entire scene
         if t_submeshes is not None:
@@ -141,10 +141,6 @@ class CityWrapper:
             return mesh, submeshes
 
         return None, None
-
-    def _get_quantities(self, city: City):
-
-        quantities = city.quantities
 
     def get_highest_lod_building(self, building: Building):
         lods = [

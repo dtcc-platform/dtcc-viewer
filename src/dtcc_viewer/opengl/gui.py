@@ -1,6 +1,12 @@
 import imgui
 import numpy as np
-from dtcc_viewer.opengl.utils import Shading, ColorMaps, RasterType, CameraProjection
+from dtcc_viewer.opengl.utils import (
+    Shading,
+    ColorMaps,
+    RasterType,
+    CameraProjection,
+    CameraView,
+)
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
@@ -36,8 +42,9 @@ class Gui:
     margin: int
     id: int
 
-    shading: list[str]
-    cmaps: list[str]
+    shading_names: list[str]
+    cmaps_names: list[str]
+    camera_view_names: list[str]
 
     selected: int
 
@@ -46,8 +53,9 @@ class Gui:
         Initialize an instance of the Gui class.
         """
         np.set_printoptions(precision=1)
-        self.shading = [style.name.lower() for style in Shading]
-        self.cmaps = [cmap.name.lower() for cmap in ColorMaps]
+        self.shading_names = [style.name.lower() for style in Shading]
+        self.cmaps_names = [cmap.name.lower() for cmap in ColorMaps]
+        self.camera_view_names = [view.name.lower() for view in CameraView]
         self.selected = 0
 
     def render(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal):
@@ -94,25 +102,44 @@ class Gui:
             "Controls", window_with - (self.min_width + self.margin), self.margin
         )
 
-    def _draw_apperance_gui(self, guip: GuiParametersGlobal) -> None:
+    def _draw_apperance_gui(self, gguip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""
         [expanded, visible] = imgui.collapsing_header("Appearance")
         if expanded:
 
             # Visualisation settings box
-            imgui.begin_child("Box1", 0, 37, border=True)
+            imgui.begin_child("Box1", 0, 57, border=True)
             # Testing radio buttons
             options = ["Perspective", "Ortho projection"]
             self.selected = self._create_radiobuttons(
-                options, self.selected, guip, True
+                options, self.selected, gguip, True
             )
+
+            # Display mode combo box
+            imgui.push_id("ComboView")
+            items = self.camera_view_names
+            with imgui.begin_combo("View", items[gguip.camera_view]) as combo:
+                if combo.opened:
+                    for i, item in enumerate(items):
+                        is_selected = gguip.camera_view
+                        if imgui.selectable(item, is_selected)[0]:
+                            gguip.camera_view = i
+                            gguip.update_camera = True
+                        # Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if is_selected:
+                            imgui.set_item_default_focus()
+            imgui.pop_id()
             imgui.end_child()
 
             imgui.spacing()
 
             imgui.begin_child("Box2", 0, 37, border=True)
-            [changed, guip.color] = imgui.color_edit4(
-                "Background", guip.color[0], guip.color[1], guip.color[2], guip.color[3]
+            [changed, gguip.color] = imgui.color_edit4(
+                "Background",
+                gguip.color[0],
+                gguip.color[1],
+                gguip.color[2],
+                gguip.color[3],
             )
             imgui.end_child()
 
@@ -120,36 +147,36 @@ class Gui:
 
             imgui.begin_child("Box3", 0, 81, border=True)
 
-            (guip.clip_bool[0], guip.clip_dist[0]) = self._create_clip_slider(
-                "Clip X", guip.clip_bool[0], guip.clip_dist[0]
+            (gguip.clip_bool[0], gguip.clip_dist[0]) = self._create_clip_slider(
+                "Clip X", gguip.clip_bool[0], gguip.clip_dist[0]
             )
 
-            (guip.clip_bool[1], guip.clip_dist[1]) = self._create_clip_slider(
-                "Clip Y", guip.clip_bool[1], guip.clip_dist[1]
+            (gguip.clip_bool[1], gguip.clip_dist[1]) = self._create_clip_slider(
+                "Clip Y", gguip.clip_bool[1], gguip.clip_dist[1]
             )
 
-            (guip.clip_bool[2], guip.clip_dist[2]) = self._create_clip_slider(
-                "Clip Z", guip.clip_bool[2], guip.clip_dist[2], min=0, max=1.0
+            (gguip.clip_bool[2], gguip.clip_dist[2]) = self._create_clip_slider(
+                "Clip Z", gguip.clip_bool[2], gguip.clip_dist[2], min=0, max=1.0
             )
 
             imgui.end_child()
 
             # Grid settings
-            imgui.begin_child("Box4", 0, 37, border=True)
+            imgui.begin_child("Box4", 0, 57, border=True)
             imgui.push_id("grid")
-            [changed, guip.show_grid] = imgui.checkbox("grid", guip.show_grid)
-            imgui.pop_id()
-            imgui.same_line()
-            imgui.push_id("cs")
-            [changed, guip.show_axes] = imgui.checkbox("cs", guip.show_axes)
+            [changed, gguip.show_grid] = imgui.checkbox("grid", gguip.show_grid)
             imgui.pop_id()
             imgui.same_line()
             imgui.push_id("adaptive")
-            [changed, guip.grid_adapt] = imgui.checkbox("adaptive", guip.grid_adapt)
+            [changed, gguip.grid_adapt] = imgui.checkbox("adaptive", gguip.grid_adapt)
             imgui.pop_id()
-
             imgui.same_line()
-            imgui.text(f"spacing: {guip.grid_sf} m")
+            imgui.text(f"spacing: {gguip.grid_sf} m")
+            imgui.push_id("cs")
+            [changed, gguip.show_axes] = imgui.checkbox(
+                "coordinate axis", gguip.show_axes
+            )
+            imgui.pop_id()
             imgui.end_child()
 
         self._draw_separator()
@@ -285,7 +312,7 @@ class Gui:
             if guip.type == RasterType.Data:
                 # Colormap selection combo box
                 imgui.push_id("CmapSelectionCombo " + str(index))
-                items = self.cmaps
+                items = self.cmaps_names
                 with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
                     if combo.opened:
                         for i, item in enumerate(items):
@@ -350,7 +377,7 @@ class Gui:
             # Display mode combo box
             imgui.push_id("Combo")
 
-            items = self.shading
+            items = self.shading_names
 
             with imgui.begin_combo("Display mode", items[guip.shading]) as combo:
                 if combo.opened:
@@ -386,7 +413,7 @@ class Gui:
     def _create_combo_cmaps(self, index: int, guip: GuiParametersObj) -> None:
         """Create a combo box for selecting color maps."""
         imgui.push_id("CmapCombo " + str(index))
-        items = self.cmaps
+        items = self.cmaps_names
         with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
             if combo.opened:
                 for i, item in enumerate(items):

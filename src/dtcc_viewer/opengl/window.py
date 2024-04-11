@@ -189,6 +189,7 @@ class Window:
 
         size_scene = math.sqrt(pow(scene.bb.xdom, 2) + pow(scene.bb.ydom, 2))
         self.action.set_camera_distance_to_target(1.5 * size_scene)
+        self.action.save_init_camera()
 
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")
@@ -247,7 +248,11 @@ class Window:
 
             # Update camera for selected objects
             if self.action.zoom_selected:
-                self.model.zoom_selected(self.action)
+                self.model.zoom_selected(self.action, self.guip)
+
+            # Update camera for selected view
+            if self.guip.update_camera:
+                self.action.update_view(self.guip)
 
             # True if the user has clicked on the GUI
             if self.action.picking:

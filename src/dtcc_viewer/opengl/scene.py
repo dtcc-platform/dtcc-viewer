@@ -176,7 +176,7 @@ class Scene:
         self.bb.move_to_zero_z()
 
         if self.bb is None:
-            warning("No bounding box found for scene.")
+            warning("No bounding box found for the scene.")
             return False
 
         for obj_w in self.obj_wrappers:

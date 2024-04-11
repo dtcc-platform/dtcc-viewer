@@ -2,7 +2,7 @@ import numpy as np
 from pyrr import Vector3, vector, vector3, matrix44
 from math import sin, cos, radians
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
-from dtcc_viewer.opengl.utils import CameraProjection
+from dtcc_viewer.opengl.utils import CameraProjection, CameraView
 
 
 class Camera:
@@ -63,8 +63,11 @@ class Camera:
     fov: float
     mouse_sensitivity: float
     scroll_sensitivity: float
-    jaw: float
+    yaw: float
     pitch: float
+    init_camera: dict
+
+    rotation_lock: bool
 
     def __init__(self, width, height):
         """Initialize the Camera object with the provided width and height.
@@ -93,10 +96,96 @@ class Camera:
 
         # Set initial view properties
         self.distance_to_target = 500.0
-        self.jaw = -90
+        self.yaw = -90
         self.pitch = 30
+        self.init_camera = None
+        self.rotation_lock = False
 
         self.update_camera_vectors()
+
+    def save_init_camera(self):
+        self.init_camera = {}
+        self.init_camera["dtt"] = self.distance_to_target
+        self.init_camera["target"] = self.target
+        self.init_camera["position"] = self.position
+        self.init_camera["front"] = self.front
+        self.init_camera["up"] = self.up
+        self.init_camera["right"] = self.right
+        self.init_camera["yaw"] = self.yaw
+        self.init_camera["pitch"] = self.pitch
+        self.init_camera["fov"] = self.fov
+
+    def reset_init_camera(self):
+        if self.init_camera is not None:
+            self.rotation_lock = False
+            self.distance_to_target = self.init_camera["dtt"]
+            self.target = self.init_camera["target"]
+            self.position = self.init_camera["position"]
+            self.front = self.init_camera["front"]
+            self.up = self.init_camera["up"]
+            self.right = self.init_camera["right"]
+            self.yaw = self.init_camera["yaw"]
+            self.pitch = self.init_camera["pitch"]
+            self.fov = self.init_camera["fov"]
+            self.update_camera_vectors()
+
+    def toggle_rotation_lock(self):
+        self.rotation_lock = not self.rotation_lock
+
+    def _set_top_view(self):
+        self.rotation_lock = True
+        self.yaw = -90
+        self.pitch = 89.99
+        self.update_camera_vectors()
+
+    def _set_front_view(self):
+        self.rotation_lock = True
+        self.target[2] = 0.0
+        self.yaw = -90
+        self.pitch = 0
+        self.update_camera_vectors()
+
+    def _set_back_view(self):
+        self.rotation_lock = True
+        self.target[2] = 0.0
+        self.yaw = 90
+        self.pitch = 0
+        self.update_camera_vectors()
+
+    def _set_left_view(self):
+        self.rotation_lock = True
+        self.target[2] = 0.0
+        self.yaw = 180
+        self.pitch = 0
+        self.update_camera_vectors()
+
+    def _set_right_view(self):
+        self.rotation_lock = True
+        self.target[2] = 0.0
+        self.yaw = 0
+        self.pitch = 0
+        self.update_camera_vectors()
+
+    def _set_persepective_view(self):
+        self.rotation_lock = False
+        self.yaw = -90
+        self.pitch = 30
+        self.update_camera_vectors()
+
+    def update_view(self, camera_view: CameraView):
+
+        if camera_view == CameraView.PERSPECTIVE:
+            self._set_persepective_view()
+        elif camera_view == CameraView.TOP:
+            self._set_top_view()
+        elif camera_view == CameraView.FRONT:
+            self._set_front_view()
+        elif camera_view == CameraView.BACK:
+            self._set_back_view()
+        elif camera_view == CameraView.LEFT:
+            self._set_left_view()
+        elif camera_view == CameraView.RIGHT:
+            self._set_right_view()
 
     def print(self):
         print("Camera settings:")
@@ -107,7 +196,7 @@ class Camera:
         print(f"Camera target: {self.target}")
         print(f"Camera direction vector: {self.direction}")
         print(f"Camera distance to target: {self.distance_to_target}")
-        print(f"Camera jaw angle: {self.jaw}")
+        print(f"Camera jaw angle: {self.yaw}")
         print(f"Camera pitch angle: {self.pitch}")
 
     def update_window_aspect_ratio(self, width, height) -> None:
@@ -234,10 +323,14 @@ class Camera:
         constrain_pitch : bool, optional
             Whether to constrain the pitch rotation, by default True.
         """
+
+        if self.rotation_lock:
+            return
+
         xoffset *= self.mouse_sensitivity
         yoffset *= self.mouse_sensitivity
 
-        self.jaw += xoffset
+        self.yaw += xoffset
         self.pitch += yoffset
 
         if constrain_pitch:
@@ -300,9 +393,9 @@ class Camera:
         dtt = self.distance_to_target
 
         new_direction = Vector3([0.0, 0.0, 0.0])
-        new_direction.x = cos(radians(self.jaw)) * cos(radians(self.pitch))
+        new_direction.x = cos(radians(self.yaw)) * cos(radians(self.pitch))
         new_direction.z = sin(radians(self.pitch))
-        new_direction.y = sin(radians(self.jaw)) * cos(radians(self.pitch))
+        new_direction.y = sin(radians(self.yaw)) * cos(radians(self.pitch))
 
         self.position = dtt * vector.normalise(new_direction) + self.target
         self.direction = vector.normalise(self.target - self.position)

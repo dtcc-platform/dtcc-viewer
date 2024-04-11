@@ -318,7 +318,7 @@ class GlModel:
             self.shader_dbpi, "screenTex"
         )
 
-    def zoom_selected(self, action: Action) -> None:
+    def zoom_selected(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if self.guip.picked_cp is None or self.guip.picked_size is None:
             action.zoom_selected = False
             info("Zoom selected: No object selected for zooming")
@@ -326,7 +326,7 @@ class GlModel:
 
         distance_to_target = 5.0 * self.guip.picked_size
         target = self.guip.picked_cp
-        action.zoom_selected_object(distance_to_target, target)
+        action.zoom_selected_object(distance_to_target, target, gguip.camera_view)
         action.zoom_selected = False
         info(f"Zoom selected: New camera position for object {self.guip.picked_id}")
 
