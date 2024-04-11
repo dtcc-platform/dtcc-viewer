@@ -187,6 +187,11 @@ class Camera:
         elif camera_view == CameraView.RIGHT:
             self._set_right_view()
 
+    def zoom_selected(self, dtt: float, new_target: Vector3):
+        self.target = new_target
+        self.distance_to_target = dtt
+        self.update_camera_vectors()
+
     def print(self):
         print("Camera settings:")
         print(f"Camera position: {self.position}")

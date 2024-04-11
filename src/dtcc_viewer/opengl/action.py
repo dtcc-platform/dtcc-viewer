@@ -76,7 +76,7 @@ class Action:
 
     show_shadow_texture: bool
     show_picking_texture: bool
-    zoom_selected: bool
+    update_zoom_selected: bool
 
     # Tracking mouse picking clicks
     picking: bool
@@ -113,7 +113,7 @@ class Action:
         self.picked_x = 0
         self.picked_y = 0
         self.picked_id = -1
-        self.zoom_selected = False
+        self.update_zoom_selected = False
 
     def set_camera_distance_to_target(self, distance_to_target):
         self.camera.distance_to_target = distance_to_target
@@ -126,11 +126,8 @@ class Action:
         self.camera.update_view(gguip.camera_view)
         gguip.update_camera = False
 
-    def zoom_selected_object(self, distance_to_target, new_target, view: CameraView):
-        # if view == CameraView.FRONT:
-        self.camera.target = new_target
-        self.camera.distance_to_target = distance_to_target
-        self.camera.update_camera_vectors()
+    def zoom_selected(self, distance_to_target, new_target, view: CameraView):
+        self.camera.zoom_selected(distance_to_target, new_target, view)
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.
@@ -184,7 +181,7 @@ class Action:
             self.show_picking_texture = not self.show_picking_texture
             info(f"Draw picking texture: {self.show_picking_texture}")
         elif key == glfw.KEY_Z and action == glfw.PRESS:
-            self.zoom_selected = True
+            self.update_zoom_selected = True
         elif key == glfw.KEY_X and action == glfw.PRESS:
             self.camera.reset_init_camera()
             info("Camera reset to initial position")

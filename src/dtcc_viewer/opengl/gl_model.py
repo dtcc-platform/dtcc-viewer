@@ -320,14 +320,14 @@ class GlModel:
 
     def zoom_selected(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if self.guip.picked_cp is None or self.guip.picked_size is None:
-            action.zoom_selected = False
+            action.update_zoom_selected = False
             info("Zoom selected: No object selected for zooming")
             return
 
         distance_to_target = 5.0 * self.guip.picked_size
         target = self.guip.picked_cp
-        action.zoom_selected_object(distance_to_target, target, gguip.camera_view)
-        action.zoom_selected = False
+        action.zoom_selected(distance_to_target, target)
+        action.update_zoom_selected = False
         info(f"Zoom selected: New camera position for object {self.guip.picked_id}")
 
     def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:

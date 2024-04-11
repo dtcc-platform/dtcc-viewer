@@ -247,7 +247,7 @@ class Window:
             self.action.set_mouse_on_gui(self.io.want_capture_mouse)
 
             # Update camera for selected objects
-            if self.action.zoom_selected:
+            if self.action.update_zoom_selected:
                 self.model.zoom_selected(self.action, self.guip)
 
             # Update camera for selected view
