@@ -160,7 +160,7 @@ class GlLineString(GlObject):
         self.uniform_locs["data_max"] = glGetUniformLocation(self.shader, "data_max")
         self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
-    def render(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def render(self, action: Action) -> None:
         """Render roads as lines in the road network."""
 
         self._bind_vao()
@@ -169,13 +169,13 @@ class GlLineString(GlObject):
 
         # MVP Calculations
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
 
-        self._set_clipping_uniforms(gguip)
+        self._set_clipping_uniforms(action.gguip)
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))

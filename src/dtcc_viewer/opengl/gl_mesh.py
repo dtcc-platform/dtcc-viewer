@@ -444,7 +444,6 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         ws_pass=0,
     ):
@@ -460,13 +459,13 @@ class GlMesh(GlObject):
 
         # MVP Calculations
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uloc_line["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_line["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_line["project"], 1, GL_FALSE, proj)
 
-        self._set_clipping_uniforms(gguip, mguip, ws_pass)
+        self._set_clipping_uniforms(action.gguip, mguip, ws_pass)
 
         glUniform1i(self.uloc_line["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_line["color_inv"], int(self.guip.invert_cmap))
@@ -484,7 +483,6 @@ class GlMesh(GlObject):
     def render_ambient(
         self,
         action: Action,
-        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
     ) -> None:
         """Render the mesh with ambient shading."""
@@ -492,14 +490,14 @@ class GlMesh(GlObject):
         self._bind_data_texture()
 
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
 
         glUniformMatrix4fv(self.uloc_ambi["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_ambi["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_ambi["project"], 1, GL_FALSE, proj)
 
-        self._set_clipping_uniforms(gguip, mguip)
+        self._set_clipping_uniforms(action.gguip, mguip)
 
         glUniform1i(self.uloc_ambi["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_ambi["color_inv"], int(self.guip.invert_cmap))
@@ -518,7 +516,6 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         ws_pass=0,
     ):
@@ -528,13 +525,13 @@ class GlMesh(GlObject):
 
         # MVP calcs
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uloc_diff["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_diff["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_diff["project"], 1, GL_FALSE, proj)
 
-        self._set_clipping_uniforms(gguip, mguip, ws_pass)
+        self._set_clipping_uniforms(action.gguip, mguip, ws_pass)
 
         glUniform1i(self.uloc_diff["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_diff["color_inv"], int(self.guip.invert_cmap))
@@ -560,16 +557,15 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
     ) -> None:
         glEnable(GL_POLYGON_OFFSET_FILL)
         glPolygonOffset(1.0, 1.0)
-        self.render_diffuse(action, env, gguip, mguip, ws_pass=1)
+        self.render_diffuse(action, env, mguip, ws_pass=1)
         glDisable(GL_POLYGON_OFFSET_FILL)
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        self.render_lines(action, env, gguip, mguip, ws_pass=2)
+        self.render_lines(action, env, mguip, ws_pass=2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     def render_shadows_pass1(self, lsm: np.ndarray):
@@ -583,7 +579,6 @@ class GlMesh(GlObject):
         self,
         action: Action,
         env: Environment,
-        gguip: GuiParametersGlobal,
         mguip: GuiParametersModel,
         lsm: np.ndarray,
     ) -> None:
@@ -593,13 +588,13 @@ class GlMesh(GlObject):
 
         # MVP Calculations
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uloc_shdw["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uloc_shdw["project"], 1, GL_FALSE, proj)
         glUniformMatrix4fv(self.uloc_shdw["view"], 1, GL_FALSE, view)
 
-        self._set_clipping_uniforms(gguip, mguip)
+        self._set_clipping_uniforms(action.gguip, mguip)
 
         glUniform1i(self.uloc_shdw["color_by"], int(self.guip.color))
         glUniform1i(self.uloc_shdw["color_inv"], int(self.guip.invert_cmap))

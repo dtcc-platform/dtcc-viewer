@@ -42,7 +42,7 @@ class LineStringsWrapper:
         name: str,
         lss: list[LineString],
         mts: int,
-        data: np.ndarray = None,
+        data: Any = None,
     ) -> None:
         """Initialize a line string wrapper object."""
         self.dict_data = {}
@@ -124,9 +124,9 @@ class LineStringsWrapper:
                 results.append(success)
 
         if data is None or not np.any(results):
-            self.data_wrapper.add_data("Vertex X", self.vertices[0::9])
-            self.data_wrapper.add_data("Vertex Y", self.vertices[1::9])
-            self.data_wrapper.add_data("Vertex Z", self.vertices[2::9])
+            self.data_wrapper.add_data("Vertex X", self.vertices[0::6])
+            self.data_wrapper.add_data("Vertex Y", self.vertices[1::6])
+            self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
 
     def get_vertex_positions(self):
         """Get the vertex positions"""

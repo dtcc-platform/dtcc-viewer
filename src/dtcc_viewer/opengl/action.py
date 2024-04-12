@@ -74,6 +74,8 @@ class Action:
     right_mbtn_pressed: bool
     mouse_on_gui: bool
 
+    gguip: GuiParametersGlobal
+
     show_shadow_texture: bool
     show_picking_texture: bool
     update_zoom_selected: bool
@@ -115,19 +117,26 @@ class Action:
         self.picked_id = -1
         self.update_zoom_selected = False
 
-    def set_camera_distance_to_target(self, distance_to_target):
+        self.gguip = GuiParametersGlobal()
+
+    def initialise_camera(self, bb_global: BoundingBox, distance_to_target: float):
+        self._set_camera_distance_to_target(distance_to_target)
+        self._calc_near_far_planes(bb_global)
+        self._save_init_camera()
+
+    def _set_camera_distance_to_target(self, distance_to_target):
         self.camera.distance_to_target = distance_to_target
         self.camera.update_camera_vectors()
 
-    def save_init_camera(self):
+    def _save_init_camera(self):
         self.camera.save_init_camera()
 
-    def update_view(self, gguip: GuiParametersGlobal):
-        self.camera.update_view(gguip.camera_view)
-        gguip.update_camera = False
-
-    def calc_near_far_planes(self, bb_global: BoundingBox):
+    def _calc_near_far_planes(self, bb_global: BoundingBox):
         self.camera.calc_near_far_planes(bb_global)
+
+    def update_view(self):
+        self.camera.update_view(self.gguip.camera_view)
+        self.gguip.update_camera = False
 
     def zoom_selected(self, distance_to_target, new_target):
         self.camera.zoom_selected(distance_to_target, new_target)
@@ -188,9 +197,6 @@ class Action:
         elif key == glfw.KEY_X and action == glfw.PRESS:
             self.camera.reset_init_camera()
             info("Camera reset to initial position")
-        elif key == glfw.KEY_R and action == glfw.PRESS:
-            self.camera.toggle_rotation_lock()
-            info("Rotation lock toggled")
         elif key == glfw.KEY_1 and action == glfw.PRESS:
             self.camera.update_view(CameraView.PERSPECTIVE)
             info("Perspective view set")

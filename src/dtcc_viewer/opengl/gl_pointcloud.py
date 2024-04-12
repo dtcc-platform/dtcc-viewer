@@ -94,25 +94,25 @@ class GlPointCloud(GlObject):
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
 
-    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def render(self, action: Action) -> None:
         """Render the point cloud using provided interaction parameters."""
 
         self._bind_vao()
         self._bind_shader()
         self._bind_data_texture()
 
-        proj = interaction.camera.get_projection_matrix(gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
 
-        view = interaction.camera.get_view_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
 
-        cam_pos = interaction.camera.position
-        cam_tar = interaction.camera.target
+        cam_pos = action.camera.position
+        cam_tar = action.camera.target
         tans = self._get_billboard_transform(cam_pos, cam_tar)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, tans)
 
-        self._set_clipping_uniforms(gguip)
+        self._set_clipping_uniforms(action.gguip)
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))

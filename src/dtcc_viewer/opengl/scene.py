@@ -53,6 +53,7 @@ class Scene:
     mts: int
 
     def __init__(self):
+
         self.obj_wrappers = []
         self.city_wrappers = []
         self.mesh_wrappers = []
@@ -65,6 +66,8 @@ class Scene:
         self.mrst_wrappers = []
 
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
+        print(self.mts)
+
         info("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
@@ -224,8 +227,8 @@ class Scene:
                 vertex_pos = obj_w.mesh_wrp_2.get_vertex_positions()
                 vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-            if obj_w.ls_wrapper is not None:
-                vertex_pos = obj_w.ls_wrapper.get_vertex_positions()
+            if obj_w.lss_wrp is not None:
+                vertex_pos = obj_w.lss_wrp.get_vertex_positions()
                 vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for city_w in self.city_wrappers:

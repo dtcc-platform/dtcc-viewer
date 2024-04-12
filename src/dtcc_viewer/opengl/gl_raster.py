@@ -325,17 +325,17 @@ class GlRaster(GlObject):
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
 
-    def render(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def render(self, action: Action) -> None:
         """Render roads as lines in the road network."""
 
         if self.type == RasterType.Data:
-            self._render_data(interaction, gguip)
+            self._render_data(action)
         elif self.type == RasterType.RGB:
-            self._render_rgb(interaction, gguip)
+            self._render_rgb(action)
         elif self.type == RasterType.RGBA:
-            self._render_rgba(interaction, gguip)
+            self._render_rgba(action)
 
-    def _render_data(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_data(self, action: Action) -> None:
 
         glUseProgram(self.shader)
 
@@ -344,14 +344,14 @@ class GlRaster(GlObject):
         glBindTexture(GL_TEXTURE_2D, self.data_texture)
         glUniform1i(self.uniform_locs["data_tex"], 0)  # Set the texture unit to 0
 
-        self._render_common(interaction, gguip)
+        self._render_common(action)
 
         glUniform1i(self.uniform_locs["color_by"], int(self.guip.color))
         glUniform1i(self.uniform_locs["cmap_idx"], self.guip.cmap_idx)
 
         self._draw_call()
 
-    def _render_rgb(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_rgb(self, action: Action) -> None:
 
         glUseProgram(self.shader)
 
@@ -363,10 +363,10 @@ class GlRaster(GlObject):
         glUniform1i(self.uniform_locs["g_channel"], self.guip.channels[1])
         glUniform1i(self.uniform_locs["b_channel"], self.guip.channels[2])
 
-        self._render_common(interaction, gguip)
+        self._render_common(action)
         self._draw_call()
 
-    def _render_rgba(self, interaction: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_rgba(self, action: Action) -> None:
 
         glUseProgram(self.shader)
 
@@ -377,20 +377,20 @@ class GlRaster(GlObject):
         glUniform1i(self.uniform_locs["g_channel"], self.guip.channels[1])
         glUniform1i(self.uniform_locs["b_channel"], self.guip.channels[2])
 
-        self._render_common(interaction, gguip)
+        self._render_common(action)
         self._draw_call()
 
-    def _render_common(self, interaction: Action, gguip: GuiParametersGlobal):
+    def _render_common(self, action: Action):
 
         # MVP Calculations
-        move = interaction.camera.get_move_matrix()
-        view = interaction.camera.get_view_matrix(gguip)
-        proj = interaction.camera.get_projection_matrix(gguip)
+        move = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uniform_locs["project"], 1, GL_FALSE, proj)
         glUniform1i(self.uniform_locs["color_inv"], int(self.guip.invert_cmap))
-        self._set_clipping_uniforms(gguip)
+        self._set_clipping_uniforms(action.gguip)
         pass
 
     def _draw_call(self):

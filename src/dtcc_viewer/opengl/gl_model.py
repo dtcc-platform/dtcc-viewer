@@ -318,7 +318,7 @@ class GlModel:
             self.shader_dbpi, "screenTex"
         )
 
-    def zoom_selected(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def zoom_selected(self, action: Action) -> None:
         if self.guip.picked_cp is None or self.guip.picked_size is None:
             action.update_zoom_selected = False
             info("Zoom selected: No object selected for zooming")
@@ -332,20 +332,20 @@ class GlModel:
             f"Zoom selected: New camera position centered on object {self.guip.picked_id}"
         )
 
-    def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def evaluate_picking(self, action: Action) -> None:
         if not action.mouse_on_gui:
-            self._draw_picking_texture(action, gguip)
-            self._evaluate_picking(action, gguip)
+            self._draw_picking_texture(action)
+            self._evaluate_picking(action)
         else:
             action.picking = False
 
-    def _draw_picking_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _draw_picking_texture(self, action: Action) -> None:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Camera input
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
 
         # Picking pass
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)
@@ -363,7 +363,7 @@ class GlModel:
             if isinstance(obj, GlMesh):
                 obj.triangles_draw_call()
 
-    def _evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _evaluate_picking(self, action: Action) -> None:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         x = action.picked_x
         y = action.picked_y
@@ -373,7 +373,7 @@ class GlModel:
 
         # Background color
         p_color = np.array([p_color[0], p_color[1], p_color[2]], dtype=int)
-        b_color = np.array(np.round(np.array(gguip.color) * 255), dtype=int)
+        b_color = np.array(np.round(np.array(action.gguip.color) * 255), dtype=int)
 
         background_click = False
         if np.all(b_color[0:3] == p_color[0:3]):
@@ -395,8 +395,8 @@ class GlModel:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-    def _render_pick_texture(self, action: Action, gguip: GuiParametersGlobal) -> None:
-        self._draw_picking_texture(action, gguip)
+    def _render_pick_texture(self, action: Action) -> None:
+        self._draw_picking_texture(action)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
@@ -413,79 +413,79 @@ class GlModel:
         self._debug_quad_draw_call()
         glEnable(GL_DEPTH_TEST)
 
-    def render(self, action: Action, gguip: GuiParametersGlobal) -> None:
-        self._render_meshes(action, gguip)
-        self._render_pcs(action, gguip)
-        self._render_lss(action, gguip)
-        self._render_txq(action, gguip)
+    def render(self, action: Action) -> None:
+        self._render_meshes(action)
+        self._render_pcs(action)
+        self._render_lss(action)
+        self._render_txq(action)
 
         self._update_light_position()
         self._update_data_caps()
         self._update_data_textures()
 
-    def _render_meshes(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_meshes(self, action: Action) -> None:
         if self.guip.shading == Shading.WIREFRAME:
-            self._render_lines(action, gguip)
+            self._render_lines(action)
         elif self.guip.shading == Shading.AMBIENT:
-            self._render_ambient(action, gguip)
+            self._render_ambient(action)
         elif self.guip.shading == Shading.DIFFUSE:
-            self._render_diffuse(action, gguip)
+            self._render_diffuse(action)
         elif self.guip.shading == Shading.WIRESHADED:
-            self._render_wireshaded(action, gguip)
+            self._render_wireshaded(action)
         elif self.guip.shading == Shading.SHADOWS:
-            self._render_shadows(action, gguip)
+            self._render_shadows(action)
         elif self.guip.shading == Shading.PICKING:
-            self._render_pick_texture(action, gguip)
+            self._render_pick_texture(action)
         else:
             warning("Shading not set for model instance")
         pass
 
-    def _render_pcs(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_pcs(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlPointCloud):
                 guip = obj.guip
                 if guip.show:
-                    obj.render(action, gguip)
+                    obj.render(action)
 
-    def _render_lss(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_lss(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlLineString):
                 guip = obj.guip
                 if guip.show:
-                    obj.render(action, gguip)
+                    obj.render(action)
 
-    def _render_txq(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_txq(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlRaster):
                 guip = obj.guip
                 if guip.show:
-                    obj.render(action, gguip)
+                    obj.render(action)
 
-    def _render_lines(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_lines(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_lines(action, self.env, gguip, self.guip)
+                    obj.render_lines(action, self.env, self.guip)
 
-    def _render_ambient(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_ambient(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_ambient(action, gguip, self.guip)
+                    obj.render_ambient(action, self.guip)
 
-    def _render_diffuse(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_diffuse(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_diffuse(action, self.env, gguip, self.guip)
+                    obj.render_diffuse(action, self.env, self.guip)
 
-    def _render_wireshaded(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_wireshaded(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_wireshaded(action, self.env, gguip, self.guip)
+                    obj.render_wireshaded(action, self.env, self.guip)
 
-    def _render_shadows(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_shadows(self, action: Action) -> None:
         """Generates a shadow map and renders the mesh with shadows by sampling that
         shadow map.
         """
@@ -494,7 +494,7 @@ class GlModel:
             self._render_debug_shadow_map(action)
         else:
             self._render_shadows_pass1(action)
-            self._render_shadows_pass2(action, gguip)
+            self._render_shadows_pass2(action)
 
     def _render_shadows_pass1(self, action: Action) -> None:
         """Render a shadow map to the frame buffer."""
@@ -525,7 +525,7 @@ class GlModel:
                 if obj.guip.show and obj.cast_shadows:
                     obj.render_shadows_pass1(self.lsm)
 
-    def _render_shadows_pass2(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_shadows_pass2(self, action: Action) -> None:
         """Render the model with shadows by sampling the shadow map frame buffer."""
         # Second pass: Render objects with the shadow map computed in the first pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Setting default buffer
@@ -540,9 +540,7 @@ class GlModel:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_shadows_pass2(
-                        action, self.env, gguip, self.guip, self.lsm
-                    )
+                    obj.render_shadows_pass2(action, self.env, self.guip, self.lsm)
 
     def _render_debug_shadow_map(self, interaction: Action) -> None:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)

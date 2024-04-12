@@ -45,7 +45,7 @@ class GlGrid:
     size: np.ndarray  # Grid sizes for the grid lines
     grid_spaces: np.ndarray  # Grid spacings for the grid lines
 
-    def __init__(self, bb_global: BoundingBox, gguip: GuiParametersGlobal):
+    def __init__(self, bb_global: BoundingBox):
 
         self.bb_global = bb_global
         self.bb_local = bb_global
@@ -71,9 +71,9 @@ class GlGrid:
         self._create_shader_grid()
         self._create_shader_axes()
 
-    def _update_grid_size(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _update_grid_size(self, action: Action) -> None:
 
-        if gguip.grid_adapt:
+        if action.gguip.grid_adapt:
             dtt = action.camera.distance_to_target
             # dtt = dtt * dtt
             dtt_min = 10
@@ -85,7 +85,7 @@ class GlGrid:
             spc = spc_min + normalized_dtt * (spc_max - spc_min)
             spc = self.find_nearest(self.grid_spaces, spc)
 
-            gguip.grid_sf = spc
+            action.gguip.grid_sf = spc
 
     def _create_grid(self, size: tuple, spacing: tuple) -> None:
         """Create a grid for rendering."""
@@ -258,32 +258,32 @@ class GlGrid:
         self.ulocs_axes["view"] = glGetUniformLocation(self.shader_axes, "view")
         self.ulocs_axes["project"] = glGetUniformLocation(self.shader_axes, "project")
 
-    def render(self, action: Action, gguip: GuiParametersGlobal) -> None:
-        if gguip.show_grid:
-            self._update_grid_size(action, gguip)
-            self._render_grid(action, gguip)
-        if gguip.show_axes:
+    def render(self, action: Action) -> None:
+        if action.gguip.show_grid:
+            self._update_grid_size(action)
+            self._render_grid(action)
+        if action.gguip.show_axes:
             glEnable(GL_LINE_SMOOTH)
-            self._render_axes(action, gguip)
+            self._render_axes(action)
             glDisable(GL_LINE_SMOOTH)
 
-    def _render_grid(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_grid(self, action: Action) -> None:
 
         glBindVertexArray(self.VAO_grid)
         glUseProgram(self.shader_grid)
 
         # MVP Calculations
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.ulocs_grid["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.ulocs_grid["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ulocs_grid["project"], 1, GL_FALSE, proj)
 
-        bc = gguip.color
+        bc = action.gguip.color
         c = self.adjust_color_brightness(bc, 0.25)
         glUniform3f(self.ulocs_grid["color"], c[0], c[1], c[2])
-        glUniform1f(self.ulocs_grid["scale"], gguip.grid_sf)
+        glUniform1f(self.ulocs_grid["scale"], action.gguip.grid_sf)
         glUniform1f(self.ulocs_grid["clip_xy"], self.size)
         glUniform3f(self.ulocs_grid["fog_color"], bc[0], bc[1], bc[2])
 
@@ -292,15 +292,15 @@ class GlGrid:
         glBindVertexArray(0)
         glUseProgram(0)
 
-    def _render_axes(self, action: Action, gguip: GuiParametersGlobal) -> None:
+    def _render_axes(self, action: Action) -> None:
 
         glBindVertexArray(self.VAO_axes)
         glUseProgram(self.shader_axes)
 
         # MVP Calculations
         move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(gguip)
-        proj = action.camera.get_projection_matrix(gguip)
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
         glUniformMatrix4fv(self.ulocs_axes["model"], 1, GL_FALSE, move)
         glUniformMatrix4fv(self.ulocs_axes["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ulocs_axes["project"], 1, GL_FALSE, proj)

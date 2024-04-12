@@ -7,6 +7,13 @@ from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
 
 
+class KeyboardParameters:
+    """Class representing keyboard parameters for the viewer."""
+
+    def __init__(self):
+        pass
+
+
 class GuiParametersGlobal:
     """Class representing GUI parameters for the viewer."""
 

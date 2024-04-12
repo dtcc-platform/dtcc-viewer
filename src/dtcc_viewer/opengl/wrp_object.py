@@ -42,7 +42,7 @@ class ObjectWrapper:
     bb_global: BoundingBox = None
     mesh_wrp_1: MeshWrapper = None
     mesh_wrp_2: MeshWrapper = None
-    lsw: LineStringsWrapper = None
+    lss_wrp: LineStringsWrapper = None
 
     def __init__(self, name: str, obj: Object, mts: int) -> None:
         """Initialize the MeshData object.
@@ -75,7 +75,7 @@ class ObjectWrapper:
         lineStrings = self._extract_linestrings(obj)
 
         if lineStrings is not None:
-            self.ls_wrapper = LineStringsWrapper("LineStrings", lineStrings, mts)
+            self.lss_wrp = LineStringsWrapper("LineStrings", lineStrings, mts)
 
         warning("ObjectWrapper not yet implemented!")
 
@@ -84,8 +84,8 @@ class ObjectWrapper:
             self.mesh_wrp_1.preprocess_drawing(bb_global)
         if self.mesh_wrp_2 is not None:
             self.mesh_wrp_2.preprocess_drawing(bb_global)
-        if self.ls_wrapper is not None:
-            self.ls_wrapper.preprocess_drawing(bb_global)
+        if self.lss_wrp is not None:
+            self.lss_wrp.preprocess_drawing(bb_global)
 
     def _extract_linestrings(self, obj: Object):
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)

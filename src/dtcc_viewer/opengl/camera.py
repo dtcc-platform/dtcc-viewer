@@ -113,17 +113,10 @@ class Camera:
             The global bounding box of the geometry.
         """
 
-        minpt = np.array([bb_global.xmin, bb_global.ymin, bb_global.zmin])
-        maxpt = np.array([bb_global.xmax, bb_global.ymax, bb_global.zmax])
-        dist = np.linalg.norm(maxpt - minpt)
-
-        # Near and far scale factor are determined by testing
-        self.near_plane = 0.0002 * dist
-        self.far_plane = 20.0 * dist
-
-        info(
-            f"Camera near and far planes at {self.near_plane:.5f} and {self.far_plane:.2f} m."
-        )
+        # Near and far plane scale factor are determined by testing
+        self.near_plane = 0.0002 * bb_global.size
+        self.far_plane = 20.0 * bb_global.size
+        info(f"Near plane: {self.near_plane:.5f} m, Far plane: {self.far_plane:.0f} m.")
 
     def save_init_camera(self):
         self.init_camera = {}

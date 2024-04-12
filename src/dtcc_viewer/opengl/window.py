@@ -87,7 +87,6 @@ class Window:
 
         imgui.create_context()
         self.gui = Gui()
-        self.guip = GuiParametersGlobal()
         self.io = imgui.get_io()
 
         if not glfw.init():
@@ -134,51 +133,51 @@ class Window:
 
         for obj in scene.obj_wrappers:
             if obj.mesh_wrp_1 is not None:
-                mesh_gl = GlMesh(obj.mesh_wrp_1)
-                self.gl_objects.append(mesh_gl)
+                gl_mesh = GlMesh(obj.mesh_wrp_1)
+                self.gl_objects.append(gl_mesh)
             if obj.mesh_wrp_2 is not None:
-                mesh_gl = GlMesh(obj.mesh_wrp_2)
-                self.gl_objects.append(mesh_gl)
-            if obj.ls_wrapper is not None:
-                lss_gl = GlLineString(obj.ls_wrapper)
-                self.gl_objects.append(lss_gl)
+                gl_mesh = GlMesh(obj.mesh_wrp_2)
+                self.gl_objects.append(gl_mesh)
+            if obj.lss_wrp is not None:
+                gl_lss = GlLineString(obj.lss_wrp)
+                self.gl_objects.append(gl_lss)
 
         for city in scene.city_wrappers:
             if city.building_mw is not None:
-                mesh_gl_bld = GlMesh(city.building_mw)
-                self.gl_objects.append(mesh_gl_bld)
+                gl_mesh_bld = GlMesh(city.building_mw)
+                self.gl_objects.append(gl_mesh_bld)
             if city.terrain_mw is not None:
-                mesh_gl_ter = GlMesh(city.terrain_mw)
-                self.gl_objects.append(mesh_gl_ter)
+                gl_mesh_ter = GlMesh(city.terrain_mw)
+                self.gl_objects.append(gl_mesh_ter)
 
         for building in scene.bld_wrappers:
-            mesh_gl = GlMesh(building.building_mw)
-            self.gl_objects.append(mesh_gl)
+            gl_mesh = GlMesh(building.building_mw)
+            self.gl_objects.append(gl_mesh)
 
         for mesh in scene.mesh_wrappers:
-            mesh_gl = GlMesh(mesh)
-            self.gl_objects.append(mesh_gl)
+            gl_mesh = GlMesh(mesh)
+            self.gl_objects.append(gl_mesh)
 
         for pc in scene.pcs_wrappers:
-            pc_gl = GlPointCloud(pc)
-            self.gl_objects.append(pc_gl)
+            gl_pc = GlPointCloud(pc)
+            self.gl_objects.append(gl_pc)
 
         for rn in scene.rnd_wrappers:
-            rn_gl = GlLineString(rn)
-            self.gl_objects.append(rn_gl)
+            gl_rn = GlLineString(rn)
+            self.gl_objects.append(gl_rn)
 
         for lss in scene.lss_wrappers:
-            lss_gl = GlLineString(lss)
-            self.gl_objects.append(lss_gl)
+            gl_lss = GlLineString(lss)
+            self.gl_objects.append(gl_lss)
 
         for rst in scene.rst_wrappers:
-            txq_gl = GlRaster(rst)
-            self.gl_objects.append(txq_gl)
+            gl_raster = GlRaster(rst)
+            self.gl_objects.append(gl_raster)
 
         for mrsr in scene.mrst_wrappers:
             for rst in mrsr.raster_wrappers:
-                txq_gl = GlRaster(rst)
-                self.gl_objects.append(txq_gl)
+                gl_raster = GlRaster(rst)
+                self.gl_objects.append(gl_raster)
 
         if len(self.gl_objects) == 0:
             warning("No meshes or point clouds or line strings found in the scene!")
@@ -188,9 +187,7 @@ class Window:
         self.model = GlModel(self.gl_objects, scene.bb)
 
         size_scene = math.sqrt(pow(scene.bb.xdom, 2) + pow(scene.bb.ydom, 2))
-        self.action.set_camera_distance_to_target(1.5 * size_scene)
-        self.action.save_init_camera()
-        self.action.calc_near_far_planes(scene.bb)
+        self.action.initialise_camera(scene.bb, 1.5 * size_scene)
 
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")
@@ -198,7 +195,7 @@ class Window:
         self.model.create_picking_fbo(self.action)
 
         # Create grid
-        self.gl_grid = GlGrid(scene.bb, self.guip)
+        self.gl_grid = GlGrid(scene.bb)
 
         return True
 
@@ -236,7 +233,7 @@ class Window:
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            color = self.guip.color
+            color = self.action.gguip.color
             glClearColor(color[0], color[1], color[2], color[3])
 
             # Enable clipping planes
@@ -247,27 +244,27 @@ class Window:
 
             # Update camera for selected objects
             if self.action.update_zoom_selected:
-                self.model.zoom_selected(self.action, self.guip)
+                self.model.zoom_selected(self.action)
 
             # Update camera for selected view
-            if self.guip.update_camera:
-                self.action.update_view(self.guip)
+            if self.action.gguip.update_camera:
+                self.action.update_view()
 
             # True if the user has clicked on the GUI
             if self.action.picking:
-                self.model.evaluate_picking(self.action, self.guip)
+                self.model.evaluate_picking(self.action)
 
             # Render the model
             if self.model.guip.show:
-                self.model.render(self.action, self.guip)
+                self.model.render(self.action)
 
             # Draw grid
-            self.gl_grid.render(self.action, self.guip)
+            self.gl_grid.render(self.action)
 
             # Render the GUI
-            self.gui.render(self.model, self.impl, self.guip)
+            self.gui.render(self.model, self.impl, self.action.gguip)
 
-            self.guip.calc_fps()
+            self.action.gguip.calc_fps()
 
             glfw.swap_buffers(self.window)
 
@@ -310,23 +307,23 @@ class Window:
         self.action.update_window_size(fb_width, fb_height, win_width, win_height)
 
     def _clipping_planes(self):
-        if self.guip.clip_bool[0]:
+        if self.action.gguip.clip_bool[0]:
             glEnable(GL_CLIP_DISTANCE0)
         else:
             glDisable(GL_CLIP_DISTANCE0)
 
-        if self.guip.clip_bool[1]:
+        if self.action.gguip.clip_bool[1]:
             glEnable(GL_CLIP_DISTANCE1)
         else:
             glDisable(GL_CLIP_DISTANCE1)
 
-        if self.guip.clip_bool[2]:
+        if self.action.gguip.clip_bool[2]:
             glEnable(GL_CLIP_DISTANCE2)
         else:
             glDisable(GL_CLIP_DISTANCE2)
 
         # Grid clipping planes
-        if self.guip.show_grid:
+        if self.action.gguip.show_grid:
             glEnable(GL_CLIP_DISTANCE3)
             glEnable(GL_CLIP_DISTANCE4)
             glEnable(GL_CLIP_DISTANCE5)

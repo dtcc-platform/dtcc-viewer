@@ -71,12 +71,14 @@ class BoundingBox:
     mid_pt: np.ndarray
     center_vec: np.ndarray
     origin: np.ndarray
+    size: float
 
     def __init__(self, vertices: np.ndarray):
         self.calc_bounds_flat(vertices)
         self.origin = np.array([0, 0, 0])
         self.calc_mid_point()
         self.calc_center_vec()
+        self.calc_size()
 
     def calc_bounds_flat(self, vertices: np.ndarray):
         self.xmin = vertices[0::3].min()
@@ -107,6 +109,12 @@ class BoundingBox:
         self.origin = np.array([0, 0, (self.zmax + self.zmin) / 2.0])
         self.calc_center_vec()
 
+    def calc_size(self):
+        """Calculate the size of the bounding box as the length of the diagonal."""
+        min_pt = np.array([self.xmin, self.ymin, self.zmin])
+        max_pt = np.array([self.xmax, self.ymax, self.zmax])
+        self.size = np.linalg.norm(max_pt - min_pt)
+
     def print(self):
         print("Bounds: ")
         print([self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax])
@@ -115,6 +123,8 @@ class BoundingBox:
         print("Center vector: ")
         print(self.center_vec)
         print("Domain: ")
+        print([self.xdom, self.ydom, self.zdom])
+        print("Size: ")
         print([self.xdom, self.ydom, self.zdom])
 
 
