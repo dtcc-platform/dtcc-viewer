@@ -3,7 +3,7 @@ import time
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.camera import Camera
 from dtcc_viewer.opengl.environment import Environment
-from dtcc_viewer.opengl.utils import CameraView
+from dtcc_viewer.opengl.utils import CameraView, BoundingBox
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 
 
@@ -126,8 +126,11 @@ class Action:
         self.camera.update_view(gguip.camera_view)
         gguip.update_camera = False
 
-    def zoom_selected(self, distance_to_target, new_target, view: CameraView):
-        self.camera.zoom_selected(distance_to_target, new_target, view)
+    def calc_near_far_planes(self, bb_global: BoundingBox):
+        self.camera.calc_near_far_planes(bb_global)
+
+    def zoom_selected(self, distance_to_target, new_target):
+        self.camera.zoom_selected(distance_to_target, new_target)
 
     def set_mouse_on_gui(self, mouse_on_gui):
         """Set the flag indicating whether the mouse cursor is over the GUI window.

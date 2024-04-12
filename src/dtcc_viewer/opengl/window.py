@@ -190,6 +190,7 @@ class Window:
         size_scene = math.sqrt(pow(scene.bb.xdom, 2) + pow(scene.bb.ydom, 2))
         self.action.set_camera_distance_to_target(1.5 * size_scene)
         self.action.save_init_camera()
+        self.action.calc_near_far_planes(scene.bb)
 
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")
@@ -198,8 +199,6 @@ class Window:
 
         # Create grid
         self.gl_grid = GlGrid(scene.bb, self.guip)
-
-        self.gl_quad = GlQuad(500)
 
         return True
 

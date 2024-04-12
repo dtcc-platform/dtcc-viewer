@@ -328,7 +328,9 @@ class GlModel:
         target = self.guip.picked_cp
         action.zoom_selected(distance_to_target, target)
         action.update_zoom_selected = False
-        info(f"Zoom selected: New camera position for object {self.guip.picked_id}")
+        info(
+            f"Zoom selected: New camera position centered on object {self.guip.picked_id}"
+        )
 
     def evaluate_picking(self, action: Action, gguip: GuiParametersGlobal) -> None:
         if not action.mouse_on_gui:

@@ -2,7 +2,8 @@ import numpy as np
 from pyrr import Vector3, vector, vector3, matrix44
 from math import sin, cos, radians
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
-from dtcc_viewer.opengl.utils import CameraProjection, CameraView
+from dtcc_viewer.opengl.utils import CameraProjection, CameraView, BoundingBox
+from dtcc_viewer.logging import info, warning
 
 
 class Camera:
@@ -102,6 +103,27 @@ class Camera:
         self.rotation_lock = False
 
         self.update_camera_vectors()
+
+    def calc_near_far_planes(self, bb_global: BoundingBox):
+        """Calculate the near and far clipping plane distances based on the bounding box.
+
+        Parameters
+        ----------
+        bb_global : list
+            The global bounding box of the geometry.
+        """
+
+        minpt = np.array([bb_global.xmin, bb_global.ymin, bb_global.zmin])
+        maxpt = np.array([bb_global.xmax, bb_global.ymax, bb_global.zmax])
+        dist = np.linalg.norm(maxpt - minpt)
+
+        # Near and far scale factor are determined by testing
+        self.near_plane = 0.0002 * dist
+        self.far_plane = 20.0 * dist
+
+        info(
+            f"Camera near and far planes at {self.near_plane:.5f} and {self.far_plane:.2f} m."
+        )
 
     def save_init_camera(self):
         self.init_camera = {}
