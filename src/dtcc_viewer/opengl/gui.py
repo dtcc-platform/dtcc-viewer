@@ -111,9 +111,8 @@ class Gui:
             imgui.begin_child("Box1", 0, 57, border=True)
             # Testing radio buttons
             options = ["Perspective", "Ortho projection"]
-            self.selected = self._create_radiobuttons(
-                options, self.selected, gguip, True
-            )
+            selected_index = gguip.camera_projection.value
+            self._create_radiobuttons(options, selected_index, gguip, True)
 
             # Display mode combo box
             imgui.push_id("ComboView")

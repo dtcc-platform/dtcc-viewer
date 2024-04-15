@@ -273,6 +273,32 @@ def raster_example_4():
     raster.view()
 
 
+def coord_axes():
+    window = Window(1200, 800)
+    scene = Scene()
+
+    h = 1
+    r = 0.02
+    n = 30
+    x_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.x, r, h, n)
+    y_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.y, r, h, n)
+    z_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.z, r, h, n)
+
+    x_cone = create_cone_mesh(Point(h, 0, 0), Direction.x, r * 2.5, r * 5, n)
+    y_cone = create_cone_mesh(Point(0, h, 0), Direction.y, r * 2.5, r * 5, n)
+    z_cone = create_cone_mesh(Point(0, 0, h), Direction.z, r * 2.5, r * 5, n)
+
+    origo = create_sphere_mesh(Point(0, 0, 0), r * 2.5, n, n)
+
+    all_meshes = [x_axis, x_cone, y_axis, y_cone, z_axis, z_cone, origo]
+
+    conc_mesh = concatenate_meshes(all_meshes)
+
+    scene.add_mesh("cs", conc_mesh)
+
+    window.render(scene)
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
@@ -295,3 +321,4 @@ if __name__ == "__main__":
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
+    # coord_axes()

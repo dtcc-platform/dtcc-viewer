@@ -7,6 +7,7 @@ import triangle as tr
 from dtcc_viewer.logging import info, warning
 from dtcc_model import MultiSurface, Surface
 from shapely.geometry import Point, LineString
+from dtcc_viewer.utils import Direction
 
 
 class Shading(IntEnum):
@@ -399,6 +400,82 @@ def create_cylinder(center, radius, height, num_segments):
     return multisurface
 
 
+def create_cylinder_mesh(center, direction, radius, height, n):
+    vertices = []
+    indices = []
+    # Calculate angle increment
+    angle_increment = 2 * math.pi / n
+    heights = [0, height]
+
+    # Generate vertices for the top circle
+    for h in heights:
+        for i in range(n):
+            if direction == Direction.x:
+                x = center.x + h
+                y = center.y + radius * math.cos(i * angle_increment)
+                z = center.z + radius * math.sin(i * angle_increment)
+            elif direction == Direction.y:
+                x = center.x + radius * math.cos(i * angle_increment)
+                y = center.y + h
+                z = center.z + radius * math.sin(i * angle_increment)
+            elif direction == Direction.z:
+                x = center.x + radius * math.cos(i * angle_increment)
+                y = center.y + radius * math.sin(i * angle_increment)
+                z = center.z + h
+
+            vertices.append([x, y, z])
+
+    # Generate the top and bottom mesh faces
+
+    for i in range(n):
+        indices.append([i, (i + 1) % n, i + n])
+        indices.append([i + n, (i + 1) % n + n, (i + 1) % n])
+
+    return Mesh(vertices=np.array(vertices), faces=np.array(indices))
+
+
+def create_cone_mesh(center, direction, radius, height, n):
+    vertices = []
+    indices = []
+    # Calculate angle increment
+    angle_increment = 2 * math.pi / n
+
+    # Generate vertices for the top circle
+    for i in range(n):
+        if direction == Direction.x:
+            x = center.x
+            y = center.y + radius * math.cos(i * angle_increment)
+            z = center.z + radius * math.sin(i * angle_increment)
+        elif direction == Direction.y:
+            x = center.x + radius * math.cos(i * angle_increment)
+            y = center.y
+            z = center.z + radius * math.sin(i * angle_increment)
+        elif direction == Direction.z:
+            x = center.x + radius * math.cos(i * angle_increment)
+            y = center.y + radius * math.sin(i * angle_increment)
+            z = center.z
+
+        vertices.append([x, y, z])
+
+    if direction == Direction.x:
+        top_vertex = [center.x + height, center.y, center.z]
+    elif direction == Direction.y:
+        top_vertex = [center.x, center.y + height, center.z]
+    elif direction == Direction.z:
+        top_vertex = [center.x, center.y, center.z + height]
+
+    vertices.append(top_vertex)
+
+    pp(len(vertices))
+    # Generate the top and bottom mesh faces
+
+    for i in range(n):
+        indices.append([i, (i + 1) % n, n])
+
+    pp(indices)
+    return Mesh(vertices=np.array(vertices), faces=np.array(indices))
+
+
 def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=20):
     vertices = []
     faces = []
@@ -434,6 +511,40 @@ def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=
     mesh = Mesh(vertices=vertices, faces=faces)
 
     return mesh
+
+
+def create_cylinder_mesh_2(
+    cp: np.ndarray, dir: np.ndarray, rad: float, h: float, n: int
+):
+    vertices = []
+    indices = []
+    angle_increment = 2 * math.pi / n
+    heights = [0, h]
+
+    dir /= np.linalg.norm(dir)
+
+    # Calculate perpendicular vectors using cross product
+    z = np.array([0.0, 0.0, 1.0])
+    if np.allclose(dir, z):
+        u = np.array([1.0, 0.0, 0.0])
+        v = np.array([0.0, 1.0, 0.0])
+    else:
+        u /= np.linalg.norm(np.cross(dir, z))
+        v /= np.linalg.norm(np.cross(dir, u))
+
+    # Generate vertices for the top and bottom circles
+    for hs in heights:
+        for i in range(n):
+            ang = i * angle_increment
+            p = cp + dir * hs + rad * (u * math.cos(ang) + v * math.sin(ang))
+            vertices.append(p)
+
+    # Generate the mesh faces
+    for i in range(n):
+        indices.append([i, (i + 1) % n, i + n])
+        indices.append([i + n, (i + 1) % n + n, (i + 1) % n])
+
+    return Mesh(vertices=np.array(vertices), faces=np.array(indices))
 
 
 def double_sine_wave_surface(x_range, y_range, n_x, n_y, freq_x, freq_y):

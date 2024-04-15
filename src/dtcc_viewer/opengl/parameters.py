@@ -30,6 +30,7 @@ class GuiParametersGlobal:
     show_axes: bool
     grid_sf: float
     grid_adapt: bool
+    axes_sf: float
     time: float
     time_acum: float
     fps_counter: int
@@ -59,6 +60,7 @@ class GuiParametersGlobal:
         self.show_grid = True
         self.show_axes = False
         self.grid_sf = 1.0
+        self.axes_sf = 1.0
         self.grid_adapt = True
 
     def calc_fps(self):

@@ -12,6 +12,7 @@ from dtcc_viewer.opengl.gl_linestring import GlLineString
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.gl_grid import GlGrid
+from dtcc_viewer.opengl.gl_axes import GlAxes
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_quad import GlQuad
@@ -60,7 +61,7 @@ class Window:
     gl_objects: list[GlObject]
     model: GlModel
     gl_grid: GlGrid
-    gl_quad: GlQuad
+    gl_axes: GlAxes
     gui: Gui
     guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
@@ -196,6 +197,7 @@ class Window:
 
         # Create grid
         self.gl_grid = GlGrid(scene.bb)
+        self.gl_axes = GlAxes(1.0)
 
         return True
 
@@ -260,6 +262,9 @@ class Window:
 
             # Draw grid
             self.gl_grid.render(self.action)
+
+            # Draw axes
+            self.gl_axes.render(self.action)
 
             # Render the GUI
             self.gui.render(self.model, self.impl, self.action.gguip)

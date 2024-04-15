@@ -26,15 +26,10 @@ class GlGrid:
     ulocs_grid: dict  # Uniform locations for the shader program
     ulocs_axes: dict  # Uniform locations for the shader program
     shader_grid: int  # Shader program
-    shader_axes: int  # Shader program
 
     VAO_grid: int  # Vertex array object
     VBO_grid: int  # Vertex buffer object
     EBO_grid: int  # Element buffer object
-
-    VAO_axes: int  # Vertex array object
-    VBO_axes: int  # Vertex buffer object
-    EBO_axes: int  # Element buffer object
 
     nx: int  # Number of grid lines
     ny: int  # Number of grid lines
@@ -60,24 +55,18 @@ class GlGrid:
         self.size = 2.0 * np.max([bb_global.xdom, bb_global.ydom])
 
         info(f"Grid size: {self.size}")
-
         grid_size = (self.size, self.size)
-        axes_size = self.size / 100.0
         grid_spacing = (1, 1)
         self._create_grid(grid_size, grid_spacing)
-        self._create_axes(axes_size)
-        self._create_vao_grid()
-        self._create_vao_axes()
-        self._create_shader_grid()
-        self._create_shader_axes()
+        self._create_vao()
+        self._create_shader()
 
-    def _update_grid_size(self, action: Action) -> None:
+    def _update_size(self, action: Action) -> None:
 
         if action.gguip.grid_adapt:
             dtt = action.camera.distance_to_target
-            # dtt = dtt * dtt
             dtt_min = 10
-            dtt_max = 100000  # * 20000
+            dtt_max = 100000
             normalized_dtt = (dtt - dtt_min) / (dtt_max - dtt_min)
 
             spc_min = np.min(self.grid_spaces)
@@ -143,28 +132,7 @@ class GlGrid:
 
         self.grid_indices = np.array(self.grid_indices, dtype="uint32").flatten()
 
-    def _create_axes(self, size: float) -> None:
-
-        r = [1.0, 0, 0]
-        g = [0, 1.0, 0]
-        b = [0, 0, 1.0]
-
-        vertices = np.zeros((6, 6))
-        vertices[1, 0:3] = [size, 0, 0]
-        vertices[3, 0:3] = [0, size, 0]
-        vertices[5, 0:3] = [0, 0, size]
-
-        vertices[0, 3:6] = r
-        vertices[1, 3:6] = r
-        vertices[2, 3:6] = g
-        vertices[3, 3:6] = g
-        vertices[4, 3:6] = b
-        vertices[5, 3:6] = b
-
-        self.axes_vertices = np.array(vertices, dtype="float32").flatten()
-        self.axes_indices = np.array([0, 1, 2, 3, 4, 5], dtype="uint32")
-
-    def _create_vao_grid(self) -> None:
+    def _create_vao(self) -> None:
         """Set up vertex and element buffers for line rendering."""
 
         self.VAO_grid = glGenVertexArrays(1)
@@ -188,35 +156,7 @@ class GlGrid:
 
         glBindVertexArray(0)
 
-    def _create_vao_axes(self) -> None:
-        """Set up vertex and element buffers for line rendering."""
-
-        self.VAO_axes = glGenVertexArrays(1)
-        glBindVertexArray(self.VAO_axes)
-
-        # Vertex buffer
-        size = len(self.axes_vertices) * 4
-        self.VBO_axes = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self.VBO_axes)
-        glBufferData(GL_ARRAY_BUFFER, size, self.axes_vertices, GL_STATIC_DRAW)
-
-        # Element buffer
-        size = len(self.axes_indices) * 4
-        self.EBO_axes = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO_axes)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, self.axes_indices, GL_STATIC_DRAW)
-
-        # Position
-        glEnableVertexAttribArray(0)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
-
-        # Colors
-        glEnableVertexAttribArray(1)  # 0 is the layout location for the vertex shader
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
-
-        glBindVertexArray(0)
-
-    def _create_shader_grid(self) -> None:
+    def _create_shader(self) -> None:
         """Create and compile the shader program."""
 
         glBindVertexArray(self.VAO_grid)
@@ -244,28 +184,10 @@ class GlGrid:
         glUniform1f(self.ulocs_grid["fog_start"], self.size * 0.4)
         glUniform1f(self.ulocs_grid["fog_end"], self.size * 0.8)
 
-    def _create_shader_axes(self) -> None:
-        """Create and compile the shader program."""
-
-        glBindVertexArray(self.VAO_axes)
-        self.shader_axes = compileProgram(
-            compileShader(vertex_shader_axes, GL_VERTEX_SHADER),
-            compileShader(fragment_shader_axes, GL_FRAGMENT_SHADER),
-        )
-        glUseProgram(self.shader_axes)
-
-        self.ulocs_axes["model"] = glGetUniformLocation(self.shader_axes, "model")
-        self.ulocs_axes["view"] = glGetUniformLocation(self.shader_axes, "view")
-        self.ulocs_axes["project"] = glGetUniformLocation(self.shader_axes, "project")
-
     def render(self, action: Action) -> None:
         if action.gguip.show_grid:
-            self._update_grid_size(action)
+            self._update_size(action)
             self._render_grid(action)
-        if action.gguip.show_axes:
-            glEnable(GL_LINE_SMOOTH)
-            self._render_axes(action)
-            glDisable(GL_LINE_SMOOTH)
 
     def _render_grid(self, action: Action) -> None:
 
@@ -288,24 +210,6 @@ class GlGrid:
         glUniform3f(self.ulocs_grid["fog_color"], bc[0], bc[1], bc[2])
 
         glDrawElements(GL_LINES, len(self.grid_indices), GL_UNSIGNED_INT, None)
-
-        glBindVertexArray(0)
-        glUseProgram(0)
-
-    def _render_axes(self, action: Action) -> None:
-
-        glBindVertexArray(self.VAO_axes)
-        glUseProgram(self.shader_axes)
-
-        # MVP Calculations
-        move = action.camera.get_move_matrix()
-        view = action.camera.get_view_matrix(action.gguip)
-        proj = action.camera.get_projection_matrix(action.gguip)
-        glUniformMatrix4fv(self.ulocs_axes["model"], 1, GL_FALSE, move)
-        glUniformMatrix4fv(self.ulocs_axes["view"], 1, GL_FALSE, view)
-        glUniformMatrix4fv(self.ulocs_axes["project"], 1, GL_FALSE, proj)
-
-        glDrawElements(GL_LINES, len(self.axes_indices), GL_UNSIGNED_INT, None)
 
         glBindVertexArray(0)
         glUseProgram(0)

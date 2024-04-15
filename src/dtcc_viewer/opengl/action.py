@@ -3,7 +3,7 @@ import time
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.camera import Camera
 from dtcc_viewer.opengl.environment import Environment
-from dtcc_viewer.opengl.utils import CameraView, BoundingBox
+from dtcc_viewer.opengl.utils import CameraView, CameraProjection, BoundingBox
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 
 
@@ -196,24 +196,32 @@ class Action:
             self.update_zoom_selected = True
         elif key == glfw.KEY_X and action == glfw.PRESS:
             self.camera.reset_init_camera()
+            self.gguip.camera_view = CameraView.PERSPECTIVE
+            self.gguip.camera_projection = CameraProjection.PERSPECTIVE
             info("Camera reset to initial position")
         elif key == glfw.KEY_1 and action == glfw.PRESS:
             self.camera.update_view(CameraView.PERSPECTIVE)
+            self.gguip.camera_view = CameraView.PERSPECTIVE
             info("Perspective view set")
         elif key == glfw.KEY_2 and action == glfw.PRESS:
             self.camera.update_view(CameraView.TOP)
+            self.gguip.camera_view = CameraView.TOP
             info("Top view set")
         elif key == glfw.KEY_3 and action == glfw.PRESS:
             self.camera.update_view(CameraView.FRONT)
+            self.gguip.camera_view = CameraView.FRONT
             info("Front view set")
         elif key == glfw.KEY_4 and action == glfw.PRESS:
             self.camera.update_view(CameraView.BACK)
+            self.gguip.camera_view = CameraView.BACK
             info("Back view set")
         elif key == glfw.KEY_5 and action == glfw.PRESS:
             self.camera.update_view(CameraView.LEFT)
+            self.gguip.camera_view = CameraView.LEFT
             info("Left view set")
         elif key == glfw.KEY_6 and action == glfw.PRESS:
             self.camera.update_view(CameraView.RIGHT)
+            self.gguip.camera_view = CameraView.RIGHT
             info("Right view set")
 
     def scroll_input_callback(self, window, xoffset, yoffset):
