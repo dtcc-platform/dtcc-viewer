@@ -465,14 +465,11 @@ def create_cone_mesh(center, direction, radius, height, n):
         top_vertex = [center.x, center.y, center.z + height]
 
     vertices.append(top_vertex)
-
-    pp(len(vertices))
     # Generate the top and bottom mesh faces
 
     for i in range(n):
         indices.append([i, (i + 1) % n, n])
 
-    pp(indices)
     return Mesh(vertices=np.array(vertices), faces=np.array(indices))
 
 
@@ -513,13 +510,15 @@ def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=
     return mesh
 
 
-def create_cylinder_mesh_2(
-    cp: np.ndarray, dir: np.ndarray, rad: float, h: float, n: int
-):
-    vertices = []
-    indices = []
+def create_arrow_mesh(cp: np.ndarray, dir: np.ndarray, r: float, h: float, n: int):
+    b_vertices = []
+    b_indices = []
+    h_vertices = []
+    h_indices = []
     angle_increment = 2 * math.pi / n
-    heights = [0, h]
+    h_body = 0.9 * h
+    r_body = r
+    r_head = 2 * r
 
     dir /= np.linalg.norm(dir)
 
@@ -529,22 +528,42 @@ def create_cylinder_mesh_2(
         u = np.array([1.0, 0.0, 0.0])
         v = np.array([0.0, 1.0, 0.0])
     else:
-        u /= np.linalg.norm(np.cross(dir, z))
-        v /= np.linalg.norm(np.cross(dir, u))
+        u = np.linalg.norm(np.cross(dir, z))
+        v = np.linalg.norm(np.cross(dir, u))
 
-    # Generate vertices for the top and bottom circles
-    for hs in heights:
+    # Generate vertices for the top and bottom circles for the cylinder body
+    for hs in [0, h_body]:
         for i in range(n):
             ang = i * angle_increment
-            p = cp + dir * hs + rad * (u * math.cos(ang) + v * math.sin(ang))
-            vertices.append(p)
+            p = cp + dir * hs + r_body * (u * math.cos(ang) + v * math.sin(ang))
+            b_vertices.append(p)
 
-    # Generate the mesh faces
+    # Generate the mesh faces for cylinder body
     for i in range(n):
-        indices.append([i, (i + 1) % n, i + n])
-        indices.append([i + n, (i + 1) % n + n, (i + 1) % n])
+        b_indices.append([i, (i + 1) % n, i + n])
+        b_indices.append([i + n, (i + 1) % n + n, (i + 1) % n])
 
-    return Mesh(vertices=np.array(vertices), faces=np.array(indices))
+    body_mesh = Mesh(vertices=np.array(b_vertices), faces=np.array(b_indices))
+
+    # Generate vertices cone head
+    for i in range(n):
+        ang = i * angle_increment
+        p = cp + dir * hs + r_head * (u * math.cos(ang) + v * math.sin(ang))
+        h_vertices.append(p)
+
+    h_vertices.append(cp + dir * h)
+    h_vertices.append(cp + dir * h_body)
+
+    # Generate the mesh faces for the cone head
+    for i in range(n):
+        h_indices.append([i, (i + 1) % n, n])
+        h_indices.append([i, (i + 1) % n, n + 1])
+
+    head_mesh = Mesh(vertices=np.array(h_vertices), faces=np.array(h_indices))
+
+    mesh = concatenate_meshes([body_mesh, head_mesh])
+
+    return mesh
 
 
 def double_sine_wave_surface(x_range, y_range, n_x, n_y, freq_x, freq_y):

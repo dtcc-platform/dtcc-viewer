@@ -291,12 +291,27 @@ def coord_axes():
     origo = create_sphere_mesh(Point(0, 0, 0), r * 2.5, n, n)
 
     all_meshes = [x_axis, x_cone, y_axis, y_cone, z_axis, z_cone, origo]
-
     conc_mesh = concatenate_meshes(all_meshes)
-
     scene.add_mesh("cs", conc_mesh)
-
     window.render(scene)
+
+
+def arrows_example():
+
+    window = Window(1200, 800)
+    scene = Scene()
+
+    h = 1.0
+    r = 0.02
+    n = 30
+    dir = np.array([1.0, 1.0, 1.0])
+    cp = np.array([0.0, 0.0, 0.0])
+    arrow = create_arrow_mesh(cp, dir, r, h, n)
+
+    scene.add_mesh("arrow", arrow)
+    window.render(scene)
+
+    pass
 
 
 if __name__ == "__main__":
@@ -312,7 +327,7 @@ if __name__ == "__main__":
     # building_example_2()
     # linestring_example_1()
     # linestring_example_2()
-    city_example_1()
+    # city_example_1()
     # city_example_2()
     # building_example_1()
     # object_example_1()
@@ -322,3 +337,4 @@ if __name__ == "__main__":
     # raster_example_3()
     # raster_example_4()
     # coord_axes()
+    arrows_example()
