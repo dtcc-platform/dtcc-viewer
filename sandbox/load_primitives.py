@@ -1,4 +1,8 @@
 import numpy as np
+import trimesh
+from dtcc_model import Mesh
+from dtcc_io import meshes
+from dtcc_viewer.utils import get_sub_mesh
 
 
 def get_quad(size, tex_min, tex_max):
@@ -1108,3 +1112,40 @@ def get_icosahedron(center, radius):
     icosa_vertices[2::9] += center[2]
 
     return icosa_vertices, icosa_indices
+
+
+def get_city_model(sub_x=None, sub_y=None):
+
+    mesh = meshes.load_mesh("../data/models/CitySurface.obj")
+
+    if sub_x is not None and sub_y is not None:
+        mesh = get_sub_mesh(sub_x, sub_y, mesh)
+
+    print("Face count: " + str(len(mesh.faces)))
+    print("Vertex count: " + str(len(mesh.vertices)))
+
+    array_length = len(mesh.faces) * 3 * 9
+    new_vertices = np.zeros(array_length)
+    face_verts = mesh.vertices[mesh.faces.flatten()]
+    c1 = face_verts[:-1]
+    c2 = face_verts[1:]
+    mask = np.ones(len(c1), dtype=bool)
+    mask[2::3] = False  # [True, True, False, True, True, False, ...]
+    cross_vecs = (c2 - c1)[mask]  # (v2 - v1), (v3 - v2)
+    cross_p = np.cross(cross_vecs[::2], cross_vecs[1::2])  # (v2 - v1) x (v3 - v2)
+    cross_p = cross_p / np.linalg.norm(cross_p, axis=1)[:, np.newaxis]  # normalize
+    vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
+    color_mask = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0], dtype=bool)
+    normal_mask = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=bool)
+    mask = np.tile(vertex_mask, array_length // len(vertex_mask) + 1)[:array_length]
+    new_vertices[mask] = face_verts.flatten()
+    mask = np.tile(color_mask, array_length // len(color_mask) + 1)[:array_length]
+    new_vertices[mask] = np.array([1.0, 0.0, 1.0] * len(mesh.faces) * 3).flatten()
+    mask = np.tile(normal_mask, array_length // len(normal_mask) + 1)[:array_length]
+    new_vertices[mask] = np.tile(cross_p, 3).flatten()
+    new_faces = np.arange(array_length // 9)
+
+    vertices = np.array(new_vertices, dtype="float32").flatten()
+    indices = np.array(new_faces, dtype="uint32").flatten()
+
+    return vertices, indices
