@@ -151,9 +151,14 @@ class GuiParametersObj(ABC):
 class GuiParametersMesh(GuiParametersObj):
     """Class representing GUI parameters for meshes."""
 
+    show_fnormals: bool
+    show_vnormals: bool
+
     def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
         self.set_default_values(name, dict_mat_data, dict_val_caps)
         self.calc_min_max()
+        self.show_fnormals = False
+        self.show_vnormals = False
 
 
 class GuiParametersPC(GuiParametersObj):

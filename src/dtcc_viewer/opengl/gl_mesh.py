@@ -42,6 +42,13 @@ from dtcc_viewer.shaders.shaders_mesh_lines import (
     fragment_shader_lines,
 )
 
+from dtcc_viewer.shaders.shaders_mesh_normals import (
+    vertex_shader_normals,
+    geometry_shader_vertexnormals,
+    geometry_shader_facenormals,
+    fragment_shader_normals,
+)
+
 from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
     color_map_inferno,
@@ -88,12 +95,16 @@ class GlMesh(GlObject):
     uloc_diff: dict  # Uniform locations for the diffuse shader
     uloc_shdw: dict  # Uniform locations for the shadow shader
     uloc_shmp: dict  # Uniform locations for the shadow shader
+    uloc_fnor: dict  # Uniform locations for the face normals shader
+    uloc_vnor: dict  # Uniform locations for the vertex normals shader
 
     shader_line: int  # Shader program for the lines
     shader_ambi: int  # Shader program for ambient mesh rendering
     shader_diff: int  # Shader program for diffuse mesh rendering
     shader_shdw: int  # Shader program for rendering of diffuse mesh with shadow map
     shader_shmp: int  # Shader program for rendering of diffuse mesh with shadow map
+    shader_fnor: int  # Shader program for rendering face normals
+    shader_vnor: int  # Shader program for rendering vertex normals
 
     # Scene based parameters
     diameter_xy: float  # Size of the model as diameter
@@ -135,6 +146,8 @@ class GlMesh(GlObject):
         self.uloc_diff = {}
         self.uloc_shdw = {}
         self.uloc_shmp = {}
+        self.uloc_fnor = {}
+        self.uloc_vnor = {}
 
         self.texture_slot = None
         self.texture_idx = None
@@ -246,6 +259,7 @@ class GlMesh(GlObject):
         self._create_shader_diffuse()
         self._create_shader_shadow_map()
         self._create_shader_shadows()
+        self._create_shader_normals()
 
     def _create_shader_lines(self) -> None:
         """Create shader for wireframe rendering."""
@@ -440,6 +454,40 @@ class GlMesh(GlObject):
             self.shader_shdw, "picked_id"
         )
 
+    def _create_shader_normals(self) -> None:
+
+        # Face normal shader
+        self.shader_fnor = compileProgram(
+            compileShader(vertex_shader_normals, GL_VERTEX_SHADER),
+            compileShader(geometry_shader_facenormals, GL_GEOMETRY_SHADER),
+            compileShader(fragment_shader_normals, GL_FRAGMENT_SHADER),
+        )
+
+        glUseProgram(self.shader_fnor)
+
+        self.uloc_fnor["model"] = glGetUniformLocation(self.shader_fnor, "model")
+        self.uloc_fnor["view"] = glGetUniformLocation(self.shader_fnor, "view")
+        self.uloc_fnor["project"] = glGetUniformLocation(self.shader_fnor, "project")
+        self.uloc_fnor["clip_x"] = glGetUniformLocation(self.shader_fnor, "clip_x")
+        self.uloc_fnor["clip_y"] = glGetUniformLocation(self.shader_fnor, "clip_y")
+        self.uloc_fnor["clip_z"] = glGetUniformLocation(self.shader_fnor, "clip_z")
+
+        # Vertex normal shader
+        self.shader_vnor = compileProgram(
+            compileShader(vertex_shader_normals, GL_VERTEX_SHADER),
+            compileShader(geometry_shader_vertexnormals, GL_GEOMETRY_SHADER),
+            compileShader(fragment_shader_normals, GL_FRAGMENT_SHADER),
+        )
+
+        glUseProgram(self.shader_vnor)
+
+        self.uloc_vnor["model"] = glGetUniformLocation(self.shader_vnor, "model")
+        self.uloc_vnor["view"] = glGetUniformLocation(self.shader_vnor, "view")
+        self.uloc_vnor["project"] = glGetUniformLocation(self.shader_vnor, "project")
+        self.uloc_vnor["clip_x"] = glGetUniformLocation(self.shader_vnor, "clip_x")
+        self.uloc_vnor["clip_y"] = glGetUniformLocation(self.shader_vnor, "clip_y")
+        self.uloc_vnor["clip_z"] = glGetUniformLocation(self.shader_vnor, "clip_z")
+
     def render_lines(
         self,
         action: Action,
@@ -617,6 +665,52 @@ class GlMesh(GlObject):
         self._unbind_shader()
         self._unbind_data_texture()
 
+    def render_normals(self, action: Action) -> None:
+
+        if self.guip.show_fnormals:
+            self._render_face_normals(action)
+
+        if self.guip.show_vnormals:
+            self._render_vertex_normals(action)
+
+    def _render_face_normals(self, action: Action) -> None:
+
+        self._bind_shader_fnormals()
+        model = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
+
+        glUniformMatrix4fv(self.uloc_fnor["model"], 1, GL_FALSE, model)
+        glUniformMatrix4fv(self.uloc_fnor["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_fnor["project"], 1, GL_FALSE, proj)
+
+        (xdom, ydom, zdom) = self._get_clip_domains()
+        glUniform1f(self.uloc_fnor["clip_x"], (xdom * action.gguip.clip_dist[0]))
+        glUniform1f(self.uloc_fnor["clip_y"], (ydom * action.gguip.clip_dist[1]))
+        glUniform1f(self.uloc_fnor["clip_z"], (zdom * action.gguip.clip_dist[2]))
+
+        self.triangles_draw_call()
+        self._unbind_shader()
+
+    def _render_vertex_normals(self, action: Action) -> None:
+
+        self._bind_shader_vnormals()
+        model = action.camera.get_move_matrix()
+        view = action.camera.get_view_matrix(action.gguip)
+        proj = action.camera.get_projection_matrix(action.gguip)
+
+        glUniformMatrix4fv(self.uloc_vnor["model"], 1, GL_FALSE, model)
+        glUniformMatrix4fv(self.uloc_vnor["view"], 1, GL_FALSE, view)
+        glUniformMatrix4fv(self.uloc_vnor["project"], 1, GL_FALSE, proj)
+
+        (xdom, ydom, zdom) = self._get_clip_domains()
+        glUniform1f(self.uloc_fnor["clip_x"], (xdom * action.gguip.clip_dist[0]))
+        glUniform1f(self.uloc_fnor["clip_y"], (ydom * action.gguip.clip_dist[1]))
+        glUniform1f(self.uloc_fnor["clip_z"], (zdom * action.gguip.clip_dist[2]))
+
+        self.triangles_draw_call()
+        self._unbind_shader()
+
     def triangles_draw_call(self):
         """Bind the vertex array object and calling draw function for triangles"""
         self._bind_vao_triangels()
@@ -657,6 +751,14 @@ class GlMesh(GlObject):
         """Bind the shader for shading with shadows."""
         glUseProgram(self.shader_shdw)
 
+    def _bind_shader_fnormals(self) -> None:
+        """Bind the shader for face normals rendering."""
+        glUseProgram(self.shader_fnor)
+
+    def _bind_shader_vnormals(self) -> None:
+        """Bind the shader for vertex normals rendering."""
+        glUseProgram(self.shader_vnor)
+
     def _unbind_shader(self) -> None:
         """Unbind the currently bound shader."""
         glUseProgram(0)
@@ -667,9 +769,7 @@ class GlMesh(GlObject):
         mguip: GuiParametersModel,
         ws_pass: int = 0,
     ):
-        xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
-        ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        (xdom, ydom, zdom) = self._get_clip_domains()
 
         if mguip.shading == Shading.WIREFRAME or ws_pass == 2:
             glUniform1f(self.uloc_line["clip_x"], (xdom * gguip.clip_dist[0]))
@@ -687,3 +787,9 @@ class GlMesh(GlObject):
             glUniform1f(self.uloc_shdw["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_shdw["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_shdw["clip_z"], (zdom * gguip.clip_dist[2]))
+
+    def _get_clip_domains(self):
+        xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
+        ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
+        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        return xdom, ydom, zdom

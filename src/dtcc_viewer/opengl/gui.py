@@ -253,8 +253,9 @@ class Gui:
         """Draw GUI for mesh."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
-            imgui.begin_child("BoxMesh" + str(index), 0, 128, border=True)
+            imgui.begin_child("BoxMesh" + str(index), 0, 150, border=True)
             self._create_cbxs(index, guip)
+            self._create_normals_cbx(index, guip)
             self._create_combo_cmaps(index, guip)
             self._create_cobmo_data(index, guip)
             self._create_range_sliders(index, guip)
@@ -394,26 +395,36 @@ class Gui:
 
         # Toggle visualisation on and off
         imgui.push_id("Show" + str(index))
-        [changed, guip.show] = imgui.checkbox("Show", guip.show)
+        [changed, guip.show] = imgui.checkbox("show     ", guip.show)
         imgui.pop_id()
 
         # Toggle color on and off
         imgui.same_line()
         imgui.push_id("Color" + str(index))
-        [changed, guip.color] = imgui.checkbox("Color", guip.color)
+        [changed, guip.color] = imgui.checkbox("color", guip.color)
         imgui.pop_id()
 
         # Toggle color map inversion
         imgui.same_line()
         imgui.push_id("Invert" + str(index))
-        [c, guip.invert_cmap] = imgui.checkbox("Invert cmap", guip.invert_cmap)
+        [c, guip.invert_cmap] = imgui.checkbox("invert cmap", guip.invert_cmap)
+        imgui.pop_id()
+
+    def _create_normals_cbx(self, index: int, guip: GuiParametersMesh) -> None:
+        """Create a checkbox for displaying normals."""
+        imgui.push_id("face normals" + str(index))
+        [changed, guip.show_fnormals] = imgui.checkbox("f-normals", guip.show_fnormals)
+        imgui.pop_id()
+        imgui.same_line()
+        imgui.push_id("vertex normals" + str(index))
+        [changed, guip.show_vnormals] = imgui.checkbox("v-normals", guip.show_vnormals)
         imgui.pop_id()
 
     def _create_combo_cmaps(self, index: int, guip: GuiParametersObj) -> None:
         """Create a combo box for selecting color maps."""
         imgui.push_id("CmapCombo " + str(index))
         items = self.cmaps_names
-        with imgui.begin_combo("Color map", items[guip.cmap_idx]) as combo:
+        with imgui.begin_combo("cmap", items[guip.cmap_idx]) as combo:
             if combo.opened:
                 for i, item in enumerate(items):
                     is_selected = guip.cmap_idx

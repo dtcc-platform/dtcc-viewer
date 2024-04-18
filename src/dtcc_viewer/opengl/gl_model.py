@@ -438,7 +438,14 @@ class GlModel:
             self._render_pick_texture(action)
         else:
             warning("Shading not set for model instance")
-        pass
+
+        self._render_normals(action)
+
+    def _render_normals(self, action: Action) -> None:
+        for obj in self.gl_objects:
+            if isinstance(obj, GlMesh):
+                if obj.guip.show:
+                    obj.render_normals(action)
 
     def _render_pcs(self, action: Action) -> None:
         for obj in self.gl_objects:

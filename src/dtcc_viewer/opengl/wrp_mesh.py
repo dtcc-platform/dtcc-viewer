@@ -180,7 +180,7 @@ class MeshWrapper:
         self.edges = new_edges
 
     def _move_mesh_to_origin(self, bb: BoundingBox):
-        # [x, y, z, d1, d2, d3, nx, ny ,nz, id]
+        # [x, y, z, tx, ty, nx, ny ,nz, id]
         v_count = len(self.vertices) // 9
         recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0, 0, 0, 0]), axis=0)
         recenter_vec = np.tile(recenter_vec, v_count)
