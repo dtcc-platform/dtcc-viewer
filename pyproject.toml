@@ -38,6 +38,7 @@ dependencies = [
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
   "dtcc-common@git+https://github.com/dtcc-platform/dtcc-common.git@develop",
+  "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
 ]
 
 [project.optional-dependencies]
