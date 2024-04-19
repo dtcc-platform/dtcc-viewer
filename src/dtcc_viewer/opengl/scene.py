@@ -6,6 +6,7 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
@@ -58,6 +59,7 @@ class Scene:
     bld_wrappers: list[BuildingWrapper]
     rst_wrappers: list[RasterWrapper]
     mrst_wrappers: list[MultiRasterWrapper]
+    geom_wrappers: list[GeometriesWrapper]
 
     bb: BoundingBox
     mts: int
@@ -74,6 +76,7 @@ class Scene:
         self.bud_wrappers = []
         self.rst_wrappers = []
         self.mrst_wrappers = []
+        self.geom_wrappers = []
 
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         print(self.mts)
@@ -202,8 +205,14 @@ class Scene:
         else:
             warning(f"Raster called - {name} - is None and not added to scene")
 
-    # def add_geometries(list: list[Geometry]):
-    #    pass
+    def add_geometries(self, name: str, geometries: list[Geometry]):
+        """Append a list of geometries"""
+        if geometries is not None:
+            info(f"Geometry collection called - {name} - added to scene")
+            geom_wrp = GeometriesWrapper(name, geometries, self.mts)
+            self.geom_wrappers.append(geom_wrp)
+        else:
+            warning(f"Failed to add geometry collection called - {name} - to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
@@ -247,6 +256,9 @@ class Scene:
         for mrst_w in self.mrst_wrappers:
             mrst_w.preprocess_drawing(self.bb)
 
+        for geom_w in self.geom_wrappers:
+            geom_w.preprocess_drawing(self.bb)
+
         info(f"Scene preprocessing completed successfully")
         return True
 
@@ -256,54 +268,35 @@ class Scene:
         # Flat array of vertices [x1,y1,z1,x2,y2,z2, ...]
         vertices = np.array([])
 
-        for obj_w in self.obj_wrappers:
-            if obj_w.mesh_wrp_1 is not None:
-                vertex_pos = obj_w.mesh_wrp_1.get_vertex_positions()
-                vertices = np.concatenate((vertices, vertex_pos), axis=0)
-
-            if obj_w.mesh_wrp_2 is not None:
-                vertex_pos = obj_w.mesh_wrp_2.get_vertex_positions()
-                vertices = np.concatenate((vertices, vertex_pos), axis=0)
-
-            if obj_w.lss_wrp is not None:
-                vertex_pos = obj_w.lss_wrp.get_vertex_positions()
-                vertices = np.concatenate((vertices, vertex_pos), axis=0)
-
         for city_w in self.city_wrappers:
-            if city_w.terrain_mw is not None:
-                vertex_pos = city_w.terrain_mw.get_vertex_positions()
-                vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, city_w.get_vertex_positions()), axis=0)
 
-            if city_w.building_mw is not None:
-                vertex_pos = city_w.building_mw.get_vertex_positions()
-                vertices = np.concatenate((vertices, vertex_pos), axis=0)
+        for geom_w in self.geom_wrappers:
+            vertices = np.concatenate((vertices, geom_w.get_vertex_positions()), axis=0)
+
+        for obj_w in self.obj_wrappers:
+            vertices = np.concatenate((vertices, obj_w.get_vertex_positions()), axis=0)
 
         for mw in self.mesh_wrappers:
-            vertex_pos = mw.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, mw.get_vertex_positions()), axis=0)
 
         for pc_w in self.pcs_wrappers:
-            vertices = np.concatenate((vertices, pc_w.points), axis=0)
+            vertices = np.concatenate((vertices, pc_w.get_vertex_positions()), axis=0)
 
         for rn_w in self.rnd_wrappers:
-            vertex_pos = rn_w.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, rn_w.get_vertex_positions()), axis=0)
 
         for lss_w in self.lss_wrappers:
-            vertex_pos = lss_w.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, lss_w.get_vertex_positions()), axis=0)
 
         for bld_w in self.bld_wrappers:
-            vertex_pos = bld_w.building_mw.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, bld_w.get_vertex_positions()), axis=0)
 
         for rst_w in self.rst_wrappers:
-            vertex_pos = rst_w.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, rst_w.get_vertex_positions()), axis=0)
 
         for mrst_w in self.mrst_wrappers:
-            vertex_pos = mrst_w.get_vertex_positions()
-            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+            vertices = np.concatenate((vertices, mrst_w.get_vertex_positions()), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex
             bb = BoundingBox(vertices)

@@ -151,6 +151,27 @@ class Window:
                 gl_mesh_ter = GlMesh(city.terrain_mw)
                 self.gl_objects.append(gl_mesh_ter)
 
+        for geom in scene.geom_wrappers:
+            if geom.mesh_wrps is not None:
+                for mesh_w in geom.mesh_wrps:
+                    gl_mesh = GlMesh(mesh_w)
+                    self.gl_objects.append(gl_mesh)
+            if geom.srf_wrps is not None:
+                for srf in geom.srf_wrps:
+                    gl_mesh = GlMesh(srf)
+                    self.gl_objects.append(gl_mesh)
+            if geom.ms_wrps is not None:
+                for ms in geom.ms_wrps:
+                    gl_mesh = GlMesh(ms)
+                    self.gl_objects.append(gl_mesh)
+            if geom.pc_wrps is not None:
+                for pc in geom.pc_wrps:
+                    gl_pc = GlPointCloud(pc)
+                    self.gl_objects.append(gl_pc)
+            if geom.lss_wrp is not None:
+                gl_ls = GlLineString(geom.lss_wrp)
+                self.gl_objects.append(gl_ls)
+
         for building in scene.bld_wrappers:
             gl_mesh = GlMesh(building.building_mw)
             self.gl_objects.append(gl_mesh)

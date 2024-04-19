@@ -57,7 +57,7 @@ class CityWrapper:
         city : City
             City object from which to generate the mesh data to view.
         mts : int
-            Max texture size for the OpenGL context.
+            Max texture size (mts) for the OpenGL context.
         """
         self.name = name
         self.dict_data = {}
@@ -90,6 +90,19 @@ class CityWrapper:
 
         if self.building_mw is not None:
             self.building_mw.preprocess_drawing(bb_global)
+
+    def get_vertex_positions(self):
+        vertices = np.array([])
+
+        if self.terrain_mw is not None:
+            vertex_pos = self.terrain_mw.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        if self.building_mw is not None:
+            vertex_pos = self.building_mw.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        return vertices
 
     def _get_terrain_mesh(self, city: City):
         meshes = []
