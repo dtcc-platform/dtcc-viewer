@@ -10,7 +10,17 @@ from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster, Geometry
+from dtcc_model import (
+    Mesh,
+    PointCloud,
+    City,
+    Object,
+    Building,
+    Raster,
+    Geometry,
+    Surface,
+    MultiSurface,
+)
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
@@ -81,6 +91,20 @@ class Scene:
             self.mesh_wrappers.append(mesh_w)
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
+
+    def add_surface(self, name: str, surface: Surface):
+        if surface is not None:
+            info(f"Surface called - {name} - added to scene")
+            mesh = surface.mesh()
+            if mesh is not None:
+                mesh_w = MeshWrapper(name=name, mesh=surface.mesh(), mts=self.mts)
+                self.mesh_wrappers.append(mesh_w)
+            else:
+                warning(
+                    f"Surface called - {name} - could not be converted to mesh and not added to scene"
+                )
+        else:
+            warning(f"Surface called - {name} - is None and not added to scene")
 
     def add_city(self, name: str, city: City):
         """Append a city with data and/or colors to the scene"""
