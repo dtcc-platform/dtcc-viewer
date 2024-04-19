@@ -104,12 +104,26 @@ class Scene:
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
 
+    def add_multisurface(self, name: str, multi_surface: MultiSurface):
+        if multi_surface is not None:
+            info(f"MultiSurface called - {name} - added to scene")
+            mesh = multi_surface.mesh()
+            if mesh is not None:
+                mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts)
+                self.mesh_wrappers.append(mesh_w)
+            else:
+                warning(
+                    f"MultiSurface called - {name} - could not be converted to mesh and not added to scene"
+                )
+        else:
+            warning(f"MultiSurface called - {name} - is None and not added to scene")
+
     def add_surface(self, name: str, surface: Surface):
         if surface is not None:
             info(f"Surface called - {name} - added to scene")
             mesh = surface.mesh()
             if mesh is not None:
-                mesh_w = MeshWrapper(name=name, mesh=surface.mesh(), mts=self.mts)
+                mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts)
                 self.mesh_wrappers.append(mesh_w)
             else:
                 warning(
