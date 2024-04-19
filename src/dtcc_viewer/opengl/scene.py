@@ -6,9 +6,12 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringsWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
+from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
+from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_model import (
     Mesh,
@@ -20,11 +23,12 @@ from dtcc_model import (
     Geometry,
     Surface,
     MultiSurface,
+    Bounds,
 )
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
-from shapely.geometry import LineString
+from shapely.geometry import LineString, MultiLineString
 from typing import Any
 
 
@@ -50,6 +54,8 @@ class Scene:
         Maximum texture size allowed by the graphics card.
     """
 
+    wrappers: list[Wrapper]
+
     obj_wrappers: list[ObjectWrapper]
     city_wrappers: list[CityWrapper]
     mesh_wrappers: list[MeshWrapper]
@@ -60,11 +66,15 @@ class Scene:
     rst_wrappers: list[RasterWrapper]
     mrst_wrappers: list[MultiRasterWrapper]
     geom_wrappers: list[GeometriesWrapper]
+    bnds_wrappers: list[BoundsWrapper]
+    mls_wrappers: list[MultiLineStringsWrapper]
 
     bb: BoundingBox
     mts: int
 
     def __init__(self):
+
+        self.wrappers = []
 
         self.obj_wrappers = []
         self.city_wrappers = []
@@ -77,6 +87,8 @@ class Scene:
         self.rst_wrappers = []
         self.mrst_wrappers = []
         self.geom_wrappers = []
+        self.bnds_wrappers = []
+        self.mls_wrappers = []
 
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         print(self.mts)
@@ -200,6 +212,24 @@ class Scene:
         else:
             warning(f"Failed to add geometry collection called - {name} - to scene")
 
+    def add_bounds(self, name: str, bounds: Bounds):
+        """Append a list of bounds"""
+        if bounds is not None:
+            info(f"Bounds called - {name} - added to scene")
+            bounds_wrp = BoundsWrapper(name, bounds, self.mts)
+            self.bnds_wrappers.append(bounds_wrp)
+        else:
+            warning(f"Failed to add bounds called - {name} - to scene")
+
+    def add_multilinestring(self, name: str, multi_ls: MultiLineString):
+        """Append a MultiLineString object to the scene"""
+        if multi_ls is not None:
+            info(f"MultiLineString called - {name} - added to scene")
+            mls_wrp = MultiLineStringsWrapper(name, multi_ls, self.mts)
+            self.mls_wrappers.append(mls_wrp)
+        else:
+            warning(f"MultiLineString called - {name} - is None and not added to scene")
+
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
 
@@ -245,6 +275,12 @@ class Scene:
         for geom_w in self.geom_wrappers:
             geom_w.preprocess_drawing(self.bb)
 
+        for bdns_w in self.bnds_wrappers:
+            bdns_w.preprocess_drawing(self.bb)
+
+        for mls_w in self.mls_wrappers:
+            mls_w.preprocess_drawing(self.bb)
+
         info(f"Scene preprocessing completed successfully")
         return True
 
@@ -283,6 +319,12 @@ class Scene:
 
         for mrst_w in self.mrst_wrappers:
             vertices = np.concatenate((vertices, mrst_w.get_vertex_positions()), axis=0)
+
+        for bdns_w in self.bnds_wrappers:
+            vertices = np.concatenate((vertices, bdns_w.get_vertex_positions()), axis=0)
+
+        for mls_w in self.mls_wrappers:
+            vertices = np.concatenate((vertices, mls_w.get_vertex_positions()), axis=0)
 
         if len(vertices) > 3:  # At least 1 vertex
             bb = BoundingBox(vertices)

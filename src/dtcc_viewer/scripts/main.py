@@ -19,7 +19,7 @@ from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, MultiLineString
 from dtcc_viewer.opengl.bundle import Bundle
 from dtcc_model.quantity import Quantity
 
@@ -90,20 +90,6 @@ def multi_geometry_example_1():
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
         scene.add_mesh("Mesh " + str(i), mesh, data)
-
-    window.render(scene)
-
-
-def linestring_example_1():
-    lss = []
-    for i in range(5):
-        ls = create_linestring_circle(Point(0, 0, 0), 10 + i, 10)
-        lss.append(ls)
-
-    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
-    window = Window(1200, 800)
-    scene = Scene()
-    scene.add_linestrings("Linestrings", lss, data=x_vals)
 
     window.render(scene)
 
@@ -318,11 +304,31 @@ def geometries_example():
     sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
     circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+    bounds = Bounds(-10, -10, 10, 10, 0, 0)
 
-    geometries = [sphere_mesh, circle_ls, cylinder_ms]
+    geometries = [sphere_mesh, circle_ls, cylinder_ms, bounds]
     window = Window(1200, 800)
     scene = Scene()
     scene.add_geometries("geometries", geometries)
+    window.render(scene)
+
+
+def bounds_example():
+    bounds = Bounds(-10, -10, 10, 10, 0, 0)
+    bounds.view()
+
+
+def multilinestring_example():
+    lss = []
+    for i in range(5):
+        ls = create_linestring_circle(Point(0, 0, 0), 10 + i, 10)
+        lss.append(ls)
+
+    mls = MultiLineString(lss)
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_multilinestring("MultiLineString", mls)
+
     window.render(scene)
 
 
@@ -350,5 +356,6 @@ if __name__ == "__main__":
     # raster_example_4()
     # coord_axes()
     # arrows_example()
-
-    geometries_example()
+    # geometries_example()
+    # bounds_example()
+    multilinestring_example()

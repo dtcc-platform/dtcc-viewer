@@ -4,7 +4,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_model import Mesh
 from dtcc_model import PointCloud
 from abc import ABC, abstractmethod
-from shapely.geometry import LineString
+from shapely.geometry import LineString, MultiLineString
 from dtcc_viewer.opengl.submeshes import Submeshes
 from typing import Any
 
@@ -206,6 +206,45 @@ class LSDataWrapper(DataWrapper):
     v_count: int
 
     def __init__(self, lss: list[LineString], v_count: int, mts: int) -> None:
+
+        self.data_mat_dict = {}
+        self.data_value_caps = {}
+        self.max_tex_size = mts
+        self.v_count = v_count
+
+        d_count = v_count
+        self._calc_matrix_format(d_count)
+        self._calc_texel_indices(d_count)
+
+    def add_data(self, name: str, data: np.ndarray):
+        (data_mat, val_caps) = self._process_data(data)
+
+        if (data_mat is not None) and (val_caps is not None):
+            self.data_mat_dict[name] = data_mat
+            self.data_value_caps[name] = val_caps
+            info(f"Data called {name} was added to data dictionary.")
+            return True
+        else:
+            warning(f"Data called {name} was not added to data dictionary.")
+            return False
+
+    def _process_data(self, data: np.ndarray):
+        """Check so the data count matches the vertex or face count."""
+        if len(data) != self.v_count:
+            warning(f"Data count does not match point count.")
+            return None, None
+        else:
+            data_mat = self._reformat_data_for_texture(data)
+            val_caps = (np.min(data), np.max(data))
+            return data_mat, val_caps
+
+
+class MLSDataWrapper(DataWrapper):
+    """Wrapper class for line string list data to be used in OpenGL."""
+
+    v_count: int
+
+    def __init__(self, mls: MultiLineString, v_count: int, mts: int) -> None:
 
         self.data_mat_dict = {}
         self.data_value_caps = {}

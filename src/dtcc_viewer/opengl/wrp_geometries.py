@@ -118,6 +118,7 @@ class GeometriesWrapper:
         pcs = []
         mss = []
         srfs = []
+        bds = []
 
         for geometry in geometries:
             if isinstance(geometry, Mesh):

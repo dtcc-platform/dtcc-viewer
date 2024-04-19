@@ -172,6 +172,16 @@ class Window:
                 gl_ls = GlLineString(geom.lss_wrp)
                 self.gl_objects.append(gl_ls)
 
+        for mls_wrp in scene.mls_wrappers:
+            if mls_wrp is not None:
+                gl_ls = GlLineString(mls_wrp)
+                self.gl_objects.append(gl_ls)
+
+        for bnds in scene.bnds_wrappers:
+            if bnds.lss_wrp is not None:
+                gl_ls = GlLineString(bnds.lss_wrp)
+                self.gl_objects.append(gl_ls)
+
         for building in scene.bld_wrappers:
             gl_mesh = GlMesh(building.building_mw)
             self.gl_objects.append(gl_mesh)

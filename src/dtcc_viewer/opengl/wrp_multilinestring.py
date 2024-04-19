@@ -2,12 +2,12 @@ import numpy as np
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
-from shapely.geometry import LineString
-from dtcc_viewer.opengl.wrp_data import LSDataWrapper
+from shapely.geometry import LineString, MultiLineString
+from dtcc_viewer.opengl.wrp_data import MLSDataWrapper
 from typing import Any
 
 
-class LineStringsWrapper:
+class MultiLineStringsWrapper:
     """Wrapper for rendering a list of LineString.
 
     This class is used to store a list of LineStrings and associated data for
@@ -20,8 +20,6 @@ class LineStringsWrapper:
         Array of vertex coordinates in the format [n_points x 3].
     indices : np.ndarray
         Array of indices for the line strings in the format [n_lines x 2].
-    data : np.ndarray or dict
-        Data associated with each vertex.
     name : str
         Name of the line strings collection.
     bb_local : BoundingBox
@@ -30,7 +28,6 @@ class LineStringsWrapper:
         Global bounding box for the entire scene.
     """
 
-    data_wrapper: LSDataWrapper
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
     name: str
@@ -38,50 +35,54 @@ class LineStringsWrapper:
     bb_global: BoundingBox
 
     def __init__(
-        self,
-        name: str,
-        lss: list[LineString],
-        mts: int,
-        data: Any = None,
+        self, name: str, mls: MultiLineString, mts: int, data: Any = None
     ) -> None:
         """Initialize a line string wrapper object."""
         self.dict_data = {}
         self.name = name
         self.mts = mts
 
-        v_count = self._get_vertex_count(lss)
-        self.data_wrapper = LSDataWrapper(lss, v_count, self.mts)
-        self._restructure_linestring(lss)
+        v_count = self._get_vertex_count(mls)
+        self.data_wrapper = MLSDataWrapper(mls, v_count, self.mts)
+        self._restructure_multilinestring(mls)
         self._append_data(data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
-        self._move_lss_to_origin(self.bb_global)
+        self._move_mls_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
 
-    def _move_lss_to_origin(self, bb: BoundingBox = None):
+    def get_vertex_positions(self):
+        """Get the vertex positions"""
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 6
+        vertex_pos_mask = np.tile(vertex_mask, v_count)
+        vertex_pos = self.vertices[vertex_pos_mask]
+        return vertex_pos
+
+    def _move_mls_to_origin(self, bb: BoundingBox = None):
         if bb is not None:
             v_count = len(self.vertices) // 6
             recenter_vec = np.concatenate((bb.center_vec, [0, 0, 0]), axis=0)
             recenter_vec_tiled = np.tile(recenter_vec, v_count)
             self.vertices += recenter_vec_tiled
 
-    def _move_lss_to_zero_z(self, bb: BoundingBox):
-        self.vertices[2::6] -= bb.zmin
+    def _get_segment_count(self, mls: MultiLineString):
+        total_count = 0
+        for line_string in mls.geoms:
+            total_count += len(line_string.coords) - 1
+        return total_count
 
-    def _get_vertex_count(self, lss: list[LineString]):
-        return sum(len(ls.coords) for ls in lss)
+    def _get_vertex_count(self, mls: MultiLineString):
+        total_count = 0
+        for line_string in mls.geoms:
+            total_count += len(line_string.coords)
+        return total_count
 
-    def _get_segment_count(self, lss: list[LineString]):
-        return sum(len(ls.coords) - 1 for ls in lss)
-
-    def _get_vertices(self, lss: list[LineString]):
-        return np.array([coord for ls in lss for coord in ls.coords]).flatten()
-
-    def _restructure_linestring(self, linestrings: list[LineString]):
-        l_count_tot = self._get_segment_count(linestrings)
-        v_count_tot = self._get_vertex_count(linestrings)
+    def _restructure_multilinestring(self, mls: MultiLineString):
+        l_count_tot = self._get_segment_count(mls)
+        v_count_tot = self._get_vertex_count(mls)
         indices = np.zeros([l_count_tot, 2], dtype=int)
 
         # vertices = [x, y, z, tx, ty, id, x, y, z ...]
@@ -89,7 +90,7 @@ class LineStringsWrapper:
 
         idx1 = 0
         idx2 = 0
-        for ls in linestrings:
+        for ls in mls.geoms:
             l_count = len(ls.coords[:]) - 1  # Line segegment count
             v_count = len(ls.coords[:])  # Vertex count
             indices1 = np.arange(idx1, idx1 + l_count, dtype=int)
@@ -127,14 +128,6 @@ class LineStringsWrapper:
             self.data_wrapper.add_data("Vertex X", self.vertices[0::6])
             self.data_wrapper.add_data("Vertex Y", self.vertices[1::6])
             self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
-
-    def get_vertex_positions(self):
-        """Get the vertex positions"""
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0], dtype=bool)
-        v_count = len(self.vertices) // 6
-        vertex_pos_mask = np.tile(vertex_mask, v_count)
-        vertex_pos = self.vertices[vertex_pos_mask]
-        return vertex_pos
 
     def _reformat(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""
