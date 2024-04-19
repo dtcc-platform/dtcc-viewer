@@ -7,8 +7,9 @@ from .building import view as view_building
 from .object import view as view_object
 from .new_raster import view as view_raster
 from .surface import view as view_surface
+from .multisurface import view as view_multisurface
 
-from dtcc_model import Mesh, PointCloud, Object, Surface
+from dtcc_model import Mesh, PointCloud, Object, Surface, MultiSurface
 from dtcc_model import Raster, City, Building
 
 # from dtcc_model.roadnetwork import RoadNetwork
@@ -21,6 +22,7 @@ Building.add_methods(view_building, "view")
 Object.add_methods(view_object, "view")
 Raster.add_methods(view_raster, "view")
 Surface.add_methods(view_surface, "view")
+MultiSurface.add_methods(view_multisurface, "view")
 
 # RoadNetwork.add_methods(view_roadnetwork, "view")
 
