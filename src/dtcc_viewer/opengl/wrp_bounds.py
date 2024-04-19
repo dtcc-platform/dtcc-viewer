@@ -3,7 +3,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString, Point
-from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from typing import Any
 
 
@@ -23,23 +23,21 @@ class BoundsWrapper:
     """
 
     name: str
-    lss_wrp: LineStringsWrapper
+    ls_wrp: LineStringWrapper
 
     def __init__(self, name: str, bounds: Bounds, mts: int) -> None:
         """Initialize a line string wrapper object."""
         self.name = name
 
         ls = self._create_linestring(bounds)
-        lss = [ls]
-
-        self.lss_wrp = LineStringsWrapper(name, lss, mts)
+        self.ls_wrp = LineStringWrapper(name, ls, mts)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
-        if self.lss_wrp is not None:
-            self.lss_wrp.preprocess_drawing(bb_global)
+        if self.ls_wrp is not None:
+            self.ls_wrp.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
-        return self.lss_wrp.get_vertex_positions()
+        return self.ls_wrp.get_vertex_positions()
 
     def _create_linestring(self, bounds: Bounds):
         pt1 = Point(bounds.xmin, bounds.ymin, 0)

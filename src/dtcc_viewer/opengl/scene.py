@@ -5,7 +5,7 @@ from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringsWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
@@ -61,7 +61,7 @@ class Scene:
     mesh_wrappers: list[MeshWrapper]
     pcs_wrappers: list[PointCloudWrapper]
     rnd_wrappers: list[RoadNetworkWrapper]
-    lss_wrappers: list[LineStringsWrapper]
+    lss_wrappers: list[LineStringWrapper]
     bld_wrappers: list[BuildingWrapper]
     rst_wrappers: list[RasterWrapper]
     mrst_wrappers: list[MultiRasterWrapper]
@@ -165,12 +165,7 @@ class Scene:
         else:
             warning(f"Point could called - {name} - is None and not added to scene")
 
-    def add_roadnetwork(
-        self,
-        name: str,
-        rn: Any,
-        data: np.ndarray = None,
-    ):
+    def add_roadnetwork(self, name: str, rn: Any, data: np.ndarray = None):
         """Append a RoadNetwork object to the scene"""
         if rn is not None:
             info(f"Road network called - {name} - added to scene")
@@ -179,21 +174,25 @@ class Scene:
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
 
-    def add_linestrings(
-        self,
-        name: str,
-        lss: list[LineString],
-        data: Any = None,
-    ):
+    def add_linestrings(self, name: str, ls: LineString, data: Any = None):
         """Append a line strings list to the scene"""
-        if lss is not None:
+        if ls is not None:
             info(f"List of LineStrings called - {name} - added to scene")
-            lss_w = LineStringsWrapper(name, lss, self.mts, data)
+            lss_w = LineStringWrapper(name, ls, self.mts, data)
             self.lss_wrappers.append(lss_w)
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
 
-        pass
+    def add_multilinestring(
+        self, name: str, multi_ls: MultiLineString, data: Any = None
+    ):
+        """Append a MultiLineString object to the scene"""
+        if multi_ls is not None:
+            info(f"MultiLineString called - {name} - added to scene")
+            mls_wrp = MultiLineStringsWrapper(name, multi_ls, self.mts, data)
+            self.mls_wrappers.append(mls_wrp)
+        else:
+            warning(f"MultiLineString called - {name} - is None and not added to scene")
 
     def add_building(self, name: str, building: Building):
         if building is not None:
@@ -234,15 +233,6 @@ class Scene:
             self.bnds_wrappers.append(bounds_wrp)
         else:
             warning(f"Failed to add bounds called - {name} - to scene")
-
-    def add_multilinestring(self, name: str, multi_ls: MultiLineString):
-        """Append a MultiLineString object to the scene"""
-        if multi_ls is not None:
-            info(f"MultiLineString called - {name} - added to scene")
-            mls_wrp = MultiLineStringsWrapper(name, multi_ls, self.mts)
-            self.mls_wrappers.append(mls_wrp)
-        else:
-            warning(f"MultiLineString called - {name} - is None and not added to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""

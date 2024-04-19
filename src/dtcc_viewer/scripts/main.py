@@ -98,8 +98,10 @@ def linestring_example_2():
     lss = []
 
     for i in range(100):
-        ls = create_linestring_circle(Point(0, 0, 0), 1 + i, 100)
+        ls = create_ls_circle(Point(0, 0, 0), 1 + i, 100)
         lss.append(ls)
+
+    mls = MultiLineString(lss)
 
     x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
     y_vals = np.array([pt[1] for ls in lss for pt in ls.coords])
@@ -115,7 +117,7 @@ def linestring_example_2():
 
     window = Window(1200, 800)
     scene = Scene()
-    scene.add_linestrings("Linestrings", lss, data=data_dict)
+    scene.add_multilinestring("Multi line strings", mls, data=data_dict)
 
     window.render(scene)
 
@@ -133,14 +135,6 @@ def city_example_1():
     # city_dhg.view()
     # city_rwy.view()
     city_nyc.view()
-
-
-def city_example_2():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
-    bld_number = np.arange(city.num_buildings)
-    bld_quantity = Quantity("Building number", "Int", "None", "building", bld_number)
-    city.add_quantity(bld_quantity)
-    city.view()
 
 
 def building_example_1():
@@ -163,7 +157,7 @@ def building_example_2():
 
 def object_example_1():
     sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
-    circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
+    circle_ls = create_ls_circle(Point(0, 0, 0), 20, 200)
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
     obj = Object()
     obj.geometry[GeometryType.MESH] = sphere_mesh
@@ -181,7 +175,7 @@ def object_example_2():
         x = r * math.cos(i * a)
         y = r * math.sin(i * a)
         mesh = create_sphere_mesh(Point(x, y, z1), 3, 30, 30)
-        ls = create_linestring_circle(Point(x, y, z2), 20, 200)
+        ls = create_ls_circle(Point(x, y, z2), 20, 200)
         ms = create_cylinder(Point(x, y, z3), 3, 10, 100)
         meshes.append(mesh)
         lss.append(ls)
@@ -301,12 +295,16 @@ def arrows_example():
 
 
 def geometries_example():
+    origo = Point(0, 0, 0)
     sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
-    circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
-    cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+    circle_ls = create_ls_circle(origo, 20, 200)
+    cylinder_ms = create_cylinder(origo, 10, 10, 100)
     bounds = Bounds(-10, -10, 10, 10, 0, 0)
+    multi_ls = MultiLineString(
+        [create_ls_circle(origo, 10, 200), create_ls_circle(origo, 15, 200)]
+    )
 
-    geometries = [sphere_mesh, circle_ls, cylinder_ms, bounds]
+    geometries = [sphere_mesh, circle_ls, cylinder_ms, bounds, multi_ls]
     window = Window(1200, 800)
     scene = Scene()
     scene.add_geometries("geometries", geometries)
@@ -321,7 +319,7 @@ def bounds_example():
 def multilinestring_example():
     lss = []
     for i in range(5):
-        ls = create_linestring_circle(Point(0, 0, 0), 10 + i, 10)
+        ls = create_ls_circle(Point(0, 0, 0), 10 + i, 10)
         lss.append(ls)
 
     mls = MultiLineString(lss)
@@ -346,7 +344,6 @@ if __name__ == "__main__":
     # linestring_example_1()
     # linestring_example_2()
     # city_example_1()
-    # city_example_2()
     # building_example_1()
     # object_example_1()
     # object_example_2()
@@ -356,6 +353,6 @@ if __name__ == "__main__":
     # raster_example_4()
     # coord_axes()
     # arrows_example()
-    # geometries_example()
+    geometries_example()
     # bounds_example()
-    multilinestring_example()
+    # multilinestring_example()

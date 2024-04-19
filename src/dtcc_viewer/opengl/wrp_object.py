@@ -8,7 +8,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.submeshes import Submeshes
 from shapely.geometry import LineString
 
@@ -42,7 +42,7 @@ class ObjectWrapper:
     bb_global: BoundingBox = None
     mesh_wrp_1: MeshWrapper = None
     mesh_wrp_2: MeshWrapper = None
-    lss_wrp: LineStringsWrapper = None
+    lss_wrp: LineStringWrapper = None
 
     def __init__(self, name: str, obj: Object, mts: int) -> None:
         """Initialize the MeshData object.
@@ -75,7 +75,7 @@ class ObjectWrapper:
         lineStrings = self._extract_linestrings(obj)
 
         if lineStrings is not None:
-            self.lss_wrp = LineStringsWrapper("LineStrings", lineStrings, mts)
+            self.lss_wrp = LineStringWrapper("LineStrings", lineStrings, mts)
 
         warning("ObjectWrapper not yet implemented!")
 

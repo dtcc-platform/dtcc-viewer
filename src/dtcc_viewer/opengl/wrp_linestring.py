@@ -7,7 +7,7 @@ from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 from typing import Any
 
 
-class LineStringsWrapper:
+class LineStringWrapper:
     """Wrapper for rendering a list of LineString.
 
     This class is used to store a list of LineStrings and associated data for
@@ -37,28 +37,28 @@ class LineStringsWrapper:
     bb_local: BoundingBox
     bb_global: BoundingBox
 
-    def __init__(
-        self,
-        name: str,
-        lss: list[LineString],
-        mts: int,
-        data: Any = None,
-    ) -> None:
+    def __init__(self, name: str, ls: LineString, mts: int, data: Any = None) -> None:
         """Initialize a line string wrapper object."""
-        self.dict_data = {}
         self.name = name
         self.mts = mts
 
-        v_count = self._get_vertex_count(lss)
-        self.data_wrapper = LSDataWrapper(lss, v_count, self.mts)
-        self._restructure_linestring(lss)
+        v_count = len(ls.coords)
+        self.data_wrapper = LSDataWrapper(ls, v_count, self.mts)
+        self._restructure_linestring(ls)
         self._append_data(data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
         self._move_lss_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.get_vertex_positions())
-        self._reformat()
+
+    def get_vertex_positions(self):
+        """Get the vertex positions"""
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 6
+        vertex_pos_mask = np.tile(vertex_mask, v_count)
+        vertex_pos = self.vertices[vertex_pos_mask]
+        return vertex_pos
 
     def _move_lss_to_origin(self, bb: BoundingBox = None):
         if bb is not None:
@@ -70,35 +70,22 @@ class LineStringsWrapper:
     def _move_lss_to_zero_z(self, bb: BoundingBox):
         self.vertices[2::6] -= bb.zmin
 
-    def _get_vertex_count(self, lss: list[LineString]):
-        return sum(len(ls.coords) for ls in lss)
-
-    def _get_segment_count(self, lss: list[LineString]):
-        return sum(len(ls.coords) - 1 for ls in lss)
-
     def _get_vertices(self, lss: list[LineString]):
         return np.array([coord for ls in lss for coord in ls.coords]).flatten()
 
-    def _restructure_linestring(self, linestrings: list[LineString]):
-        l_count_tot = self._get_segment_count(linestrings)
-        v_count_tot = self._get_vertex_count(linestrings)
-        indices = np.zeros([l_count_tot, 2], dtype=int)
+    def _restructure_linestring(self, line_string: LineString):
+        v_count = len(line_string.coords)  # Number of vertices
+        l_count = len(line_string.coords) - 1  # Number of line segments
 
         # vertices = [x, y, z, tx, ty, id, x, y, z ...]
-        vertices = np.zeros([v_count_tot, 6])
+        vertices = np.zeros([v_count, 6])
+        indices = np.zeros([l_count, 2], dtype=int)
 
-        idx1 = 0
-        idx2 = 0
-        for ls in linestrings:
-            l_count = len(ls.coords[:]) - 1  # Line segegment count
-            v_count = len(ls.coords[:])  # Vertex count
-            indices1 = np.arange(idx1, idx1 + l_count, dtype=int)
-            indices2 = np.arange(idx1 + 1, idx1 + l_count + 1, dtype=int)
-            indices[idx2 : (idx2 + l_count), 0] = indices1
-            indices[idx2 : (idx2 + l_count), 1] = indices2
-            vertices[idx1 : (idx1 + v_count), 0:3] = np.array(list(ls.coords))
-            idx1 += len(ls.coords[:])
-            idx2 += l_count
+        indices1 = np.arange(0, l_count, dtype=int)
+        indices2 = np.arange(1, l_count + 1, dtype=int)
+        indices[0:l_count, 0] = indices1
+        indices[0:l_count, 1] = indices2
+        vertices[0 : 0 + v_count, 0:3] = np.array(list(line_string.coords))
 
         indices = indices.flatten()
         vertices = vertices.flatten()
@@ -127,17 +114,3 @@ class LineStringsWrapper:
             self.data_wrapper.add_data("Vertex X", self.vertices[0::6])
             self.data_wrapper.add_data("Vertex Y", self.vertices[1::6])
             self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
-
-    def get_vertex_positions(self):
-        """Get the vertex positions"""
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0], dtype=bool)
-        v_count = len(self.vertices) // 6
-        vertex_pos_mask = np.tile(vertex_mask, v_count)
-        vertex_pos = self.vertices[vertex_pos_mask]
-        return vertex_pos
-
-    def _reformat(self):
-        """Flatten the mesh data arrays for OpenGL compatibility."""
-        # Making sure the datatypes are aligned with opengl implementation
-        self.vertices = np.array(self.vertices, dtype="float32")
-        self.indices = np.array(self.indices, dtype="uint32")

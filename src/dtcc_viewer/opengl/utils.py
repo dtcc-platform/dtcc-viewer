@@ -335,7 +335,7 @@ def invert_color(color):
 # ---------- Geometry primitives for testing --------#
 
 
-def create_linestring_circle(center, radius, num_segments):
+def create_ls_circle(center, radius, num_segments):
     # Calculate the angle between each segment
     angle_step = 2 * math.pi / num_segments
 

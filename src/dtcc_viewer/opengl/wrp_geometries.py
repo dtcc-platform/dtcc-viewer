@@ -9,9 +9,11 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from shapely.geometry import LineString
+from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringsWrapper
+from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
+from shapely.geometry import LineString, MultiLineString
 from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces
 import dtcc_builder as builder
@@ -43,11 +45,13 @@ class GeometriesWrapper:
 
     name: str
     bb_global: BoundingBox = None
-    lss_wrp: LineStringsWrapper
+    mls_wrps: list[MultiLineStringsWrapper]
+    ls_wrps: list[LineStringWrapper]
     mesh_wrps: list[MeshWrapper]
     pc_wrps: list[PointCloudWrapper]
     ms_wrps: list[MeshWrapper]
     srf_wrps: list[MeshWrapper]
+    bnds_wrps: list[BoundsWrapper]
 
     def __init__(self, name: str, geometries: list[Geometry], mts: int) -> None:
         """Initialize the MeshData object.
@@ -63,13 +67,15 @@ class GeometriesWrapper:
         """
         self.name = name
 
-        (meshes, lss, pcs, mss, srfs) = self._sort_geometries(geometries)
+        (meshes, mls, lss, pcs, mss, srfs, bds) = self._sort_geometries(geometries)
 
         self.mesh_wrps = self._create_mesh_wrappers(meshes, mts)
         self.srf_wrps = self._create_srf_wrappers(srfs, mts)
         self.ms_wrps = self._create_ms_wrappers(mss, mts)
         self.pc_wrps = self._create_pc_wrappers(pcs, mts)
-        self.lss_wrp = self._create_lss_wrappers(lss, mts)
+        self.mls_wrps = self._create_mls_wrappers(mls, mts)
+        self.ls_wrps = self._create_ls_wrappers(lss, mts)
+        self.bnds_wrps = self._create_bnd_wrappers(bds, mts)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         for mesh_wrp in self.mesh_wrps:
@@ -84,8 +90,14 @@ class GeometriesWrapper:
         for pc_wrp in self.pc_wrps:
             pc_wrp.preprocess_drawing(bb_global)
 
-        if self.lss_wrp is not None:
-            self.lss_wrp.preprocess_drawing(bb_global)
+        for mls_wrp in self.mls_wrps:
+            mls_wrp.preprocess_drawing(bb_global)
+
+        for ls_wrp in self.ls_wrps:
+            ls_wrp.preprocess_drawing(bb_global)
+
+        for bnd_wrp in self.bnds_wrps:
+            bnd_wrp.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
         vertices = np.array([])
@@ -106,14 +118,23 @@ class GeometriesWrapper:
             vertex_pos = pc_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-        if self.lss_wrp is not None:
-            vertex_pos = self.lss_wrp.get_vertex_positions()
+        for ms_wrp in self.ms_wrps:
+            vertex_pos = ms_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for ls_wrp in self.ls_wrps:
+            vertex_pos = ls_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for bnd_wrp in self.bnds_wrps:
+            vertex_pos = bnd_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         return vertices
 
     def _sort_geometries(self, geometries: list[Geometry]):
         meshes = []
+        mls = []
         lss = []
         pcs = []
         mss = []
@@ -129,10 +150,14 @@ class GeometriesWrapper:
                 mss.append(geometry)
             elif isinstance(geometry, Surface):
                 srfs.append(geometry)
+            elif isinstance(geometry, MultiLineString):
+                mls.append(geometry)
             elif isinstance(geometry, LineString):
                 lss.append(geometry)
+            elif isinstance(geometry, Bounds):
+                bds.append(geometry)
 
-        return meshes, lss, pcs, mss, srfs
+        return meshes, mls, lss, pcs, mss, srfs, bds
 
     def _create_mesh_wrappers(self, meshes: list[Mesh], mts: int):
         mesh_wrps = []
@@ -145,7 +170,10 @@ class GeometriesWrapper:
         mss_wrps = []
         for i, ms in enumerate(mss):
             mesh = ms.mesh()
-            mss_wrps.append(MeshWrapper(f"multi surface {i}", mesh, mts))
+            if mesh is not None:
+                mss_wrps.append(MeshWrapper(f"multi surface {i}", mesh, mts))
+            else:
+                warning(f"Failed to create mesh for multi surface {i}")
 
         return mss_wrps
 
@@ -153,7 +181,10 @@ class GeometriesWrapper:
         srf_wrps = []
         for i, srf in enumerate(srfs):
             mesh = srf.mesh()
-            srf_wrps.append(MeshWrapper(f"surface {i}", mesh, mts))
+            if mesh is not None:
+                srf_wrps.append(MeshWrapper(f"surface {i}", mesh, mts))
+            else:
+                warning(f"Failed to create mesh for surface {i}")
 
         return srf_wrps
 
@@ -164,6 +195,25 @@ class GeometriesWrapper:
 
         return pc_wrps
 
-    def _create_lss_wrappers(self, lss: list[LineString], mts: int):
-        lss_wrp = LineStringsWrapper(f"line strings", lss, mts)
-        return lss_wrp
+    def _create_mls_wrappers(self, mls: list[MultiLineString], mts: int):
+        mls_wrps = []
+        for i, mls in enumerate(mls):
+            mls_wrps.append(
+                MultiLineStringsWrapper(f"multi line strings {i}", mls, mts)
+            )
+
+        return mls_wrps
+
+    def _create_ls_wrappers(self, lss: list[LineString], mts: int):
+        ls_wrps = []
+        for i, ls in enumerate(lss):
+            ls_wrps.append(LineStringWrapper(f"line strings {i}", ls, mts))
+
+        return ls_wrps
+
+    def _create_bnd_wrappers(self, bds: list[Bounds], mts: int):
+        bnd_wrps = []
+        for i, bd in enumerate(bds):
+            bnd_wrps.append(BoundsWrapper(f"bounds {i}", bd, mts))
+
+        return bnd_wrps

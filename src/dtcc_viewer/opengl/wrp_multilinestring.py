@@ -28,6 +28,7 @@ class MultiLineStringsWrapper:
         Global bounding box for the entire scene.
     """
 
+    dict_data: dict
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
     name: str
@@ -38,7 +39,6 @@ class MultiLineStringsWrapper:
         self, name: str, mls: MultiLineString, mts: int, data: Any = None
     ) -> None:
         """Initialize a line string wrapper object."""
-        self.dict_data = {}
         self.name = name
         self.mts = mts
 

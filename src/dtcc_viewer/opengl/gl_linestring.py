@@ -13,7 +13,7 @@ from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.wrp_linestrings import LineStringsWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 
 from dtcc_viewer.shaders.shaders_lss_lines import (
@@ -41,7 +41,6 @@ class GlLineString(GlObject):
     vertices: np.ndarray  # All vertices in the road network
     line_indices: np.ndarray  #  Line indices for roads [[2 x n_roads],]
     guip: GuiParametersLS
-    dict_data: dict
     name: str  # Name of the line string
 
     n_vertices: int  # Number of vertices
@@ -64,12 +63,11 @@ class GlLineString(GlObject):
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, lss_wrapper: LineStringsWrapper):
+    def __init__(self, lss_wrapper: LineStringWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
         self.vertices = lss_wrapper.vertices
         self.line_indices = lss_wrapper.indices
-        self.dict_data = lss_wrapper.dict_data
         self.name = lss_wrapper.name
         self.data_wrapper = lss_wrapper.data_wrapper
 

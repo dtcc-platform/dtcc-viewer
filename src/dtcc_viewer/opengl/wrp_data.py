@@ -205,7 +205,7 @@ class LSDataWrapper(DataWrapper):
 
     v_count: int
 
-    def __init__(self, lss: list[LineString], v_count: int, mts: int) -> None:
+    def __init__(self, ls: LineString, v_count: int, mts: int) -> None:
 
         self.data_mat_dict = {}
         self.data_value_caps = {}

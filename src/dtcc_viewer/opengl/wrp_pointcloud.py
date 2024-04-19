@@ -76,6 +76,9 @@ class PointCloudWrapper:
         self.bb_local = BoundingBox(self.points)
         self._reformat_pc()
 
+    def get_vertex_positions(self):
+        return self.points
+
     def _append_data(self, pc: PointCloud, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 

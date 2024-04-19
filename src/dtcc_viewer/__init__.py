@@ -16,7 +16,6 @@ from dtcc_model import (
     Object,
     Surface,
     MultiSurface,
-    MultiSurface,
     Bounds,
 )
 from dtcc_model import Raster, City, Building
