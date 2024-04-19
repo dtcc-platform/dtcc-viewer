@@ -71,7 +71,8 @@ class CityWrapper:
         # Set the global ids for the entire scene
         if t_submeshes is not None:
             offset = np.max(t_submeshes.ids) + 1
-            b_submeshes.offset_ids(offset)
+            if b_submeshes is not None:
+                b_submeshes.offset_ids(offset)
 
         if t_mesh is not None:
             name = "terrain"
