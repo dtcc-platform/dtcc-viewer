@@ -41,7 +41,7 @@ class BuildingWrapper:
         city : City
             City object from which to generate the mesh data to view.
         mts : int
-            Max texture size for the OpenGL context.
+            Max texture size (mts) for the OpenGL context.
         """
         self.name = name
         self.dict_data = {}
@@ -51,10 +51,10 @@ class BuildingWrapper:
         self.building_mw = MeshWrapper(name, mesh, mts)
 
     def _get_building_mesh(self, building: Building):
-        flat_geom = self.get_highest_lod_building(building)
+        flat_geom = self._get_highest_lod_building(building)
 
         building_meshes = []
-        flat_geom = self.get_highest_lod_building(building)
+        flat_geom = self._get_highest_lod_building(building)
         if isinstance(flat_geom, MultiSurface):
             for srf in flat_geom.surfaces:
                 (mesh, result) = surface_2_mesh(srf.vertices)
@@ -72,13 +72,17 @@ class BuildingWrapper:
         if self.building_mw is not None:
             self.building_mw.preprocess_drawing(bb_global)
 
+    def get_vertex_positions(self):
+        vertex_pos = self.building_mw.get_vertex_positions()
+        return vertex_pos
+
     def _get_terrain_mesh(self, city: City):
         pass
 
     def _generate_building_mesh(self, city: City):
         pass
 
-    def get_highest_lod_building(self, building: Building):
+    def _get_highest_lod_building(self, building: Building):
         lods = [
             GeometryType.LOD3,
             GeometryType.LOD2,

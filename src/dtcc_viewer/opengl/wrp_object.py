@@ -87,6 +87,23 @@ class ObjectWrapper:
         if self.lss_wrp is not None:
             self.lss_wrp.preprocess_drawing(bb_global)
 
+    def get_vertex_positions(self):
+        vertices = np.array([])
+
+        if self.mesh_wrp_1 is not None:
+            vertex_pos = self.mesh_wrp_1.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        if self.mesh_wrp_2 is not None:
+            vertex_pos = self.mesh_wrp_2.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        if self.lss_wrp is not None:
+            vertex_pos = self.lss_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        return vertices
+
     def _extract_linestrings(self, obj: Object):
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)
 

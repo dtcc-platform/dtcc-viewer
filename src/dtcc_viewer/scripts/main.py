@@ -314,13 +314,25 @@ def arrows_example():
     pass
 
 
+def geometries_example():
+    sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
+    circle_ls = create_linestring_circle(Point(0, 0, 0), 20, 200)
+    cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+
+    geometries = [sphere_mesh, circle_ls, cylinder_ms]
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_geometries("geometries", geometries)
+    window.render(scene)
+
+
 if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
     set_log_level("INFO")
     # pointcloud_example_1()
     # pointcloud_example_2()
-    mesh_example_1()
+    # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
     # multi_geometry_example_1()
@@ -338,3 +350,5 @@ if __name__ == "__main__":
     # raster_example_4()
     # coord_axes()
     # arrows_example()
+
+    geometries_example()
