@@ -3,11 +3,12 @@ from dtcc_model import Mesh
 from dtcc_model import Bounds, Raster
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, RasterType
+from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.logging import info, warning
 from pprint import PrettyPrinter
 
 
-class RasterWrapper:
+class RasterWrapper(Wrapper):
     """Support class for rendering rasters."""
 
     name: str

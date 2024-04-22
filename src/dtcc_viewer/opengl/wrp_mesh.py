@@ -6,11 +6,12 @@ from dtcc_viewer.opengl.submeshes import Submeshes
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_model.quantity import Quantity
+from dtcc_viewer.opengl.wrapper import Wrapper
 from pprint import PrettyPrinter
 from typing import Any
 
 
-class MeshWrapper:
+class MeshWrapper(Wrapper):
     """Mesh attributes and associated data structured for the purpous of rendering.
 
     This class represents mesh data for rendering in an OpenGL window. It encapsulates

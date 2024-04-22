@@ -7,6 +7,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrapper import Wrapper
 
 
 class BuildingWrapper:

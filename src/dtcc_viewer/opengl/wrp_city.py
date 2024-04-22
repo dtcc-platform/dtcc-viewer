@@ -11,10 +11,11 @@ from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces
+from dtcc_viewer.opengl.wrapper import Wrapper
 import dtcc_builder as builder
 
 
-class CityWrapper:
+class CityWrapper(Wrapper):
     """CityWrapper restructures data for the purpous of rendering.
 
     This class wrapps a city object for rendering in an OpenGL window. It encapsulates

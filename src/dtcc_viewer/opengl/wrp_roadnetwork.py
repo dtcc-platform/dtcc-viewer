@@ -5,10 +5,11 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.wrp_data import RNDataWrapper
+from dtcc_viewer.opengl.wrapper import Wrapper
 from typing import Any
 
 
-class RoadNetworkWrapper:
+class RoadNetworkWrapper(Wrapper):
     """Road network attributes and data structured for the purpous of rendering.
 
     This class is used to store a road network with associated data and colors
@@ -72,6 +73,14 @@ class RoadNetworkWrapper:
         self._move_rn_to_origin(self.bb_global)
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat()
+
+    def get_vertex_positions(self):
+        """Get the vertex positions"""
+        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
+        v_count = len(self.vertices) // 9
+        vertex_pos_mask = np.tile(vertex_mask, v_count)
+        vertex_pos = self.vertices[vertex_pos_mask]
+        return vertex_pos
 
     def _move_rn_to_origin(self, bb: BoundingBox = None):
         if bb is not None:
@@ -146,14 +155,6 @@ class RoadNetworkWrapper:
 
         self.vertices = np.array(new_vertices, dtype="float32").flatten()
         self.indices = np.array(new_indices, dtype="uint32").flatten()
-
-    def get_vertex_positions(self):
-        """Get the vertex positions"""
-        vertex_mask = np.array([1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
-        v_count = len(self.vertices) // 9
-        vertex_pos_mask = np.tile(vertex_mask, v_count)
-        vertex_pos = self.vertices[vertex_pos_mask]
-        return vertex_pos
 
     def _reformat(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""

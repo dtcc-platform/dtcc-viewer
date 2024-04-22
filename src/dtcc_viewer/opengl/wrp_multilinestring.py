@@ -4,10 +4,11 @@ from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString, MultiLineString
 from dtcc_viewer.opengl.wrp_data import MLSDataWrapper
+from dtcc_viewer.opengl.wrapper import Wrapper
 from typing import Any
 
 
-class MultiLineStringsWrapper:
+class MultiLineStringWrapper(Wrapper):
     """Wrapper for rendering a list of LineString.
 
     This class is used to store a list of LineStrings and associated data for

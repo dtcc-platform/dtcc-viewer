@@ -319,7 +319,7 @@ def bounds_example():
 def multilinestring_example():
     lss = []
     for i in range(5):
-        ls = create_ls_circle(Point(0, 0, 0), 10 + i, 10)
+        ls = create_ls_circle(Point(0, 0, 0), 10 + i, 100)
         lss.append(ls)
 
     mls = MultiLineString(lss)
@@ -341,11 +341,10 @@ if __name__ == "__main__":
     # mesh_example_3()
     # multi_geometry_example_1()
     # building_example_2()
-    # linestring_example_1()
     # linestring_example_2()
     # city_example_1()
     # building_example_1()
-    # object_example_1()
+    object_example_1()
     # object_example_2()
     # raster_example_1()
     # raster_example_2()
@@ -353,6 +352,6 @@ if __name__ == "__main__":
     # raster_example_4()
     # coord_axes()
     # arrows_example()
-    geometries_example()
+    # geometries_example()
     # bounds_example()
     # multilinestring_example()

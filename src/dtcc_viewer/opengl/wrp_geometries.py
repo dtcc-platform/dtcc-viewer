@@ -11,15 +11,16 @@ from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringsWrapper
+from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from shapely.geometry import LineString, MultiLineString
+from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces
 import dtcc_builder as builder
 
 
-class GeometriesWrapper:
+class GeometriesWrapper(Wrapper):
     """GeometriesWrapper restructures a list of geomety for visualisation.
 
     This class wrapps a list of geometry objects for visualisation. It encapsulates
@@ -45,7 +46,7 @@ class GeometriesWrapper:
 
     name: str
     bb_global: BoundingBox = None
-    mls_wrps: list[MultiLineStringsWrapper]
+    mls_wrps: list[MultiLineStringWrapper]
     ls_wrps: list[LineStringWrapper]
     mesh_wrps: list[MeshWrapper]
     pc_wrps: list[PointCloudWrapper]
@@ -162,7 +163,8 @@ class GeometriesWrapper:
     def _create_mesh_wrappers(self, meshes: list[Mesh], mts: int):
         mesh_wrps = []
         for i, mesh in enumerate(meshes):
-            mesh_wrps.append(MeshWrapper(f"mesh {i}", mesh, mts))
+            if mesh is not None:
+                mesh_wrps.append(MeshWrapper(f"mesh {i}", mesh, mts))
 
         return mesh_wrps
 
@@ -191,29 +193,32 @@ class GeometriesWrapper:
     def _create_pc_wrappers(self, pcs: list[PointCloud], mts: int):
         pc_wrps = []
         for i, pc in enumerate(pcs):
-            pc_wrps.append(PointCloudWrapper(f"point colud {i}", pc, mts))
+            if pc is not None:
+                pc_wrps.append(PointCloudWrapper(f"point colud {i}", pc, mts))
 
         return pc_wrps
 
     def _create_mls_wrappers(self, mls: list[MultiLineString], mts: int):
         mls_wrps = []
         for i, mls in enumerate(mls):
-            mls_wrps.append(
-                MultiLineStringsWrapper(f"multi line strings {i}", mls, mts)
-            )
-
+            if mls is not None:
+                mls_wrps.append(
+                    MultiLineStringWrapper(f"multi line strings {i}", mls, mts)
+                )
         return mls_wrps
 
     def _create_ls_wrappers(self, lss: list[LineString], mts: int):
         ls_wrps = []
         for i, ls in enumerate(lss):
-            ls_wrps.append(LineStringWrapper(f"line strings {i}", ls, mts))
+            if ls is not None:
+                ls_wrps.append(LineStringWrapper(f"line strings {i}", ls, mts))
 
         return ls_wrps
 
     def _create_bnd_wrappers(self, bds: list[Bounds], mts: int):
         bnd_wrps = []
         for i, bd in enumerate(bds):
-            bnd_wrps.append(BoundsWrapper(f"bounds {i}", bd, mts))
+            if bd is not None:
+                bnd_wrps.append(BoundsWrapper(f"bounds {i}", bd, mts))
 
         return bnd_wrps

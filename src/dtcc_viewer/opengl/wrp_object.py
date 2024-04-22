@@ -8,12 +8,14 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.submeshes import Submeshes
-from shapely.geometry import LineString
+from dtcc_viewer.opengl.wrapper import Wrapper
+from shapely.geometry import LineString, MultiLineString
 
 
-class ObjectWrapper:
+class ObjectWrapper(Wrapper):
     """ObjectWrapper restructures data for the purpous of rendering.
 
     This class wrapps a generic object for rendering in an OpenGL window. It enables the
@@ -75,7 +77,12 @@ class ObjectWrapper:
         lineStrings = self._extract_linestrings(obj)
 
         if lineStrings is not None:
-            self.lss_wrp = LineStringWrapper("LineStrings", lineStrings, mts)
+            if isinstance(lineStrings, LineString):
+                self.lss_wrp = LineStringWrapper("LineStrings", lineStrings, mts)
+            elif isinstance(lineStrings, MultiLineString):
+                self.lss_wrp = MultiLineStringWrapper(
+                    "MultiLineStrings", lineStrings, mts
+                )
 
         warning("ObjectWrapper not yet implemented!")
 
@@ -107,10 +114,14 @@ class ObjectWrapper:
     def _extract_linestrings(self, obj: Object):
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)
 
-        if isinstance(line_string, list):
+        if isinstance(line_string, LineString):
             return line_string
-        elif isinstance(line_string, LineString):
-            return [line_string]
+        elif isinstance(line_string, list):
+            lss = []
+            for ls in line_string:
+                if isinstance(ls, LineString):
+                    lss.append(ls)
+            return MultiLineString(lss)
         else:
             return None
 

@@ -19,6 +19,17 @@ from dtcc_viewer.opengl.gl_quad import GlQuad
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.gui import Gui
 
+from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
+from dtcc_viewer.opengl.wrp_object import ObjectWrapper
+from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
+from dtcc_viewer.opengl.wrp_city import CityWrapper
+from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
+from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
+from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
+from dtcc_viewer.opengl.wrp_building import BuildingWrapper
+
 
 class Window:
     """OpenGL Rendering Window.
@@ -132,72 +143,61 @@ class Window:
     def _preprocess_model(self, scene: Scene):
         self.gl_objects = []
 
-        for obj in scene.obj_wrappers:
-            if obj.mesh_wrp_1 is not None:
-                self.gl_objects.append(GlMesh(obj.mesh_wrp_1))
-            if obj.mesh_wrp_2 is not None:
-                self.gl_objects.append(GlMesh(obj.mesh_wrp_2))
-            if obj.lss_wrp is not None:
-                self.gl_objects.append(GlLineString(obj.lss_wrp))
+        for wrapper in scene.wrappers:
+            if isinstance(wrapper, ObjectWrapper):
+                if wrapper.mesh_wrp_1 is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_wrp_1))
+                if wrapper.mesh_wrp_2 is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_wrp_2))
+                if wrapper.lss_wrp is not None:
+                    self.gl_objects.append(GlLineString(wrapper.lss_wrp))
 
-        for city in scene.city_wrappers:
-            if city.building_mw is not None:
-                self.gl_objects.append(GlMesh(city.building_mw))
-            if city.terrain_mw is not None:
-                self.gl_objects.append(GlMesh(city.terrain_mw))
+            elif isinstance(wrapper, CityWrapper):
+                if wrapper.building_mw is not None:
+                    self.gl_objects.append(GlMesh(wrapper.building_mw))
+                if wrapper.terrain_mw is not None:
+                    self.gl_objects.append(GlMesh(wrapper.terrain_mw))
 
-        for geom in scene.geom_wrappers:
-            if geom.mesh_wrps is not None:
-                for mesh_w in geom.mesh_wrps:
+            elif isinstance(wrapper, GeometriesWrapper):
+                for mesh_w in wrapper.mesh_wrps:
                     self.gl_objects.append(GlMesh(mesh_w))
-            if geom.srf_wrps is not None:
-                for srf in geom.srf_wrps:
+                for srf in wrapper.srf_wrps:
                     self.gl_objects.append(GlMesh(srf))
-            if geom.ms_wrps is not None:
-                for ms in geom.ms_wrps:
+                for ms in wrapper.ms_wrps:
                     self.gl_objects.append(GlMesh(ms))
-            if geom.pc_wrps is not None:
-                for pc in geom.pc_wrps:
+                for pc in wrapper.pc_wrps:
                     self.gl_objects.append(GlPointCloud(pc))
-            if geom.mls_wrps is not None:
-                for mls_wrp in geom.mls_wrps:
+                for mls_wrp in wrapper.mls_wrps:
                     self.gl_objects.append(GlLineString(mls_wrp))
-            if geom.ls_wrps is not None:
-                for ls_wrp in geom.ls_wrps:
+                for ls_wrp in wrapper.ls_wrps:
                     self.gl_objects.append(GlLineString(ls_wrp))
-            if geom.bnds_wrps is not None:
-                for bnds_wrp in geom.bnds_wrps:
+                for bnds_wrp in wrapper.bnds_wrps:
                     self.gl_objects.append(GlLineString(bnds_wrp.ls_wrp))
 
-        for mls_wrp in scene.mls_wrappers:
-            if mls_wrp is not None:
-                self.gl_objects.append(GlLineString(mls_wrp))
+            elif isinstance(wrapper, MultiLineStringWrapper):
+                self.gl_objects.append(GlLineString(wrapper))
 
-        for bnds in scene.bnds_wrappers:
-            if bnds.ls_wrp is not None:
-                self.gl_objects.append(GlLineString(bnds.ls_wrp))
+            elif isinstance(wrapper, LineStringWrapper):
+                self.gl_objects.append(GlLineString(wrapper))
 
-        for building in scene.bld_wrappers:
-            self.gl_objects.append(GlMesh(building.building_mw))
+            elif isinstance(wrapper, MeshWrapper):
+                self.gl_objects.append(GlMesh(wrapper))
 
-        for mesh in scene.mesh_wrappers:
-            self.gl_objects.append(GlMesh(mesh))
+            elif isinstance(wrapper, PointCloudWrapper):
+                self.gl_objects.append(GlPointCloud(wrapper))
 
-        for pc in scene.pcs_wrappers:
-            self.gl_objects.append(GlPointCloud(pc))
+            elif isinstance(wrapper, RasterWrapper):
+                self.gl_objects.append(GlRaster(wrapper))
 
-        for rn in scene.rnd_wrappers:
-            self.gl_objects.append(GlLineString(rn))
+            elif isinstance(wrapper, BuildingWrapper):
+                self.gl_objects.append(GlMesh(wrapper.building_mw))
 
-        for lss in scene.lss_wrappers:
-            self.gl_objects.append(GlLineString(lss))
+            elif isinstance(wrapper, BoundsWrapper):
+                self.gl_objects.append(GlLineString(wrapper.ls_wrp))
 
-        for rst in scene.rst_wrappers:
-            self.gl_objects.append(GlRaster(rst))
-
-        for mrsr in scene.mrst_wrappers:
-            for rst in mrsr.raster_wrappers:
-                self.gl_objects.append(GlRaster(rst))
+            elif isinstance(wrapper, MultiRasterWrapper):
+                for raster_wrp in wrapper.raster_wrappers:
+                    self.gl_objects.append(GlRaster(raster_wrp))
 
         if len(self.gl_objects) == 0:
             warning("No meshes or point clouds or line strings found in the scene!")

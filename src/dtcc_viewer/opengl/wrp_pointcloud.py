@@ -3,11 +3,12 @@ from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PCDataWrapper
+from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.logging import info, warning
 from typing import Any
 
 
-class PointCloudWrapper:
+class PointCloudWrapper(Wrapper):
     """Point cloud attributes and data structured for the purpous of rendering.
 
     This class is used to store point cloud data along with color information
