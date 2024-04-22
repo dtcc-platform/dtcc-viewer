@@ -10,7 +10,7 @@ from dtcc_viewer.opengl.utils import (
 from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
-from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_points import GlPoints
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.parameters import (
@@ -196,7 +196,7 @@ class Gui:
     def _draw_model_gui(self, model: GlModel) -> None:
         """Draw GUI for model."""
         meshes = model.filter_gl_type(GlMesh)
-        pointclouds = model.filter_gl_type(GlPointCloud)
+        pointclouds = model.filter_gl_type(GlPoints)
         linestrings = model.filter_gl_type(GlLines)
         rasters = model.filter_gl_type(GlRaster)
 
@@ -576,7 +576,7 @@ class Gui:
         width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Data")
         mhs = model.filter_gl_type(GlMesh)
-        pcs = model.filter_gl_type(GlPointCloud)
+        pcs = model.filter_gl_type(GlPoints)
         lss = model.filter_gl_type(GlLines)
         rst = model.filter_gl_type(GlRaster)
 
@@ -588,7 +588,7 @@ class Gui:
     def _draw_model_stats(
         self,
         mhs: list[GlMesh],
-        pcs: list[GlPointCloud],
+        pcs: list[GlPoints],
         lss: list[GlLines],
         text_width: int,
     ) -> None:

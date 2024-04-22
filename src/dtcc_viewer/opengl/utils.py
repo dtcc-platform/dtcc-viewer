@@ -400,6 +400,24 @@ def create_cylinder(center, radius, height, num_segments):
     return multisurface
 
 
+def create_surface_disc(center, radius, num_segments):
+    vertices = []
+
+    # Calculate angle increment
+    angle_increment = 2 * math.pi / num_segments
+
+    # Generate vertices for the top circle
+    for i in range(num_segments):
+        x = center.x + radius * math.cos(i * angle_increment)
+        y = center.y + radius * math.sin(i * angle_increment)
+        z = center.z
+        vertices.append([x, y, z])
+
+    srf = Surface(vertices=np.array(vertices))
+
+    return srf
+
+
 def create_cylinder_mesh(center, direction, radius, height, n):
     vertices = []
     indices = []

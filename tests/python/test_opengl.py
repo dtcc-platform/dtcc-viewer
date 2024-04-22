@@ -6,7 +6,7 @@ import numpy as np
 from pprint import pp
 from dtcc_viewer import *
 from dtcc_viewer.opengl.gl_mesh import GlMesh
-from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_points import GlPoints
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.utils import *
@@ -82,7 +82,7 @@ class TestOpenGLViewer:
         # Need to create a context for other OpenGL calls to be possible.
         window = Window(1200, 800)
 
-        pc_gl = GlPointCloud(pc_wrapper)
+        pc_gl = GlPoints(pc_wrapper)
 
         # window.render_point_cloud(pc_data_obj)
 

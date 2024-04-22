@@ -1,7 +1,6 @@
 from .opengl import *
 from .pointcloud import view as view_pointcloud
 from .mesh import view as view_mesh
-from .roadnetwork import view as view_roadnetwork
 from .city import view as view_city
 from .building import view as view_building
 from .object import view as view_object
@@ -20,8 +19,6 @@ from dtcc_model import (
 )
 from dtcc_model import Raster, City, Building
 
-# from dtcc_model.roadnetwork import RoadNetwork
-
 # Add model extensions
 PointCloud.add_methods(view_pointcloud, "view")
 Mesh.add_methods(view_mesh, "view")
@@ -32,8 +29,6 @@ Raster.add_methods(view_raster, "view")
 Surface.add_methods(view_surface, "view")
 Bounds.add_methods(view_bounds, "view")
 MultiSurface.add_methods(view_multisurface, "view")
-
-# RoadNetwork.add_methods(view_roadnetwork, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [

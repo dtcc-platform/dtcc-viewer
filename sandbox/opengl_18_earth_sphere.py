@@ -110,8 +110,8 @@ lss_long, lss_lati = create_sphere_lss(cp, R, 100, 100)
 window = Window(1200, 800)
 scene = Scene()
 
-scene.add_linestrings("Countries", lss)
-scene.add_linestrings("Longitude", lss_long)
-scene.add_linestrings("Latitude", lss_lati)
+scene.add_linestring("Countries", lss)
+scene.add_linestring("Longitude", lss_long)
+scene.add_linestring("Latitude", lss_lati)
 
 window.render(scene)

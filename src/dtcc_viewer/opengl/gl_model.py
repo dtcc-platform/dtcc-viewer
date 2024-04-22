@@ -8,12 +8,12 @@ from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.utils import Shading, BoundingBox, color_to_id
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.gl_mesh import GlMesh
-from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_points import GlPoints
 from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.environment import Environment
-from dtcc_viewer.opengl.parameters import GuiParametersGlobal, GuiParametersModel
+from dtcc_viewer.opengl.parameters import GuiParametersModel
 
 from dtcc_viewer.shaders.shaders_debug import (
     vertex_shader_debug_shadows,
@@ -106,8 +106,8 @@ class GlModel:
     def filter_gl_type(self, gl_type):
         if gl_type == GlMesh:
             return [mesh for mesh in self.gl_objects if isinstance(mesh, GlMesh)]
-        elif gl_type == GlPointCloud:
-            return [pc for pc in self.gl_objects if isinstance(pc, GlPointCloud)]
+        elif gl_type == GlPoints:
+            return [pc for pc in self.gl_objects if isinstance(pc, GlPoints)]
         elif gl_type == GlLines:
             return [lss for lss in self.gl_objects if isinstance(lss, GlLines)]
         elif gl_type == GlRaster:
@@ -449,7 +449,7 @@ class GlModel:
 
     def _render_pcs(self, action: Action) -> None:
         for obj in self.gl_objects:
-            if isinstance(obj, GlPointCloud):
+            if isinstance(obj, GlPoints):
                 guip = obj.guip
                 if guip.show:
                     obj.render(action)

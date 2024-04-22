@@ -10,7 +10,7 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 
 
-class BuildingWrapper:
+class BuildingWrapper(Wrapper):
     """BuildingWrapper restructures data for a building for the purpous of rendering.
 
     This class wraps a building object for rendering in an OpenGL window. It

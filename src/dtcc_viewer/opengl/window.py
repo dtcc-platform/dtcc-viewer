@@ -7,7 +7,7 @@ from imgui.integrations.glfw import GlfwRenderer
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.action import Action
-from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
+from dtcc_viewer.opengl.gl_points import GlPoints
 from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
@@ -24,9 +24,9 @@ from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
+from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 
@@ -165,14 +165,26 @@ class Window:
                     self.gl_objects.append(GlMesh(srf))
                 for ms in wrapper.ms_wrps:
                     self.gl_objects.append(GlMesh(ms))
-                for pc in wrapper.pc_wrps:
-                    self.gl_objects.append(GlPointCloud(pc))
                 for mls_wrp in wrapper.mls_wrps:
                     self.gl_objects.append(GlLines(mls_wrp))
                 for ls_wrp in wrapper.ls_wrps:
                     self.gl_objects.append(GlLines(ls_wrp))
                 for bnds_wrp in wrapper.bnds_wrps:
                     self.gl_objects.append(GlLines(bnds_wrp.ls_wrp))
+                for pc in wrapper.pc_wrps:
+                    self.gl_objects.append(GlPoints(pc))
+
+            elif isinstance(wrapper, MeshWrapper):
+                self.gl_objects.append(GlMesh(wrapper))
+
+            elif isinstance(wrapper, SurfaceWrapper):
+                self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
+
+            elif isinstance(wrapper, MultiSurfaceWrapper):
+                self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
+
+            elif isinstance(wrapper, BuildingWrapper):
+                self.gl_objects.append(GlMesh(wrapper.building_mw))
 
             elif isinstance(wrapper, MultiLineStringWrapper):
                 self.gl_objects.append(GlLines(wrapper))
@@ -180,20 +192,14 @@ class Window:
             elif isinstance(wrapper, LineStringWrapper):
                 self.gl_objects.append(GlLines(wrapper))
 
-            elif isinstance(wrapper, MeshWrapper):
-                self.gl_objects.append(GlMesh(wrapper))
+            elif isinstance(wrapper, BoundsWrapper):
+                self.gl_objects.append(GlLines(wrapper.ls_wrp))
 
             elif isinstance(wrapper, PointCloudWrapper):
-                self.gl_objects.append(GlPointCloud(wrapper))
+                self.gl_objects.append(GlPoints(wrapper))
 
             elif isinstance(wrapper, RasterWrapper):
                 self.gl_objects.append(GlRaster(wrapper))
-
-            elif isinstance(wrapper, BuildingWrapper):
-                self.gl_objects.append(GlMesh(wrapper.building_mw))
-
-            elif isinstance(wrapper, BoundsWrapper):
-                self.gl_objects.append(GlLines(wrapper.ls_wrp))
 
             elif isinstance(wrapper, MultiRasterWrapper):
                 for raster_wrp in wrapper.raster_wrappers:
@@ -206,15 +212,17 @@ class Window:
         # Create model from meshes
         self.model = GlModel(self.gl_objects, scene.bb)
 
-        size_scene = math.sqrt(pow(scene.bb.xdom, 2) + pow(scene.bb.ydom, 2))
-        self.action.initialise_camera(scene.bb, 1.5 * size_scene)
+        # Initialise camera base on bounding box size
+        self.action.initialise_camera(scene.bb)
 
+        # Create opengl data for all the objects
         if not self.model.preprocess():
             warning("GLModel preprocessing failed!")
 
+        # Create picking frame buffer object
         self.model.create_picking_fbo(self.action)
 
-        # Create grid
+        # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
         self.gl_axes = GlAxes(1.0)
 
@@ -271,7 +279,7 @@ class Window:
             if self.action.gguip.update_camera:
                 self.action.update_view()
 
-            # True if the user has clicked on the GUI
+            # True if the user has clicked on the model
             if self.action.picking:
                 self.model.evaluate_picking(self.action)
 

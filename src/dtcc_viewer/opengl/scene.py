@@ -3,7 +3,6 @@ from OpenGL.GL import *
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
@@ -11,6 +10,7 @@ from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
+from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_model import (
@@ -54,47 +54,28 @@ class Scene:
     mts: int
 
     def __init__(self):
-
         self.wrappers = []
-
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
-
         info("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
-        """Append a mesh with data and/or colors to the scene"""
         if mesh is not None:
             info(f"Mesh called - {name} - added to scene")
-            mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts, data=data)
-            self.wrappers.append(mesh_w)
+            self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
         else:
             warning(f"Mesh called - {name} - is None and not added to scene")
 
-    def add_multisurface(self, name: str, multi_surface: MultiSurface):
-        if multi_surface is not None:
+    def add_multisurface(self, name: str, ms: MultiSurface):
+        if ms is not None:
             info(f"MultiSurface called - {name} - added to scene")
-            mesh = multi_surface.mesh()
-            if mesh is not None:
-                mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts)
-                self.wrappers.append(mesh_w)
-            else:
-                warning(
-                    f"MultiSurface called - {name} - could not be converted to mesh and not added to scene"
-                )
+            self.wrappers.append(MultiSurfaceWrapper(name, ms, self.mts))
         else:
             warning(f"MultiSurface called - {name} - is None and not added to scene")
 
     def add_surface(self, name: str, surface: Surface):
         if surface is not None:
             info(f"Surface called - {name} - added to scene")
-            mesh = surface.mesh()
-            if mesh is not None:
-                mesh_w = MeshWrapper(name=name, mesh=mesh, mts=self.mts)
-                self.wrappers.append(mesh_w)
-            else:
-                warning(
-                    f"Surface called - {name} - could not be converted to mesh and not added to scene"
-                )
+            self.wrappers.append(SurfaceWrapper(name, surface, self.mts))
         else:
             warning(f"Surface called - {name} - is None and not added to scene")
 
@@ -102,8 +83,7 @@ class Scene:
         """Append a city with data and/or colors to the scene"""
         if city is not None:
             info(f"City called - {name} - added to scene")
-            city_w = CityWrapper(name=name, city=city, mts=self.mts)
-            self.wrappers.append(city_w)
+            self.wrappers.append(CityWrapper(name, city, self.mts))
         else:
             warning(f"City called - {name} - is None and not added to scene")
 
@@ -131,40 +111,24 @@ class Scene:
         else:
             warning(f"Point could called - {name} - is None and not added to scene")
 
-    def add_roadnetwork(self, name: str, rn: Any, data: np.ndarray = None):
-        """Append a RoadNetwork object to the scene"""
-        if rn is not None:
-            info(f"Road network called - {name} - added to scene")
-            rn_w = RoadNetworkWrapper(name=name, rn=rn, data=data)
-            self.wrappers.append(rn_w)
-        else:
-            warning(f"Road network called - {name} - is None and not added to scene")
-
-    def add_linestrings(self, name: str, ls: LineString, data: Any = None):
-        """Append a line strings list to the scene"""
+    def add_linestring(self, name: str, ls: LineString, data: Any = None):
         if ls is not None:
             info(f"List of LineStrings called - {name} - added to scene")
-            lss_w = LineStringWrapper(name, ls, self.mts, data)
-            self.wrappers.append(lss_w)
+            self.wrappers.append(LineStringWrapper(name, ls, self.mts, data))
         else:
             warning(f"Road network called - {name} - is None and not added to scene")
 
-    def add_multilinestring(
-        self, name: str, multi_ls: MultiLineString, data: Any = None
-    ):
-        """Append a MultiLineString object to the scene"""
-        if multi_ls is not None:
+    def add_multilinestring(self, name: str, mls: MultiLineString, data: Any = None):
+        if mls is not None:
             info(f"MultiLineString called - {name} - added to scene")
-            mls_wrp = MultiLineStringWrapper(name, multi_ls, self.mts, data)
-            self.wrappers.append(mls_wrp)
+            self.wrappers.append(MultiLineStringWrapper(name, mls, self.mts, data))
         else:
             warning(f"MultiLineString called - {name} - is None and not added to scene")
 
     def add_building(self, name: str, building: Building):
         if building is not None:
             info(f"Building called - {name} - added to scene")
-            bld_w = BuildingWrapper(name, building, self.mts)
-            self.wrappers.append(bld_w)
+            self.wrappers.append(BuildingWrapper(name, building, self.mts))
         else:
             warning(f"Building called - {name} - is None and not added to scene")
 
@@ -183,20 +147,16 @@ class Scene:
             warning(f"Raster called - {name} - is None and not added to scene")
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
-        """Append a list of geometries"""
         if geometries is not None:
             info(f"Geometry collection called - {name} - added to scene")
-            geom_wrp = GeometriesWrapper(name, geometries, self.mts)
-            self.wrappers.append(geom_wrp)
+            self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
         else:
             warning(f"Failed to add geometry collection called - {name} - to scene")
 
     def add_bounds(self, name: str, bounds: Bounds):
-        """Append a list of bounds"""
         if bounds is not None:
             info(f"Bounds called - {name} - added to scene")
-            bounds_wrp = BoundsWrapper(name, bounds, self.mts)
-            self.wrappers.append(bounds_wrp)
+            self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
         else:
             warning(f"Failed to add bounds called - {name} - to scene")
 
@@ -236,15 +196,3 @@ class Scene:
         else:
             warning("No vertices found in scene")
             return None
-
-    def _offset_picking_ids(self) -> None:
-        id_offset = 0
-        id_offsets = []
-        id_offsets.append(0)
-
-        for mesh in self.meshes:
-            id_offset += np.max(mesh.vertices[9::10]) + 1
-            id_offsets.append(id_offset)
-
-        for i, mesh in enumerate(self.meshes):
-            mesh.vertices[9::10] += id_offsets[i]

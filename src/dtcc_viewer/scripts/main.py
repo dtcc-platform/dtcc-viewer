@@ -197,13 +197,6 @@ def raster_example_1():
     georef = Affine.identity()
     raster = Raster(data=data, georef=georef, crs=crs)
 
-    # Print information about the raster
-    print("Shape:", raster.shape)
-    print("Height:", raster.height)
-    print("Width:", raster.width)
-    print("Channels:", raster.channels)
-    print("Bounds:", raster.bounds)
-    print("Cell Size:", raster.cell_size)
     raster.view()
 
 
@@ -213,93 +206,32 @@ def raster_example_2():
     (x, y, z) = double_sine_wave_surface(x_range, y_range, 200, 200, 1, 1)
     raster = Raster(data=z)
 
-    print("Shape:", raster.shape)
-    print("Height:", raster.height)
-    print("Width:", raster.width)
-    print("Channels:", raster.channels)
-    print("Bounds:", raster.bounds)
-    print("Cell Size:", raster.cell_size)
     raster.view()
 
 
 def raster_example_3():
-
     raster = load_raster("../../../data/models/672_61_7550_2017.tif")
-
-    print("Shape:", raster.shape)
-    print("Height:", raster.height)
-    print("Width:", raster.width)
-    print("Channels:", raster.channels)
-    print("Bounds:", raster.bounds)
-    print("Cell Size:", raster.cell_size)
     raster.view()
 
 
 def raster_example_4():
-
     raster = load_raster("../../../data/models/652_59_7550_2019.tif")
-    print("Shape:", raster.shape)
-    print("Height:", raster.height)
-    print("Width:", raster.width)
-    print("Channels:", raster.channels)
-    print("Bounds:", raster.bounds)
-    print("Cell Size:", raster.cell_size)
-
     raster.view()
-
-
-def coord_axes():
-    window = Window(1200, 800)
-    scene = Scene()
-
-    h = 1
-    r = 0.02
-    n = 30
-    x_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.x, r, h, n)
-    y_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.y, r, h, n)
-    z_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.z, r, h, n)
-
-    x_cone = create_cone_mesh(Point(h, 0, 0), Direction.x, r * 2.5, r * 5, n)
-    y_cone = create_cone_mesh(Point(0, h, 0), Direction.y, r * 2.5, r * 5, n)
-    z_cone = create_cone_mesh(Point(0, 0, h), Direction.z, r * 2.5, r * 5, n)
-
-    origo = create_sphere_mesh(Point(0, 0, 0), r * 2.5, n, n)
-
-    all_meshes = [x_axis, x_cone, y_axis, y_cone, z_axis, z_cone, origo]
-    conc_mesh = concatenate_meshes(all_meshes)
-    scene.add_mesh("cs", conc_mesh)
-    window.render(scene)
-
-
-def arrows_example():
-
-    window = Window(1200, 800)
-    scene = Scene()
-
-    h = 1.0
-    r = 0.02
-    n = 30
-    dir = np.array([1.0, 1.0, 1.0])
-    cp = np.array([0.0, 0.0, 0.0])
-    arrow = create_arrow_mesh(cp, dir, r, h, n)
-
-    scene.add_mesh("arrow", arrow)
-    window.render(scene)
-
-    pass
 
 
 def geometries_example():
     origo = Point(0, 0, 0)
-    sphere_mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
-    circle_ls = create_ls_circle(origo, 20, 200)
-    cylinder_ms = create_cylinder(origo, 10, 10, 100)
+    mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
+    linestring_1 = create_ls_circle(origo, 20, 200)
+    multi_surface = create_cylinder(origo, 10, 10, 100)
     bounds = Bounds(-10, -10, 10, 10, 0, 0)
-    multi_ls = MultiLineString(
-        [create_ls_circle(origo, 10, 200), create_ls_circle(origo, 15, 200)]
-    )
+    surface = create_surface_disc(Point(10, 0, 0), 10, 100)
 
-    geometries = [sphere_mesh, circle_ls, cylinder_ms, bounds, multi_ls]
+    linestring_2 = create_ls_circle(origo, 10, 200)
+    linestring_3 = create_ls_circle(origo, 15, 200)
+    multi_ls = MultiLineString([linestring_2, linestring_3])
+
+    geometries = [mesh, linestring_1, multi_surface, bounds, multi_ls, surface]
     window = Window(1200, 800)
     scene = Scene()
     scene.add_geometries("geometries", geometries)
@@ -314,15 +246,23 @@ def bounds_example():
 def multilinestring_example():
     lss = []
     for i in range(5):
-        ls = create_ls_circle(Point(0, 0, 0), 10 + i, 100)
-        lss.append(ls)
+        lss.append(create_ls_circle(Point(0, 0, 0), 10 + i, 100))
 
     mls = MultiLineString(lss)
     window = Window(1200, 800)
     scene = Scene()
     scene.add_multilinestring("MultiLineString", mls)
-
     window.render(scene)
+
+
+def multisurface_example():
+    cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+    cylinder_ms.view()
+
+
+def surface_example():
+    surface = create_surface_disc(Point(0, 0, 0), 10, 100)
+    surface.view()
 
 
 if __name__ == "__main__":
@@ -336,7 +276,7 @@ if __name__ == "__main__":
     # mesh_example_3()
     # multi_geometry_example_1()
     # building_example_2()
-    linestring_example_2()
+    # linestring_example_2()
     # city_example_1()
     # building_example_1()
     # object_example_1()
@@ -345,8 +285,8 @@ if __name__ == "__main__":
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
-    # coord_axes()
-    # arrows_example()
-    # geometries_example()
+    geometries_example()
     # bounds_example()
     # multilinestring_example()
+    # multisurface_example()
+    # surface_example()

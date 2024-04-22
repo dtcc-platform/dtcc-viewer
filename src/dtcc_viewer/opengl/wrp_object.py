@@ -149,6 +149,9 @@ class ObjectWrapper(Wrapper):
 
         return mesh, submeshes
 
+    def _extract_mesh_from_srf(self, obj: Object):
+        pass
+
     def _triangulate_multisurfaces(self, ms_list: list[MultiSurface]):
         meshes = []
         results = []

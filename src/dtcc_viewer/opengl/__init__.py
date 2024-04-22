@@ -1,7 +1,7 @@
 from .camera import Camera
 from .window import Window
 from .wrp_pointcloud import PointCloudWrapper
-from .gl_pointcloud import GlPointCloud
+from .gl_points import GlPoints
 from .gl_mesh import GlMesh
 from .wrp_mesh import MeshWrapper
 from .action import Action
@@ -15,7 +15,7 @@ __all__ = [
     "Camera",
     "Window",
     "PointCloudWrapper",
-    "GlPointCloud",
+    "GlPoints",
     "GlMesh",
     "MeshWrapper",
     "Action",

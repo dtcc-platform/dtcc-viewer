@@ -27,7 +27,7 @@ from dtcc_viewer.shaders.shaders_point_cloud import (
 )
 
 
-class GlPointCloud(GlObject):
+class GlPoints(GlObject):
     """A class for rendering point cloud data using OpenGL.
 
     This class handles the rendering of point cloud data using OpenGL.

@@ -16,5 +16,5 @@ def view(surface: MultiSurface):
 
     window = Window(1200, 800)
     scene = Scene()
-    scene.add_surface("Surface", surface)
+    scene.add_multisurface("Surface", surface)
     window.render(scene)
