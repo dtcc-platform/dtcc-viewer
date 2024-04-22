@@ -11,7 +11,7 @@ from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.wrp_data import LSDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.parameters import GuiParametersLS, GuiParametersGlobal
+from dtcc_viewer.opengl.parameters import GuiParametersLines, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
@@ -30,7 +30,7 @@ from dtcc_viewer.shaders.shaders_color_maps import (
 )
 
 
-class GlLineString(GlObject):
+class GlLines(GlObject):
     """A class for rendering road networks using OpenGL.
 
     This class handles the rendering of road networks using OpenGL.
@@ -40,7 +40,7 @@ class GlLineString(GlObject):
 
     vertices: np.ndarray  # All vertices in the road network
     line_indices: np.ndarray  #  Line indices for roads [[2 x n_roads],]
-    guip: GuiParametersLS
+    guip: GuiParametersLines
     name: str  # Name of the line string
 
     n_vertices: int  # Number of vertices
@@ -63,13 +63,13 @@ class GlLineString(GlObject):
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, lss_wrapper: LineStringWrapper):
+    def __init__(self, wrapper: LineStringWrapper):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
-        self.vertices = lss_wrapper.vertices
-        self.line_indices = lss_wrapper.indices
-        self.name = lss_wrapper.name
-        self.data_wrapper = lss_wrapper.data_wrapper
+        self.vertices = wrapper.vertices
+        self.line_indices = wrapper.indices
+        self.name = wrapper.name
+        self.data_wrapper = wrapper.data_wrapper
 
         self.n_vertices = len(self.vertices) // 6
         self.n_lines = len(self.line_indices) // 2
@@ -79,9 +79,9 @@ class GlLineString(GlObject):
 
         data_mat_dict = self.data_wrapper.data_mat_dict
         data_val_caps = self.data_wrapper.data_value_caps
-        self.guip = GuiParametersLS(lss_wrapper.name, data_mat_dict, data_val_caps)
-        self.bb_local = lss_wrapper.bb_local
-        self.bb_global = lss_wrapper.bb_global
+        self.guip = GuiParametersLines(wrapper.name, data_mat_dict, data_val_caps)
+        self.bb_local = wrapper.bb_local
+        self.bb_global = wrapper.bb_global
 
         self.texture_slot = None
         self.texture_idx = None

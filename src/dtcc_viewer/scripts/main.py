@@ -4,7 +4,6 @@
 import os
 import numpy as np
 import trimesh
-import time
 import dtcc_io
 
 from affine import Affine
@@ -20,10 +19,6 @@ from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import LineString, Point, MultiLineString
-from dtcc_viewer.opengl.bundle import Bundle
-from dtcc_model.quantity import Quantity
-
-# from dtcc_io import load_roadnetwork
 
 
 def pointcloud_example_1():
@@ -341,10 +336,10 @@ if __name__ == "__main__":
     # mesh_example_3()
     # multi_geometry_example_1()
     # building_example_2()
-    # linestring_example_2()
+    linestring_example_2()
     # city_example_1()
     # building_example_1()
-    object_example_1()
+    # object_example_1()
     # object_example_2()
     # raster_example_1()
     # raster_example_2()

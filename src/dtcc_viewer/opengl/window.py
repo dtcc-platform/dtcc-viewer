@@ -8,7 +8,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.gl_grid import GlGrid
@@ -150,7 +150,7 @@ class Window:
                 if wrapper.mesh_wrp_2 is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_wrp_2))
                 if wrapper.lss_wrp is not None:
-                    self.gl_objects.append(GlLineString(wrapper.lss_wrp))
+                    self.gl_objects.append(GlLines(wrapper.lss_wrp))
 
             elif isinstance(wrapper, CityWrapper):
                 if wrapper.building_mw is not None:
@@ -168,17 +168,17 @@ class Window:
                 for pc in wrapper.pc_wrps:
                     self.gl_objects.append(GlPointCloud(pc))
                 for mls_wrp in wrapper.mls_wrps:
-                    self.gl_objects.append(GlLineString(mls_wrp))
+                    self.gl_objects.append(GlLines(mls_wrp))
                 for ls_wrp in wrapper.ls_wrps:
-                    self.gl_objects.append(GlLineString(ls_wrp))
+                    self.gl_objects.append(GlLines(ls_wrp))
                 for bnds_wrp in wrapper.bnds_wrps:
-                    self.gl_objects.append(GlLineString(bnds_wrp.ls_wrp))
+                    self.gl_objects.append(GlLines(bnds_wrp.ls_wrp))
 
             elif isinstance(wrapper, MultiLineStringWrapper):
-                self.gl_objects.append(GlLineString(wrapper))
+                self.gl_objects.append(GlLines(wrapper))
 
             elif isinstance(wrapper, LineStringWrapper):
-                self.gl_objects.append(GlLineString(wrapper))
+                self.gl_objects.append(GlLines(wrapper))
 
             elif isinstance(wrapper, MeshWrapper):
                 self.gl_objects.append(GlMesh(wrapper))
@@ -193,7 +193,7 @@ class Window:
                 self.gl_objects.append(GlMesh(wrapper.building_mw))
 
             elif isinstance(wrapper, BoundsWrapper):
-                self.gl_objects.append(GlLineString(wrapper.ls_wrp))
+                self.gl_objects.append(GlLines(wrapper.ls_wrp))
 
             elif isinstance(wrapper, MultiRasterWrapper):
                 for raster_wrp in wrapper.raster_wrappers:

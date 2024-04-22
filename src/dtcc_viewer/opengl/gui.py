@@ -12,13 +12,13 @@ from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
 from dtcc_viewer.opengl.gl_raster import GlRaster
-from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.parameters import (
     GuiParametersGlobal,
     GuiParametersObj,
     GuiParametersMesh,
     GuiParametersPC,
-    GuiParametersLS,
+    GuiParametersLines,
     GuiParametersRaster,
     GuiParametersDates,
     GuiParametersModel,
@@ -197,7 +197,7 @@ class Gui:
         """Draw GUI for model."""
         meshes = model.filter_gl_type(GlMesh)
         pointclouds = model.filter_gl_type(GlPointCloud)
-        linestrings = model.filter_gl_type(GlLineString)
+        linestrings = model.filter_gl_type(GlLines)
         rasters = model.filter_gl_type(GlRaster)
 
         [expanded, visible] = imgui.collapsing_header(model.guip.name)
@@ -282,7 +282,7 @@ class Gui:
 
         self._draw_separator()
 
-    def _draw_ls_gui(self, guip: GuiParametersLS, index: int) -> None:
+    def _draw_ls_gui(self, guip: GuiParametersLines, index: int) -> None:
         """Draw GUI for road networks."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
@@ -577,7 +577,7 @@ class Gui:
         [expanded, visible] = imgui.collapsing_header("Data")
         mhs = model.filter_gl_type(GlMesh)
         pcs = model.filter_gl_type(GlPointCloud)
-        lss = model.filter_gl_type(GlLineString)
+        lss = model.filter_gl_type(GlLines)
         rst = model.filter_gl_type(GlRaster)
 
         if expanded:
@@ -589,7 +589,7 @@ class Gui:
         self,
         mhs: list[GlMesh],
         pcs: list[GlPointCloud],
-        lss: list[GlLineString],
+        lss: list[GlLines],
         text_width: int,
     ) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""

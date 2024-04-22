@@ -171,7 +171,7 @@ class GuiParametersPC(GuiParametersObj):
         self.point_scale = 1.0
 
 
-class GuiParametersLS(GuiParametersObj):
+class GuiParametersLines(GuiParametersObj):
     """Class representing GUI parameters for road networks."""
 
     def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:

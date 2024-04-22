@@ -7,7 +7,7 @@ from .wrp_mesh import MeshWrapper
 from .action import Action
 from .scene import Scene
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
-from .gui import GuiParametersLS, GuiParametersGlobal, GuiParametersDates
+from .gui import GuiParametersLines, GuiParametersGlobal, GuiParametersDates
 from .utils import Shading
 
 
@@ -24,7 +24,7 @@ __all__ = [
     "GuiParametersGlobal",
     "GuiParametersMesh",
     "GuiParametersPC",
-    "GuiParametersLS",
+    "GuiParametersLines",
     "GuiParametersGlobal",
     "Shading",
 ]

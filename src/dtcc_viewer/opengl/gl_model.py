@@ -9,7 +9,7 @@ from dtcc_viewer.opengl.utils import Shading, BoundingBox, color_to_id
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_pointcloud import GlPointCloud
-from dtcc_viewer.opengl.gl_linestring import GlLineString
+from dtcc_viewer.opengl.gl_lines import GlLines
 from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.environment import Environment
@@ -108,8 +108,8 @@ class GlModel:
             return [mesh for mesh in self.gl_objects if isinstance(mesh, GlMesh)]
         elif gl_type == GlPointCloud:
             return [pc for pc in self.gl_objects if isinstance(pc, GlPointCloud)]
-        elif gl_type == GlLineString:
-            return [lss for lss in self.gl_objects if isinstance(lss, GlLineString)]
+        elif gl_type == GlLines:
+            return [lss for lss in self.gl_objects if isinstance(lss, GlLines)]
         elif gl_type == GlRaster:
             return [rst for rst in self.gl_objects if isinstance(rst, GlRaster)]
         else:
@@ -456,7 +456,7 @@ class GlModel:
 
     def _render_lss(self, action: Action) -> None:
         for obj in self.gl_objects:
-            if isinstance(obj, GlLineString):
+            if isinstance(obj, GlLines):
                 guip = obj.guip
                 if guip.show:
                     obj.render(action)
