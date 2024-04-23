@@ -163,9 +163,9 @@ def object_example_1():
 
 def object_example_2():
     r, n = 20, 10
-    z1, z2, z3 = 0, 5, 10
+    z1, z2, z3, z4 = 0, 5, 10, 25
     a = 2 * math.pi / n
-    meshes, mss, lss, pts = [], [], [], []
+    meshes, mss, lss, pcs = [], [], [], []
     for i in range(n):
         x = r * math.cos(i * a)
         y = r * math.sin(i * a)
@@ -175,15 +175,16 @@ def object_example_2():
         meshes.append(mesh)
         lss.append(ls)
         mss.append(ms)
-        pts.append([x, y, z1])
+        pts = mesh.vertices + np.array([0, 0, z4])
+        pc = PointCloud(points=pts)
+        pcs.append(pc)
 
     pts = np.array(pts)
-    pointcloud = PointCloud(pts)
     obj = Object()
     obj.geometry[GeometryType.MESH] = meshes
     obj.geometry[GeometryType.LINESTRING] = lss
     obj.geometry[GeometryType.LOD2] = mss
-    obj.geometry[GeometryType.POINT_CLOUD] = pointcloud
+    obj.geometry[GeometryType.POINT_CLOUD] = pcs
     obj.view()
 
 
@@ -223,9 +224,9 @@ def geometries_example():
     origo = Point(0, 0, 0)
     mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
     linestring_1 = create_ls_circle(origo, 20, 200)
-    multi_surface = create_cylinder(origo, 10, 10, 100)
+    multi_surface = create_cylinder(origo, 5, 10, 100)
     bounds = Bounds(-10, -10, 10, 10, 0, 0)
-    surface = create_surface_disc(Point(10, 0, 0), 10, 100)
+    surface = create_surface_disc(Point(10, 0, 0), 5, 100)
 
     linestring_2 = create_ls_circle(origo, 10, 200)
     linestring_3 = create_ls_circle(origo, 15, 200)
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
-    city_example_1()
+    # city_example_1()
     # building_example_1()
     # object_example_1()
     # object_example_2()
@@ -287,6 +288,6 @@ if __name__ == "__main__":
     # raster_example_4()
     # geometries_example()
     # bounds_example()
-    # multilinestring_example()
+    multilinestring_example()
     # multisurface_example()
     # surface_example()

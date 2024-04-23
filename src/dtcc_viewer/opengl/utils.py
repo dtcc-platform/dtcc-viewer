@@ -296,6 +296,22 @@ def surface_2_mesh(vertices):
     return mesh, Results.TriSuccess
 
 
+def concatenate_pcs(pcs: list[PointCloud]):
+    v_count_tot = 0
+    for pc in pcs:
+        v_count_tot += len(pc.points)
+
+    all_points = np.zeros((v_count_tot, 3), dtype=float)
+    start_idx = 0
+    for pc in pcs:
+        v_count = len(pc.points)
+        all_points[start_idx : start_idx + v_count, :] = pc.points
+        start_idx += v_count
+
+    pc = PointCloud(points=all_points)
+    return pc
+
+
 def concatenate_meshes(meshes: list[Mesh]):
     v_count_tot = 0
     f_count_tot = 0

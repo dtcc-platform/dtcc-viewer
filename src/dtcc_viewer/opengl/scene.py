@@ -4,8 +4,7 @@ from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
-from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
+from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
@@ -156,8 +155,6 @@ class Scene:
         # used to center move everything to the origin.
         self.bb = self._calculate_bb()
 
-        print("zmin" + str(self.bb.zmin))
-
         if self.bb is None:
             warning("No bounding box found for the scene.")
             return False
@@ -210,6 +207,11 @@ class Scene:
                     next_id = self.update_ids(srf_wrp.mesh_wrp, next_id)
             elif isinstance(wrp, BuildingWrapper):
                 next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, ObjectWrapper):
+                if wrp.mesh_wrp_1 is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp_1, next_id)
+                if wrp.mesh_wrp_2 is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp_2, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
         max_id = np.max(mesh_wrp.parts.ids)

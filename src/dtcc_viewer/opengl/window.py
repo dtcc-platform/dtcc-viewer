@@ -145,6 +145,9 @@ class Window:
 
         scene.offset_mesh_part_ids()
 
+        info("Preprocessing scene objects...")
+        info(f"Scene has {len(scene.wrappers)} objects.")
+
         for wrapper in scene.wrappers:
             if isinstance(wrapper, ObjectWrapper):
                 if wrapper.mesh_wrp_1 is not None:
@@ -153,6 +156,8 @@ class Window:
                     self.gl_objects.append(GlMesh(wrapper.mesh_wrp_2))
                 if wrapper.lss_wrp is not None:
                     self.gl_objects.append(GlLines(wrapper.lss_wrp))
+                if wrapper.pc_wrp is not None:
+                    self.gl_objects.append(GlPoints(wrapper.pc_wrp))
 
             elif isinstance(wrapper, CityWrapper):
                 if wrapper.mesh_bld is not None:
@@ -206,9 +211,11 @@ class Window:
             elif isinstance(wrapper, MultiRasterWrapper):
                 for raster_wrp in wrapper.raster_wrappers:
                     self.gl_objects.append(GlRaster(raster_wrp))
+            else:
+                warning(f"Wrapper type {type(wrapper)} not supported!")
 
         if len(self.gl_objects) == 0:
-            warning("No meshes or point clouds or line strings found in the scene!")
+            warning("No meshes, points or lines added to scene!")
             return False
 
         # Create model from meshes
@@ -226,9 +233,6 @@ class Window:
 
         # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
-
-        print("zmin" + str(scene.bb.zmin))
-
         self.gl_axes = GlAxes(1.0, scene.bb.zmin)
 
         return True

@@ -16,7 +16,7 @@ from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 
-from dtcc_viewer.shaders.shaders_lss_lines import (
+from dtcc_viewer.shaders.shaders_lines import (
     vertex_shader_lines,
     fragment_shader_lines,
 )

@@ -103,8 +103,6 @@ class GlGrid:
         ycoord[n_gridlines_x * 2 : n_gridlines_x * 2 + n_gridlines_y] = y3
         ycoord[n_gridlines_x * 2 + n_gridlines_y :] = y4
 
-        print("zpos " + str(zpos))
-
         zcoord = zpos * np.ones((n_gridlines_x * 2 + n_gridlines_y * 2))
         coord = np.zeros((len(xcoord) * 3))
         coord[0::3] = xcoord

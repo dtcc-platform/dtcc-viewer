@@ -1,15 +1,15 @@
 import numpy as np
-from dtcc_model import MultiSurface
-from dtcc_model import Object
+from dtcc_model import Object, Surface, MultiSurface
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.utils import concatenate_meshes, surface_2_mesh
+from dtcc_viewer.opengl.utils import concatenate_meshes, concatenate_pcs
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrapper import Wrapper
 from shapely.geometry import LineString, MultiLineString
@@ -40,11 +40,12 @@ class ObjectWrapper(Wrapper):
 
     name: str
     shading: Shading
-    bb_local: BoundingBox = None
     bb_global: BoundingBox = None
     mesh_wrp_1: MeshWrapper = None
     mesh_wrp_2: MeshWrapper = None
+    mesh_wrp_3: MeshWrapper = None
     lss_wrp: LineStringWrapper = None
+    pc_wrp: PointCloudWrapper = None
 
     def __init__(self, name: str, obj: Object, mts: int) -> None:
         """Initialize the MeshData object.
@@ -53,8 +54,8 @@ class ObjectWrapper(Wrapper):
         ----------
         name : str
             The name of the mesh data.
-        city : City
-            City object from which to generate the mesh data to view.
+        obj : Object
+            Generic Object which can hold a range of different geometries.
         mts : int
             Max texture size for the OpenGL context.
         """
@@ -63,15 +64,15 @@ class ObjectWrapper(Wrapper):
         self.dict_data = {}
 
         # Extract meshes from the object and its children
-        (mesh_1, submeshes_1) = self._extract_mesh_from_mesh(obj)
-        (mesh_2, submeshes_2) = self._extract_mesh_from_ms(obj)
+        (mesh_1, parts_1) = self._extract_mesh_from_mesh(obj)
+        (mesh_2, parts_2) = self._extract_mesh_from_ms(obj)
 
         quantities = obj.quantities
 
         if mesh_1 is not None:
-            self.mesh_wrp_1 = MeshWrapper("Mesh", mesh_1, mts, quantities, submeshes_1)
+            self.mesh_wrp_1 = MeshWrapper("MESH", mesh_1, mts, quantities, parts_1)
         if mesh_2 is not None:
-            self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, quantities, submeshes_2)
+            self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, quantities, parts_2)
 
         # Extract line strings from the object and its children
         lineStrings = self._extract_linestrings(obj)
@@ -80,11 +81,12 @@ class ObjectWrapper(Wrapper):
             if isinstance(lineStrings, LineString):
                 self.lss_wrp = LineStringWrapper("LineStrings", lineStrings, mts)
             elif isinstance(lineStrings, MultiLineString):
-                self.lss_wrp = MultiLineStringWrapper(
-                    "MultiLineStrings", lineStrings, mts
-                )
+                self.lss_wrp = MultiLineStringWrapper("Multi LS", lineStrings, mts)
 
-        warning("ObjectWrapper not yet implemented!")
+        # Extract line strings from the object and its children
+        pc = self._extract_point_cloud(obj)
+        if pc is not None:
+            self.pc_wrp = PointCloudWrapper("PointCloud", pc, mts)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         if self.mesh_wrp_1 is not None:
@@ -93,6 +95,8 @@ class ObjectWrapper(Wrapper):
             self.mesh_wrp_2.preprocess_drawing(bb_global)
         if self.lss_wrp is not None:
             self.lss_wrp.preprocess_drawing(bb_global)
+        if self.pc_wrp is not None:
+            self.pc_wrp.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
         vertices = np.array([])
@@ -110,6 +114,19 @@ class ObjectWrapper(Wrapper):
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         return vertices
+
+    def _extract_point_cloud(self, obj: Object):
+        geom = obj.flatten_geometry(GeometryType.POINT_CLOUD)
+        pcs = []
+        if geom is not None:
+            if isinstance(geom, list):
+                for pc in geom:
+                    if isinstance(pc, PointCloud):
+                        pcs.append(pc)
+                return concatenate_pcs(pcs)
+            elif isinstance(geom, PointCloud):
+                return geom
+        return None
 
     def _extract_linestrings(self, obj: Object):
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)
@@ -132,8 +149,8 @@ class ObjectWrapper(Wrapper):
                 meshes = [meshes]
             mesh = concatenate_meshes(meshes)
             ids = [str(num) for num in np.arange(0, len(meshes)).tolist()]
-            submeshes = Parts(meshes, ids)
-            return mesh, submeshes
+            parts = Parts(meshes, ids)
+            return mesh, parts
 
         return None, None
 
@@ -142,26 +159,31 @@ class ObjectWrapper(Wrapper):
         if ms_list is None:
             return None, None
 
-        (meshes, results) = self._triangulate_multisurfaces(ms_list)
+        meshes = self._triangulate_multisurfaces(ms_list)
+        if len(meshes) == 0:
+            return None, None
+
         mesh = concatenate_meshes(meshes)
         ids = [str(num) for num in np.arange(0, len(meshes)).tolist()]
-        submeshes = Parts(meshes, ids)
+        parts = Parts(meshes, ids)
 
-        return mesh, submeshes
-
-    def _extract_mesh_from_srf(self, obj: Object):
-        pass
+        return mesh, parts
 
     def _triangulate_multisurfaces(self, ms_list: list[MultiSurface]):
         meshes = []
-        results = []
         for ms in ms_list:
-            for s in ms.surfaces:
-                (mesh, result) = surface_2_mesh(s.vertices)
-                results.append(result)
-                if mesh is not None:
-                    meshes.append(mesh)
-        return meshes, results
+            mesh = ms.mesh()
+            if mesh is not None:
+                meshes.append(mesh)
+        return meshes
+
+    def _triangulate_surfaces(self, srf_list: list[Surface]):
+        meshes = []
+        for s in srf_list:
+            mesh = s.mesh()
+            if mesh is not None:
+                meshes.append(mesh)
+        return meshes
 
     def get_highest_lod_ms_list(self, obj: Object):
         lods = [
@@ -170,13 +192,15 @@ class ObjectWrapper(Wrapper):
             GeometryType.LOD1,
             GeometryType.LOD0,
         ]
-
+        mss = []
         for lod in lods:
-            ms_list = obj.flatten_geometry(lod)
-            if ms_list is not None:
-                if isinstance(ms_list, list):
-                    return ms_list
-                elif isinstance(ms_list, MultiSurface):
-                    return [ms_list]
+            geom = obj.flatten_geometry(lod)
+            if geom is not None:
+                if isinstance(geom, list):
+                    for ms in geom:
+                        if isinstance(ms, MultiSurface):
+                            mss.append(ms)
+                elif isinstance(geom, MultiSurface):
+                    mss.append(geom)
 
-        return None
+        return mss

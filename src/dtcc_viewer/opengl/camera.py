@@ -187,9 +187,6 @@ class Camera:
         self.pitch = 30
         self.update_camera_vectors()
 
-    def set_target(self, target: np.ndarray):
-        self.target = Vector3(target)
-
     def update_view(self, camera_view: CameraView):
 
         if camera_view == CameraView.PERSPECTIVE:
