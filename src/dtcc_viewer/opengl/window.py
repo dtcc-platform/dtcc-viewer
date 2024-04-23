@@ -250,6 +250,10 @@ class Window:
                 The scene with objects to be rendered.
         """
 
+        if scene.wrappers is None or len(scene.wrappers) == 0:
+            warning("Scene has no objects to render. Viewer aborted!")
+            return False
+
         if not scene.preprocess_drawing():
             warning("Scene preprocessing failed. Viewer aborted!")
             glfw.terminate()

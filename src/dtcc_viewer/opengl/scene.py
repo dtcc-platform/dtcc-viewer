@@ -58,73 +58,73 @@ class Scene:
         info("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
-        if mesh is not None:
+        if mesh is not None and isinstance(mesh, Mesh):
             info(f"Mesh called - {name} - added to scene")
             self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
         else:
-            warning(f"Mesh called - {name} - is None and not added to scene")
+            warning(f"Failed to add Mesh called - {name} - to the scene")
 
     def add_multisurface(self, name: str, ms: MultiSurface):
-        if ms is not None:
+        if ms is not None and isinstance(ms, MultiSurface):
             info(f"MultiSurface called - {name} - added to scene")
             self.wrappers.append(MultiSurfaceWrapper(name, ms, self.mts))
         else:
-            warning(f"MultiSurface called - {name} - is None and not added to scene")
+            warning(f"Failed to add MultiSurface called - {name} - to the scene")
 
     def add_surface(self, name: str, surface: Surface):
-        if surface is not None:
+        if surface is not None and isinstance(surface, Surface):
             info(f"Surface called - {name} - added to scene")
             self.wrappers.append(SurfaceWrapper(name, surface, self.mts))
         else:
-            warning(f"Surface called - {name} - is None and not added to scene")
+            warning(f"Failed to add Surface called - {name} - added to the scene")
 
     def add_city(self, name: str, city: City):
-        if city is not None:
+        if city is not None and isinstance(city, City):
             info(f"City called - {name} - added to scene")
             self.wrappers.append(CityWrapper(name, city, self.mts))
         else:
-            warning(f"City called - {name} - is None and not added to scene")
+            warning(f"Failed to add City called - {name} - to the scene")
 
     def add_object(self, name: str, obj: Object):
-        if obj is not None:
+        if obj is not None and isinstance(obj, Object):
             info(f"Object called - {name} - added to scene")
             self.wrappers.append(ObjectWrapper(name, obj, self.mts))
         else:
-            warning(f"Object called - {name} - is None and not added to scene")
+            warning(f"Failed to add Object called - {name} - to the scene")
 
     def add_pointcloud(
         self, name: str, pc: PointCloud, size: float = 0.2, data: np.ndarray = None
     ):
-        if pc is not None:
+        if pc is not None and isinstance(pc, PointCloud):
             info(f"Point could called - {name} - added to scene")
             self.wrappers.append(PointCloudWrapper(name, pc, self.mts, size, data=data))
         else:
-            warning(f"Point could called - {name} - is None and not added to scene")
+            warning(f"Failed to add PointCould called - {name} - to the scene")
 
     def add_linestring(self, name: str, ls: LineString, data: Any = None):
-        if ls is not None:
+        if ls is not None and isinstance(ls, LineString):
             info(f"List of LineStrings called - {name} - added to scene")
             self.wrappers.append(LineStringWrapper(name, ls, self.mts, data))
         else:
-            warning(f"Road network called - {name} - is None and not added to scene")
+            warning(f"Failed to add LineString - {name} - to the scene")
 
     def add_multilinestring(self, name: str, mls: MultiLineString, data: Any = None):
-        if mls is not None:
+        if mls is not None and isinstance(mls, MultiLineString):
             info(f"MultiLineString called - {name} - added to scene")
             self.wrappers.append(MultiLineStringWrapper(name, mls, self.mts, data))
         else:
-            warning(f"MultiLineString called - {name} - is None and not added to scene")
+            warning(f"Failed to att MultiLineString called - {name} - to the scene")
 
     def add_building(self, name: str, building: Building):
-        if building is not None:
+        if building is not None and isinstance(building, Building):
             info(f"Building called - {name} - added to scene")
             self.wrappers.append(BuildingWrapper(name, building, self.mts))
         else:
-            warning(f"Building called - {name} - is None and not added to scene")
+            warning(f"Failed to add Building called - {name} - to the scene")
 
     def add_raster(self, name: str, raster: Raster):
         max_size = 10000
-        if raster is not None:
+        if raster is not None and isinstance(raster, Raster):
             if np.max(raster.data.shape) > max_size:
                 info(f"Multi raster called - {name} - added to scene")
                 self.wrappers.append(MultiRasterWrapper(name, raster, max_size))
@@ -132,17 +132,17 @@ class Scene:
                 info(f"Raster called - {name} - added to scene")
                 self.wrappers.append(RasterWrapper(name, raster))
         else:
-            warning(f"Raster called - {name} - is None and not added to scene")
+            warning(f"Failed to add raster called - {name} - to the scene")
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
-        if geometries is not None:
+        if geometries is not None and isinstance(geometries, list):
             info(f"Geometry collection called - {name} - added to scene")
             self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
         else:
             warning(f"Failed to add geometry collection called - {name} - to scene")
 
     def add_bounds(self, name: str, bounds: Bounds):
-        if bounds is not None:
+        if bounds is not None and isinstance(bounds, Bounds):
             info(f"Bounds called - {name} - added to scene")
             self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
         else:
@@ -180,7 +180,7 @@ class Scene:
             bb = BoundingBox(vertices)
             return bb
         else:
-            warning("No vertices found in scene")
+            warning("No vertices found in the scene")
             return None
 
     def offset_mesh_part_ids(self):

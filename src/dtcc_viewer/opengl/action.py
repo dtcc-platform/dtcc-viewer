@@ -120,7 +120,7 @@ class Action:
         self.gguip = GuiParametersGlobal()
 
     def initialise_camera(self, bb_global: BoundingBox):
-        self._set_camera_distance_to_target(1.5 * bb_global.size)
+        self._set_camera_distance_to_target(2.0 * bb_global.size)
         self._calc_near_far_planes(bb_global)
         self._save_init_camera()
 

@@ -162,6 +162,8 @@ class GeometriesWrapper(Wrapper):
                 lss.append(geometry)
             elif isinstance(geometry, Bounds):
                 bds.append(geometry)
+            else:
+                warning(f"Type {type(geometry)} is not of type Geometry. Skipping.")
 
         return meshes, mls, lss, pcs, mss, srfs, bds
 
