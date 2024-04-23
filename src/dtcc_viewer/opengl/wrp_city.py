@@ -4,7 +4,7 @@ from collections import Counter
 from dtcc_model import City, MultiSurface, Building, Mesh, Terrain
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_model.object.object import GeometryType
@@ -43,10 +43,8 @@ class CityWrapper(Wrapper):
 
     name: str
     bb_global: BoundingBox = None
-    building_mw: MeshWrapper = None
-    building_submeshes: Submeshes
-    terrain_mw: MeshWrapper = None
-    terrain_submeshes: Submeshes
+    mesh_bld: MeshWrapper = None
+    mesh_ter: MeshWrapper = None
 
     def __init__(self, name: str, city: City, mts: int) -> None:
         """Initialize the MeshData object.
@@ -64,43 +62,35 @@ class CityWrapper(Wrapper):
         self.dict_data = {}
 
         # Read the city model and generate the mesh geometry for buildings and terrain
-        (t_mesh, t_submeshes) = self._get_terrain_mesh(city)
-        (b_mesh, b_submeshes) = self._generate_building_mesh(city)
+        (mesh_t, parts_t) = self._get_terrain_mesh(city)
+        (mesh_b, parts_b) = self._generate_building_mesh(city)
 
-        quantities = city.quantities
+        quant = city.quantities
 
-        # Set the global ids for the entire scene
-        if t_submeshes is not None:
-            offset = np.max(t_submeshes.ids) + 1
-            if b_submeshes is not None:
-                b_submeshes.offset_ids(offset)
+        if mesh_t is not None:
+            self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, quant, parts_t)
 
-        if t_mesh is not None:
-            name = "terrain"
-            self.terrain_mw = MeshWrapper(name, t_mesh, mts, quantities, t_submeshes)
-
-        if b_mesh is not None:
-            name = "buildings"
-            self.building_mw = MeshWrapper(name, b_mesh, mts, quantities, b_submeshes)
+        if mesh_b is not None:
+            self.mesh_bld = MeshWrapper("buildings", mesh_b, mts, quant, parts_b)
 
         info("CityWrapper initialized")
 
     def preprocess_drawing(self, bb_global: BoundingBox):
-        if self.terrain_mw is not None:
-            self.terrain_mw.preprocess_drawing(bb_global)
+        if self.mesh_ter is not None:
+            self.mesh_ter.preprocess_drawing(bb_global)
 
-        if self.building_mw is not None:
-            self.building_mw.preprocess_drawing(bb_global)
+        if self.mesh_bld is not None:
+            self.mesh_bld.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
         vertices = np.array([])
 
-        if self.terrain_mw is not None:
-            vertex_pos = self.terrain_mw.get_vertex_positions()
+        if self.mesh_ter is not None:
+            vertex_pos = self.mesh_ter.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-        if self.building_mw is not None:
-            vertex_pos = self.building_mw.get_vertex_positions()
+        if self.mesh_bld is not None:
+            vertex_pos = self.mesh_bld.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         return vertices
@@ -121,7 +111,7 @@ class CityWrapper(Wrapper):
             info("No terrain mesh found in city model")
             return None, None
         else:
-            submeshes = Submeshes(meshes, uuids)
+            submeshes = Parts(meshes, uuids)
             mesh = concatenate_meshes(meshes)
             info(f"Terrain mesh with {len(mesh.faces)} faces was found")
             return mesh, submeshes
@@ -150,7 +140,7 @@ class CityWrapper(Wrapper):
             info("No building meshes found in city model")
             return None, None
         else:
-            submeshes = Submeshes(meshes, uuids)
+            submeshes = Parts(meshes, uuids)
             mesh = concatenate_meshes(meshes)
             info(f"Mesh with {len(mesh.faces)} faces was retrieved from buildings")
             return mesh, submeshes

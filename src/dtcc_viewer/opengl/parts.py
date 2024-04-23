@@ -4,22 +4,39 @@ from pprint import pp
 from dtcc_viewer.logging import info, warning
 
 
-class Submeshes:
+class Parts:
+    """Class for storing sub sets "parts" of a mesh.
+
+    Each part is a submesh with its own face indices. The class also stores meta data
+    and ids for each part. The ids are used to identify clickable objects in the scene.
+
+
+    Attributes
+    ----------
+    face_start_indices : np.ndarray[int]
+        Array of face indices for the start of each part.
+    face_end_indices : np.ndarray[int]
+        Array of face indices for the end of each part.
+
+    bb : BoundingBox
+        Bounding box for the entire collection of objects in the scene.
+    max_tex_size : int
+        Maximum texture size allowed by the graphics card.
+    """
+
     face_start_indices: np.ndarray
     face_end_indices: np.ndarray
-    face_count_per_submesh: np.ndarray
+    face_count_per_part: np.ndarray
     ids: np.ndarray
     selected: np.ndarray
     meta_data: dict
     ids_2_uuids: dict  # Mapping between id (int) and uuid (str)
-    id_offset: int
-    count: int  # Number of submeshes
+    count: int  # Number of parts
     f_count: int  # Total number of faces
 
     def __init__(self, meshes: list[Mesh], uuids: list[str]):
         self.count = len(meshes)
         self._process_data(meshes, uuids)
-        self.id_offset = 0
 
     def _process_data(self, meshes: list[Mesh], uuids: list[str]):
         face_count_per_submesh = []
@@ -44,7 +61,7 @@ class Submeshes:
             ids.append(counter)
             counter += 1
 
-        self.face_count_per_submesh = np.array(face_count_per_submesh)
+        self.face_count_per_part = np.array(face_count_per_submesh)
         self.f_count = tot_f_count
         self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
         self.face_start_indices = np.array(face_start_indices)
@@ -69,11 +86,9 @@ class Submeshes:
         print(self.face_end_indices)
         print(self.ids)
 
-    def set_id_offset(self, offset):
-        self.id_offset = offset
-
     def toogle_selected(self, id):
         self.selected[id] = not self.selected[id]
 
-    def get_face_ids(self, id, mesh: Mesh):
-        len(mesh.faces)
+    def get_face_ids(self):
+        face_ids = np.repeat(self.ids, self.face_count_per_part)
+        return face_ids

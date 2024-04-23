@@ -21,10 +21,8 @@ from dtcc_viewer.shaders.shaders_grid import (
 class GlGrid:
     """A class for rendering a grid and coordinate axes for the OpenGL scene."""
 
-    bb_local: BoundingBox
     bb_global: BoundingBox
     ulocs_grid: dict  # Uniform locations for the shader program
-    ulocs_axes: dict  # Uniform locations for the shader program
     shader_grid: int  # Shader program
 
     VAO_grid: int  # Vertex array object
@@ -43,11 +41,7 @@ class GlGrid:
     def __init__(self, bb_global: BoundingBox):
 
         self.bb_global = bb_global
-        self.bb_local = bb_global
-
         self.ulocs_grid = {}
-        self.ulocs_axes = {}
-
         self.grid_spaces = np.array(
             [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
         )
@@ -57,7 +51,7 @@ class GlGrid:
         info(f"Grid size: {self.size}")
         grid_size = (self.size, self.size)
         grid_spacing = (1, 1)
-        self._create_grid(grid_size, grid_spacing)
+        self._create_grid(grid_size, grid_spacing, bb_global.zmin)
         self._create_vao()
         self._create_shader()
 
@@ -76,7 +70,7 @@ class GlGrid:
 
             action.gguip.grid_sf = spc
 
-    def _create_grid(self, size: tuple, spacing: tuple) -> None:
+    def _create_grid(self, size: tuple, spacing: tuple, zpos: float) -> None:
         """Create a grid for rendering."""
 
         # Update size to be a multiple of the spacing
@@ -109,7 +103,9 @@ class GlGrid:
         ycoord[n_gridlines_x * 2 : n_gridlines_x * 2 + n_gridlines_y] = y3
         ycoord[n_gridlines_x * 2 + n_gridlines_y :] = y4
 
-        zcoord = np.zeros((n_gridlines_x * 2 + n_gridlines_y * 2))
+        print("zpos " + str(zpos))
+
+        zcoord = zpos * np.ones((n_gridlines_x * 2 + n_gridlines_y * 2))
         coord = np.zeros((len(xcoord) * 3))
         coord[0::3] = xcoord
         coord[1::3] = ycoord

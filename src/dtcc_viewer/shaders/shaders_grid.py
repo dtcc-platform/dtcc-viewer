@@ -17,7 +17,7 @@ out vec3 frag_position;
 
 void main()
 {    
-    vec4 world_pos = model * vec4(a_position * scale, 1.0);
+    vec4 world_pos = model * vec4(a_position[0] * scale, a_position[1] * scale, a_position[2], 1.0);
     
     float xdir = 1.0;
     float ydir = 1.0;

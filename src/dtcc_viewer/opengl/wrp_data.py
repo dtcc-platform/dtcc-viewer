@@ -5,7 +5,7 @@ from dtcc_model import Mesh
 from dtcc_model import PointCloud
 from abc import ABC, abstractmethod
 from shapely.geometry import LineString, MultiLineString
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from typing import Any
 
 
@@ -100,8 +100,8 @@ class MeshDataWrapper(DataWrapper):
             warning(f"Data called {name} was not added to data dictionary.")
             return False
 
-    def add_submeshes_data(self, name: str, data: np.ndarray, submeshes: Submeshes):
-        (data_mat, val_caps) = self._process_submeshes_data(data, submeshes)
+    def add_parts_data(self, name: str, data: np.ndarray, submeshes: Parts):
+        (data_mat, val_caps) = self._process_parts_data(data, submeshes)
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
@@ -112,7 +112,7 @@ class MeshDataWrapper(DataWrapper):
             warning(f"Data called {name} was not added to data dictionary.")
             return False
 
-    def _process_submeshes_data(self, data: np.ndarray, submeshes: Submeshes):
+    def _process_parts_data(self, data: np.ndarray, submeshes: Parts):
 
         if submeshes.f_count != len(self.mesh.faces):
             warning(f"Submesh count does not match data count.")
@@ -120,7 +120,7 @@ class MeshDataWrapper(DataWrapper):
 
         # For example, if data is per building and submeshes are used to define building
         if len(data) == submeshes.count:
-            f_counts = submeshes.face_count_per_submesh
+            f_counts = submeshes.face_count_per_part
             face_data = []
             # repeat the data for each face in the submesh => n_data = n_faces
             for i in range(len(data)):

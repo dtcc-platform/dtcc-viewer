@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_model import City, MultiSurface, Building, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
 from dtcc_model.object.object import GeometryType
@@ -29,8 +29,7 @@ class BuildingWrapper(Wrapper):
 
     name: str
     bb_global: BoundingBox = None
-    building_mw: MeshWrapper = None
-    building_submeshes: Submeshes
+    mesh_wrp: MeshWrapper = None
 
     def __init__(self, name: str, building: Building, mts: int) -> None:
         """Initialize the MeshData object.
@@ -49,7 +48,7 @@ class BuildingWrapper(Wrapper):
 
         mesh = self._get_building_mesh(building)
 
-        self.building_mw = MeshWrapper(name, mesh, mts)
+        self.mesh_wrp = MeshWrapper(name, mesh, mts)
 
     def _get_building_mesh(self, building: Building):
         flat_geom = self._get_highest_lod_building(building)
@@ -70,11 +69,11 @@ class BuildingWrapper(Wrapper):
         return None
 
     def preprocess_drawing(self, bb_global: BoundingBox):
-        if self.building_mw is not None:
-            self.building_mw.preprocess_drawing(bb_global)
+        if self.mesh_wrp is not None:
+            self.mesh_wrp.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
-        vertex_pos = self.building_mw.get_vertex_positions()
+        vertex_pos = self.mesh_wrp.get_vertex_positions()
         return vertex_pos
 
     def _get_terrain_mesh(self, city: City):

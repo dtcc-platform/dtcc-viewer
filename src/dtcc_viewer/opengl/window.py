@@ -143,6 +143,8 @@ class Window:
     def _preprocess_model(self, scene: Scene):
         self.gl_objects = []
 
+        scene.offset_mesh_part_ids()
+
         for wrapper in scene.wrappers:
             if isinstance(wrapper, ObjectWrapper):
                 if wrapper.mesh_wrp_1 is not None:
@@ -153,18 +155,18 @@ class Window:
                     self.gl_objects.append(GlLines(wrapper.lss_wrp))
 
             elif isinstance(wrapper, CityWrapper):
-                if wrapper.building_mw is not None:
-                    self.gl_objects.append(GlMesh(wrapper.building_mw))
-                if wrapper.terrain_mw is not None:
-                    self.gl_objects.append(GlMesh(wrapper.terrain_mw))
+                if wrapper.mesh_bld is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_bld))
+                if wrapper.mesh_ter is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_ter))
 
             elif isinstance(wrapper, GeometriesWrapper):
                 for mesh_w in wrapper.mesh_wrps:
                     self.gl_objects.append(GlMesh(mesh_w))
                 for srf in wrapper.srf_wrps:
-                    self.gl_objects.append(GlMesh(srf))
+                    self.gl_objects.append(GlMesh(srf.mesh_wrp))
                 for ms in wrapper.ms_wrps:
-                    self.gl_objects.append(GlMesh(ms))
+                    self.gl_objects.append(GlMesh(ms.mesh_wrp))
                 for mls_wrp in wrapper.mls_wrps:
                     self.gl_objects.append(GlLines(mls_wrp))
                 for ls_wrp in wrapper.ls_wrps:
@@ -184,7 +186,7 @@ class Window:
                 self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
 
             elif isinstance(wrapper, BuildingWrapper):
-                self.gl_objects.append(GlMesh(wrapper.building_mw))
+                self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
 
             elif isinstance(wrapper, MultiLineStringWrapper):
                 self.gl_objects.append(GlLines(wrapper))
@@ -224,7 +226,10 @@ class Window:
 
         # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
-        self.gl_axes = GlAxes(1.0)
+
+        print("zmin" + str(scene.bb.zmin))
+
+        self.gl_axes = GlAxes(1.0, scene.bb.zmin)
 
         return True
 
@@ -301,22 +306,6 @@ class Window:
             glfw.swap_buffers(self.window)
 
         glfw.terminate()
-
-    def _render_point_clouds(self):
-        """Render all the point clouds in the window.
-
-        This method renders all the point cloud objects in the window using OpenGL.
-        """
-        for pc in self.pcs:
-            if pc.guip.show:
-                pc.render(self.action, self.guip)
-
-    def _render_road_networks(self):
-        """Render all the road networks in the window."""
-        for rn in self.lss:
-            mguip = rn.guip
-            if mguip.show:
-                rn.render(self.action, self.guip)
 
     def _window_resize_callback(self, window, width, height):
         """Callback for window resize events.

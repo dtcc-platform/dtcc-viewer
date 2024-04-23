@@ -11,8 +11,12 @@ uniform float scale;
 
 out vec3 v_color;
 void main()
-{    
-    vec4 world_pos = model * vec4(a_position * scale, 1.0);
+{   
+    // Scale when the cs is in the origin position.
+    vec4 scale_pos = vec4(a_position * scale, 1.0);
+
+    // Move to world origin
+    vec4 world_pos = model * scale_pos;
     
     gl_Position = project * view * world_pos;
 

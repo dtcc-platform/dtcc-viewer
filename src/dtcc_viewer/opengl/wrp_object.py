@@ -10,7 +10,7 @@ from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrapper import Wrapper
 from shapely.geometry import LineString, MultiLineString
 
@@ -132,7 +132,7 @@ class ObjectWrapper(Wrapper):
                 meshes = [meshes]
             mesh = concatenate_meshes(meshes)
             ids = [str(num) for num in np.arange(0, len(meshes)).tolist()]
-            submeshes = Submeshes(meshes, ids)
+            submeshes = Parts(meshes, ids)
             return mesh, submeshes
 
         return None, None
@@ -145,7 +145,7 @@ class ObjectWrapper(Wrapper):
         (meshes, results) = self._triangulate_multisurfaces(ms_list)
         mesh = concatenate_meshes(meshes)
         ids = [str(num) for num in np.arange(0, len(meshes)).tolist()]
-        submeshes = Submeshes(meshes, ids)
+        submeshes = Parts(meshes, ids)
 
         return mesh, submeshes
 

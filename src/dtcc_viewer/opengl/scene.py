@@ -80,7 +80,6 @@ class Scene:
             warning(f"Surface called - {name} - is None and not added to scene")
 
     def add_city(self, name: str, city: City):
-        """Append a city with data and/or colors to the scene"""
         if city is not None:
             info(f"City called - {name} - added to scene")
             self.wrappers.append(CityWrapper(name, city, self.mts))
@@ -88,26 +87,18 @@ class Scene:
             warning(f"City called - {name} - is None and not added to scene")
 
     def add_object(self, name: str, obj: Object):
-        """Append a generic object with data and/or colors to the scene"""
         if obj is not None:
             info(f"Object called - {name} - added to scene")
-            obj_w = ObjectWrapper(name=name, obj=obj, mts=self.mts)
-            self.wrappers.append(obj_w)
+            self.wrappers.append(ObjectWrapper(name, obj, self.mts))
         else:
             warning(f"Object called - {name} - is None and not added to scene")
 
     def add_pointcloud(
-        self,
-        name: str,
-        pc: PointCloud,
-        size: float = 0.2,
-        data: np.ndarray = None,
+        self, name: str, pc: PointCloud, size: float = 0.2, data: np.ndarray = None
     ):
-        """Append a pointcloud with data to color the scene"""
         if pc is not None:
             info(f"Point could called - {name} - added to scene")
-            pc_w = PointCloudWrapper(name, pc, self.mts, size, data=data)
-            self.wrappers.append(pc_w)
+            self.wrappers.append(PointCloudWrapper(name, pc, self.mts, size, data=data))
         else:
             warning(f"Point could called - {name} - is None and not added to scene")
 
@@ -137,12 +128,10 @@ class Scene:
         if raster is not None:
             if np.max(raster.data.shape) > max_size:
                 info(f"Multi raster called - {name} - added to scene")
-                mrst_w = MultiRasterWrapper(name=name, raster=raster, max_size=max_size)
-                self.wrappers.append(mrst_w)
+                self.wrappers.append(MultiRasterWrapper(name, raster, max_size))
             else:
                 info(f"Raster called - {name} - added to scene")
-                rst_w = RasterWrapper(name=name, raster=raster)
-                self.wrappers.append(rst_w)
+                self.wrappers.append(RasterWrapper(name, raster))
         else:
             warning(f"Raster called - {name} - is None and not added to scene")
 
@@ -167,9 +156,7 @@ class Scene:
         # used to center move everything to the origin.
         self.bb = self._calculate_bb()
 
-        # Move the bounding box so that everything is in positive z-space. This move
-        # will impact all the preprocessing below.
-        self.bb.move_to_zero_z()
+        print("zmin" + str(self.bb.zmin))
 
         if self.bb is None:
             warning("No bounding box found for the scene.")
@@ -177,6 +164,8 @@ class Scene:
 
         for wrapper in self.wrappers:
             wrapper.preprocess_drawing(self.bb)
+
+        self.bb.move_to_center()
 
         info(f"Scene preprocessing completed successfully")
         return True
@@ -196,3 +185,35 @@ class Scene:
         else:
             warning("No vertices found in scene")
             return None
+
+    def offset_mesh_part_ids(self):
+        """Offset submesh ids to enable clicking"""
+        next_id = 0
+        for wrp in self.wrappers:
+            if isinstance(wrp, MeshWrapper):
+                next_id = self.update_ids(wrp, next_id)
+            elif isinstance(wrp, MultiSurfaceWrapper):
+                next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, MultiSurfaceWrapper):
+                next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, CityWrapper):
+                if wrp.mesh_ter is not None:
+                    next_id = self.update_ids(wrp.mesh_ter, next_id)
+                if wrp.mesh_bld is not None:
+                    next_id = self.update_ids(wrp.mesh_bld, next_id)
+            elif isinstance(wrp, GeometriesWrapper):
+                for mesh_wrp in wrp.mesh_wrps:
+                    next_id = self.update_ids(mesh_wrp, next_id)
+                for ms_wrp in wrp.ms_wrps:
+                    next_id = self.update_ids(ms_wrp.mesh_wrp, next_id)
+                for srf_wrp in wrp.srf_wrps:
+                    next_id = self.update_ids(srf_wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, BuildingWrapper):
+                next_id = self.update_ids(wrp.mesh_wrp, next_id)
+
+    def update_ids(self, mesh_wrp: MeshWrapper, next_id):
+        max_id = np.max(mesh_wrp.parts.ids)
+        mesh_wrp.parts.offset_ids(next_id)
+        mesh_wrp.update_ids_from_parts()
+        next_id += max_id + 1
+        return next_id

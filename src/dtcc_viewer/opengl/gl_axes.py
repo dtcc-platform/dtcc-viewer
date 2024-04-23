@@ -30,7 +30,7 @@ class GlAxes:
 
     size: np.ndarray  # Grid sizes for the grid lines
 
-    def __init__(self, size: float):
+    def __init__(self, size: float, zpos: float):
 
         self.ulocs = {}
         self.size = size
@@ -38,6 +38,10 @@ class GlAxes:
         h = 1.0 * size
         r = 0.02 * size
         n = 20
+
+        model_vector = pyrr.Vector3([0.0, 0.0, zpos])
+        self.model_matrix = pyrr.matrix44.create_from_translation(model_vector)
+
         self._create_mesh(h, r, n)
         self._create_vao()
         self._create_shader()
@@ -149,10 +153,9 @@ class GlAxes:
         glUseProgram(self.shader)
 
         # MVP Calculations
-        move = action.camera.get_move_matrix()
         view = action.camera.get_view_matrix(action.gguip)
         proj = action.camera.get_projection_matrix(action.gguip)
-        glUniformMatrix4fv(self.ulocs["model"], 1, GL_FALSE, move)
+        glUniformMatrix4fv(self.ulocs["model"], 1, GL_FALSE, self.model_matrix)
         glUniformMatrix4fv(self.ulocs["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.ulocs["project"], 1, GL_FALSE, proj)
         glUniform1f(self.ulocs["scale"], action.gguip.axes_sf)

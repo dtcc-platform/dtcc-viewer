@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_model import Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_model.quantity import Quantity
@@ -45,7 +45,7 @@ class MeshWrapper(Wrapper):
     name: str
     bb_local: BoundingBox
     bb_global: BoundingBox = None
-    submeshes: Submeshes = None
+    parts: Parts = None
     data_wrapper: MeshDataWrapper = None
 
     def __init__(
@@ -54,7 +54,7 @@ class MeshWrapper(Wrapper):
         mesh: Mesh,
         mts: int,
         data: Any = None,  # Dict, np.ndarray, Quantity or list[Quantity]
-        submeshes: Submeshes = None,
+        parts: Parts = None,
     ) -> None:
         """Initialize the MeshWrapper object.
 
@@ -68,24 +68,25 @@ class MeshWrapper(Wrapper):
             Max texture size for the data.
         data : Any, optional
             Additional mesh data (dict or array) for color calculation (default is None).
-        submeshes : Submeshes, optional
-            Faces grouped into a submeshes object for clickability (default is None).
+        parts : Parts, optional
+            Faces grouped into a parts object for clickability (default is None).
         shading : MeshShading, optional
             Shading option (default is MeshShading.wireshaded).
         """
         self.name = name
         self.dict_data = {}
-        self.submeshes = submeshes
+        self.parts = parts
         self.data = []
         self.data_wrapper = None
 
-        self._append_data(mesh, mts, data, submeshes)
+        self._append_data(mesh, mts, data, parts)
         self._restructure_mesh(mesh)
 
-        if self.submeshes is None:
+        if self.parts is None:
             info("Submesh is None -> faces are used as defualt submeshes")
+            self._create_default_mesh_parts(mesh)
         else:
-            self._create_ids_from_submeshes(self.submeshes)  # Picking ids
+            self._create_ids_from_mesh_parts(self.parts)  # Picking ids
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -93,9 +94,7 @@ class MeshWrapper(Wrapper):
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
-    def _append_data(
-        self, mesh: Mesh, mts: int, data: Any = None, submeshes: Submeshes = None
-    ):
+    def _append_data(self, mesh: Mesh, mts: int, data: Any = None, parts: Parts = None):
 
         self.data_wrapper = MeshDataWrapper(mesh, mts)
         results = []
@@ -109,11 +108,11 @@ class MeshWrapper(Wrapper):
                 success = self.data_wrapper.add_data("Data", data)
                 results.append(success)
             elif type(data) == Quantity:
-                success = self._add_quantity_data(mesh, quantity, submeshes)
+                success = self._add_quantity_data(mesh, quantity, parts)
                 results.append(success)
             elif type(data) == list[Quantity]:
                 for quantity in data:
-                    success = self._add_quantity_data(mesh, quantity, submeshes)
+                    success = self._add_quantity_data(mesh, quantity, parts)
                     results.append(success)
 
         if data is None or not np.any(results):
@@ -121,11 +120,11 @@ class MeshWrapper(Wrapper):
             self.data_wrapper.add_data("Vertex Y", mesh.vertices[:, 1])
             self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
 
-    def _add_quantity_data(self, mesh: Mesh, q: Quantity, submeshes: Submeshes):
+    def _add_quantity_data(self, mesh: Mesh, q: Quantity, parts: Parts):
         n = len(q.values)
-        if submeshes is not None:
-            if n == len(submeshes):
-                self.data_wrapper.add_submeshes_data(q.name, q.values, submeshes)
+        if parts is not None:
+            if n == len(parts):
+                self.data_wrapper.add_parts_data(q.name, q.values, parts)
                 return True
         elif n == len(mesh.vertices) or n == len(mesh.faces):
             self.data_wrapper.add_data(q.name, q.values)
@@ -212,11 +211,11 @@ class MeshWrapper(Wrapper):
         self.edges = np.array(self.edges, dtype="uint32").flatten()
         self.faces = np.array(self.faces, dtype="uint32").flatten()
 
-    def _create_ids_from_submeshes(self, submeshes: Submeshes):
+    def _create_ids_from_mesh_parts(self, parts: Parts):
         # Restructures submesh ids to the face index structure
-        face_per_submesh = submeshes.face_end_indices - submeshes.face_start_indices + 1
-        ids_in_submesh_shape = submeshes.ids
-        ids_in_faces_shape = np.repeat(ids_in_submesh_shape, face_per_submesh)
+        face_per_part = parts.face_end_indices - parts.face_start_indices + 1
+        ids_in_parts_shape = parts.ids
+        ids_in_faces_shape = np.repeat(ids_in_parts_shape, face_per_part)
 
         # Restructure the face ids to the vertex structure
         ids_in_vertex_shape = np.repeat(ids_in_faces_shape, 3)
@@ -229,15 +228,12 @@ class MeshWrapper(Wrapper):
             info("Replacing default face ids with submesh ids in the vertices")
             self.vertices[8::9] = ids_in_vertex_shape
 
-    def _create_default_submeshes(self, mesh):
-        # The default structure is such that each face is represented as a submesh
-        # which makes the faces clickable in the viewer.
+    def _create_default_mesh_parts(self, mesh):
+        self.parts = Parts([mesh], ["Default"])
 
-        # faces = [f1v1, f1v2, f1v3, f2v1, f2v2, f2v3, ...]
-        n_faces = len(self.faces) // 3
+    def update_ids_from_parts(self):
+        face_ids = self.parts.get_face_ids()
 
-        # Start and end indices are the same, only one face is grouped in each submesh
-        start_faces = np.arange(0, n_faces)
-        end_faces = np.arange(0, n_faces)
-        id = np.arange(0, n_faces)
-        self.submeshes = Submeshes(start_faces, end_faces, id)
+        # New vertex structure with 3 unique vertices per face
+        vertex_ids = np.repeat(face_ids, 3)
+        self.vertices[8::9] = vertex_ids

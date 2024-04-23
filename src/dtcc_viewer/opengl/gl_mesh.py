@@ -10,7 +10,7 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 
@@ -113,7 +113,7 @@ class GlMesh(GlObject):
     light_color: np.ndarray  # color of scene light [1 x 3]
     loop_counter: int  # loop counter for animation of scene light source
 
-    submeshes: Submeshes  # Defines clickable objects and their metadata in the mesh
+    submeshes: Parts  # Defines clickable objects and their metadata in the mesh
 
     cast_shadows: bool  # If the mesh should cast shadows
     recieve_shadows: bool  # If the mesh should recieve shadows
@@ -125,7 +125,7 @@ class GlMesh(GlObject):
         self.vertices = mesh_wrapper.vertices
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
-        self.submeshes = mesh_wrapper.submeshes
+        self.submeshes = mesh_wrapper.parts
         self.data_wrapper = mesh_wrapper.data_wrapper
 
         self.n_vertices = len(self.vertices) // 9

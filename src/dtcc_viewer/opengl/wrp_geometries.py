@@ -4,7 +4,7 @@ from collections import Counter
 from dtcc_model import Geometry, Mesh, Surface, MultiSurface, PointCloud, Bounds
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.submeshes import Submeshes
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_model.object.object import GeometryType
@@ -13,6 +13,7 @@ from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
+from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from shapely.geometry import LineString, MultiLineString
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_builder import *
@@ -50,8 +51,8 @@ class GeometriesWrapper(Wrapper):
     ls_wrps: list[LineStringWrapper]
     mesh_wrps: list[MeshWrapper]
     pc_wrps: list[PointCloudWrapper]
-    ms_wrps: list[MeshWrapper]
-    srf_wrps: list[MeshWrapper]
+    ms_wrps: list[MultiSurfaceWrapper]
+    srf_wrps: list[SurfaceWrapper]
     bnds_wrps: list[BoundsWrapper]
 
     def __init__(self, name: str, geometries: list[Geometry], mts: int) -> None:
@@ -131,6 +132,10 @@ class GeometriesWrapper(Wrapper):
             vertex_pos = bnd_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
+        for mls_wrp in self.mls_wrps:
+            vertex_pos = mls_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
         return vertices
 
     def _sort_geometries(self, geometries: list[Geometry]):
@@ -171,22 +176,14 @@ class GeometriesWrapper(Wrapper):
     def _create_ms_wrappers(self, mss: list[MultiSurface], mts: int):
         mss_wrps = []
         for i, ms in enumerate(mss):
-            mesh = ms.mesh()
-            if mesh is not None:
-                mss_wrps.append(MeshWrapper(f"multi surface {i}", mesh, mts))
-            else:
-                warning(f"Failed to create mesh for multi surface {i}")
+            mss_wrps.append(MultiSurfaceWrapper(f"multi surface {i}", ms, mts))
 
         return mss_wrps
 
     def _create_srf_wrappers(self, srfs: list[Surface], mts: int):
         srf_wrps = []
         for i, srf in enumerate(srfs):
-            mesh = srf.mesh()
-            if mesh is not None:
-                srf_wrps.append(MeshWrapper(f"surface {i}", mesh, mts))
-            else:
-                warning(f"Failed to create mesh for surface {i}")
+            srf_wrps.append(SurfaceWrapper(f"surface {i}", srf, mts))
 
         return srf_wrps
 

@@ -110,6 +110,17 @@ class BoundingBox:
         self.origin = np.array([0, 0, (self.zmax + self.zmin) / 2.0])
         self.calc_center_vec()
 
+    def move_to_center(self):
+        """Move the bounding box so everything is centered."""
+        self.xmax -= self.mid_pt[0]
+        self.xmin -= self.mid_pt[0]
+        self.ymax -= self.mid_pt[1]
+        self.ymin -= self.mid_pt[1]
+        self.zmax -= self.mid_pt[2]
+        self.zmin -= self.mid_pt[2]
+        self.origin = self.mid_pt
+        self.calc_center_vec()
+
     def calc_size(self):
         """Calculate the size of the bounding box as the length of the diagonal."""
         min_pt = np.array([self.xmin, self.ymin, self.zmin])
