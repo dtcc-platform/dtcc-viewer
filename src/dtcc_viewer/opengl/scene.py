@@ -3,6 +3,7 @@ from OpenGL.GL import *
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
@@ -12,18 +13,8 @@ from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import (
-    Mesh,
-    PointCloud,
-    City,
-    Object,
-    Building,
-    Raster,
-    Geometry,
-    Surface,
-    MultiSurface,
-    Bounds,
-)
+from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster
+from dtcc_model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
@@ -43,12 +34,11 @@ class Scene:
         List of Wrapper objects representing drawable geometry.
     bb : BoundingBox
         Bounding box for the entire collection of objects in the scene.
-    max_tex_size : int
-        Maximum texture size allowed by the graphics card.
+    mts : int
+        Maximum texture size (mts) allowed by the graphics card.
     """
 
     wrappers: list[Wrapper]
-
     bb: BoundingBox
     mts: int
 
@@ -136,8 +126,11 @@ class Scene:
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
         if geometries is not None and isinstance(geometries, list):
-            info(f"Geometry collection called - {name} - added to scene")
-            self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
+            if all(isinstance(item, Geometry) for item in geometries):
+                info(f"Geometry collection called - {name} - added to scene")
+                self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
+            else:
+                warning(f"Failed to add geometry collection called - {name} - to scene")
         else:
             warning(f"Failed to add geometry collection called - {name} - to scene")
 
@@ -147,6 +140,20 @@ class Scene:
             self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
         else:
             warning(f"Failed to add bounds called - {name} - to scene")
+
+    def add_grid(self, name: str, grid: Grid):
+        if grid is not None and isinstance(grid, Grid):
+            info(f"Grid called - {name} - added to scene")
+            self.wrappers.append(GridWrapper(name, grid, self.mts))
+        else:
+            warning(f"Failed to add grid called - {name} - to scene")
+
+    def add_volume_grid(self, name: str, grid: VolumeGrid):
+        if grid is not None and isinstance(grid, VolumeGrid):
+            info(f"Grid called - {name} - added to scene")
+            self.wrappers.append(VolumeGridWrapper(name, grid, self.mts))
+        else:
+            warning(f"Failed to add grid called - {name} - to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""

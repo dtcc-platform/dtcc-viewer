@@ -488,7 +488,7 @@ class GlMesh(GlObject):
         self.uloc_vnor["clip_y"] = glGetUniformLocation(self.shader_vnor, "clip_y")
         self.uloc_vnor["clip_z"] = glGetUniformLocation(self.shader_vnor, "clip_z")
 
-    def render_lines(
+    def render_wireframe(
         self,
         action: Action,
         env: Environment,
@@ -613,7 +613,7 @@ class GlMesh(GlObject):
         glDisable(GL_POLYGON_OFFSET_FILL)
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        self.render_lines(action, env, mguip, ws_pass=2)
+        self.render_wireframe(action, env, mguip, ws_pass=2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     def render_shadows_pass1(self, lsm: np.ndarray):
@@ -791,5 +791,5 @@ class GlMesh(GlObject):
     def _get_clip_domains(self):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
         return xdom, ydom, zdom

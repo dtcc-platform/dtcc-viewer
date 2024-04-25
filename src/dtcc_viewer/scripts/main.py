@@ -11,7 +11,7 @@ from pprint import pp
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 from dtcc_io import load_raster
-from dtcc_model import City, Mesh, PointCloud, Object, Raster
+from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
@@ -266,13 +266,32 @@ def surface_example():
     surface.view()
 
 
+def grid_example():
+    bounds = Bounds(-12, -12, 12, 12, 0, 0)
+    grid = Grid(width=30, height=50, bounds=bounds)
+    grid.view()
+
+
+def volume_grid_example():
+    bounds = Bounds(-2, -3, 2, 3, -4, 4)
+    volume_grid = VolumeGrid(width=26, height=31, depth=43, bounds=bounds)
+    volume_grid.view()
+
+
 def crasch_test():
 
     window = Window(1200, 800)
     scene = Scene()
 
+    vertices = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0], [5.0, 2.0, 3.0]])
+    faces = np.array([[0, 1, 2]])
+
+    mesh = Mesh(vertices=vertices, faces=faces)
+
     wrong_input = np.zeros(5)
     wrong_list = [7, 4.5, "text", None]
+
+    scene.add_mesh("crasch mesh", mesh, None)
     scene.add_mesh("crasch mesh", None, None)
     scene.add_mesh("crasch mesh", wrong_input, None)
     scene.add_multisurface("crasch ms", None)
@@ -302,25 +321,27 @@ if __name__ == "__main__":
     os.system("clear")
     print("-------- View test started from main function -------")
     set_log_level("INFO")
-    pointcloud_example_1()
+    # pointcloud_example_1()
     pointcloud_example_2()
     mesh_example_1()
-    mesh_example_2()
-    mesh_example_3()
-    multi_geometry_example_1()
-    building_example_2()
-    linestring_example_2()
-    city_example_1()
-    building_example_1()
-    object_example_1()
-    object_example_2()
-    raster_example_1()
-    raster_example_2()
-    raster_example_3()
-    raster_example_4()
-    geometries_example()
-    bounds_example()
-    multilinestring_example()
-    multisurface_example()
-    surface_example()
-    crasch_test()
+    # mesh_example_2()
+    # mesh_example_3()
+    # multi_geometry_example_1()
+    # building_example_2()
+    # linestring_example_2()
+    # city_example_1()
+    # building_example_1()
+    # object_example_1()
+    # object_example_2()
+    # raster_example_1()
+    # raster_example_2()
+    # aster_example_3()
+    # raster_example_4()
+    # geometries_example()
+    # bounds_example()
+    # multilinestring_example()
+    # multisurface_example()
+    # surface_example()
+    # crasch_test()
+    # grid_example()
+    volume_grid_example()

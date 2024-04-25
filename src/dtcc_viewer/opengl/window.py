@@ -24,6 +24,7 @@ from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
@@ -204,6 +205,14 @@ class Window:
 
             elif isinstance(wrapper, PointCloudWrapper):
                 self.gl_objects.append(GlPoints(wrapper))
+
+            elif isinstance(wrapper, GridWrapper):
+                if wrapper.mls_wrp is not None:
+                    self.gl_objects.append(GlLines(wrapper.mls_wrp, False))
+
+            elif isinstance(wrapper, VolumeGridWrapper):
+                if wrapper.mls_wrp is not None:
+                    self.gl_objects.append(GlLines(wrapper.mls_wrp, False))
 
             elif isinstance(wrapper, RasterWrapper):
                 self.gl_objects.append(GlRaster(wrapper))

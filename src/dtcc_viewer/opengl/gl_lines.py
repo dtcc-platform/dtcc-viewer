@@ -63,7 +63,7 @@ class GlLines(GlObject):
     VBO: int  # Vertex buffer object
     EBO: int  # Element buffer object
 
-    def __init__(self, wrapper: LineStringWrapper):
+    def __init__(self, wrapper: LineStringWrapper, draw_colors: bool = True):
         """Initialize the RoadNetworkGL object and set up rendering."""
 
         self.vertices = wrapper.vertices
@@ -85,6 +85,8 @@ class GlLines(GlObject):
 
         self.texture_slot = None
         self.texture_idx = None
+
+        self.guip.color = draw_colors
 
     def _create_textures(self) -> None:
         """Create textures for data."""
@@ -208,7 +210,7 @@ class GlLines(GlObject):
     def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
-        zdom = 1.0 * np.max([self.bb_local.zdom, self.bb_global.zdom])
+        zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])
 
         glUniform1f(self.uniform_locs["clip_x"], (xdom * gguip.clip_dist[0]))
         glUniform1f(self.uniform_locs["clip_y"], (ydom * gguip.clip_dist[1]))

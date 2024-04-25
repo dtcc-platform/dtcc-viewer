@@ -57,11 +57,11 @@ class GlModel:
     uloc_dbpi: dict  # Uniform locations for rendering picking texture on a quad
     uloc_pick: dict  # Uniform locations for the picking shader
 
-    # The model calss also has the shader programs for shadow map and picking rendering
-    # since these are "global" actions performed for the whole model
-    shader_shmp: (
-        int  # Shader program for rendering of the shadow map to the frame buffer
-    )
+    # The GlModel calss also has the shader for shadow maps and picking rendering
+    # since these are "global" actions performed for the whole model. For example, one
+    # GlMesh may cast shadows on another GlMesh so the shadow map needs to be rendered
+    # for the entire model.
+    shader_shmp: int  # Shader program for rendering of the shadow map
     shader_pick: int  # Shader program for picking
     shader_dbsh: int  # Shader program for debug rendering of the shadow map to a quad
     shader_dbpi: int  # Shader program for debug rendering of picking texture to a quad
@@ -415,9 +415,9 @@ class GlModel:
 
     def render(self, action: Action) -> None:
         self._render_meshes(action)
-        self._render_pcs(action)
-        self._render_lss(action)
-        self._render_txq(action)
+        self._render_points(action)
+        self._render_lines(action)
+        self._render_rasters(action)
 
         self._update_light_position()
         self._update_data_caps()
@@ -425,7 +425,7 @@ class GlModel:
 
     def _render_meshes(self, action: Action) -> None:
         if self.guip.shading == Shading.WIREFRAME:
-            self._render_lines(action)
+            self._render_wireframe(action)
         elif self.guip.shading == Shading.AMBIENT:
             self._render_ambient(action)
         elif self.guip.shading == Shading.DIFFUSE:
@@ -447,32 +447,32 @@ class GlModel:
                 if obj.guip.show:
                     obj.render_normals(action)
 
-    def _render_pcs(self, action: Action) -> None:
+    def _render_points(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlPoints):
                 guip = obj.guip
                 if guip.show:
                     obj.render(action)
 
-    def _render_lss(self, action: Action) -> None:
+    def _render_lines(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlLines):
                 guip = obj.guip
                 if guip.show:
                     obj.render(action)
 
-    def _render_txq(self, action: Action) -> None:
+    def _render_rasters(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlRaster):
                 guip = obj.guip
                 if guip.show:
                     obj.render(action)
 
-    def _render_lines(self, action: Action) -> None:
+    def _render_wireframe(self, action: Action) -> None:
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
-                    obj.render_lines(action, self.env, self.guip)
+                    obj.render_wireframe(action, self.env, self.guip)
 
     def _render_ambient(self, action: Action) -> None:
         for obj in self.gl_objects:

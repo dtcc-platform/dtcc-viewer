@@ -155,7 +155,7 @@ class Gui:
             )
 
             (gguip.clip_bool[2], gguip.clip_dist[2]) = self._create_clip_slider(
-                "Clip Z", gguip.clip_bool[2], gguip.clip_dist[2], min=0, max=1.0
+                "Clip Z", gguip.clip_bool[2], gguip.clip_dist[2]
             )
 
             imgui.end_child()
