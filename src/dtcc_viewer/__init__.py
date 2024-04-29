@@ -10,9 +10,10 @@ from .bounds import view as view_bounds
 from .grid import view as view_grid
 from .volume_grid import view as view_volume_grid
 from .multisurface import view as view_multisurface
+from .volume_mesh import view as view_volume_mesh
 
 from dtcc_model import Mesh, PointCloud, Object, Surface, MultiSurface, Bounds
-from dtcc_model import Raster, City, Building, Grid, VolumeGrid
+from dtcc_model import Raster, City, Building, Grid, VolumeGrid, VolumeMesh
 
 # Add model extensions
 PointCloud.add_methods(view_pointcloud, "view")
@@ -26,6 +27,7 @@ Bounds.add_methods(view_bounds, "view")
 Grid.add_methods(view_grid, "view")
 VolumeGrid.add_methods(view_volume_grid, "view")
 MultiSurface.add_methods(view_multisurface, "view")
+VolumeMesh.add_methods(view_volume_mesh, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [

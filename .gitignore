@@ -12,6 +12,9 @@ dtcc-demo-data/
 *.shp
 *.shx
 *.tif
+*.vtk
+*.obj
+*.mtl
 !cube_pc.csv
 
 *.city.json

@@ -11,9 +11,10 @@ from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
+from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster
+from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 
 # from dtcc_model.roadnetwork import RoadNetwork
@@ -126,11 +127,8 @@ class Scene:
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
         if geometries is not None and isinstance(geometries, list):
-            if all(isinstance(item, Geometry) for item in geometries):
-                info(f"Geometry collection called - {name} - added to scene")
-                self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
-            else:
-                warning(f"Failed to add geometry collection called - {name} - to scene")
+            info(f"Geometry collection called - {name} - added to scene")
+            self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
         else:
             warning(f"Failed to add geometry collection called - {name} - to scene")
 
@@ -152,6 +150,13 @@ class Scene:
         if grid is not None and isinstance(grid, VolumeGrid):
             info(f"Grid called - {name} - added to scene")
             self.wrappers.append(VolumeGridWrapper(name, grid, self.mts))
+        else:
+            warning(f"Failed to add grid called - {name} - to scene")
+
+    def add_volume_mesh(self, name: str, volume_mesh: VolumeMesh):
+        if volume_mesh is not None and isinstance(volume_mesh, VolumeMesh):
+            info(f"Grid called - {name} - added to scene")
+            self.wrappers.append(VolumeMeshWrapper(name, volume_mesh, self.mts))
         else:
             warning(f"Failed to add grid called - {name} - to scene")
 
