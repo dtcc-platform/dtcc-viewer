@@ -7,7 +7,7 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes, concatenate_pcs
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_viewer.opengl.wrp_multilinestring import MultiLineStringWrapper
+from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parts import Parts

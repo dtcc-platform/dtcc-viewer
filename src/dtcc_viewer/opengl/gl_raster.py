@@ -19,7 +19,6 @@ from dtcc_viewer.shaders.shaders_raster import (
 
 from dtcc_viewer.opengl.parameters import GuiParametersRaster, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox, RasterType
-from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper
 from dtcc_viewer.shaders.shaders_color_maps import (
     color_map_rainbow,
