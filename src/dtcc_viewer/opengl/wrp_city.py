@@ -1,7 +1,7 @@
 import numpy as np
 from time import time
 from collections import Counter
-from dtcc_model import City, MultiSurface, Building, Mesh, Terrain
+from dtcc_model import City, MultiSurface, Surface, Building, Mesh, Terrain
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
@@ -65,7 +65,7 @@ class CityWrapper(Wrapper):
         (mesh_t, parts_t) = self._get_terrain_mesh(city)
         (mesh_b, parts_b) = self._generate_building_mesh(city)
 
-        quant = city.quantities
+        quant = None #city.quantities
 
         if mesh_t is not None:
             self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, quant, parts_t)
@@ -127,9 +127,23 @@ class CityWrapper(Wrapper):
             if isinstance(ms, MultiSurface):
                 mss.append(ms)
                 uuids.append(uuid)
+            elif isinstance(ms, Surface):
+                mss.append(MultiSurface(surfaces=[ms]))
+                uuids.append(uuid)
+
 
         tic = time()
-        meshes = [ms.mesh() for ms in mss]
+        # meshes = [ms.mesh() for ms in mss]
+        meshes = []
+        idx = 0
+        for ms in mss:
+            print(f"Meshing building {idx}")
+            if idx == 64:
+                pass
+            mesh = ms.mesh()
+            if mesh is not None:
+                meshes.append(mesh)
+            idx += 1
         info(f"Meshing complete. Time elapsed: {time() - tic:0.4f} seconds")
 
         # tic = time()
