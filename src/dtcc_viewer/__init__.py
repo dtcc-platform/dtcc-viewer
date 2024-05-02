@@ -34,7 +34,6 @@ __all__ = [
     "view_pointcloud",
     "view_city",
     "view_mesh",
-    "view_roadnetwork",
     "view_building",
     "view_object",
     "view_raster",
