@@ -182,6 +182,13 @@ class Window:
                     self.gl_objects.append(GlLines(bnds_wrp.ls_wrp))
                 for pc in wrapper.pc_wrps:
                     self.gl_objects.append(GlPoints(pc))
+                for mesh_wrp in wrapper.vmesh_wrps:
+                    self.gl_objects.append(GlMesh(mesh_wrp.mesh_vol_wrp))
+                    self.gl_objects.append(GlMesh(mesh_wrp.mesh_env_wrp))
+                for grd_wrp in wrapper.grd_wrps:
+                    self.gl_objects.append(GlLines(grd_wrp.mls_wrp, False))
+                for vgrd_wrp in wrapper.vgrd_wrps:
+                    self.gl_objects.append(GlLines(vgrd_wrp.mls_wrp, False))
 
             elif isinstance(wrapper, MeshWrapper):
                 self.gl_objects.append(GlMesh(wrapper))

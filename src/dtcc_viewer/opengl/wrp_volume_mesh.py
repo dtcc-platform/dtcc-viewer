@@ -23,7 +23,7 @@ class VolumeMeshWrapper(Wrapper):
         self.mesh_vol_wrp = MeshWrapper(name, mesh_vol, mts)
 
         if mesh_env is not None:
-            self.mesh_env_wrp = MeshWrapper("Volume mesh envelop", mesh_env, mts)
+            self.mesh_env_wrp = MeshWrapper("volume mesh envelop", mesh_env, mts)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         if self.mesh_vol_wrp is not None:

@@ -246,16 +246,26 @@ def raster_example_4():
 def geometries_example():
     origo = Point(0, 0, 0)
     mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
-    linestring_1 = create_ls_circle(origo, 20, 200)
-    multi_surface = create_cylinder(origo, 5, 10, 100)
-    bounds = Bounds(-10, -10, 10, 10, 0, 0)
+    ms = create_cylinder(origo, 5, 10, 100)
     surface = create_surface_disc(Point(10, 0, 0), 5, 100)
 
-    linestring_2 = create_ls_circle(origo, 10, 200)
-    linestring_3 = create_ls_circle(origo, 15, 200)
-    multi_ls = MultiLineString([linestring_2, linestring_3])
+    ls1 = create_ls_circle(origo, 20, 200)
+    ls2 = create_ls_circle(origo, 10, 200)
+    ls3 = create_ls_circle(origo, 15, 200)
+    mls = MultiLineString([ls2, ls3])
 
-    geometries = [mesh, linestring_1, multi_surface, bounds, multi_ls, surface]
+    vmesh = create_tetrahedral_cube_mesh(10, 10, 10, 10)
+    vmesh.vertices += np.array([20, -20, 0])
+
+    bounds = Bounds(-20, -20, -10, -10, 0, 0)
+    grid = Grid(width=30, height=50, bounds=bounds)
+
+    bounds = Bounds(10, 10, 20, 20, 0, 10)
+    vgrid = VolumeGrid(width=30, height=50, depth=20, bounds=bounds)
+
+    bounds = Bounds(-30, -30, 30, 30, 0, 0)
+
+    geometries = [mesh, ls1, ms, bounds, mls, surface, vmesh, grid, vgrid]
     print(type(geometries))
     window = Window(1200, 800)
     scene = Scene()
@@ -312,7 +322,6 @@ def volume_mesh_example():
 
 
 def volume_mesh_example_2():
-
     vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
     vmesh.view()
 
@@ -322,8 +331,6 @@ def volume_mesh_example_3():
     scene = Scene()
     vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
     scene.add_volume_mesh("volume mesh", vmesh)
-    pc = PointCloud(points=vmesh.vertices)
-    scene.add_pointcloud("PC", pc)
     window.render(scene)
 
 
@@ -390,7 +397,7 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
-    city_example_1()
+    # city_example_1()
     # building_example_1()
     # building_example_3()
     # object_example_1()
@@ -399,7 +406,7 @@ if __name__ == "__main__":
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
-    # geometries_example()
+    geometries_example()
     # bounds_example()
     # multilinestring_example()
     # multisurface_example()
@@ -409,4 +416,5 @@ if __name__ == "__main__":
     # volume_grid_example()
     # volume_mesh_example()
     # volume_mesh_example_2()
+    # volume_mesh_example_3()
     # volume_mesh_example_4()

@@ -2,6 +2,7 @@ import numpy as np
 from time import time
 from collections import Counter
 from dtcc_model import Geometry, Mesh, Surface, MultiSurface, PointCloud, Bounds
+from dtcc_model import VolumeMesh, Grid, VolumeGrid
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
@@ -9,11 +10,13 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
+from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from shapely.geometry import LineString, MultiLineString
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_builder import *
@@ -54,6 +57,9 @@ class GeometriesWrapper(Wrapper):
     ms_wrps: list[MultiSurfaceWrapper]
     srf_wrps: list[SurfaceWrapper]
     bnds_wrps: list[BoundsWrapper]
+    vmesh_wrps: list[VolumeMeshWrapper]
+    grd_wrps: list[GridWrapper]
+    vgrd_wrps: list[VolumeGridWrapper]
 
     def __init__(self, name: str, geometries: list[Geometry], mts: int) -> None:
         """Initialize the MeshData object.
@@ -69,15 +75,20 @@ class GeometriesWrapper(Wrapper):
         """
         self.name = name
 
-        (meshes, mls, lss, pcs, mss, srfs, bds) = self._sort_geometries(geometries)
+        (mhs, mls, lss, pcs, mss, srfs, bds, vmsh, grds, vgrds) = self._sort_geometries(
+            geometries
+        )
 
-        self.mesh_wrps = self._create_mesh_wrappers(meshes, mts)
+        self.mesh_wrps = self._create_mesh_wrappers(mhs, mts)
         self.srf_wrps = self._create_srf_wrappers(srfs, mts)
         self.ms_wrps = self._create_ms_wrappers(mss, mts)
         self.pc_wrps = self._create_pc_wrappers(pcs, mts)
         self.mls_wrps = self._create_mls_wrappers(mls, mts)
         self.ls_wrps = self._create_ls_wrappers(lss, mts)
         self.bnds_wrps = self._create_bnd_wrappers(bds, mts)
+        self.vmesh_wrps = self._create_vmesh_wrappers(vmsh, mts)
+        self.grd_wrps = self._create_grd_wrappers(grds, mts)
+        self.vgrd_wrps = self._create_vgrd_wrappers(vgrds, mts)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         for mesh_wrp in self.mesh_wrps:
@@ -100,6 +111,15 @@ class GeometriesWrapper(Wrapper):
 
         for bnd_wrp in self.bnds_wrps:
             bnd_wrp.preprocess_drawing(bb_global)
+
+        for vmesh_wrp in self.vmesh_wrps:
+            vmesh_wrp.preprocess_drawing(bb_global)
+
+        for grd_wrp in self.grd_wrps:
+            grd_wrp.preprocess_drawing(bb_global)
+
+        for vgrd_wrp in self.vgrd_wrps:
+            vgrd_wrp.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
         vertices = np.array([])
@@ -136,20 +156,35 @@ class GeometriesWrapper(Wrapper):
             vertex_pos = mls_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
+        for vmesh_wrp in self.vmesh_wrps:
+            vertex_pos = vmesh_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for grd_wrp in self.grd_wrps:
+            vertex_pos = grd_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for vgrd_wrp in self.vgrd_wrps:
+            vertex_pos = vgrd_wrp.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
         return vertices
 
     def _sort_geometries(self, geometries: list[Geometry]):
-        meshes = []
+        msh = []
         mls = []
         lss = []
         pcs = []
         mss = []
         srfs = []
         bds = []
+        vmsh = []
+        grds = []
+        vgrds = []
 
         for geometry in geometries:
             if isinstance(geometry, Mesh):
-                meshes.append(geometry)
+                msh.append(geometry)
             elif isinstance(geometry, PointCloud):
                 pcs.append(geometry)
             elif isinstance(geometry, MultiSurface):
@@ -162,10 +197,16 @@ class GeometriesWrapper(Wrapper):
                 lss.append(geometry)
             elif isinstance(geometry, Bounds):
                 bds.append(geometry)
+            elif isinstance(geometry, VolumeMesh):
+                vmsh.append(geometry)
+            elif isinstance(geometry, Grid):
+                grds.append(geometry)
+            elif isinstance(geometry, VolumeGrid):
+                vgrds.append(geometry)
             else:
                 warning(f"Type {type(geometry)} is not of type Geometry. Skipping.")
 
-        return meshes, mls, lss, pcs, mss, srfs, bds
+        return msh, mls, lss, pcs, mss, srfs, bds, vmsh, grds, vgrds
 
     def _create_mesh_wrappers(self, meshes: list[Mesh], mts: int):
         mesh_wrps = []
@@ -221,3 +262,27 @@ class GeometriesWrapper(Wrapper):
                 bnd_wrps.append(BoundsWrapper(f"bounds {i}", bd, mts))
 
         return bnd_wrps
+
+    def _create_vmesh_wrappers(self, wmhs: list[VolumeMesh], mts: int):
+        vmesh_wrps = []
+        for i, vmsh in enumerate(wmhs):
+            if vmsh is not None:
+                vmesh_wrps.append(VolumeMeshWrapper(f"volume mesh {i}", vmsh, mts))
+
+        return vmesh_wrps
+
+    def _create_grd_wrappers(self, wgd: list[Grid], mts: int):
+        grd_wrps = []
+        for i, gd in enumerate(wgd):
+            if gd is not None:
+                grd_wrps.append(GridWrapper(f"grid {i}", gd, mts))
+
+        return grd_wrps
+
+    def _create_vgrd_wrappers(self, wgd: list[VolumeGrid], mts: int):
+        vgrd_wrps = []
+        for i, gd in enumerate(wgd):
+            if gd is not None:
+                vgrd_wrps.append(VolumeGridWrapper(f"volume grid {i}", gd, mts))
+
+        return vgrd_wrps

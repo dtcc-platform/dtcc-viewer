@@ -217,6 +217,11 @@ class Scene:
                     next_id = self.update_ids(ms_wrp.mesh_wrp, next_id)
                 for srf_wrp in wrp.srf_wrps:
                     next_id = self.update_ids(srf_wrp.mesh_wrp, next_id)
+                for vmesh_wrp in wrp.vmesh_wrps:
+                    if vmesh_wrp.mesh_vol_wrp is not None:
+                        next_id = self.update_ids(vmesh_wrp.mesh_vol_wrp, next_id)
+                    if vmesh_wrp.mesh_env_wrp is not None:
+                        next_id = self.update_ids(vmesh_wrp.mesh_env_wrp, next_id)
             elif isinstance(wrp, BuildingWrapper):
                 next_id = self.update_ids(wrp.mesh_wrp, next_id)
             elif isinstance(wrp, ObjectWrapper):
