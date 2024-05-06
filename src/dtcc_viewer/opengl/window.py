@@ -216,7 +216,10 @@ class Window:
                     self.gl_objects.append(GlLines(wrapper.mls_wrp, False))
 
             elif isinstance(wrapper, VolumeMeshWrapper):
-                self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
+                if wrapper.mesh_vol_wrp is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_vol_wrp))
+                if wrapper.mesh_env_wrp is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_env_wrp))
 
             elif isinstance(wrapper, RasterWrapper):
                 self.gl_objects.append(GlRaster(wrapper))

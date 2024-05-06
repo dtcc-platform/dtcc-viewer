@@ -13,6 +13,7 @@ dtcc-demo-data/
 *.shx
 *.tif
 *.vtk
+*.vtu
 *.obj
 *.mtl
 !cube_pc.csv

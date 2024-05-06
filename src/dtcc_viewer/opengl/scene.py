@@ -224,6 +224,11 @@ class Scene:
                     next_id = self.update_ids(wrp.mesh_wrp_1, next_id)
                 if wrp.mesh_wrp_2 is not None:
                     next_id = self.update_ids(wrp.mesh_wrp_2, next_id)
+            elif isinstance(wrp, VolumeMeshWrapper):
+                if wrp.mesh_vol_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_vol_wrp, next_id)
+                if wrp.mesh_env_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_env_wrp, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
         max_id = np.max(mesh_wrp.parts.ids)

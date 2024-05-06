@@ -5,7 +5,7 @@ from dtcc_model import Mesh, PointCloud
 from pprint import pp
 import triangle as tr
 from dtcc_viewer.logging import info, warning
-from dtcc_model import MultiSurface, Surface
+from dtcc_model import MultiSurface, Surface, VolumeMesh
 from shapely.geometry import Point, LineString
 from dtcc_viewer.utils import Direction
 
@@ -633,3 +633,63 @@ def create_cylinder_2(p, w, radius, height, num_segments=20):
 
     # (b, -a, 0)
     # v = np.array([-w[2], 0, w[0]])
+
+
+def create_tetrahedral_cube_mesh(nx, ny, nz, length=1.0):
+    # Calculate the step size
+    dx = length / nx
+    dy = length / ny
+    dz = length / nz
+
+    # Create an array to store the vertices
+    vertices = []
+
+    # Create vertices
+    for k in range(nz + 1):
+        for j in range(ny + 1):
+            for i in range(nx + 1):
+                x = i * dx
+                y = j * dy
+                z = k * dz
+                vertices.append([x, y, z])
+
+    vertices = np.array(vertices)
+
+    # Create an array to store the cells (tetrahedra)
+    cells = []
+
+    # Create cells
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                # Define the indices of the vertices for the current cell
+                v0 = i + j * (nx + 1) + k * (nx + 1) * (ny + 1)
+                v1 = v0 + 1
+                v2 = v0 + (nx + 1)
+                v3 = v0 + (nx + 1) + 1
+
+                v4 = v0 + (nx + 1) * (ny + 1)
+                v5 = v1 + (nx + 1) * (ny + 1)
+                v6 = v2 + (nx + 1) * (ny + 1)
+                v7 = v3 + (nx + 1) * (ny + 1)
+
+                # Create the tetrahedra
+                tetra1 = [v0, v3, v2, v6]
+                tetra2 = [v0, v3, v6, v4]
+                tetra3 = [v0, v1, v3, v4]
+                tetra4 = [v3, v6, v4, v7]
+                tetra5 = [v1, v3, v4, v7]
+                tetra6 = [v1, v7, v4, v5]
+
+                # Append the tetrahedra to the list of cells
+                # cells.extend([tetra1, tetra2, tetra3, tetra4, tetra5, tetra6])
+                cells.append(tetra1)
+                cells.append(tetra2)
+                cells.append(tetra3)
+                cells.append(tetra4)
+                cells.append(tetra5)
+                cells.append(tetra6)
+
+    cells = np.array(cells)
+    vmesh = VolumeMesh(vertices=vertices, cells=cells)
+    return vmesh

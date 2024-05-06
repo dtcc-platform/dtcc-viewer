@@ -68,6 +68,16 @@ def mesh_example_3():
     mesh.view(data=data_dict)
 
 
+def mesh_example_4():
+    window = Window(1200, 800)
+    scene = Scene()
+    mesh = meshes.load_mesh("../../../data/models/CitySurface.obj")
+    pc = PointCloud(points=mesh.vertices)
+    scene.add_mesh("MESH", mesh)
+    scene.add_pointcloud("PC", pc)
+    window.render(scene)
+
+
 def multi_geometry_example_1():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
     all_pcs = split_pc_in_stripes(3, pc, Direction.x)
@@ -149,6 +159,18 @@ def building_example_2():
             scene.add_building(f"building {i}", building)
 
     window.render(scene)
+
+
+def building_example_3():
+    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    new_city = City()
+    some_buildings = []
+    for i, building in enumerate(city_dhg.buildings):
+        if i < 10:
+            some_buildings.append(building)
+
+    new_city.add_buildings(some_buildings)
+    new_city.view()
 
 
 def object_example_1():
@@ -289,6 +311,33 @@ def volume_mesh_example():
     vmesh.view()
 
 
+def volume_mesh_example_2():
+
+    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
+    vmesh.view()
+
+
+def volume_mesh_example_3():
+    window = Window(1200, 800)
+    scene = Scene()
+    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
+    scene.add_volume_mesh("volume mesh", vmesh)
+    pc = PointCloud(points=vmesh.vertices)
+    scene.add_pointcloud("PC", pc)
+    window.render(scene)
+
+
+def volume_mesh_example_4():
+    window = Window(1200, 800)
+    scene = Scene()
+    vmesh = create_tetrahedral_cube_mesh(10, 10, 10, 10)
+    print(f"vmesh vertices count: {len(vmesh.vertices)}")
+    print(f"vmesh cells count: {len(vmesh.cells)}")
+    print(f"max cell index: {np.max(vmesh.cells)}")
+    scene.add_volume_mesh("volume mesh", vmesh)
+    window.render(scene)
+
+
 def crasch_test():
 
     window = Window(1200, 800)
@@ -337,18 +386,20 @@ if __name__ == "__main__":
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
+    # mesh_example_4()
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
     # city_example_1()
     # building_example_1()
+    # building_example_3()
     # object_example_1()
     # object_example_2()
     # raster_example_1()
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
-    geometries_example()
+    # geometries_example()
     # bounds_example()
     # multilinestring_example()
     # multisurface_example()
@@ -357,3 +408,5 @@ if __name__ == "__main__":
     # grid_example()
     # volume_grid_example()
     # volume_mesh_example()
+    # volume_mesh_example_2()
+    volume_mesh_example_4()
