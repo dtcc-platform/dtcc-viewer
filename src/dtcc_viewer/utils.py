@@ -1,7 +1,7 @@
 from pprint import pp
 
 # from dtcc_viewer import *
-from dtcc_model import Mesh, PointCloud, Bounds
+from dtcc_model import Mesh, PointCloud, Bounds, VolumeMesh
 
 # from dtcc_viewer.colors import *
 from typing import Iterable
@@ -138,7 +138,7 @@ def split_mesh_in_quadrants(mesh: trimesh, face_mid_pts: Iterable):
     return meshes, values
 
 
-def get_sub_mesh(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
+def get_sub_mesh_from_mask(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
     face_mid_pts = calc_face_mid_points(mesh)
 
     if len(xdom) == 2 and len(ydom) == 2 and xdom[0] < xdom[1] and ydom[0] < ydom[1]:
@@ -222,3 +222,45 @@ def calc_distance_to_centre(face_mid_pts: Iterable):
     mesh_mid_pt = np.array([average_x, average_y, average_z])
     dist = np.sqrt(np.sum((face_mid_pts - mesh_mid_pt) ** 2, axis=1))
     return dist
+
+
+def get_sub_volume_mesh_from_mask(cell_mask: np.ndarray, vmesh: VolumeMesh) -> Mesh:
+
+    cells = vmesh.cells[cell_mask, :]
+    cells_flat = cells.flatten()
+    unique_vertex_indices = np.unique(cells_flat)
+    old_vertex_indices = unique_vertex_indices
+
+    old_2_new = {}
+    for i, old_vi in enumerate(old_vertex_indices):
+        old_2_new[old_vi] = i
+
+    new_vertices = vmesh.vertices[unique_vertex_indices, :]
+    new_cells = np.zeros(cells.shape, dtype=int)
+
+    for i in range(cells.shape[0]):
+        new_cells[i, :] = [old_2_new[old_vi] for old_vi in cells[i, :]]
+
+    sub_vmesh = VolumeMesh(vertices=new_vertices, cells=new_cells)
+
+    return sub_vmesh
+
+
+def get_sub_mesh_from_mask(face_mask: np.ndarray, mesh: Mesh) -> Mesh:
+
+    faces = mesh.faces[face_mask, :]
+    faces_flat = faces.flatten()
+    unique_vertex_indices = np.unique(faces_flat)
+    old_vertex_indices = unique_vertex_indices
+
+    old_2_new = {}
+    for i, old_vi in enumerate(old_vertex_indices):
+        old_2_new[old_vi] = i
+
+    new_vertices = mesh.vertices[unique_vertex_indices, :]
+    new_faces = np.zeros(faces.shape, dtype=int)
+
+    for i in range(faces.shape[0]):
+        new_faces[i, :] = [old_2_new[old_vi] for old_vi in faces[i, :]]
+
+    return Mesh(vertices=new_vertices, faces=new_faces)

@@ -2,7 +2,7 @@ import numpy as np
 import trimesh
 from dtcc_model import Mesh
 from dtcc_io import meshes
-from dtcc_viewer.utils import get_sub_mesh
+from dtcc_viewer.utils import get_sub_mesh_from_mask
 
 
 def get_quad(size, tex_min, tex_max):
@@ -1119,7 +1119,7 @@ def get_city_model(sub_x=None, sub_y=None):
     mesh = meshes.load_mesh("../data/models/CitySurface.obj")
 
     if sub_x is not None and sub_y is not None:
-        mesh = get_sub_mesh(sub_x, sub_y, mesh)
+        mesh = get_sub_mesh_from_mask(sub_x, sub_y, mesh)
 
     print("Face count: " + str(len(mesh.faces)))
     print("Vertex count: " + str(len(mesh.vertices)))

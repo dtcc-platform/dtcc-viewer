@@ -166,7 +166,7 @@ def building_example_3():
     new_city = City()
     some_buildings = []
     for i, building in enumerate(city_dhg.buildings):
-        if i < 10:
+        if i < 1:
             some_buildings.append(building)
 
     new_city.add_buildings(some_buildings)
@@ -330,11 +330,24 @@ def volume_mesh_example_3():
     window = Window(1200, 800)
     scene = Scene()
     vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
+    pc = PointCloud(points=vmesh.vertices)
     scene.add_volume_mesh("volume mesh", vmesh)
+    scene.add_pointcloud("point cloud", pc)
     window.render(scene)
 
 
 def volume_mesh_example_4():
+    window = Window(1200, 800)
+    scene = Scene()
+    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
+    cell_mask = np.zeros(len(vmesh.cells), dtype=bool)
+    cell_mask[0::400] = True
+    sub_vmesh = get_sub_volume_mesh_from_mask(cell_mask, vmesh)
+    scene.add_volume_mesh("volume mesh", sub_vmesh)
+    window.render(scene)
+
+
+def volume_mesh_example_5():
     window = Window(1200, 800)
     scene = Scene()
     vmesh = create_tetrahedral_cube_mesh(10, 10, 10, 10)
@@ -406,7 +419,7 @@ if __name__ == "__main__":
     # raster_example_2()
     # raster_example_3()
     # raster_example_4()
-    geometries_example()
+    # geometries_example()
     # bounds_example()
     # multilinestring_example()
     # multisurface_example()
@@ -416,5 +429,5 @@ if __name__ == "__main__":
     # volume_grid_example()
     # volume_mesh_example()
     # volume_mesh_example_2()
-    # volume_mesh_example_3()
+    volume_mesh_example_3()
     # volume_mesh_example_4()

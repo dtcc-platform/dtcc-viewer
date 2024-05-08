@@ -36,62 +36,39 @@ class VolumeMeshWrapper(Wrapper):
         return self.mesh_vol_wrp.get_vertex_positions()
 
     def _create_mesh(self, volume_mesh: VolumeMesh) -> Mesh:
-
-        vertices = volume_mesh.vertices
-        faces = []
-        for cell in volume_mesh.cells:
-            faces.append([cell[0], cell[2], cell[1]])
-            faces.append([cell[0], cell[1], cell[3]])
-            faces.append([cell[0], cell[3], cell[2]])
-            faces.append([cell[1], cell[2], cell[3]])
+        verts = volume_mesh.vertices
+        faces = np.zeros((volume_mesh.cells.shape[0] * 4, 3), dtype=int)
+        for i, cell in enumerate(volume_mesh.cells):
+            faces[i * 4 + 0, :] = [cell[0], cell[2], cell[1]]
+            faces[i * 4 + 1, :] = [cell[0], cell[1], cell[3]]
+            faces[i * 4 + 2, :] = [cell[0], cell[3], cell[2]]
+            faces[i * 4 + 3, :] = [cell[3], cell[2], cell[1]]
 
         faces = np.array(faces)
-        return Mesh(vertices=vertices, faces=faces)
+        return Mesh(vertices=verts, faces=faces)
+
+    def _correct_winding(self, f: np.ndarray, vs: np.ndarray, mpt: np.ndarray):
+        # Too slow to be used
+        normal = np.cross(vs[f[1], :] - vs[f[0], :], vs[f[2], :] - vs[f[0], :])
+        normal = normal / np.linalg.norm(normal)
+        if np.dot(normal, mpt - vs[f[0], :]) > 0:
+            return f
+        else:
+            return f[::-1]
 
     def _extract_mesh_envelope(self, mesh: Mesh) -> Mesh:
-
         faces_sorted = np.sort(mesh.faces, axis=1)
-        faces_unique_mask = self.find_duplicates(faces_sorted)
-
+        faces_unique_mask = self.find_unique(faces_sorted)
+        mesh = get_sub_mesh_from_mask(faces_unique_mask, mesh)
         true_count = np.count_nonzero(faces_unique_mask)
-        print("Number of faces: ", len(faces_sorted))
-        print("Number of unique faces: ", true_count)
-
-        faces = mesh.faces[faces_unique_mask, :]
-        faces_flat = faces.flatten()
-        unique_vertex_indices = np.unique(faces_flat)
-        old_vertex_indices = unique_vertex_indices
-
-        old_2_new = {}
-        for i, old_vi in enumerate(old_vertex_indices):
-            old_2_new[old_vi] = i
-
-        new_vertices = mesh.vertices[unique_vertex_indices, :]
-        new_faces = np.zeros(faces.shape, dtype=int)
-
-        for i in range(faces.shape[0]):
-            new_faces[i, :] = [old_2_new[old_vi] for old_vi in faces[i, :]]
-
-        mesh = Mesh(vertices=new_vertices, faces=new_faces)
+        info(f"Envelope extraction for VolumeMesh found {true_count} envelope faces")
 
         return mesh
 
-    def find_duplicates(self, faces):
+    def find_unique(self, data):
         # Convert vertices to a structured array to hash them efficiently
-        faces_view = faces.view(
-            np.dtype((np.void, faces.dtype.itemsize * faces.shape[1]))
-        )
-
-        # Find unique vertices and their indices
-        # unique_vertices, inverse_indices = np.unique(vertices_view, return_inverse=True)
-
-        vals, idx, inv, counts = np.unique(
-            faces_view, return_index=True, return_counts=True, return_inverse=True
-        )
-
+        copy = data.view(np.dtype((np.void, data.dtype.itemsize * data.shape[1])))
+        vals, inv, counts = np.unique(copy, return_counts=True, return_inverse=True)
         occurrences = counts[inv]
-
-        # Find duplicate vertices based on inverse indices
         unique_mask = occurrences == 1
-
         return unique_mask
