@@ -15,7 +15,7 @@ from dtcc_io import meshes
 from string import Template
 import trimesh
 from dtcc_model import Mesh
-from dtcc_viewer.utils import get_sub_mesh_from_mask
+from dtcc_viewer.utils import get_sub_mesh
 from pprint import pp
 import time
 
@@ -210,7 +210,7 @@ glfw.make_context_current(window)
 
 mesh = meshes.load_mesh("../data/models/CitySurface.obj")
 
-mesh = get_sub_mesh_from_mask([-0.02, 0.02], [-0.02, 0.02], mesh)
+mesh = get_sub_mesh([-0.02, 0.02], [-0.02, 0.02], mesh)
 
 # mesh = subdivide_mesh(mesh, 2.0, 6)
 

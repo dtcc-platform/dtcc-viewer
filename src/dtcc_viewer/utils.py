@@ -138,7 +138,7 @@ def split_mesh_in_quadrants(mesh: trimesh, face_mid_pts: Iterable):
     return meshes, values
 
 
-def get_sub_mesh_from_mask(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
+def get_sub_mesh(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
     face_mid_pts = calc_face_mid_points(mesh)
 
     if len(xdom) == 2 and len(ydom) == 2 and xdom[0] < xdom[1] and ydom[0] < ydom[1]:
