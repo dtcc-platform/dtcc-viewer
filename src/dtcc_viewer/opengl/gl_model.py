@@ -306,6 +306,10 @@ class GlModel:
         self.uloc_pick["project"] = glGetUniformLocation(self.shader_pick, "project")
         self.uloc_pick["view"] = glGetUniformLocation(self.shader_pick, "view")
 
+        self.uloc_pick["clip_x"] = glGetUniformLocation(self.shader_pick, "clip_x")
+        self.uloc_pick["clip_y"] = glGetUniformLocation(self.shader_pick, "clip_y")
+        self.uloc_pick["clip_z"] = glGetUniformLocation(self.shader_pick, "clip_z")
+
     def _create_shader_debug_picking(self) -> None:
         """Create shader for rendering shadow map."""
 
@@ -358,10 +362,17 @@ class GlModel:
         glUniformMatrix4fv(self.uloc_pick["view"], 1, GL_FALSE, view)
         glUniformMatrix4fv(self.uloc_pick["project"], 1, GL_FALSE, proj)
 
+        (xdom, ydom, zdom) = self._get_clip_domains()
+
+        glUniform1f(self.uloc_pick["clip_x"], (xdom * action.gguip.clip_dist[0]))
+        glUniform1f(self.uloc_pick["clip_y"], (ydom * action.gguip.clip_dist[1]))
+        glUniform1f(self.uloc_pick["clip_z"], (zdom * action.gguip.clip_dist[2]))
+
         # Draw meshes to the texture
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
-                obj.triangles_draw_call()
+                if obj.guip.show:
+                    obj.triangles_draw_call()
 
     def _evaluate_picking(self, action: Action) -> None:
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
@@ -631,3 +642,9 @@ class GlModel:
         ]
 
         return texture_slots
+
+    def _get_clip_domains(self):
+        xdom = 0.5 * self.env.bb_global.xdom
+        ydom = 0.5 * self.env.bb_global.ydom
+        zdom = 0.5 * self.env.bb_global.zdom
+        return xdom, ydom, zdom
