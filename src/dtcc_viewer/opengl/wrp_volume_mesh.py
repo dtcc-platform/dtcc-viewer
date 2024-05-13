@@ -17,6 +17,7 @@ class VolumeMeshWrapper(Wrapper):
     def __init__(self, name: str, volume_mesh: VolumeMesh, mts: int) -> None:
         """Initialize a SurfaceWrapper object."""
         self.name = name
+        self._find_vertex_dups(volume_mesh)
         mesh_vol = self._create_mesh(volume_mesh)
         mesh_env = self._extract_mesh_envelope(mesh_vol)
 
@@ -36,16 +37,15 @@ class VolumeMeshWrapper(Wrapper):
         return self.mesh_vol_wrp.get_vertex_positions()
 
     def _create_mesh(self, volume_mesh: VolumeMesh) -> Mesh:
-        verts = volume_mesh.vertices
+        vertices = volume_mesh.vertices
         faces = np.zeros((volume_mesh.cells.shape[0] * 4, 3), dtype=int)
         for i, cell in enumerate(volume_mesh.cells):
-            faces[i * 4 + 0, :] = [cell[0], cell[2], cell[1]]
-            faces[i * 4 + 1, :] = [cell[0], cell[1], cell[3]]
-            faces[i * 4 + 2, :] = [cell[0], cell[3], cell[2]]
-            faces[i * 4 + 3, :] = [cell[3], cell[2], cell[1]]
+            faces[i * 4 + 0, :] = np.array([cell[0], cell[2], cell[1]])
+            faces[i * 4 + 1, :] = np.array([cell[0], cell[1], cell[3]])
+            faces[i * 4 + 2, :] = np.array([cell[0], cell[3], cell[2]])
+            faces[i * 4 + 3, :] = np.array([cell[3], cell[2], cell[1]])
 
-        faces = np.array(faces)
-        return Mesh(vertices=verts, faces=faces)
+        return Mesh(vertices=vertices, faces=faces)
 
     def _correct_winding(self, f: np.ndarray, vs: np.ndarray, mpt: np.ndarray):
         # Too slow to be used

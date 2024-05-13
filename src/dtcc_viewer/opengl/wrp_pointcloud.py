@@ -68,7 +68,7 @@ class PointCloudWrapper(Wrapper):
         self.mts = mts
         self.data_dict = {}
         self.n_points = len(pc.points)
-        self.points = np.array(pc.points, dtype="float32").flatten()
+        self.points = np.array(pc.points, dtype="float64").flatten()
         self._append_data(pc, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):

@@ -337,6 +337,9 @@ def volume_mesh_example_3():
 
 
 def volume_mesh_example_4():
+
+    np.set_printoptions(precision=3, suppress=True)
+
     window = Window(1200, 800)
     scene = Scene()
     vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
@@ -410,7 +413,7 @@ if __name__ == "__main__":
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
-    city_example_1()
+    # city_example_1()
     # building_example_1()
     # building_example_3()
     # object_example_1()
@@ -430,4 +433,4 @@ if __name__ == "__main__":
     # volume_mesh_example()
     # volume_mesh_example_2()
     # volume_mesh_example_3()
-    # volume_mesh_example_4()
+    volume_mesh_example_4()
