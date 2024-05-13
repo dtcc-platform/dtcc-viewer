@@ -465,26 +465,31 @@ class Gui:
 
         key = guip.get_current_data_name()
 
-        # Range sliders to cap data
         imgui.push_id("lower_cap" + str(index))
-        value = guip.dict_slider_caps[key][0]
-        [changed, value] = imgui.slider_float("Min", value, 0, 0.99)
+        min = guip.dict_min_max[key][0]
+        max = guip.dict_min_max[key][1]
+
+        dom = max - min
+        sldr_value = guip.dict_sldr_val[key][0]
+        [changed, sldr_value] = imgui.slider_float("Min", sldr_value, min, max)
         if changed:
-            guip.dict_slider_caps[key][0] = value
+            guip.dict_sldr_val[key][0] = sldr_value
             guip.update_caps = True
-            if guip.dict_slider_caps[key][0] >= guip.dict_slider_caps[key][1]:
-                guip.dict_slider_caps[key][1] = guip.dict_slider_caps[key][0] + 0.001
+            if guip.dict_sldr_val[key][0] >= guip.dict_sldr_val[key][1]:
+                new_val = np.clip(guip.dict_sldr_val[key][0] + 0.001 * dom, min, max)
+                guip.dict_sldr_val[key][1] = new_val
 
         imgui.pop_id()
 
         imgui.push_id("upper_cap" + str(index))
-        value = guip.dict_slider_caps[key][1]
-        [changed, value] = imgui.slider_float("Max", value, 0.01, 1.0)
+        sldr_value = guip.dict_sldr_val[key][1]
+        [changed, sldr_value] = imgui.slider_float("Max", sldr_value, min, max)
         if changed:
-            guip.dict_slider_caps[key][1] = value
+            guip.dict_sldr_val[key][1] = sldr_value
             guip.update_caps = True
-            if guip.dict_slider_caps[key][1] <= guip.dict_slider_caps[key][0]:
-                guip.dict_slider_caps[key][0] = guip.dict_slider_caps[key][1] - 0.001
+            if guip.dict_sldr_val[key][1] <= guip.dict_sldr_val[key][0]:
+                new_val = np.clip(guip.dict_sldr_val[key][1] - 0.001 * dom, min, max)
+                guip.dict_sldr_val[key][0] = new_val
 
         imgui.pop_id()
 

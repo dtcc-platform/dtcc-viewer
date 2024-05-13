@@ -78,8 +78,8 @@ class GlLines(GlObject):
         self.uniform_locs = {}
 
         data_mat_dict = self.data_wrapper.data_mat_dict
-        data_val_caps = self.data_wrapper.data_value_caps
-        self.guip = GuiParametersLines(wrapper.name, data_mat_dict, data_val_caps)
+        data_min_max = self.data_wrapper.data_min_max
+        self.guip = GuiParametersLines(wrapper.name, data_mat_dict, data_min_max)
         self.bb_local = wrapper.bb_local
         self.bb_global = wrapper.bb_global
 

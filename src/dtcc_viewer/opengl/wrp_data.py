@@ -12,7 +12,7 @@ from typing import Any
 class DataWrapper(ABC):
 
     data_mat_dict: dict  # Dictionary of data matrices
-    data_value_caps: dict  # Dictionary of data value caps
+    data_min_max: dict  # Dictionary of data value caps
     texel_x: np.ndarray  # Texel indices for x
     texel_y: np.ndarray  # Texel indices for y
     row_count: int  # Number of rows in the data
@@ -76,7 +76,7 @@ class MeshDataWrapper(DataWrapper):
     def __init__(self, mesh: Mesh, mts: int) -> None:
 
         self.data_mat_dict = {}
-        self.data_value_caps = {}
+        self.data_min_max = {}
         self.max_tex_size = mts
         self.v_count = len(mesh.vertices)
         self.f_count = len(mesh.faces)
@@ -93,7 +93,7 @@ class MeshDataWrapper(DataWrapper):
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
-            self.data_value_caps[name] = val_caps
+            self.data_min_max[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
             return True
         else:
@@ -105,7 +105,7 @@ class MeshDataWrapper(DataWrapper):
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
-            self.data_value_caps[name] = val_caps
+            self.data_min_max[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
             return True
         else:
@@ -169,7 +169,7 @@ class PCDataWrapper(DataWrapper):
     def __init__(self, pc: PointCloud, mts: int) -> None:
 
         self.data_mat_dict = {}
-        self.data_value_caps = {}
+        self.data_min_max = {}
         self.max_tex_size = mts
         self.p_count = len(pc.points)
 
@@ -182,7 +182,7 @@ class PCDataWrapper(DataWrapper):
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
-            self.data_value_caps[name] = val_caps
+            self.data_min_max[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
             return True
         else:
@@ -208,7 +208,7 @@ class LSDataWrapper(DataWrapper):
     def __init__(self, ls: LineString, v_count: int, mts: int) -> None:
 
         self.data_mat_dict = {}
-        self.data_value_caps = {}
+        self.data_min_max = {}
         self.max_tex_size = mts
         self.v_count = v_count
 
@@ -221,7 +221,7 @@ class LSDataWrapper(DataWrapper):
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
-            self.data_value_caps[name] = val_caps
+            self.data_min_max[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
             return True
         else:
@@ -247,7 +247,7 @@ class MLSDataWrapper(DataWrapper):
     def __init__(self, mls: MultiLineString, v_count: int, mts: int) -> None:
 
         self.data_mat_dict = {}
-        self.data_value_caps = {}
+        self.data_min_max = {}
         self.max_tex_size = mts
         self.v_count = v_count
 
@@ -260,7 +260,7 @@ class MLSDataWrapper(DataWrapper):
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
-            self.data_value_caps[name] = val_caps
+            self.data_min_max[name] = val_caps
             info(f"Data called {name} was added to data dictionary.")
             return True
         else:
@@ -284,7 +284,7 @@ class RNDataWrapper(DataWrapper):
     def __init__(self, rn: Any, mts: int) -> None:
 
         self.data_mat_dict = {}
-        self.data_value_caps = {}
+        self.data_min_max = {}
         self.max_tex_size = mts
 
         d_count = len(rn.vertices)

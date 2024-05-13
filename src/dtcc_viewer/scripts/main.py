@@ -432,5 +432,5 @@ if __name__ == "__main__":
     # volume_grid_example()
     # volume_mesh_example()
     # volume_mesh_example_2()
-    # volume_mesh_example_3()
-    volume_mesh_example_4()
+    volume_mesh_example_3()
+    # volume_mesh_example_4()

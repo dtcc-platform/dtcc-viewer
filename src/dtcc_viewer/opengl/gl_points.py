@@ -89,8 +89,8 @@ class GlPoints(GlObject):
         self.uniform_locs = {}
 
         data_mat_dict = self.data_wrapper.data_mat_dict
-        data_val_caps = self.data_wrapper.data_value_caps
-        self.guip = GuiParametersPC(pc_wrapper.name, data_mat_dict, data_val_caps)
+        data_min_max = self.data_wrapper.data_min_max
+        self.guip = GuiParametersPC(pc_wrapper.name, data_mat_dict, data_min_max)
         self.bb_local = pc_wrapper.bb_local
         self.bb_global = pc_wrapper.bb_global
 

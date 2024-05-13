@@ -116,9 +116,10 @@ class GuiParametersObj(ABC):
     data_max: float
     data_keys: list
     dict_slider_caps: dict
-    dict_value_caps: dict
+    dict_min_max: dict
+    dict_sldr_val: dict
 
-    def set_default_values(self, name: str, dict_mat_data: dict, dict_val_caps: dict):
+    def set_default_values(self, name: str, dict_mat_data: dict, dict_min_max: dict):
         self.name = name
         self.show = True
         self.color = True
@@ -130,22 +131,20 @@ class GuiParametersObj(ABC):
         self.data_min = 0  # Min value for color clamp
         self.data_max = 0  # Max value for color clamp
         self.data_keys = list(dict_mat_data.keys())
-        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])
-        self.dict_value_caps = dict_val_caps
+        self.dict_slider_caps = dict.fromkeys(self.data_keys, [0.0, 1.0])  # [0,1]
+        self.dict_min_max = dict_min_max  # [min, max]
+
+        self.dict_sldr_val = {}
+        for key, min_max in dict_min_max.items():
+            self.dict_sldr_val[key] = [min_max[0], min_max[1]]
 
     def get_current_data_name(self):
         return self.data_keys[self.data_idx]
 
     def calc_min_max(self):
         key = self.get_current_data_name()
-        min = self.dict_value_caps[key][0]
-        max = self.dict_value_caps[key][1]
-        dom = max - min
-
-        lower_cap = self.dict_slider_caps[key][0]
-        upper_cap = self.dict_slider_caps[key][1]
-        self.data_min = min + dom * lower_cap
-        self.data_max = min + dom * upper_cap
+        self.data_min = self.dict_sldr_val[key][0]
+        self.data_max = self.dict_sldr_val[key][1]
 
 
 class GuiParametersMesh(GuiParametersObj):
@@ -154,8 +153,8 @@ class GuiParametersMesh(GuiParametersObj):
     show_fnormals: bool
     show_vnormals: bool
 
-    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
-        self.set_default_values(name, dict_mat_data, dict_val_caps)
+    def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
+        self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.show_fnormals = False
         self.show_vnormals = False
@@ -164,9 +163,9 @@ class GuiParametersMesh(GuiParametersObj):
 class GuiParametersPC(GuiParametersObj):
     """Class representing GUI parameters for point clouds."""
 
-    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
+    def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
         """Initialize the GuiParametersPC object."""
-        self.set_default_values(name, dict_mat_data, dict_val_caps)
+        self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.point_scale = 1.0
 
@@ -174,8 +173,8 @@ class GuiParametersPC(GuiParametersObj):
 class GuiParametersLines(GuiParametersObj):
     """Class representing GUI parameters for road networks."""
 
-    def __init__(self, name: str, dict_mat_data: dict, dict_val_caps: dict) -> None:
-        self.set_default_values(name, dict_mat_data, dict_val_caps)
+    def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
+        self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.line_scale = 1.0
 
