@@ -17,7 +17,6 @@ class VolumeMeshWrapper(Wrapper):
     def __init__(self, name: str, volume_mesh: VolumeMesh, mts: int) -> None:
         """Initialize a SurfaceWrapper object."""
         self.name = name
-        self._find_vertex_dups(volume_mesh)
         mesh_vol = self._create_mesh(volume_mesh)
         mesh_env = self._extract_mesh_envelope(mesh_vol)
 
