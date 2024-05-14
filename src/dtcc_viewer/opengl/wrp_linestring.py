@@ -112,9 +112,9 @@ class LineStringWrapper(Wrapper):
                 results.append(success)
 
         if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
             self.data_wrapper.add_data("Vertex X", self.vertices[0::6])
             self.data_wrapper.add_data("Vertex Y", self.vertices[1::6])
-            self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
 
 
 class MultiLineStringWrapper(Wrapper):
@@ -235,9 +235,9 @@ class MultiLineStringWrapper(Wrapper):
                 results.append(success)
 
         if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
             self.data_wrapper.add_data("Vertex X", self.vertices[0::6])
             self.data_wrapper.add_data("Vertex Y", self.vertices[1::6])
-            self.data_wrapper.add_data("Vertex Z", self.vertices[2::6])
 
     def _reformat(self):
         """Flatten the mesh data arrays for OpenGL compatibility."""

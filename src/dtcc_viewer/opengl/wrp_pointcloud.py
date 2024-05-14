@@ -96,9 +96,9 @@ class PointCloudWrapper(Wrapper):
                 results.append(success)
 
         if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex Z", self.points[2::3])
             self.data_wrapper.add_data("Vertex X", self.points[0::3])
             self.data_wrapper.add_data("Vertex Y", self.points[1::3])
-            self.data_wrapper.add_data("Vertex Z", self.points[2::3])
 
     def _move_pc_to_origin(self, bb: BoundingBox = None):
         """Move the point cloud data to the origin using multiple recenter vectors."""

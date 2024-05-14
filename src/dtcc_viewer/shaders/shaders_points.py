@@ -59,7 +59,7 @@ void main()
 
         if(cmap_idx == 0)
         {
-            color_per_instance = rainbow(data);
+            color_per_instance = turbo(data);
         }
         else if(cmap_idx == 1)
         {
@@ -71,7 +71,7 @@ void main()
         }
         else if(cmap_idx == 3)
         {
-            color_per_instance = turbo(data);
+            color_per_instance = rainbow(data);
         }
         else if(cmap_idx == 4)
         {

@@ -20,10 +20,10 @@ class Shading(IntEnum):
 
 
 class ColorMaps(IntEnum):
-    RAINBOW = 0
+    TURBO = 0
     INFERNO = 1
     BLACKBODY = 2
-    TURBO = 3
+    RAINBOW = 3
     VIRIDIS = 4
 
 

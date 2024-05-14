@@ -33,9 +33,9 @@ def pointcloud_example_2():
     file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
     pc = pointcloud.load(file)
     data_dict = {}
-    data_dict["vertex_x"] = pc.points[:, 0]
-    data_dict["vertex_y"] = pc.points[:, 1]
-    data_dict["vertex_z"] = pc.points[:, 2]
+    data_dict["vertex_x2"] = pc.points[:, 0] * pc.points[:, 0]
+    data_dict["vertex_y2"] = pc.points[:, 1] * pc.points[:, 1]
+    data_dict["vertex_z2"] = pc.points[:, 2] * pc.points[:, 2]
     pc.view(data=data_dict)
 
 
@@ -405,12 +405,12 @@ if __name__ == "__main__":
     print("-------- View test started from main function -------")
     set_log_level("INFO")
     # pointcloud_example_1()
-    # pointcloud_example_2()
+    pointcloud_example_2()
     # mesh_example_1()
-    # mesh_example_2()
+    mesh_example_2()
     # mesh_example_3()
     # mesh_example_4()
-    # multi_geometry_example_1()
+    multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
     # city_example_1()
@@ -424,8 +424,8 @@ if __name__ == "__main__":
     # raster_example_4()
     # geometries_example()
     # bounds_example()
-    # multilinestring_example()
-    # multisurface_example()
+    multilinestring_example()
+    multisurface_example()
     # surface_example()
     # crasch_test()
     # grid_example()

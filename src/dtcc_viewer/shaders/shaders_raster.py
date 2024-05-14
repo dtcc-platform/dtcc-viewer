@@ -67,14 +67,22 @@ void main()
     if (color_by == 1) {
     
         if (cmap_idx == 0) {
-            color = rainbow(value.r);
-        } else if (cmap_idx == 1) {
-            color = inferno(value.r);
-        } else if (cmap_idx == 2) {
-            color = black_body(value.r);
-        } else if (cmap_idx == 3) {
             color = turbo(value.r);
-        } else if (cmap_idx == 4) {
+        } 
+        else if (cmap_idx == 1) 
+        {
+            color = inferno(value.r);
+        } 
+        else if (cmap_idx == 2) 
+        {
+            color = black_body(value.r);
+        } 
+        else if (cmap_idx == 3) 
+        {
+            color = rainbow(value.r);
+        } 
+        else if (cmap_idx == 4) 
+        {
             color = viridis(value.r);
         }
         if(color_inv == 1)

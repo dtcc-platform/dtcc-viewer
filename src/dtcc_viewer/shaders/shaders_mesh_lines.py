@@ -63,7 +63,7 @@ void main()
         // Calculate the colors using the shader colormaps
         if(cmap_idx == 0)
         {
-            v_color = rainbow(data);
+            v_color = turbo(data);
         }
         else if(cmap_idx == 1)
         {
@@ -75,7 +75,7 @@ void main()
         }
         else if(cmap_idx == 3)
         {
-            v_color = turbo(data);
+            v_color = rainbow(data);
         }
         else if(cmap_idx == 4)
         {

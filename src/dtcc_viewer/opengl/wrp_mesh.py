@@ -5,7 +5,6 @@ from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
 from dtcc_viewer.logging import info, warning
-from dtcc_model.quantity import Quantity
 from dtcc_viewer.opengl.wrapper import Wrapper
 from pprint import PrettyPrinter
 from typing import Any
@@ -107,29 +106,11 @@ class MeshWrapper(Wrapper):
             elif type(data) == np.ndarray:
                 success = self.data_wrapper.add_data("Data", data)
                 results.append(success)
-            elif type(data) == Quantity:
-                success = self._add_quantity_data(mesh, quantity, parts)
-                results.append(success)
-            elif type(data) == list[Quantity]:
-                for quantity in data:
-                    success = self._add_quantity_data(mesh, quantity, parts)
-                    results.append(success)
 
         if data is None or not np.any(results):
+            self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
             self.data_wrapper.add_data("Vertex X", mesh.vertices[:, 0])
             self.data_wrapper.add_data("Vertex Y", mesh.vertices[:, 1])
-            self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
-
-    def _add_quantity_data(self, mesh: Mesh, q: Quantity, parts: Parts):
-        n = len(q.values)
-        if parts is not None:
-            if n == len(parts):
-                self.data_wrapper.add_parts_data(q.name, q.values, parts)
-                return True
-        elif n == len(mesh.vertices) or n == len(mesh.faces):
-            self.data_wrapper.add_data(q.name, q.values)
-        else:
-            warning(f"Attempt to add quantity data {q.name} failed")
 
     def _restructure_mesh(self, mesh: Mesh):
         array_length = len(mesh.faces) * 3 * 9
