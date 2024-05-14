@@ -18,9 +18,9 @@ class VolumeMeshWrapper(Wrapper):
         """Initialize a SurfaceWrapper object."""
         self.name = name
         mesh_vol = self._create_mesh(volume_mesh)
+        data_dict = self._calc_mesh_quality(volume_mesh)
         mesh_env = self._extract_mesh_envelope(mesh_vol)
-
-        self.mesh_vol_wrp = MeshWrapper(name, mesh_vol, mts)
+        self.mesh_vol_wrp = MeshWrapper(name, mesh_vol, mts, data_dict)
 
         if mesh_env is not None:
             self.mesh_env_wrp = MeshWrapper("volume mesh envelop", mesh_env, mts)
@@ -71,3 +71,51 @@ class VolumeMeshWrapper(Wrapper):
         occurrences = counts[inv]
         unique_mask = occurrences == 1
         return unique_mask
+
+    def _calc_mesh_quality(self, volume_mesh: VolumeMesh):
+        data_dict = {}
+        aspect_ratios = np.zeros(volume_mesh.cells.shape[0])
+        cell_volume = np.zeros(volume_mesh.cells.shape[0])
+
+        for i, cell in enumerate(volume_mesh.cells):
+            v0 = volume_mesh.vertices[cell[0]]
+            v1 = volume_mesh.vertices[cell[1]]
+            v2 = volume_mesh.vertices[cell[2]]
+            v3 = volume_mesh.vertices[cell[3]]
+            (aspect_ratio, volume) = self._tet_aspect_ratio(v0, v1, v2, v3)
+            aspect_ratios[i] = aspect_ratio
+            cell_volume[i] = volume
+
+        data_dict["Aspect Ratio (R/r)"] = np.repeat(aspect_ratios, 4)
+        data_dict["Volume"] = np.repeat(cell_volume, 4)
+        return data_dict
+
+    def _tet_volume(self, v0, v1, v2, v3):
+        """
+        Calculate the volume of a tetrahedron.
+        """
+        return np.abs(np.dot((v3 - v0), np.cross(v1 - v0, v2 - v0))) / 6.0
+
+    def _tet_aspect_ratio(self, v0, v1, v2, v3):
+        # Compute the edge lengths
+
+        a = np.linalg.norm(v0 - v1)
+        b = np.linalg.norm(v0 - v2)
+        c = np.linalg.norm(v0 - v3)
+        d = np.linalg.norm(v1 - v2)
+        e = np.linalg.norm(v1 - v3)
+        f = np.linalg.norm(v2 - v3)
+
+        # Compute the tet volume
+        volume = np.abs(np.dot(np.cross(v1 - v0, v2 - v0), v3 - v0)) / 6.0
+
+        # Compute the radius of the circumscribed sphere
+        R = np.sqrt((a * b * c * d * e * f) / (2 * volume)) / 2.0
+
+        # Compute the radius of the inscribed sphere
+        r = (3 * volume) / (a * b * c + a * d * e + b * d * f + c * e * f)
+
+        # Compute the aspect ratio
+        aspect_ratio = R / r
+
+        return aspect_ratio, volume
