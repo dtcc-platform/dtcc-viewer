@@ -52,7 +52,7 @@ class MeshWrapper(Wrapper):
         name: str,
         mesh: Mesh,
         mts: int,
-        data: Any = None,  # Dict, np.ndarray, Quantity or list[Quantity]
+        data: Any = None,  # Dict, np.ndarray
         parts: Parts = None,
     ) -> None:
         """Initialize the MeshWrapper object.

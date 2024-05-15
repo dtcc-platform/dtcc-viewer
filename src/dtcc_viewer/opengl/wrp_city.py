@@ -12,6 +12,7 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces
 from dtcc_viewer.opengl.wrapper import Wrapper
+from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 import dtcc_builder as builder
 
 
@@ -45,6 +46,8 @@ class CityWrapper(Wrapper):
     bb_global: BoundingBox = None
     mesh_bld: MeshWrapper = None
     mesh_ter: MeshWrapper = None
+    grid_wrps: list[GridWrapper] = []
+    vgrid_wrps: list[VolumeGridWrapper] = []
 
     def __init__(self, name: str, city: City, mts: int) -> None:
         """Initialize the MeshData object.
@@ -65,13 +68,21 @@ class CityWrapper(Wrapper):
         (mesh_t, parts_t) = self._get_terrain_mesh(city)
         (mesh_b, parts_b) = self._generate_building_mesh(city)
 
-        quant = None  # city.quantities
-
         if mesh_t is not None:
-            self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, quant, parts_t)
+            self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, None, parts_t)
 
         if mesh_b is not None:
-            self.mesh_bld = MeshWrapper("buildings", mesh_b, mts, quant, parts_b)
+            self.mesh_bld = MeshWrapper("buildings", mesh_b, mts, None, parts_b)
+
+        grids = self._get_grids(city)
+        for i, grid in enumerate(grids):
+            if grid is not None:
+                self.grid_wrps.append(GridWrapper(f"grid {i}", grid, mts))
+
+        vgrids = self._get_volume_grids(city)
+        for vgrid in vgrids:
+            if vgrid is not None:
+                self.vgrid_wrps.append(VolumeGridWrapper(f"vgrid {i}", vgrid, mts))
 
         info("CityWrapper initialized")
 
@@ -82,6 +93,12 @@ class CityWrapper(Wrapper):
         if self.mesh_bld is not None:
             self.mesh_bld.preprocess_drawing(bb_global)
 
+        for grid in self.grid_wrps:
+            grid.preprocess_drawing(bb_global)
+
+        for vgrid in self.vgrid_wrps:
+            vgrid.preprocess_drawing(bb_global)
+
     def get_vertex_positions(self):
         vertices = np.array([])
 
@@ -91,6 +108,14 @@ class CityWrapper(Wrapper):
 
         if self.mesh_bld is not None:
             vertex_pos = self.mesh_bld.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for grid in self.grid_wrps:
+            vertex_pos = grid.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for vgrid in self.vgrid_wrps:
+            vertex_pos = vgrid.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         return vertices
@@ -132,17 +157,12 @@ class CityWrapper(Wrapper):
                 uuids.append(uuid)
 
         tic = time()
-        # meshes = [ms.mesh() for ms in mss]
         meshes = []
         for ms in mss:
             mesh = ms.mesh()
             if mesh is not None:
                 meshes.append(mesh)
         info(f"Meshing complete. Time elapsed: {time() - tic:0.4f} seconds")
-
-        # tic = time()
-        # meshes2 = mesh_multisurfaces(mss)
-        # info(f"Time elapsed: {time() - tic:0.4f} seconds")
 
         if len(meshes) == 0:
             info("No building meshes found in city model")
@@ -169,3 +189,19 @@ class CityWrapper(Wrapper):
                 return flat_geom
 
         return None
+
+    def _get_grids(self, city: City):
+        geom = city.geometry.get("grid", None)  # TODO: Change to geometry type
+        if type(geom) != list:
+            geom = [geom]
+
+        info(f"Found {len(geom)} grid(s) in city model")
+        return geom
+
+    def _get_volume_grids(self, city: City):
+        geom = city.geometry.get("volume_grid", None)  # TODO: Change to geometry type
+        if type(geom) != list:
+            geom = [geom]
+
+        info(f"Found {len(geom)} volume grid(s) in city model")
+        return geom

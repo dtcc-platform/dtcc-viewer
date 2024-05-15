@@ -166,6 +166,10 @@ class Window:
                     self.gl_objects.append(GlMesh(wrapper.mesh_bld))
                 if wrapper.mesh_ter is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_ter))
+                for grid_wrp in wrapper.grid_wrps:
+                    self.gl_objects.append(GlLines(grid_wrp.mls_wrp))
+                for vgrid_wrp in wrapper.vgrid_wrps:
+                    self.gl_objects.append(GlLines(vgrid_wrp.mls_wrp))
 
             elif isinstance(wrapper, GeometriesWrapper):
                 for mesh_w in wrapper.mesh_wrps:

@@ -44,6 +44,7 @@ class VolumeMeshWrapper(Wrapper):
             faces[i * 4 + 2, :] = np.array([cell[0], cell[3], cell[2]])
             faces[i * 4 + 3, :] = np.array([cell[3], cell[2], cell[1]])
 
+        info(f"Mesh with {len(vertices)} vertices and {len(faces)} faces created.")
         return Mesh(vertices=vertices, faces=faces)
 
     def _correct_winding(self, f: np.ndarray, vs: np.ndarray, mpt: np.ndarray):
@@ -61,7 +62,6 @@ class VolumeMeshWrapper(Wrapper):
         mesh = get_sub_mesh_from_mask(faces_unique_mask, mesh)
         true_count = np.count_nonzero(faces_unique_mask)
         info(f"Envelope extraction for VolumeMesh found {true_count} envelope faces")
-
         return mesh
 
     def find_unique(self, data):
@@ -88,6 +88,7 @@ class VolumeMeshWrapper(Wrapper):
 
         data_dict["Aspect Ratio (R/r)"] = np.repeat(aspect_ratios, 4)
         data_dict["Volume"] = np.repeat(cell_volume, 4)
+        info("Volume mesh quality metrics calculated.")
         return data_dict
 
     def _tet_volume(self, v0, v1, v2, v3):

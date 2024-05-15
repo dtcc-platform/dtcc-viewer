@@ -11,7 +11,7 @@ from pprint import pp
 from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes
 from dtcc_io import load_raster
-from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid
+from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
 from dtcc_model import VolumeMesh
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
@@ -135,6 +135,26 @@ def city_example_1():
     city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
     # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+
+    # Add some geometries to the city
+    bounds = city_dhg.bounds
+    bounds.zmax = 100
+    n = 30
+    grid = Grid(bounds=bounds, width=n, height=n)
+    field1 = Field(name="field1", values=np.random.rand(grid.num_vertices))
+    field2 = Field(name="field2", values=np.random.rand(grid.num_vertices))
+    city_dhg.add_geometry(grid, "grid")
+    city_dhg.add_field(field1, "grid")
+    city_dhg.add_field(field2, "grid")
+
+    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
+    field3 = Field(name="field3", values=np.random.rand(volume_grid.num_vertices))
+    field4 = Field(name="field4", values=np.random.rand(volume_grid.num_vertices))
+
+    city_dhg.add_geometry(volume_grid, "volume_grid")
+    city_dhg.add_field(field3, "volume_grid")
+    city_dhg.add_field(field4, "volume_grid")
+
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
@@ -169,6 +189,7 @@ def building_example_3():
         if i < 1:
             some_buildings.append(building)
 
+    new_city.attributes = city_dhg.attributes
     new_city.add_buildings(some_buildings)
     new_city.view()
 
@@ -302,13 +323,21 @@ def surface_example():
 
 def grid_example():
     bounds = Bounds(-12, -12, 12, 12, 0, 0)
-    grid = Grid(width=30, height=50, bounds=bounds)
+    grid = Grid(width=30, height=40, bounds=bounds)
+    field1 = Field(name="field", values=np.random.rand(grid.num_vertices))
+    field2 = Field(name="field", values=np.random.rand(grid.num_vertices))
+    grid.add_field(field1)
+    grid.add_field(field2)
     grid.view()
 
 
 def volume_grid_example():
-    bounds = Bounds(-2, -3, 2, 3, -4, 4)
-    volume_grid = VolumeGrid(width=26, height=31, depth=43, bounds=bounds)
+    bounds = Bounds(-5.0, -3.0, 5.0, 3.0, -4.0, 4.0)
+    volume_grid = VolumeGrid(width=2, height=3, depth=4, bounds=bounds)
+    field1 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
+    field2 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
+    volume_grid.add_field(field1)
+    volume_grid.add_field(field2)
     volume_grid.view()
 
 
@@ -405,15 +434,15 @@ if __name__ == "__main__":
     print("-------- View test started from main function -------")
     set_log_level("INFO")
     # pointcloud_example_1()
-    pointcloud_example_2()
+    # pointcloud_example_2()
     # mesh_example_1()
-    mesh_example_2()
+    # mesh_example_2()
     # mesh_example_3()
     # mesh_example_4()
-    multi_geometry_example_1()
+    # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
-    # city_example_1()
+    city_example_1()
     # building_example_1()
     # building_example_3()
     # object_example_1()
@@ -424,13 +453,13 @@ if __name__ == "__main__":
     # raster_example_4()
     # geometries_example()
     # bounds_example()
-    multilinestring_example()
-    multisurface_example()
+    # multilinestring_example()
+    # multisurface_example()
     # surface_example()
     # crasch_test()
     # grid_example()
     # volume_grid_example()
     # volume_mesh_example()
-    volume_mesh_example_2()
+    # volume_mesh_example_2()
     # volume_mesh_example_3()
     # volume_mesh_example_4()

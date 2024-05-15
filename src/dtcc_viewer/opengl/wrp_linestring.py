@@ -200,7 +200,7 @@ class MultiLineStringWrapper(Wrapper):
 
         idx1 = 0
         idx2 = 0
-        for ls in mls.geoms:
+        for ls in mls.geoms:  # Loop over the LineStrings
             l_count = len(ls.coords[:]) - 1  # Line segegment count
             v_count = len(ls.coords[:])  # Vertex count
             indices1 = np.arange(idx1, idx1 + l_count, dtype=int)
@@ -210,6 +210,8 @@ class MultiLineStringWrapper(Wrapper):
             vertices[idx1 : (idx1 + v_count), 0:3] = np.array(list(ls.coords))
             idx1 += len(ls.coords[:])
             idx2 += l_count
+
+        pp(vertices)
 
         indices = indices.flatten()
         vertices = vertices.flatten()

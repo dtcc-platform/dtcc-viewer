@@ -1,5 +1,7 @@
+import numpy as np
 from dtcc_viewer.opengl.utils import BoundingBox
 from abc import ABC, abstractmethod
+from dtcc_model import Geometry
 
 
 class Wrapper(ABC):
