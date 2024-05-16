@@ -161,17 +161,17 @@ class MeshDataWrapper(DataWrapper):
             return None, None
 
 
-class PCDataWrapper(DataWrapper):
-    """Wrapper class for point cloud data to be used in OpenGL."""
+class PointsDataWrapper(DataWrapper):
+    """Wrapper class for points data to be used in OpenGL."""
 
     p_count: int  # Number of points in the point cloud
 
-    def __init__(self, pc: PointCloud, mts: int) -> None:
+    def __init__(self, n_points: int, mts: int) -> None:
 
         self.data_mat_dict = {}
         self.data_min_max = {}
         self.max_tex_size = mts
-        self.p_count = len(pc.points)
+        self.p_count = n_points
 
         d_count = self.p_count
         self._calc_matrix_format(d_count)

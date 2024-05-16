@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
-from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PCDataWrapper
+from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PointsDataWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.logging import info, warning
 from typing import Any
@@ -69,6 +69,8 @@ class PointCloudWrapper(Wrapper):
         self.data_dict = {}
         self.n_points = len(pc.points)
         self.points = np.array(pc.points, dtype="float64").flatten()
+        if data is None:
+            data = self._get_fields_data(pc)
         self._append_data(pc, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -80,10 +82,18 @@ class PointCloudWrapper(Wrapper):
     def get_vertex_positions(self):
         return self.points
 
+    def _get_fields_data(self, pc: PointCloud):
+        """Extract data fields from the point cloud object."""
+        fields = pc.fields
+        data = {}
+        for field in fields:
+            data[field.name] = field.values
+        return data
+
     def _append_data(self, pc: PointCloud, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
-        self.data_wrapper = PCDataWrapper(pc, self.mts)
+        self.data_wrapper = PointsDataWrapper(len(pc.points), self.mts)
         results = []
 
         if data is not None:

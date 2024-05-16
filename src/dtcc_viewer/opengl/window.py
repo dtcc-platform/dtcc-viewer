@@ -20,6 +20,7 @@ from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.gui import Gui
 
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
+from dtcc_viewer.opengl.wrp_lines import LinesWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_geometries import GeometriesWrapper
 from dtcc_viewer.opengl.wrp_city import CityWrapper
@@ -167,9 +168,11 @@ class Window:
                 if wrapper.mesh_ter is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_ter))
                 for grid_wrp in wrapper.grid_wrps:
-                    self.gl_objects.append(GlLines(grid_wrp.mls_wrp))
+                    self.gl_objects.append(GlLines(grid_wrp.lines_wrp))
                 for vgrid_wrp in wrapper.vgrid_wrps:
-                    self.gl_objects.append(GlLines(vgrid_wrp.mls_wrp))
+                    self.gl_objects.append(GlLines(vgrid_wrp.lines_wrp))
+                for pc_wrp in wrapper.pc_wrps:
+                    self.gl_objects.append(GlPoints(pc_wrp))
 
             elif isinstance(wrapper, GeometriesWrapper):
                 for mesh_w in wrapper.mesh_wrps:
@@ -190,9 +193,9 @@ class Window:
                     self.gl_objects.append(GlMesh(mesh_wrp.mesh_vol_wrp))
                     self.gl_objects.append(GlMesh(mesh_wrp.mesh_env_wrp))
                 for grd_wrp in wrapper.grd_wrps:
-                    self.gl_objects.append(GlLines(grd_wrp.mls_wrp, False))
+                    self.gl_objects.append(GlLines(grd_wrp.lines_wrp, False))
                 for vgrd_wrp in wrapper.vgrd_wrps:
-                    self.gl_objects.append(GlLines(vgrd_wrp.mls_wrp, False))
+                    self.gl_objects.append(GlLines(vgrd_wrp.lines_wrp, False))
 
             elif isinstance(wrapper, MeshWrapper):
                 self.gl_objects.append(GlMesh(wrapper))
@@ -212,6 +215,9 @@ class Window:
             elif isinstance(wrapper, LineStringWrapper):
                 self.gl_objects.append(GlLines(wrapper))
 
+            elif isinstance(wrapper, LinesWrapper):
+                self.gl_objects.append(GlLines(wrapper))
+
             elif isinstance(wrapper, BoundsWrapper):
                 self.gl_objects.append(GlLines(wrapper.ls_wrp))
 
@@ -219,12 +225,12 @@ class Window:
                 self.gl_objects.append(GlPoints(wrapper))
 
             elif isinstance(wrapper, GridWrapper):
-                if wrapper.mls_wrp is not None:
-                    self.gl_objects.append(GlLines(wrapper.mls_wrp, False))
+                if wrapper.lines_wrp is not None:
+                    self.gl_objects.append(GlLines(wrapper.lines_wrp, False))
 
             elif isinstance(wrapper, VolumeGridWrapper):
-                if wrapper.mls_wrp is not None:
-                    self.gl_objects.append(GlLines(wrapper.mls_wrp, False))
+                if wrapper.lines_wrp is not None:
+                    self.gl_objects.append(GlLines(wrapper.lines_wrp, False))
 
             elif isinstance(wrapper, VolumeMeshWrapper):
                 if wrapper.mesh_vol_wrp is not None:

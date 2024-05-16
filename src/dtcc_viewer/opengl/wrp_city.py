@@ -13,6 +13,7 @@ from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
+from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 import dtcc_builder as builder
 
 
@@ -48,6 +49,7 @@ class CityWrapper(Wrapper):
     mesh_ter: MeshWrapper = None
     grid_wrps: list[GridWrapper] = []
     vgrid_wrps: list[VolumeGridWrapper] = []
+    pc_wrps: list[PointCloudWrapper] = []
 
     def __init__(self, name: str, city: City, mts: int) -> None:
         """Initialize the MeshData object.
@@ -84,6 +86,11 @@ class CityWrapper(Wrapper):
             if vgrid is not None:
                 self.vgrid_wrps.append(VolumeGridWrapper(f"vgrid {i}", vgrid, mts))
 
+        pcs = self._get_pcs(city)
+        for i, pc in enumerate(pcs):
+            if pc is not None:
+                self.pc_wrps.append(PointCloudWrapper(f"pc {i}", pc, mts))
+
         info("CityWrapper initialized")
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -98,6 +105,9 @@ class CityWrapper(Wrapper):
 
         for vgrid in self.vgrid_wrps:
             vgrid.preprocess_drawing(bb_global)
+
+        for pc in self.pc_wrps:
+            pc.preprocess_drawing(bb_global)
 
     def get_vertex_positions(self):
         vertices = np.array([])
@@ -116,6 +126,10 @@ class CityWrapper(Wrapper):
 
         for vgrid in self.vgrid_wrps:
             vertex_pos = vgrid.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        for pc in self.pc_wrps:
+            vertex_pos = pc.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         return vertices
@@ -204,4 +218,13 @@ class CityWrapper(Wrapper):
             geom = [geom]
 
         info(f"Found {len(geom)} volume grid(s) in city model")
+        return geom
+
+    def _get_pcs(self, city: City):
+        geom = city.geometry.get(GeometryType.POINT_CLOUD, None)
+
+        if type(geom) != list:
+            geom = [geom]
+
+        info(f"Found {len(geom)} pc(s) in city model")
         return geom

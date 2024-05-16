@@ -132,35 +132,53 @@ def city_example_1():
     # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    # city_nyc = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    city = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # Add some geometries to the city
-    bounds = city_dhg.bounds
-    bounds.zmax = 100
+    bounds = city.bounds
+    bounds.zmax = 800
     n = 30
     grid = Grid(bounds=bounds, width=n, height=n)
     field1 = Field(name="field1", values=np.random.rand(grid.num_vertices))
     field2 = Field(name="field2", values=np.random.rand(grid.num_vertices))
-    city_dhg.add_geometry(grid, "grid")
-    city_dhg.add_field(field1, "grid")
-    city_dhg.add_field(field2, "grid")
+    grid.add_field(field1)
+    grid.add_field(field2)
 
-    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
+    city.add_geometry(grid, "grid")
+
+    volume_grid = VolumeGrid(bounds=bounds, width=10 * n, height=10 * n, depth=n)
     field3 = Field(name="field3", values=np.random.rand(volume_grid.num_vertices))
     field4 = Field(name="field4", values=np.random.rand(volume_grid.num_vertices))
 
-    city_dhg.add_geometry(volume_grid, "volume_grid")
-    city_dhg.add_field(field3, "volume_grid")
-    city_dhg.add_field(field4, "volume_grid")
+    volume_grid.add_field(field3)
+    volume_grid.add_field(field4)
+    city.add_geometry(volume_grid, "volume_grid")
 
     # city_rot.view()
     # city_mon.view()
     # city_vie.view()
-    city_dhg.view()
+    city.view()
     # city_rwy.view()
     # city_nyc.view()
+
+
+def city_example_2():
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+
+    # Add some geometries to the city
+    bounds = city.bounds
+    bounds.zmax = 100
+    n = 30
+    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
+    pc = PointCloud(points=volume_grid.coordinates())
+    field1 = Field(name="field1", values=np.random.rand(len(pc.points)))
+    field2 = Field(name="field2", values=np.random.rand(len(pc.points)))
+    pc.add_field(field1)
+    pc.add_field(field2)
+    city.add_geometry(pc, GeometryType.POINT_CLOUD)
+    city.view()
 
 
 def building_example_1():
@@ -443,6 +461,7 @@ if __name__ == "__main__":
     # building_example_2()
     # linestring_example_2()
     city_example_1()
+    # city_example_2()
     # building_example_1()
     # building_example_3()
     # object_example_1()
