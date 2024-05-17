@@ -54,7 +54,7 @@ class GlObject(ABC):
 
         width = self.data_wrapper.col_count
         height = self.data_wrapper.row_count
-        key = self.data_wrapper.get_keys()[0]
+        key = self.data_wrapper.get_keys()[0]  # Using the first key as default
         default_data = self.data_wrapper.data_mat_dict[key]
 
         # Transfer data to the texture

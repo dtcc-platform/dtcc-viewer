@@ -69,9 +69,8 @@ class PointCloudWrapper(Wrapper):
         self.data_dict = {}
         self.n_points = len(pc.points)
         self.points = np.array(pc.points, dtype="float64").flatten()
-        if data is None:
-            data = self._get_fields_data(pc)
-        self._append_data(pc, data)
+        fields = self._get_fields_data(pc)
+        self._append_data(pc, fields, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -87,14 +86,23 @@ class PointCloudWrapper(Wrapper):
         fields = pc.fields
         data = {}
         for field in fields:
-            data[field.name] = field.values
+            if field.dim == 1:
+                data[field.name] = field.values
+            elif field.dim != 1:
+                warning("Viewer only supports scalar field in current implementation")
+                warning(f"Field called '{field.name}' has dim != 1. Skipping.")
         return data
 
-    def _append_data(self, pc: PointCloud, data: Any = None):
+    def _append_data(self, pc: PointCloud, fields: dict, data: Any = None):
         """Generate colors for the point cloud based on the provided data."""
 
         self.data_wrapper = PointsDataWrapper(len(pc.points), self.mts)
         results = []
+
+        if fields is not None:
+            for key, value in fields.items():
+                success = self.data_wrapper.add_data(key, value)
+                results.append(success)
 
         if data is not None:
             if type(data) == dict:
@@ -105,7 +113,7 @@ class PointCloudWrapper(Wrapper):
                 success = self.data_wrapper.add_data("Data", data)
                 results.append(success)
 
-        if data is None or not np.any(results):
+        if not np.any(results):
             self.data_wrapper.add_data("Vertex Z", self.points[2::3])
             self.data_wrapper.add_data("Vertex X", self.points[0::3])
             self.data_wrapper.add_data("Vertex Y", self.points[1::3])

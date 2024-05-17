@@ -158,6 +158,10 @@ class MeshDataWrapper(DataWrapper):
             return data_mat, val_caps
         else:
             warning(f"Data count does not match vertex or face count.")
+            warning(
+                f"Data count: {len(data)}, vertex count: {self.v_count}, face count: {self.f_count}"
+            )
+
             return None, None
 
 

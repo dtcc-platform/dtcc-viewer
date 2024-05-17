@@ -86,8 +86,14 @@ class GridWrapper(Wrapper):
                 warning(f"Field {i} has less values than the grid")
                 continue
             else:
-                data_dict[f"field {i}"] = field.values[flat_indices]
-                info(f"Field {i} has been added to the data dictionary")
+                if field.dim == 1:
+                    data_dict[f"field {i}"] = field.values[flat_indices]
+                    info(f"Field {i} has been added to the data dictionary")
+                elif field.dim != 1:
+                    warning(
+                        "Viewer only supports scalar fields in current implementation"
+                    )
+                    warning(f"Field called '{field.name}' has dim != 1. Skipping.")
 
         return data_dict
 
@@ -172,7 +178,12 @@ class VolumeGridWrapper(Wrapper):
                 warning(f"Field {i} has less values than the grid")
                 continue
             else:
-                data_dict[f"field {i}"] = field.values[flat_indices]
-                info(f"Field {i} has been added to the data dictionary")
-
+                if field.dim == 1:
+                    data_dict[f"field {i}"] = field.values[flat_indices]
+                    info(f"Field {i} has been added to the data dictionary")
+                elif field.dim != 1:
+                    warning(
+                        "Viewer only supports scalar fields in current implementation"
+                    )
+                    warning(f"Field called '{field.name}' has dim != 1. Skipping.")
         return data_dict

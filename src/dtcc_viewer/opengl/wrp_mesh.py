@@ -78,7 +78,8 @@ class MeshWrapper(Wrapper):
         self.data = []
         self.data_wrapper = None
 
-        self._append_data(mesh, mts, data, parts)
+        fields = self._get_fields_data(mesh)
+        self._append_data(mesh, mts, fields, data, parts)
         self._restructure_mesh(mesh)
 
         if self.parts is None:
@@ -93,11 +94,25 @@ class MeshWrapper(Wrapper):
         self.bb_local = BoundingBox(self.get_vertex_positions())
         self._reformat_mesh()
 
-    def _append_data(self, mesh: Mesh, mts: int, data: Any = None, parts: Parts = None):
+    def _append_data(
+        self,
+        mesh: Mesh,
+        mts: int,
+        fields: dict,
+        data: Any = None,
+        parts: Parts = None,
+    ):
 
         self.data_wrapper = MeshDataWrapper(mesh, mts)
         results = []
 
+        # Add data from fileds
+        if fields is not None:
+            for key, value in fields.items():
+                success = self.data_wrapper.add_data(key, value)
+                results.append(success)
+
+        # Add additional data
         if data is not None:
             if type(data) == dict:
                 for key, value in data.items():
@@ -107,7 +122,8 @@ class MeshWrapper(Wrapper):
                 success = self.data_wrapper.add_data("Data", data)
                 results.append(success)
 
-        if data is None or not np.any(results):
+        # Add default data if no data is provided
+        if not np.any(results):
             self.data_wrapper.add_data("Vertex Z", mesh.vertices[:, 2])
             self.data_wrapper.add_data("Vertex X", mesh.vertices[:, 0])
             self.data_wrapper.add_data("Vertex Y", mesh.vertices[:, 1])
@@ -218,3 +234,15 @@ class MeshWrapper(Wrapper):
         # New vertex structure with 3 unique vertices per face
         vertex_ids = np.repeat(face_ids, 3)
         self.vertices[8::9] = vertex_ids
+
+    def _get_fields_data(self, mesh: Mesh):
+        data_dict = {}
+
+        for field in mesh.fields:
+            if field.dim == 1:
+                data_dict[field.name] = field.values
+            elif field.dim != 1:
+                warning("Viewer only supports scalar field in current implementation")
+                warning(f"Field called '{field.name}' has dim != 1. Skipping.")
+
+        return data_dict

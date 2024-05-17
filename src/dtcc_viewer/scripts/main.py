@@ -32,6 +32,10 @@ def pointcloud_example_1():
 def pointcloud_example_2():
     file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
     pc = pointcloud.load(file)
+
+    field = Field(name="Field: z", values=pc.points[:, 2])
+    pc.add_field(field)
+
     data_dict = {}
     data_dict["vertex_x2"] = pc.points[:, 0] * pc.points[:, 0]
     data_dict["vertex_y2"] = pc.points[:, 1] * pc.points[:, 1]
@@ -76,6 +80,17 @@ def mesh_example_4():
     scene.add_mesh("MESH", mesh)
     scene.add_pointcloud("PC", pc)
     window.render(scene)
+
+
+def mesh_example_5():
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
+    face_mid_pts = calc_face_mid_points(mesh)
+    field1 = Field(name="Field: face_z", values=face_mid_pts[:, 2], dim=1)
+    field2 = Field(name="Field: vertex_z", values=mesh.vertices[:, 2], dim=1)
+    mesh.add_field(field1)
+    mesh.add_field(field2)
+    mesh.view()
 
 
 def multi_geometry_example_1():
@@ -331,6 +346,12 @@ def multilinestring_example():
 
 def multisurface_example():
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
+    data1 = np.random.rand(len(cylinder_ms.surfaces))
+    data2 = np.random.rand(len(cylinder_ms.surfaces))
+    field1 = Field(name="field1", values=data1, dim=1)
+    field2 = Field(name="field2", values=data2, dim=1)
+    cylinder_ms.add_field(field1)
+    cylinder_ms.add_field(field2)
     cylinder_ms.view()
 
 
@@ -457,10 +478,11 @@ if __name__ == "__main__":
     # mesh_example_2()
     # mesh_example_3()
     # mesh_example_4()
+    # mesh_example_5()
     # multi_geometry_example_1()
     # building_example_2()
     # linestring_example_2()
-    city_example_1()
+    # city_example_1()
     # city_example_2()
     # building_example_1()
     # building_example_3()
@@ -473,7 +495,7 @@ if __name__ == "__main__":
     # geometries_example()
     # bounds_example()
     # multilinestring_example()
-    # multisurface_example()
+    multisurface_example()
     # surface_example()
     # crasch_test()
     # grid_example()
