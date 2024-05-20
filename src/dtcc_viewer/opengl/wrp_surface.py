@@ -63,7 +63,7 @@ class MultiSurfaceWrapper(Wrapper):
                 fields[field.name] = data
             elif field.dim != 1:
                 warning("Viewer only supports scalar fields in current implementation")
-                warning(f"Field called '{field.name}' has dim != 1. Skipping.")
+                warning(f"Field '{field.name}' has dimension != 1. Skipping.")
             elif len(field.values) != len(ms.surfaces):
                 warning(
                     f"Field '{field.name}' has {len(field.values)} values, but there are {len(ms.surfaces)} surfaces."

@@ -160,15 +160,18 @@ class CityWrapper(Wrapper):
     def _generate_building_mesh(self, city: City):
         uuids = []
         mss = []
+        attributes = []
         for building in city.buildings:
             uuid = building.id
             ms = self.get_highest_lod_building(building)
             if isinstance(ms, MultiSurface):
                 mss.append(ms)
                 uuids.append(uuid)
+                attributes.append(building.attributes)
             elif isinstance(ms, Surface):
                 mss.append(MultiSurface(surfaces=[ms]))
                 uuids.append(uuid)
+                attributes.append(building.attributes)
 
         tic = time()
         meshes = []
@@ -182,10 +185,10 @@ class CityWrapper(Wrapper):
             info("No building meshes found in city model")
             return None, None
         else:
-            submeshes = Parts(meshes, uuids)
+            parts = Parts(meshes, uuids, attributes)
             mesh = concatenate_meshes(meshes)
             info(f"Mesh with {len(mesh.faces)} faces was retrieved from buildings")
-            return mesh, submeshes
+            return mesh, parts
 
         return None, None
 

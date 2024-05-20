@@ -113,7 +113,7 @@ class GlMesh(GlObject):
     light_color: np.ndarray  # color of scene light [1 x 3]
     loop_counter: int  # loop counter for animation of scene light source
 
-    submeshes: Parts  # Defines clickable objects and their metadata in the mesh
+    parts: Parts  # Defines clickable objects and their metadata in the mesh
 
     cast_shadows: bool  # If the mesh should cast shadows
     recieve_shadows: bool  # If the mesh should recieve shadows
@@ -125,7 +125,7 @@ class GlMesh(GlObject):
         self.vertices = mesh_wrapper.vertices
         self.faces = mesh_wrapper.faces
         self.edges = mesh_wrapper.edges
-        self.submeshes = mesh_wrapper.parts
+        self.parts = mesh_wrapper.parts
         self.data_wrapper = mesh_wrapper.data_wrapper
 
         self.n_vertices = len(self.vertices) // 9

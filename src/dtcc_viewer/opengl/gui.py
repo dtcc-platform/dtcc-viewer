@@ -641,14 +641,16 @@ class Gui:
         if model.guip.picked_id != -1:
             text_0 = "- id: " + str(model.guip.picked_id)
             imgui.text(self.wrap_text(text_0, text_width))
-            text_1 = "- uuid: " + str(model.guip.picked_uuid)
-            imgui.text(self.wrap_text(text_1, text_width))
+            # text_1 = "- uuid: " + str(model.guip.picked_uuid)
+            # imgui.text(self.wrap_text(text_1, text_width))
             text_2 = "- mesh: " + str(model.guip.picked_metadata)
             imgui.text(self.wrap_text(text_2, text_width))
             text_3 = "- center: " + str(model.guip.picked_cp)
             imgui.text(self.wrap_text(text_3, text_width))
             text_4 = "- size: " + str(model.guip.picked_size)
             imgui.text(self.wrap_text(text_4, text_width))
+            text_5 = "- attributes: " + str(model.guip.picked_attributes)
+            imgui.text(self.wrap_text(text_5, text_width))
 
         imgui.end_child()
 

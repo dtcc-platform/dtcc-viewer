@@ -243,6 +243,6 @@ class MeshWrapper(Wrapper):
                 data_dict[field.name] = field.values
             elif field.dim != 1:
                 warning("Viewer only supports scalar field in current implementation")
-                warning(f"Field called '{field.name}' has dim != 1. Skipping.")
+                warning(f"Field '{field.name}' has dimension != 1. Skipping.")
 
         return data_dict

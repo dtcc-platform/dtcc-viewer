@@ -93,7 +93,7 @@ class GridWrapper(Wrapper):
                     warning(
                         "Viewer only supports scalar fields in current implementation"
                     )
-                    warning(f"Field called '{field.name}' has dim != 1. Skipping.")
+                    warning(f"Field '{field.name}' has dimension != 1. Skipping.")
 
         return data_dict
 
@@ -185,5 +185,5 @@ class VolumeGridWrapper(Wrapper):
                     warning(
                         "Viewer only supports scalar fields in current implementation"
                     )
-                    warning(f"Field called '{field.name}' has dim != 1. Skipping.")
+                    warning(f"Field '{field.name}' has dimension != 1. Skipping.")
         return data_dict

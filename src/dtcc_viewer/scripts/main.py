@@ -144,17 +144,16 @@ def linestring_example_2():
 
 
 def city_example_1():
-    # city_rot = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
-    # city_mon = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
-    # city_vie = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
-    # city_rwy = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
     city = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
 
     # Add some geometries to the city
-    bounds = city.bounds
-    bounds.zmax = 800
-    n = 30
+
+    """
     grid = Grid(bounds=bounds, width=n, height=n)
     field1 = Field(name="field1", values=np.random.rand(grid.num_vertices))
     field2 = Field(name="field2", values=np.random.rand(grid.num_vertices))
@@ -163,20 +162,16 @@ def city_example_1():
 
     city.add_geometry(grid, "grid")
 
-    volume_grid = VolumeGrid(bounds=bounds, width=10 * n, height=10 * n, depth=n)
+    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
     field3 = Field(name="field3", values=np.random.rand(volume_grid.num_vertices))
     field4 = Field(name="field4", values=np.random.rand(volume_grid.num_vertices))
 
     volume_grid.add_field(field3)
     volume_grid.add_field(field4)
     city.add_geometry(volume_grid, "volume_grid")
+    """
 
-    # city_rot.view()
-    # city_mon.view()
-    # city_vie.view()
     city.view()
-    # city_rwy.view()
-    # city_nyc.view()
 
 
 def city_example_2():
@@ -193,6 +188,13 @@ def city_example_2():
     pc.add_field(field1)
     pc.add_field(field2)
     city.add_geometry(pc, GeometryType.POINT_CLOUD)
+    city.view()
+
+
+def city_example_3():
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    # for i, building in enumerate(city.buildings):
+    #    building.attributes["Test attribute"] = str(i)
     city.view()
 
 
@@ -480,12 +482,13 @@ if __name__ == "__main__":
     # mesh_example_4()
     # mesh_example_5()
     # multi_geometry_example_1()
-    # building_example_2()
+    building_example_2()
     # linestring_example_2()
     # city_example_1()
     # city_example_2()
-    # building_example_1()
-    # building_example_3()
+    # city_example_3()
+    building_example_1()
+    building_example_3()
     # object_example_1()
     # object_example_2()
     # raster_example_1()
@@ -495,7 +498,7 @@ if __name__ == "__main__":
     # geometries_example()
     # bounds_example()
     # multilinestring_example()
-    multisurface_example()
+    # multisurface_example()
     # surface_example()
     # crasch_test()
     # grid_example()

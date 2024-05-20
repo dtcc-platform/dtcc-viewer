@@ -30,15 +30,23 @@ class Parts:
     ids: np.ndarray
     selected: np.ndarray
     meta_data: dict
+    attributes: dict
     ids_2_uuids: dict  # Mapping between id (int) and uuid (str)
     count: int  # Number of parts
     f_count: int  # Total number of faces
 
-    def __init__(self, meshes: list[Mesh], uuids: list[str]):
+    def __init__(
+        self,
+        meshes: list[Mesh],
+        uuids: list[str],
+        attributes: list[dict] = None,
+    ):
         self.count = len(meshes)
-        self._process_data(meshes, uuids)
+        self._process_data(meshes, uuids, attributes)
 
-    def _process_data(self, meshes: list[Mesh], uuids: list[str]):
+    def _process_data(
+        self, meshes: list[Mesh], uuids: list[str], attributes: list[dict]
+    ):
         face_count_per_submesh = []
         face_start_indices = []
         face_end_indices = []
@@ -49,6 +57,10 @@ class Parts:
         if len(meshes) != len(uuids):
             warning("Number of meshes and uuids do not match")
             return
+
+        if attributes is not None:
+            if len(meshes) != len(attributes):
+                warning("Number of meshes and attributes do not match")
 
         for mesh in meshes:
             # Store face indices for this submesh to be used for picking
@@ -67,6 +79,11 @@ class Parts:
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
         self.ids = np.array(ids)
+
+        if attributes is not None:
+            self.attributes = {key: value for key, value in zip(ids, attributes)}
+        else:
+            self.attributes = None
 
     def offset_ids(self, id_offset):
         self.ids = self.ids + id_offset
@@ -92,3 +109,12 @@ class Parts:
     def get_face_ids(self):
         face_ids = np.repeat(self.ids, self.face_count_per_part)
         return face_ids
+
+    def get_attributes(self, id):
+        if self.attributes is None:
+            return None
+
+        if id in self.attributes:
+            return self.attributes[id]
+        else:
+            return None

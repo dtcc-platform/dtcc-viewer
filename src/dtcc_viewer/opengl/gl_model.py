@@ -591,10 +591,11 @@ class GlModel:
         self.guip.picked_uuid = None
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):  # Only meshes are pickable atm
-                if obj.submeshes is not None:
-                    if obj.submeshes.id_exists(id):
-                        uuid = obj.submeshes.ids_2_uuids[id]
+                if obj.parts is not None:
+                    if obj.parts.id_exists(id):
+                        uuid = obj.parts.ids_2_uuids[id]
                         self.guip.picked_uuid = uuid
+                        self.guip.picked_attributes = obj.parts.get_attributes(id)
                         break
 
     def _find_metadata_from_id(self, id):
