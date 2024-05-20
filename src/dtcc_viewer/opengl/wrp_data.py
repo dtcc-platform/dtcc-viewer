@@ -187,10 +187,10 @@ class PointsDataWrapper(DataWrapper):
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Data called {name} was added to data dictionary.")
+            info(f"Data called '{name}' was added to data dictionary.")
             return True
         else:
-            warning(f"Data called {name} was not added to data dictionary.")
+            warning(f"Data called '{name}' was not added to data dictionary.")
             return False
 
     def _process_data(self, data: np.ndarray):

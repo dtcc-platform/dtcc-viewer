@@ -29,7 +29,7 @@ class GridWrapper(Wrapper):
         """Initialize a line string wrapper object."""
         self.name = name
         vertices, indices = self._connect_grid_points(grid)
-        data_dict = self._get_fields_data(grid, indices)
+        data_dict = self._get_fields_data(grid)
         self.lines_wrp = LinesWrapper(name, vertices, indices, mts, data_dict)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -76,24 +76,15 @@ class GridWrapper(Wrapper):
 
         return vertices, indices
 
-    def _get_fields_data(self, grid: Grid, indices: np.ndarray) -> dict:
-
+    def _get_fields_data(self, grid: Grid) -> dict:
         data_dict = {}
-        flat_indices = indices.flatten()
         for i, field in enumerate(grid.fields):
-
-            if max(flat_indices) >= len(field.values):
-                warning(f"Field {i} has less values than the grid")
-                continue
-            else:
-                if field.dim == 1:
-                    data_dict[f"field {i}"] = field.values[flat_indices]
-                    info(f"Field {i} has been added to the data dictionary")
-                elif field.dim != 1:
-                    warning(
-                        "Viewer only supports scalar fields in current implementation"
-                    )
-                    warning(f"Field '{field.name}' has dimension != 1. Skipping.")
+            if field.dim == 1:
+                data_dict[field.name] = field.values
+                info(f"Field {i} has been added to the data dictionary")
+            elif field.dim != 1:
+                warning("Viewer only supports scalar fields in current implementation")
+                warning(f"Field '{field.name}' has dimension != 1. Skipping.")
 
         return data_dict
 
@@ -117,7 +108,7 @@ class VolumeGridWrapper(Wrapper):
         self.name = name
         # mls = self._create_gridlines(volume_grid)
         vertices, indices = self._connect_grid_points(volume_grid)
-        data_dict = self._get_fields_data(volume_grid, indices)
+        data_dict = self._get_fields_data(volume_grid)
         self.lines_wrp = LinesWrapper(name, vertices, indices, mts, data_dict)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
@@ -169,21 +160,13 @@ class VolumeGridWrapper(Wrapper):
         indices = np.array(indices, dtype="uint32")
         return coords, indices
 
-    def _get_fields_data(self, volume_grid: VolumeGrid, indices: np.ndarray) -> dict:
-
+    def _get_fields_data(self, volume_grid: VolumeGrid) -> dict:
         data_dict = {}
-        flat_indices = indices.flatten()
         for i, field in enumerate(volume_grid.fields):
-            if max(flat_indices) >= len(field.values):
-                warning(f"Field {i} has less values than the grid")
-                continue
-            else:
-                if field.dim == 1:
-                    data_dict[f"field {i}"] = field.values[flat_indices]
-                    info(f"Field {i} has been added to the data dictionary")
-                elif field.dim != 1:
-                    warning(
-                        "Viewer only supports scalar fields in current implementation"
-                    )
-                    warning(f"Field '{field.name}' has dimension != 1. Skipping.")
+            if field.dim == 1:
+                data_dict[field.name] = field.values
+                info(f"Field called {field.name} has been added to the data dictionary")
+            elif field.dim != 1:
+                warning("Viewer only supports scalar fields in current implementation")
+                warning(f"Field '{field.name}' has dimension != 1. Skipping.")
         return data_dict

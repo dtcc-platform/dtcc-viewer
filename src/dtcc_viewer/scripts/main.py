@@ -147,29 +147,29 @@ def city_example_1():
     # city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    # city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    city = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    # city = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
-
-    """
+    n = 30
+    bounds = city.bounds
+    bounds.zmax = 100
     grid = Grid(bounds=bounds, width=n, height=n)
-    field1 = Field(name="field1", values=np.random.rand(grid.num_vertices))
-    field2 = Field(name="field2", values=np.random.rand(grid.num_vertices))
+    field1 = Field(name="field1", values=np.random.rand(grid.num_vertices), dim=1)
+    field2 = Field(name="field2", values=np.random.rand(grid.num_vertices), dim=1)
     grid.add_field(field1)
     grid.add_field(field2)
 
     city.add_geometry(grid, "grid")
 
-    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
-    field3 = Field(name="field3", values=np.random.rand(volume_grid.num_vertices))
-    field4 = Field(name="field4", values=np.random.rand(volume_grid.num_vertices))
+    vgrid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
+    field3 = Field(name="field3", values=np.random.rand(vgrid.num_vertices), dim=1)
+    field4 = Field(name="field4", values=np.random.rand(vgrid.num_vertices), dim=1)
 
-    volume_grid.add_field(field3)
-    volume_grid.add_field(field4)
-    city.add_geometry(volume_grid, "volume_grid")
-    """
+    vgrid.add_field(field3)
+    vgrid.add_field(field4)
+    city.add_geometry(vgrid, "volume_grid")
 
     city.view()
 
@@ -373,7 +373,7 @@ def grid_example():
 
 
 def volume_grid_example():
-    bounds = Bounds(-5.0, -3.0, 5.0, 3.0, -4.0, 4.0)
+    bounds = Bounds(5.0, -3.0, 10.0, 3.0, -4.0, 4.0)
     volume_grid = VolumeGrid(width=2, height=3, depth=4, bounds=bounds)
     field1 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
     field2 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
@@ -482,13 +482,13 @@ if __name__ == "__main__":
     # mesh_example_4()
     # mesh_example_5()
     # multi_geometry_example_1()
-    building_example_2()
+    # building_example_2()
     # linestring_example_2()
     # city_example_1()
-    # city_example_2()
+    city_example_2()
     # city_example_3()
-    building_example_1()
-    building_example_3()
+    # building_example_1()
+    # building_example_3()
     # object_example_1()
     # object_example_2()
     # raster_example_1()
