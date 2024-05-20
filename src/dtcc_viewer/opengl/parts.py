@@ -7,8 +7,9 @@ from dtcc_viewer.logging import info, warning
 class Parts:
     """Class for storing sub sets "parts" of a mesh.
 
-    Each part is a submesh with its own face indices. The class also stores meta data
-    and ids for each part. The ids are used to identify clickable objects in the scene.
+    Each part is a subset of a mesh with its own face indices. The class also stores
+    meta data and ids for each part. The ids are used to identify clickable objects
+    in the scene and to retrieve meta data for display
 
 
     Attributes
@@ -47,7 +48,7 @@ class Parts:
     def _process_data(
         self, meshes: list[Mesh], uuids: list[str], attributes: list[dict]
     ):
-        face_count_per_submesh = []
+        face_count_per_part = []
         face_start_indices = []
         face_end_indices = []
         tot_f_count = 0
@@ -69,11 +70,11 @@ class Parts:
             face_end_indices.append(tot_f_count + mesh_f_count - 1)
             tot_f_count += mesh_f_count
 
-            face_count_per_submesh.append(mesh_f_count)
+            face_count_per_part.append(mesh_f_count)
             ids.append(counter)
             counter += 1
 
-        self.face_count_per_part = np.array(face_count_per_submesh)
+        self.face_count_per_part = np.array(face_count_per_part)
         self.f_count = tot_f_count
         self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
         self.face_start_indices = np.array(face_start_indices)
@@ -98,7 +99,7 @@ class Parts:
         self.meta_data[id] = newdata_dict
 
     def print(self):
-        print("Submeshes data: ")
+        print("Parts data: ")
         print(self.face_start_indices)
         print(self.face_end_indices)
         print(self.ids)

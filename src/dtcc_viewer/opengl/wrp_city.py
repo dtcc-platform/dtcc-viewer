@@ -70,6 +70,8 @@ class CityWrapper(Wrapper):
         (mesh_t, parts_t) = self._get_terrain_mesh(city)
         (mesh_b, parts_b) = self._generate_building_mesh(city)
 
+        parts_b.print()
+
         if mesh_t is not None:
             self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, None, parts_t)
 
@@ -137,6 +139,7 @@ class CityWrapper(Wrapper):
     def _get_terrain_mesh(self, city: City):
         meshes = []
         uuids = []
+        attributes = []
         terrain_list = city.children[Terrain]
 
         for terrain in terrain_list:
@@ -145,6 +148,7 @@ class CityWrapper(Wrapper):
             if mesh is not None:
                 meshes.append(mesh)
                 uuids.append(uuid)
+                attributes.append(terrain.attributes)
 
         if len(meshes) == 0:
             info("No terrain mesh found in city model")
@@ -172,6 +176,8 @@ class CityWrapper(Wrapper):
                 mss.append(MultiSurface(surfaces=[ms]))
                 uuids.append(uuid)
                 attributes.append(building.attributes)
+
+        info(f"Found {len(mss)} building(s) in city model")
 
         tic = time()
         meshes = []

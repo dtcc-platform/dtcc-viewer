@@ -144,6 +144,11 @@ def linestring_example_2():
 
 
 def city_example_1():
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city.view()
+
+
+def city_example_2():
     # city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
     # city = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
@@ -174,24 +179,25 @@ def city_example_1():
     city.view()
 
 
-def city_example_2():
+def city_example_3():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
     bounds = city.bounds
-    bounds.zmax = 100
-    n = 30
-    volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
-    pc = PointCloud(points=volume_grid.coordinates())
-    field1 = Field(name="field1", values=np.random.rand(len(pc.points)))
-    field2 = Field(name="field2", values=np.random.rand(len(pc.points)))
-    pc.add_field(field1)
-    pc.add_field(field2)
-    city.add_geometry(pc, GeometryType.POINT_CLOUD)
+    # bounds.zmax = 100
+    # n = 30
+    # volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
+    # pc = PointCloud(points=volume_grid.coordinates())
+    # field1 = Field(name="field1", values=np.random.rand(len(pc.points)))
+    # field2 = Field(name="field2", values=np.random.rand(len(pc.points)))
+    # pc.add_field(field1)
+    # pc.add_field(field2)
+    # city.add_geometry(pc, GeometryType.POINT_CLOUD)
+
     city.view()
 
 
-def city_example_3():
+def city_example_4():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     # for i, building in enumerate(city.buildings):
     #    building.attributes["Test attribute"] = str(i)
@@ -487,6 +493,7 @@ if __name__ == "__main__":
     # city_example_1()
     city_example_2()
     # city_example_3()
+    # city_example_4()
     # building_example_1()
     # building_example_3()
     # object_example_1()

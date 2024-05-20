@@ -586,73 +586,104 @@ class Gui:
         rst = model.filter_gl_type(GlRaster)
 
         if expanded:
-            self._draw_model_stats(mhs, pcs, lss, width)
-            self._draw_model_data(model, width)
+            self._draw_model_stats(mhs, pcs, lss)
+            self._draw_model_data(model)
         self._draw_separator()
 
     def _draw_model_stats(
-        self,
-        mhs: list[GlMesh],
-        pcs: list[GlPoints],
-        lss: list[GlLines],
-        text_width: int,
+        self, mhs: list[GlMesh], pcs: list[GlPoints], lss: list[GlLines]
     ) -> None:
-        """Draw GUI elements for adjusting appearance settings like background color."""
-        imgui.begin_child("ModelStats", 0, 180, border=True)
-        imgui.text("MODEL STATS:")
-        v_count, f_count, p_count, l_count = 0, 0, 0, 0
+        v_count, f_count, l_count = 0, 0, 0
+        data_dict = {}
+
         for mesh in mhs:
-            text_0 = f"- Mesh called: '{mesh.name}' has {mesh.n_vertices} vertices and {mesh.n_faces} faces."
-            imgui.text(self.wrap_text(text_0, text_width))
+            data_dict[f"'{mesh.name}' face count:"] = mesh.n_vertices
+            data_dict[f"'{mesh.name}' vertex count:"] = mesh.n_faces
             v_count += mesh.n_vertices
             f_count += mesh.n_faces
-            # print(v_count)
         for pc in pcs:
+            data_dict[f"'{pc.name}' points count:"] = pc.n_points
             n_particles = pc.n_points
             n_vertices = (pc.n_sides + 1) * n_particles
             n_faces = pc.n_sides * n_particles
-            text_0 = f"- PointCloud called: '{pc.name}' has {pc.n_points} points, which are drawn with {n_vertices} vertices and {n_faces} faces."
-            imgui.text(self.wrap_text(text_0, text_width))
             v_count += n_vertices
             f_count += n_faces
-            p_count += n_particles
         for ls in lss:
-            text_0 = f"- LineString called: '{ls.name}' has {len(ls.vertices)} points."
-            imgui.text(self.wrap_text(text_0, text_width))
+            data_dict[f"'{ls.name}' vertex count:"] = ls.n_vertices
+            data_dict[f"'{ls.name}' segment count:"] = ls.n_lines
             v_count += ls.n_vertices
             l_count += ls.n_lines
 
-        imgui.text(f"----------------------------------------")
-        imgui.text("Visualisation stats:")
-        if v_count > 0:
-            imgui.text(f"Total vertex count: {v_count}")
-        if f_count > 0:
-            imgui.text(f"Total face count: {f_count}")
-        if p_count > 0:
-            imgui.text(f"Total particle count: {p_count}")
-        if l_count > 0:
-            imgui.text(f"Total line count: {l_count}")
+        space_model_stats = self._calc_space(data_dict, 25, 21)
+        space_vis_stats = 75
+        padding = 55
+        space_tot = space_model_stats + space_vis_stats + padding
+        imgui.begin_child("ModelStats", 0, space_tot, border=True)
+
+        imgui.text("MODEL STATS:")
+        imgui.begin_child("Table1", 0, space_model_stats, border=True)
+        self._draw_data_table(data_dict)
+        imgui.end_child()
+
+        data_dict = {}
+        data_dict["Total vertex count:"] = v_count
+        data_dict["Total face count:"] = f_count
+        data_dict["Total line count:"] = l_count
+
+        imgui.text("VISUALISATION STATS:")
+        imgui.begin_child("Table2", 0, space_vis_stats, border=True)
+        self._draw_data_table(data_dict)
+        imgui.end_child()
 
         imgui.end_child()
 
-    def _draw_model_data(self, model: GlModel, text_width: int) -> None:
+    def _draw_model_data(self, model: GlModel) -> None:
         imgui.begin_child("ModelData", 0, 250, border=True)
         imgui.text("SELECTED OBJECT DATA:")
         if model.guip.picked_id != -1:
-            text_0 = "- id: " + str(model.guip.picked_id)
-            imgui.text(self.wrap_text(text_0, text_width))
-            # text_1 = "- uuid: " + str(model.guip.picked_uuid)
-            # imgui.text(self.wrap_text(text_1, text_width))
-            text_2 = "- mesh: " + str(model.guip.picked_metadata)
-            imgui.text(self.wrap_text(text_2, text_width))
-            text_3 = "- center: " + str(model.guip.picked_cp)
-            imgui.text(self.wrap_text(text_3, text_width))
-            text_4 = "- size: " + str(model.guip.picked_size)
-            imgui.text(self.wrap_text(text_4, text_width))
-            text_5 = "- attributes: " + str(model.guip.picked_attributes)
-            imgui.text(self.wrap_text(text_5, text_width))
+            data_dict = {}
+            data_dict["id"] = model.guip.picked_id
+            data_dict["face count"] = model.guip.picked_mesh_face_count
+            data_dict["vertex count"] = model.guip.picked_mesh_vertex_count
+            # data_dict["center"] = model.guip.picked_cp
+            data_dict["size"] = np.round(model.guip.picked_size, 2)
+
+            if model.guip.picked_attributes is not None:
+                data_dict.update(model.guip.picked_attributes)
+
+            space = self._calc_space(data_dict, 25, 21)
+            imgui.begin_child("Table", 0, space, border=True)
+            self._draw_data_table(data_dict)
+            imgui.end_child()
 
         imgui.end_child()
+
+    def _calc_space(self, data_dict: dict, space_first_last, space_other) -> int:
+        """ "Calculate vertical space for data table rows."""
+        len_data = len(data_dict)
+        if len_data > 2:
+            space = space_first_last * 2 + space_other * (len_data - 2)
+        else:
+            space = space_first_last * len_data
+        return space
+
+    def _draw_data_table(self, data_dict: dict) -> None:
+
+        # Define the column headers
+        imgui.columns(2, "dict_table")
+        imgui.set_column_width(0, 180)
+
+        last_key = list(data_dict.keys())[-1]
+        # Populate the table with dictionary data
+        for key, value in data_dict.items():
+            imgui.text(str(key))
+            imgui.next_column()
+            imgui.text(str(value))
+            imgui.next_column()
+            if key != last_key:
+                imgui.separator()
+
+        imgui.columns(1)
 
     def _draw_fps(self, guip: GuiParametersGlobal) -> None:
         """Draw GUI elements for adjusting appearance settings like background color."""

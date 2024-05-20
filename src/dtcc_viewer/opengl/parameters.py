@@ -85,7 +85,9 @@ class GuiParametersModel:
     animate_light: bool
     picked_id: int
     picked_uuid: str
-    picked_metadata: str
+    picked_mesh_face_count: int
+    picked_mesh_vertex_count: int
+    picked_attributes: str
     picked_cp: np.ndarray
     picked_size: float
 

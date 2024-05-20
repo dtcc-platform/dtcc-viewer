@@ -613,7 +613,8 @@ class GlModel:
 
         # Assign to
         if sucess:
-            self.guip.picked_metadata = f" has {f_count} faces, {v_counter} vertices."
+            self.guip.picked_mesh_face_count = f_count
+            self.guip.picked_mesh_vertex_count = v_counter
             self.guip.picked_cp = avrg_pt
             self.guip.picked_size = radius
         else:
