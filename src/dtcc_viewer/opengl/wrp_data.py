@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import numbers
 from dtcc_viewer.logging import info, warning
 from dtcc_model import Mesh
 from dtcc_model import PointCloud
@@ -60,6 +61,12 @@ class DataWrapper(ABC):
 
         info(f"Texel indices for DataWrapper computed.")
 
+    def is_numeric(self, value):
+        return isinstance(value, (int, float))
+
+    def all_is_numeric(self, data):
+        return all(isinstance(item, numbers.Number) for item in data)
+
 
 class MeshDataWrapper(DataWrapper):
     """Wrapper class for mesh data to be used in OpenGL.
@@ -100,27 +107,35 @@ class MeshDataWrapper(DataWrapper):
             warning(f"Data called {name} was not added to data dictionary.")
             return False
 
-    def add_parts_data(self, name: str, data: np.ndarray, submeshes: Parts):
-        (data_mat, val_caps) = self._process_parts_data(data, submeshes)
+    def add_parts_data(self, name: str, data: np.ndarray, parts: Parts):
+        (data_mat, val_caps) = self._process_parts_data(data, parts)
 
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Data called {name} was added to data dictionary.")
+            info(f"Attribute data '{name}' was added to data dictionary.")
             return True
         else:
-            warning(f"Data called {name} was not added to data dictionary.")
+            warning(f"Attribute data '{name}' was not added to data dictionary.")
             return False
 
-    def _process_parts_data(self, data: np.ndarray, submeshes: Parts):
+    def _process_parts_data(self, data: np.ndarray, parts: Parts):
 
-        if submeshes.f_count != len(self.mesh.faces):
-            warning(f"Submesh count does not match data count.")
+        if parts.f_count != len(self.mesh.faces):
+            warning(f"Parts face count does not match mesh face count.")
+            return None, None
+
+        if None in data:
+            warning(f"Attribute data contains None-valued item.")
+            return None, None
+
+        if not self.all_is_numeric(data):
+            warning(f"Attribute data contains non-numeric entities.")
             return None, None
 
         # For example, if data is per building and submeshes are used to define building
-        if len(data) == submeshes.count:
-            f_counts = submeshes.face_count_per_part
+        if len(data) == parts.count:
+            f_counts = parts.face_count_per_part
             face_data = []
             # repeat the data for each face in the submesh => n_data = n_faces
             for i in range(len(data)):
@@ -128,6 +143,7 @@ class MeshDataWrapper(DataWrapper):
                 face_data.extend(d)
 
             # Restructure the data to match the vertex structure
+            face_data = np.array(face_data)
             data_res = self._face_data_2_new_vertex_structure(face_data)
             data_mat = self._reformat_data_for_texture(data_res)
             val_caps = (np.min(data_res), np.max(data_res))

@@ -183,7 +183,7 @@ def city_example_3():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
-    bounds = city.bounds
+    # bounds = city.bounds
     # bounds.zmax = 100
     # n = 30
     # volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
@@ -199,8 +199,20 @@ def city_example_3():
 
 def city_example_4():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
-    # for i, building in enumerate(city.buildings):
-    #    building.attributes["Test attribute"] = str(i)
+    building_year = [1900, 1920, 1930, 1945, 1960, 1980, 2000, 2010, 2020, 2030]
+    residents = np.arange(10) + 5
+
+    for i, building in enumerate(city.buildings):
+        building.attributes["energy consumption"] = i
+        building.attributes["no residents"] = residents[i % len(residents)]
+        building.attributes["year"] = building_year[i % len(building_year)]
+    city.view()
+
+
+def city_example_5():
+    city = dtcc_io.load_cityjson(
+        "../../../data/models/citygml_loz_buildings_energy_20230819.json"
+    )
     city.view()
 
 
@@ -491,9 +503,10 @@ if __name__ == "__main__":
     # building_example_2()
     # linestring_example_2()
     # city_example_1()
-    city_example_2()
+    # city_example_2()
     # city_example_3()
-    # city_example_4()
+    city_example_4()
+    # city_example_5()
     # building_example_1()
     # building_example_3()
     # object_example_1()

@@ -52,8 +52,8 @@ class Parts:
         face_start_indices = []
         face_end_indices = []
         tot_f_count = 0
-        counter = 0
         ids = []
+        self.attributes = {}
 
         if len(meshes) != len(uuids):
             warning("Number of meshes and uuids do not match")
@@ -62,17 +62,16 @@ class Parts:
         if attributes is not None:
             if len(meshes) != len(attributes):
                 warning("Number of meshes and attributes do not match")
+                return
 
-        for mesh in meshes:
+        for i, mesh in enumerate(meshes):
             # Store face indices for this submesh to be used for picking
             mesh_f_count = len(mesh.faces)
             face_start_indices.append(tot_f_count)
             face_end_indices.append(tot_f_count + mesh_f_count - 1)
             tot_f_count += mesh_f_count
-
             face_count_per_part.append(mesh_f_count)
-            ids.append(counter)
-            counter += 1
+            ids.append(i)
 
         self.face_count_per_part = np.array(face_count_per_part)
         self.f_count = tot_f_count
@@ -119,3 +118,21 @@ class Parts:
             return self.attributes[id]
         else:
             return None
+
+    def get_unique_attribute_keys(self):
+        unique_keys = set()
+
+        for attributes in self.attributes.values():
+            if isinstance(attributes, dict):
+                unique_keys.update(attributes.keys())
+
+        return unique_keys
+
+    def get_attribute_data(self, key):
+        data = []
+        for part_attribute in self.attributes.values():
+            if key in part_attribute:
+                data.append(part_attribute[key])
+            else:
+                data.append(None)
+        return data

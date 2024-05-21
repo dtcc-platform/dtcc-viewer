@@ -70,8 +70,6 @@ class CityWrapper(Wrapper):
         (mesh_t, parts_t) = self._get_terrain_mesh(city)
         (mesh_b, parts_b) = self._generate_building_mesh(city)
 
-        parts_b.print()
-
         if mesh_t is not None:
             self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, None, parts_t)
 
