@@ -178,19 +178,30 @@ class CityWrapper(Wrapper):
         info(f"Found {len(mss)} building(s) in city model")
 
         tic = time()
-        meshes = []
-        for ms in mss:
-            mesh = ms.mesh()
-            if mesh is not None:
-                meshes.append(mesh)
-        info(f"Meshing complete. Time elapsed: {time() - tic:0.4f} seconds")
+        valid_meshes = []
+        valid_uuids = []
+        valid_attrib = []
+        dups_count = 0
+        for i, ms in enumerate(mss):
+            if ms.find_dups():
+                dups_count += 1
+            else:
+                # avoid meshing multi surfaces with duplicates
+                mesh = ms.mesh()
+                if mesh is not None:
+                    valid_meshes.append(mesh)
+                    valid_uuids.append(uuids[i])
+                    valid_attrib.append(attributes[i])
 
-        if len(meshes) == 0:
+        info(f"Meshing complete. Time elapsed: {time() - tic:0.4f} seconds")
+        info(f"Found {dups_count} building(s) with duplicate vertices")
+
+        if len(valid_meshes) == 0:
             info("No building meshes found in city model")
             return None, None
         else:
-            parts = Parts(meshes, uuids, attributes)
-            mesh = concatenate_meshes(meshes)
+            parts = Parts(valid_meshes, valid_uuids, valid_attrib)
+            mesh = concatenate_meshes(valid_meshes)
             info(f"Mesh with {len(mesh.faces)} faces was retrieved from buildings")
             return mesh, parts
 

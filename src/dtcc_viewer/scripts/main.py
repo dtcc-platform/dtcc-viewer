@@ -144,7 +144,7 @@ def linestring_example_2():
 
 
 def city_example_1():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
     city.view()
 
 
@@ -505,8 +505,8 @@ if __name__ == "__main__":
     # city_example_1()
     # city_example_2()
     # city_example_3()
-    city_example_4()
-    # city_example_5()
+    # city_example_4()
+    city_example_5()
     # building_example_1()
     # building_example_3()
     # object_example_1()
