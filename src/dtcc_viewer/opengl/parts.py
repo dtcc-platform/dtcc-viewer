@@ -30,7 +30,8 @@ class Parts:
     face_count_per_part: np.ndarray
     ids: np.ndarray
     selected: np.ndarray
-    meta_data: dict
+    mid_points: np.ndarray
+    sizes: np.ndarray
     attributes: dict
     ids_2_uuids: dict  # Mapping between id (int) and uuid (str)
     count: int  # Number of parts
@@ -39,7 +40,7 @@ class Parts:
     def __init__(
         self,
         meshes: list[Mesh],
-        uuids: list[str],
+        uuids: list[str] = None,
         attributes: list[dict] = None,
     ):
         self.count = len(meshes)
@@ -48,6 +49,8 @@ class Parts:
     def _process_data(
         self, meshes: list[Mesh], uuids: list[str], attributes: list[dict]
     ):
+        self.mid_points = []
+        self.sizes = []
         face_count_per_part = []
         face_start_indices = []
         face_end_indices = []
@@ -55,9 +58,10 @@ class Parts:
         ids = []
         self.attributes = {}
 
-        if len(meshes) != len(uuids):
-            warning("Number of meshes and uuids do not match")
-            return
+        if uuids is not None:
+            if len(meshes) != len(uuids):
+                warning("Number of meshes and uuids do not match")
+                return
 
         if attributes is not None:
             if len(meshes) != len(attributes):
@@ -73,12 +77,22 @@ class Parts:
             face_count_per_part.append(mesh_f_count)
             ids.append(i)
 
+            # Store the mid point and size of the mesh
+            self.mid_points.append(self.calculate_midpoint(mesh))
+            self.sizes.append(self.calculate_size(mesh))
+
         self.face_count_per_part = np.array(face_count_per_part)
         self.f_count = tot_f_count
-        self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
         self.ids = np.array(ids)
+        self.mid_points = np.array(self.mid_points)
+        self.sizes = np.array(self.sizes)
+
+        if uuids is not None:
+            self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
+        else:
+            self.ids_2_uuids = None
 
         if attributes is not None:
             self.attributes = {key: value for key, value in zip(ids, attributes)}
@@ -93,9 +107,6 @@ class Parts:
 
     def id_exists(self, id):
         return id in self.ids
-
-    def add_meta_data(self, id, newdata_dict):
-        self.meta_data[id] = newdata_dict
 
     def print(self):
         print("Parts data: ")
@@ -136,3 +147,34 @@ class Parts:
             else:
                 data.append(None)
         return data
+
+    def calculate_midpoint(self, mesh: Mesh) -> np.ndarray:
+        """Calculate the midpoint of the mesh.
+
+        Returns
+        -------
+        np.ndarray
+            The midpoint (centroid) of the mesh.
+        """
+        if len(mesh.vertices) == 0:
+            raise ValueError("Mesh has no vertices.")
+
+        midpoint = np.mean(mesh.vertices, axis=0)
+        return midpoint
+
+    def calculate_size(self, mesh: Mesh) -> float:
+        """Calculate the size of the mesh.
+
+        Returns
+        -------
+        np.ndarray
+            The size of the mesh along the x, y, and z axes.
+        """
+        if len(mesh.vertices) == 0:
+            raise ValueError("Mesh has no vertices.")
+
+        bds = mesh.calculate_bounds()
+        dom = np.array([bds.xmax - bds.xmin, bds.ymax - bds.ymin, bds.zmax - bds.zmin])
+        size = np.linalg.norm(dom)
+
+        return size

@@ -210,9 +210,10 @@ def city_example_4():
 
 
 def city_example_5():
-    city = dtcc_io.load_cityjson(
-        "../../../data/models/citygml_loz_buildings_energy_20230819.json"
-    )
+    file1 = "../../../data/models/citygml_loz_buildings_energy_20230819.json"
+    file2 = "../../../data/models/lozenets_citygml2cityjson.json"
+    file3 = "../../../data/models/lozenets_citygml2cityjson_lod1_replaced.json"
+    city = dtcc_io.load_cityjson(file3)
     city.view()
 
 

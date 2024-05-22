@@ -19,6 +19,7 @@ dtcc-demo-data/
 !cube_pc.csv
 
 *.city.json
+*.json
 *.html
 *.txt
 

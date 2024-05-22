@@ -597,8 +597,8 @@ class Gui:
         data_dict = {}
 
         for mesh in mhs:
-            data_dict[f"'{mesh.name}' face count:"] = mesh.n_vertices
-            data_dict[f"'{mesh.name}' vertex count:"] = mesh.n_faces
+            data_dict[f"'{mesh.name}' face count:"] = mesh.n_faces
+            data_dict[f"'{mesh.name}' vertex count:"] = mesh.n_vertices
             v_count += mesh.n_vertices
             f_count += mesh.n_faces
         for pc in pcs:

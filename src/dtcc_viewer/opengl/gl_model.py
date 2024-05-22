@@ -400,7 +400,7 @@ class GlModel:
             action.picked_id = picked_id_new
             self.guip.picked_id = picked_id_new
             self._find_object_from_id(picked_id_new)
-            self._find_metadata_from_id(picked_id_new)
+            self._find_data_from_id(picked_id_new)
 
         action.picking = False
 
@@ -598,27 +598,26 @@ class GlModel:
                         self.guip.picked_attributes = obj.parts.get_attributes(id)
                         break
 
-    def _find_metadata_from_id(self, id):
+    def _find_data_from_id(self, id):
         sucess = False
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 vertex_ids = obj.get_vertex_ids()
-                indices = np.where(vertex_ids == id)[0]
-                if len(indices) > 0:
-                    v_counter = len(indices)
-                    f_count = v_counter // 3
-                    (avrg_pt, radius) = obj.get_average_vertex_position(indices)
+                vertex_idx = np.where(vertex_ids == id)[0]
+                if len(vertex_idx) > 0:
+                    f_count = len(vertex_idx) // 3
+                    v_count = len(vertex_idx)
+                    (avrg_pt, radius) = obj.get_average_vertex_position(vertex_idx)
                     sucess = True
                     break
 
         # Assign to
         if sucess:
             self.guip.picked_mesh_face_count = f_count
-            self.guip.picked_mesh_vertex_count = v_counter
+            self.guip.picked_mesh_vertex_count = v_count
             self.guip.picked_cp = avrg_pt
             self.guip.picked_size = radius
         else:
-            self.guip.picked_metadata = None
             self.guip.picked_cp = None
             self.guip.picked_size = None
 
