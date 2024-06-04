@@ -9,17 +9,20 @@ import dtcc_io
 from affine import Affine
 from pprint import pp
 from dtcc_viewer import utils
-from dtcc_io import pointcloud, meshes
-from dtcc_io import load_raster
+from dtcc_io import pointcloud, meshes, roadnetwork
+from dtcc_io import load_raster, load_roadnetwork
 from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
-from dtcc_model import VolumeMesh
+from dtcc_model import VolumeMesh, LineString, MultiLineString
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
-from shapely.geometry import LineString, Point, MultiLineString
+from shapely.geometry import Point
+from shapely.geometry import MultiLineString as ShapelyMultiLineString
+from shapely.geometry import LineString as ShapelyLineString
+from dtcc_builder import clean_building_surfaces
 
 
 def pointcloud_example_1():
@@ -122,7 +125,7 @@ def linestring_example_2():
         ls = create_ls_circle(Point(0, 0, 0), 1 + i, 100)
         lss.append(ls)
 
-    mls = MultiLineString(lss)
+    mls = ShapelyMultiLineString(lss)
 
     x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
     y_vals = np.array([pt[1] for ls in lss for pt in ls.coords])
@@ -143,39 +146,42 @@ def linestring_example_2():
     window.render(scene)
 
 
+def linestring_example_3():
+    # Create instances of LineString
+    linestring = LineString(vertices=np.array([[0, 5], [1, 1], [2, 1], [4, 3], [0, 4]]))
+    linestring.view()
+
+
+def multilinestring_example_1():
+    line1 = LineString(vertices=np.array([[0, 0], [1, 1], [2, 2]]))
+    line2 = LineString(vertices=np.array([[2, 2], [3, 3], [4, 4]]))
+    line3 = LineString(vertices=np.array([[4, 4], [5, 5], [6, 6]]))
+
+    line_strings = [line1, line2, line3]
+    multilinestring = MultiLineString(linestrings=line_strings)
+    multilinestring.view()
+
+
+def multilinestring_example_2():
+    lss = []
+    for i in range(15):
+        lss.append(create_ls_circle(Point(0, 0, 0), 10 + i, 100))
+
+    mls = MultiLineString(linestrings=lss)
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_multilinestring("MultiLineString", mls)
+    window.render(scene)
+
+
 def city_example_1():
-    city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
     city.view()
 
 
 def city_example_2():
-    # city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
-    # city = dtcc_io.load_cityjson("../../../data/models/montreal.city.json")
-    # city = dtcc_io.load_cityjson("../../../data/models/vienna.city.json")
-    # city = dtcc_io.load_cityjson("../../../data/models/railway.city.json")
-    # city = dtcc_io.load_cityjson("../../../data/models/newyork.city.json")
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
-
-    # Add some geometries to the city
-    n = 30
-    bounds = city.bounds
-    bounds.zmax = 100
-    grid = Grid(bounds=bounds, width=n, height=n)
-    field1 = Field(name="field1", values=np.random.rand(grid.num_vertices), dim=1)
-    field2 = Field(name="field2", values=np.random.rand(grid.num_vertices), dim=1)
-    grid.add_field(field1)
-    grid.add_field(field2)
-
-    city.add_geometry(grid, "grid")
-
-    vgrid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
-    field3 = Field(name="field3", values=np.random.rand(vgrid.num_vertices), dim=1)
-    field4 = Field(name="field4", values=np.random.rand(vgrid.num_vertices), dim=1)
-
-    vgrid.add_field(field3)
-    vgrid.add_field(field4)
-    city.add_geometry(vgrid, "volume_grid")
-
+    city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
+    city = clean_building_surfaces(city, GeometryType.LOD2)
     city.view()
 
 
@@ -183,16 +189,26 @@ def city_example_3():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
-    # bounds = city.bounds
-    # bounds.zmax = 100
-    # n = 30
-    # volume_grid = VolumeGrid(bounds=bounds, width=n, height=n, depth=n)
-    # pc = PointCloud(points=volume_grid.coordinates())
-    # field1 = Field(name="field1", values=np.random.rand(len(pc.points)))
-    # field2 = Field(name="field2", values=np.random.rand(len(pc.points)))
-    # pc.add_field(field1)
-    # pc.add_field(field2)
-    # city.add_geometry(pc, GeometryType.POINT_CLOUD)
+    n = 30
+    bounds = city.bounds
+    bounds.zmax = 100
+    grid = Grid(width=n, height=n)
+    grid.bounds = bounds
+    field1 = Field(name="field1", values=np.random.rand(grid.num_vertices), dim=1)
+    field2 = Field(name="field2", values=np.random.rand(grid.num_vertices), dim=1)
+    grid.add_field(field1)
+    grid.add_field(field2)
+
+    city.add_geometry(grid, "grid")
+
+    vgrid = VolumeGrid(width=n, height=n, depth=n)
+    vgrid.bounds = bounds
+    field3 = Field(name="field3", values=np.random.rand(vgrid.num_vertices), dim=1)
+    field4 = Field(name="field4", values=np.random.rand(vgrid.num_vertices), dim=1)
+
+    vgrid.add_field(field3)
+    vgrid.add_field(field4)
+    city.add_geometry(vgrid, "volume_grid")
 
     city.view()
 
@@ -213,7 +229,8 @@ def city_example_5():
     file1 = "../../../data/models/citygml_loz_buildings_energy_20230819.json"
     file2 = "../../../data/models/lozenets_citygml2cityjson.json"
     file3 = "../../../data/models/lozenets_citygml2cityjson_lod1_replaced.json"
-    city = dtcc_io.load_cityjson(file3)
+    file4 = "../../../data/models/lozenets_citygml2cityjson_with_facades_2.json"
+    city = dtcc_io.load_cityjson(file1)
     city.view()
 
 
@@ -353,26 +370,14 @@ def bounds_example():
     bounds.view()
 
 
-def multilinestring_example():
-    lss = []
-    for i in range(5):
-        lss.append(create_ls_circle(Point(0, 0, 0), 10 + i, 100))
-
-    mls = MultiLineString(lss)
-    window = Window(1200, 800)
-    scene = Scene()
-    scene.add_multilinestring("MultiLineString", mls)
-    window.render(scene)
-
-
 def multisurface_example():
     cylinder_ms = create_cylinder(Point(0, 0, 0), 10, 10, 100)
     data1 = np.random.rand(len(cylinder_ms.surfaces))
     data2 = np.random.rand(len(cylinder_ms.surfaces))
     field1 = Field(name="field1", values=data1, dim=1)
     field2 = Field(name="field2", values=data2, dim=1)
-    cylinder_ms.add_field(field1)
-    cylinder_ms.add_field(field2)
+    # cylinder_ms.add_field(field1)
+    # cylinder_ms.add_field(field2)
     cylinder_ms.view()
 
 
@@ -383,7 +388,8 @@ def surface_example():
 
 def grid_example():
     bounds = Bounds(-12, -12, 12, 12, 0, 0)
-    grid = Grid(width=30, height=40, bounds=bounds)
+    grid = Grid(width=30, height=40)
+    grid.bounds = bounds
     field1 = Field(name="field", values=np.random.rand(grid.num_vertices))
     field2 = Field(name="field", values=np.random.rand(grid.num_vertices))
     grid.add_field(field1)
@@ -393,7 +399,8 @@ def grid_example():
 
 def volume_grid_example():
     bounds = Bounds(5.0, -3.0, 10.0, 3.0, -4.0, 4.0)
-    volume_grid = VolumeGrid(width=2, height=3, depth=4, bounds=bounds)
+    volume_grid = VolumeGrid(width=2, height=3, depth=4)
+    volume_grid.bounds = bounds
     field1 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
     field2 = Field(name="field", values=np.random.rand(volume_grid.num_vertices))
     volume_grid.add_field(field1)
@@ -450,6 +457,12 @@ def volume_mesh_example_5():
     window.render(scene)
 
 
+def road_network_example():
+    filename = "../../../data/models/helsingborg_road_data.shp"
+    rn = load_roadnetwork(filename)
+    rn.view()
+
+
 def crasch_test():
 
     window = Window(1200, 800)
@@ -502,12 +515,14 @@ if __name__ == "__main__":
     # mesh_example_5()
     # multi_geometry_example_1()
     # building_example_2()
-    # linestring_example_2()
+    # linestring_example_3()
+    # multilinestring_example_1()
+    # multilinestring_example_2()
     # city_example_1()
     # city_example_2()
     # city_example_3()
     # city_example_4()
-    city_example_5()
+    # city_example_5()
     # building_example_1()
     # building_example_3()
     # object_example_1()
@@ -518,13 +533,13 @@ if __name__ == "__main__":
     # raster_example_4()
     # geometries_example()
     # bounds_example()
-    # multilinestring_example()
     # multisurface_example()
     # surface_example()
-    # crasch_test()
     # grid_example()
     # volume_grid_example()
     # volume_mesh_example()
     # volume_mesh_example_2()
     # volume_mesh_example_3()
     # volume_mesh_example_4()
+    road_network_example()
+    # crasch_test()

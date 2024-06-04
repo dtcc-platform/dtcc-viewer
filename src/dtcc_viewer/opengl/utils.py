@@ -5,8 +5,9 @@ from dtcc_model import Mesh, PointCloud
 from pprint import pp
 import triangle as tr
 from dtcc_viewer.logging import info, warning
-from dtcc_model import MultiSurface, Surface, VolumeMesh
-from shapely.geometry import Point, LineString
+from dtcc_model import MultiSurface, Surface, VolumeMesh, LineString, MultiLineString
+from shapely.geometry import Point
+from shapely.geometry import LineString as ShapelyLineString
 from dtcc_viewer.utils import Direction
 
 
@@ -367,18 +368,17 @@ def create_ls_circle(center, radius, num_segments):
     angle_step = 2 * math.pi / num_segments
 
     # Generate points around the circumference of the circle
-    points = []
+    vertices = []
     for i in range(num_segments):
         x = center.x + radius * math.cos(i * angle_step)
         y = center.y + radius * math.sin(i * angle_step)
-        z = center.z + math.sin(i * angle_step * 2) * 10
-        points.append(Point(x, y, z))
+        z = center.z + math.sin(i * angle_step * 2) * 10.0
+        vertices.append([x, y, z])
 
-    points.append(points[0])
-    # Create a LineString from the points
-    circle_line = LineString(points)
-
-    return circle_line
+    vertices.append(vertices[0])
+    vertices = np.array(vertices)
+    circle_ls = LineString(vertices=vertices)
+    return circle_ls
 
 
 def create_cylinder(center, radius, height, num_segments):

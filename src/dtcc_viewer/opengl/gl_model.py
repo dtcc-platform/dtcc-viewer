@@ -593,8 +593,6 @@ class GlModel:
             if isinstance(obj, GlMesh):  # Only meshes are pickable atm
                 if obj.parts is not None:
                     if obj.parts.id_exists(id):
-                        uuid = obj.parts.ids_2_uuids[id]
-                        self.guip.picked_uuid = uuid
                         self.guip.picked_attributes = obj.parts.get_attributes(id)
                         break
 

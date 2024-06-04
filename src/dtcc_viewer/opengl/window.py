@@ -32,6 +32,7 @@ from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
+from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 
 
 class Window:
@@ -217,6 +218,9 @@ class Window:
 
             elif isinstance(wrapper, LinesWrapper):
                 self.gl_objects.append(GlLines(wrapper))
+
+            elif isinstance(wrapper, RoadNetworkWrapper):
+                self.gl_objects.append(GlLines(wrapper.mls_wrp))
 
             elif isinstance(wrapper, BoundsWrapper):
                 self.gl_objects.append(GlLines(wrapper.ls_wrp))

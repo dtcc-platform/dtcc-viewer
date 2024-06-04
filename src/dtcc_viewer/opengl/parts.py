@@ -77,10 +77,6 @@ class Parts:
             face_count_per_part.append(mesh_f_count)
             ids.append(i)
 
-            # Store the mid point and size of the mesh
-            self.mid_points.append(self.calculate_midpoint(mesh))
-            self.sizes.append(self.calculate_size(mesh))
-
         self.face_count_per_part = np.array(face_count_per_part)
         self.f_count = tot_f_count
         self.face_start_indices = np.array(face_start_indices)
@@ -89,11 +85,6 @@ class Parts:
         self.mid_points = np.array(self.mid_points)
         self.sizes = np.array(self.sizes)
 
-        if uuids is not None:
-            self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
-        else:
-            self.ids_2_uuids = None
-
         if attributes is not None:
             self.attributes = {key: value for key, value in zip(ids, attributes)}
         else:
@@ -101,9 +92,6 @@ class Parts:
 
     def offset_ids(self, id_offset):
         self.ids = self.ids + id_offset
-        self.ids_2_uuids = {
-            key + id_offset: value for key, value in self.ids_2_uuids.items()
-        }
 
     def id_exists(self, id):
         return id in self.ids
@@ -147,34 +135,3 @@ class Parts:
             else:
                 data.append(None)
         return data
-
-    def calculate_midpoint(self, mesh: Mesh) -> np.ndarray:
-        """Calculate the midpoint of the mesh.
-
-        Returns
-        -------
-        np.ndarray
-            The midpoint (centroid) of the mesh.
-        """
-        if len(mesh.vertices) == 0:
-            raise ValueError("Mesh has no vertices.")
-
-        midpoint = np.mean(mesh.vertices, axis=0)
-        return midpoint
-
-    def calculate_size(self, mesh: Mesh) -> float:
-        """Calculate the size of the mesh.
-
-        Returns
-        -------
-        np.ndarray
-            The size of the mesh along the x, y, and z axes.
-        """
-        if len(mesh.vertices) == 0:
-            raise ValueError("Mesh has no vertices.")
-
-        bds = mesh.calculate_bounds()
-        dom = np.array([bds.xmax - bds.xmin, bds.ymax - bds.ymin, bds.zmax - bds.zmin])
-        size = np.linalg.norm(dom)
-
-        return size

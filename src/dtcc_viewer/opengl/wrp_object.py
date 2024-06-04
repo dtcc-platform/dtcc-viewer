@@ -67,12 +67,10 @@ class ObjectWrapper(Wrapper):
         (mesh_1, parts_1) = self._extract_mesh_from_mesh(obj)
         (mesh_2, parts_2) = self._extract_mesh_from_ms(obj)
 
-        quantities = obj.quantities
-
         if mesh_1 is not None:
-            self.mesh_wrp_1 = MeshWrapper("MESH", mesh_1, mts, quantities, parts_1)
+            self.mesh_wrp_1 = MeshWrapper("MESH", mesh_1, mts, None, parts_1)
         if mesh_2 is not None:
-            self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, quantities, parts_2)
+            self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, None, parts_2)
 
         # Extract line strings from the object and its children
         lineStrings = self._extract_linestrings(obj)

@@ -74,7 +74,7 @@ class MultiSurfaceWrapper(Wrapper):
             mesh = surface.mesh()
             meshes.append(mesh)
 
-        parts = Parts(meshes, np.arange(len(meshes)))
+        parts = Parts(meshes)
         mesh = concatenate_meshes(meshes)
 
         new_fields = {}

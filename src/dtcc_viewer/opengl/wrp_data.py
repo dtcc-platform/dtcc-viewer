@@ -2,10 +2,9 @@ import numpy as np
 import math
 import numbers
 from dtcc_viewer.logging import info, warning
-from dtcc_model import Mesh
+from dtcc_model import Mesh, LineString, MultiLineString
 from dtcc_model import PointCloud
 from abc import ABC, abstractmethod
-from shapely.geometry import LineString, MultiLineString
 from dtcc_viewer.opengl.parts import Parts
 from typing import Any
 

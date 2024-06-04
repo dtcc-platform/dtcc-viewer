@@ -2,9 +2,10 @@ import numpy as np
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
-from shapely.geometry import LineString, MultiLineString
+
 from dtcc_viewer.opengl.wrp_data import LSDataWrapper, MLSDataWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
+from dtcc_model import LineString, MultiLineString
 from typing import Any
 
 
@@ -43,7 +44,7 @@ class LineStringWrapper(Wrapper):
         self.name = name
         self.mts = mts
 
-        v_count = len(ls.coords)
+        v_count = len(ls.vertices)
         self.data_wrapper = LSDataWrapper(ls, v_count, self.mts)
         self._restructure_linestring(ls)
         self._append_data(data)
@@ -71,12 +72,9 @@ class LineStringWrapper(Wrapper):
     def _move_lss_to_zero_z(self, bb: BoundingBox):
         self.vertices[2::6] -= bb.zmin
 
-    def _get_vertices(self, lss: list[LineString]):
-        return np.array([coord for ls in lss for coord in ls.coords]).flatten()
-
     def _restructure_linestring(self, line_string: LineString):
-        v_count = len(line_string.coords)  # Number of vertices
-        l_count = len(line_string.coords) - 1  # Number of line segments
+        v_count = len(line_string.vertices)  # Number of vertices
+        l_count = len(line_string.vertices) - 1  # Number of line segments
 
         # vertices = [x, y, z, tx, ty, id, x, y, z ...]
         vertices = np.zeros([v_count, 6])
@@ -86,7 +84,8 @@ class LineStringWrapper(Wrapper):
         indices2 = np.arange(1, l_count + 1, dtype=int)
         indices[0:l_count, 0] = indices1
         indices[0:l_count, 1] = indices2
-        vertices[0 : 0 + v_count, 0:3] = np.array(list(line_string.coords))
+        vertices[0 : 0 + v_count, 0:3] = line_string.vertices[:, 0:3]
+        # vertices[0 : 0 + v_count, 3] = 0.0
 
         indices = indices.flatten()
         vertices = vertices.flatten()
@@ -146,11 +145,17 @@ class MultiLineStringWrapper(Wrapper):
     bb_global: BoundingBox
 
     def __init__(
-        self, name: str, mls: MultiLineString, mts: int, data: Any = None
+        self,
+        name: str,
+        mls: MultiLineString,
+        mts: int,
+        data: Any = None,
+        has_z: bool = True,
     ) -> None:
         """Initialize a line string wrapper object."""
         self.name = name
         self.mts = mts
+        self.has_z = has_z
 
         v_count = self._get_vertex_count(mls)
         self.data_wrapper = MLSDataWrapper(mls, v_count, self.mts)
@@ -180,14 +185,14 @@ class MultiLineStringWrapper(Wrapper):
 
     def _get_segment_count(self, mls: MultiLineString):
         total_count = 0
-        for line_string in mls.geoms:
-            total_count += len(line_string.coords) - 1
+        for line_string in mls.linestrings:
+            total_count += len(line_string.vertices) - 1
         return total_count
 
     def _get_vertex_count(self, mls: MultiLineString):
         total_count = 0
-        for line_string in mls.geoms:
-            total_count += len(line_string.coords)
+        for line_string in mls.linestrings:
+            total_count += len(line_string.vertices)
         return total_count
 
     def _restructure_multilinestring(self, mls: MultiLineString):
@@ -200,18 +205,19 @@ class MultiLineStringWrapper(Wrapper):
 
         idx1 = 0
         idx2 = 0
-        for ls in mls.geoms:  # Loop over the LineStrings
-            l_count = len(ls.coords[:]) - 1  # Line segegment count
-            v_count = len(ls.coords[:])  # Vertex count
+        for ls in mls.linestrings:  # Loop over the LineStrings
+            l_count = len(ls.vertices) - 1  # Line segegment count
+            v_count = len(ls.vertices)  # Vertex count
             indices1 = np.arange(idx1, idx1 + l_count, dtype=int)
             indices2 = np.arange(idx1 + 1, idx1 + l_count + 1, dtype=int)
             indices[idx2 : (idx2 + l_count), 0] = indices1
             indices[idx2 : (idx2 + l_count), 1] = indices2
-            vertices[idx1 : (idx1 + v_count), 0:3] = np.array(list(ls.coords))
-            idx1 += len(ls.coords[:])
-            idx2 += l_count
+            vertices[idx1 : (idx1 + v_count), 0:3] = ls.vertices[:, 0:3]
+            if not self.has_z:
+                vertices[idx1 : (idx1 + v_count), 2] = 0.0
 
-        pp(vertices)
+            idx1 += v_count
+            idx2 += l_count
 
         indices = indices.flatten()
         vertices = vertices.flatten()

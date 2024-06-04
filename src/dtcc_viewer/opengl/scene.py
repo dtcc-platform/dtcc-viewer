@@ -12,14 +12,15 @@ from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
+from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
+from dtcc_model import RoadNetwork, LineString, MultiLineString
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning
-from shapely.geometry import LineString, MultiLineString
 from typing import Any
 
 
@@ -50,115 +51,122 @@ class Scene:
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         if mesh is not None and isinstance(mesh, Mesh):
-            info(f"Mesh called - {name} - added to scene")
+            info(f"Mesh called '{name}' added to scene")
             self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
         else:
-            warning(f"Failed to add Mesh called - {name} - to the scene")
+            warning(f"Failed to add Mesh called '{name}' to the scene")
 
     def add_multisurface(self, name: str, ms: MultiSurface):
         if ms is not None and isinstance(ms, MultiSurface):
-            info(f"MultiSurface called - {name} - added to scene")
+            info(f"MultiSurface called '{name}' added to scene")
             self.wrappers.append(MultiSurfaceWrapper(name, ms, self.mts))
         else:
-            warning(f"Failed to add MultiSurface called - {name} - to the scene")
+            warning(f"Failed to add MultiSurface called '{name}' to the scene")
 
     def add_surface(self, name: str, surface: Surface):
         if surface is not None and isinstance(surface, Surface):
-            info(f"Surface called - {name} - added to scene")
+            info(f"Surface called '{name}' added to scene")
             self.wrappers.append(SurfaceWrapper(name, surface, self.mts))
         else:
-            warning(f"Failed to add Surface called - {name} - added to the scene")
+            warning(f"Failed to add Surface called '{name}' added to the scene")
 
     def add_city(self, name: str, city: City):
         if city is not None and isinstance(city, City):
-            info(f"City called - {name} - added to scene")
+            info(f"City called '{name}' added to scene")
             self.wrappers.append(CityWrapper(name, city, self.mts))
         else:
-            warning(f"Failed to add City called - {name} - to the scene")
+            warning(f"Failed to add City called '{name}' to the scene")
 
     def add_object(self, name: str, obj: Object):
         if obj is not None and isinstance(obj, Object):
-            info(f"Object called - {name} - added to scene")
+            info(f"Object called '{name}' added to scene")
             self.wrappers.append(ObjectWrapper(name, obj, self.mts))
         else:
-            warning(f"Failed to add Object called - {name} - to the scene")
+            warning(f"Failed to add Object called '{name}' to the scene")
 
     def add_pointcloud(
         self, name: str, pc: PointCloud, size: float = 0.2, data: np.ndarray = None
     ):
         if pc is not None and isinstance(pc, PointCloud):
-            info(f"Point could called - {name} - added to scene")
+            info(f"Point could called '{name}' added to scene")
             self.wrappers.append(PointCloudWrapper(name, pc, self.mts, size, data=data))
         else:
-            warning(f"Failed to add PointCould called - {name} - to the scene")
+            warning(f"Failed to add PointCould called '{name}' to the scene")
 
     def add_linestring(self, name: str, ls: LineString, data: Any = None):
         if ls is not None and isinstance(ls, LineString):
-            info(f"List of LineStrings called - {name} - added to scene")
+            info(f"List of LineStrings called '{name}' added to scene")
             self.wrappers.append(LineStringWrapper(name, ls, self.mts, data))
         else:
-            warning(f"Failed to add LineString - {name} - to the scene")
+            warning(f"Failed to add LineString '{name}' to the scene")
 
     def add_multilinestring(self, name: str, mls: MultiLineString, data: Any = None):
         if mls is not None and isinstance(mls, MultiLineString):
-            info(f"MultiLineString called - {name} - added to scene")
+            info(f"MultiLineString called '{name}' added to scene")
             self.wrappers.append(MultiLineStringWrapper(name, mls, self.mts, data))
         else:
-            warning(f"Failed to att MultiLineString called - {name} - to the scene")
+            warning(f"Failed to att MultiLineString called '{name}' to the scene")
 
     def add_building(self, name: str, building: Building):
         if building is not None and isinstance(building, Building):
-            info(f"Building called - {name} - added to scene")
+            info(f"Building called '{name}' added to scene")
             self.wrappers.append(BuildingWrapper(name, building, self.mts))
         else:
-            warning(f"Failed to add Building called - {name} - to the scene")
+            warning(f"Failed to add Building called '{name}' to the scene")
 
     def add_raster(self, name: str, raster: Raster):
         max_size = 10000
         if raster is not None and isinstance(raster, Raster):
             if np.max(raster.data.shape) > max_size:
-                info(f"Multi raster called - {name} - added to scene")
+                info(f"Multi raster called '{name}' added to scene")
                 self.wrappers.append(MultiRasterWrapper(name, raster, max_size))
             else:
-                info(f"Raster called - {name} - added to scene")
+                info(f"Raster called '{name}' added to scene")
                 self.wrappers.append(RasterWrapper(name, raster))
         else:
-            warning(f"Failed to add raster called - {name} - to the scene")
+            warning(f"Failed to add raster called '{name}' to the scene")
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
         if geometries is not None and isinstance(geometries, list):
-            info(f"Geometry collection called - {name} - added to scene")
+            info(f"Geometry collection called '{name}' added to scene")
             self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
         else:
-            warning(f"Failed to add geometry collection called - {name} - to scene")
+            warning(f"Failed to add geometry collection called '{name}' to scene")
 
     def add_bounds(self, name: str, bounds: Bounds):
         if bounds is not None and isinstance(bounds, Bounds):
-            info(f"Bounds called - {name} - added to scene")
+            info(f"Bounds called '{name}' added to scene")
             self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
         else:
-            warning(f"Failed to add bounds called - {name} - to scene")
+            warning(f"Failed to add bounds called '{name}' to scene")
 
     def add_grid(self, name: str, grid: Grid):
         if grid is not None and isinstance(grid, Grid):
-            info(f"Grid called - {name} - added to scene")
+            info(f"Grid called '{name}' added to scene")
             self.wrappers.append(GridWrapper(name, grid, self.mts))
         else:
-            warning(f"Failed to add grid called - {name} - to scene")
+            warning(f"Failed to add grid called '{name}' to scene")
 
     def add_volume_grid(self, name: str, grid: VolumeGrid):
         if grid is not None and isinstance(grid, VolumeGrid):
-            info(f"Grid called - {name} - added to scene")
+            info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeGridWrapper(name, grid, self.mts))
         else:
-            warning(f"Failed to add grid called - {name} - to scene")
+            warning(f"Failed to add grid called '{name}' to scene")
 
     def add_volume_mesh(self, name: str, volume_mesh: VolumeMesh):
         if volume_mesh is not None and isinstance(volume_mesh, VolumeMesh):
-            info(f"Grid called - {name} - added to scene")
+            info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeMeshWrapper(name, volume_mesh, self.mts))
         else:
-            warning(f"Failed to add grid called - {name} - to scene")
+            warning(f"Failed to add grid called '{name}' to scene")
+
+    def add_roadnetwork(self, name: str, road_network: Any):
+        if road_network is not None and isinstance(road_network, RoadNetwork):
+            info(f"Road network called '{name}' added to scene")
+            self.wrappers.append(RoadNetworkWrapper(name, road_network, self.mts))
+        else:
+            warning(f"Failed to add road network called '{name}' to scene")
 
     def preprocess_drawing(self):
         """Preprocess bounding box calculation for all scene objects"""
