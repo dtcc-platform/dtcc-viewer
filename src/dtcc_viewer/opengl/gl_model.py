@@ -435,6 +435,7 @@ class GlModel:
         self._update_data_textures()
 
     def _render_meshes(self, action: Action) -> None:
+        self.guip.animate_light = False
         if self.guip.shading == Shading.WIREFRAME:
             self._render_wireframe(action)
         elif self.guip.shading == Shading.AMBIENT:
@@ -443,7 +444,10 @@ class GlModel:
             self._render_diffuse(action)
         elif self.guip.shading == Shading.WIRESHADED:
             self._render_wireshaded(action)
-        elif self.guip.shading == Shading.SHADOWS:
+        elif self.guip.shading == Shading.SHADOWS_STATIC:
+            self._render_shadows(action)
+        elif self.guip.shading == Shading.SHADOWS_DYNAMIC:
+            self.guip.animate_light = True
             self._render_shadows(action)
         elif self.guip.shading == Shading.PICKING:
             self._render_pick_texture(action)

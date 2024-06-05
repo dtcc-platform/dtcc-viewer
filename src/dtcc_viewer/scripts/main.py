@@ -96,6 +96,24 @@ def mesh_example_5():
     mesh.view()
 
 
+def multi_geometry_example_2():
+    pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
+    mesh = meshes.load_mesh("../../../data/models/CitySurface.obj")
+
+    lss = []
+    for i in range(30):
+        lss.append(create_ls_circle(Point(0, 0, 0), 50 + i * 5, 200))
+
+    mls = MultiLineString(linestrings=lss)
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_pointcloud("Pointcloud", pc, 0.2)
+    scene.add_mesh("Mesh", mesh)
+    scene.add_multilinestring("MultiLineString", mls)
+
+    window.render(scene)
+
+
 def multi_geometry_example_1():
     pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
     all_pcs = split_pc_in_stripes(3, pc, Direction.x)
@@ -107,9 +125,8 @@ def multi_geometry_example_1():
     window = Window(1200, 800)
     scene = Scene()
 
-    for i, pc in enumerate(all_pcs):
-        data = pc.points[:, Direction.x]
-        scene.add_pointcloud("pc " + str(i), pc, 0.2, data)
+    data = pc.points[:, Direction.x]
+    scene.add_pointcloud("pc " + str(i), pc, 0.2, data)
 
     for i, mesh in enumerate(all_meshes):
         data = mesh.vertices[:, Direction.y]
@@ -514,6 +531,7 @@ if __name__ == "__main__":
     # mesh_example_4()
     # mesh_example_5()
     # multi_geometry_example_1()
+    multi_geometry_example_2()
     # building_example_2()
     # linestring_example_3()
     # multilinestring_example_1()
@@ -541,5 +559,5 @@ if __name__ == "__main__":
     # volume_mesh_example_2()
     # volume_mesh_example_3()
     # volume_mesh_example_4()
-    road_network_example()
+    # road_network_example()
     # crasch_test()

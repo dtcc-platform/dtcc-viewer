@@ -11,7 +11,7 @@ from dtcc_viewer.opengl.utils import Shading, BoundingBox
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.parts import Parts
-from dtcc_viewer.opengl.wrp_data import MeshDataWrapper
+from dtcc_viewer.opengl.data_wrapper import MeshDataWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
 
 from dtcc_viewer.opengl.parameters import (
@@ -783,7 +783,7 @@ class GlMesh(GlObject):
             glUniform1f(self.uloc_diff["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_diff["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_diff["clip_z"], (zdom * gguip.clip_dist[2]))
-        elif mguip.shading == Shading.SHADOWS:
+        elif mguip.shading == Shading.SHADOWS_STATIC:
             glUniform1f(self.uloc_shdw["clip_x"], (xdom * gguip.clip_dist[0]))
             glUniform1f(self.uloc_shdw["clip_y"], (ydom * gguip.clip_dist[1]))
             glUniform1f(self.uloc_shdw["clip_z"], (zdom * gguip.clip_dist[2]))

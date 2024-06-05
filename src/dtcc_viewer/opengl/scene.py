@@ -115,7 +115,7 @@ class Scene:
             warning(f"Failed to add Building called '{name}' to the scene")
 
     def add_raster(self, name: str, raster: Raster):
-        max_size = 10000
+        max_size = 16384
         if raster is not None and isinstance(raster, Raster):
             if np.max(raster.data.shape) > max_size:
                 info(f"Multi raster called '{name}' added to scene")

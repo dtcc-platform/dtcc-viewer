@@ -108,7 +108,7 @@ class Gui:
         if expanded:
 
             # Visualisation settings box
-            imgui.begin_child("Box1", 0, 57, border=True)
+            imgui.begin_child("Box1", 0, 58, border=True)
             # Testing radio buttons
             options = ["Perspective", "Ortho projection"]
             selected_index = gguip.camera_projection.value
@@ -161,7 +161,7 @@ class Gui:
             imgui.end_child()
 
             # Grid settings
-            imgui.begin_child("Box4", 0, 57, border=True)
+            imgui.begin_child("Box4", 0, 58, border=True)
             imgui.push_id("grid")
             [changed, gguip.show_grid] = imgui.checkbox("grid", gguip.show_grid)
             imgui.pop_id()
@@ -204,20 +204,13 @@ class Gui:
         if expanded:
             guip = model.guip
 
-            imgui.push_id("Model show")
-            [changed, guip.show] = imgui.checkbox("Show", guip.show)
-            imgui.pop_id()
 
-            if guip.shading == Shading.SHADOWS:
-                imgui.same_line()
-                imgui.push_id("Animate light")
-                [changed, guip.animate_light] = imgui.checkbox(
-                    "Animate light", guip.animate_light
-                )
-                imgui.pop_id()
+            imgui.begin_child("BoxModel", 0, 35, border=True)
 
             # Display mode combo box
             self._create_combo_display(meshes, guip)
+
+            imgui.end_child()
 
             # The id ensures gui component has a unique identifyer while they may have
             # the same name
@@ -268,8 +261,8 @@ class Gui:
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
 
+            imgui.begin_child("BoxPc" + str(index), 0, 150, border=True)
             self._create_cbxs(index, guip)
-
             imgui.push_id("Size" + str(index))
             [changed, guip.point_scale] = imgui.slider_float(
                 "Scale factor", guip.point_scale, 0, 10
@@ -279,17 +272,20 @@ class Gui:
             self._create_combo_cmaps(index, guip)
             self._create_cobmo_data(index, guip)
             self._create_range_sliders(index, guip)
+            imgui.end_child()
 
         self._draw_separator()
 
     def _draw_ls_gui(self, guip: GuiParametersLines, index: int) -> None:
-        """Draw GUI for road networks."""
+        """Draw GUI for lines."""
         [expanded, visible] = imgui.collapsing_header(str(index) + " " + guip.name)
         if expanded:
+            imgui.begin_child("BoxLines" + str(index), 0, 130, border=True)
             self._create_cbxs(index, guip)
             self._create_combo_cmaps(index, guip)
             self._create_cobmo_data(index, guip)
             self._create_range_sliders(index, guip)
+            imgui.end_child()
 
         self._draw_separator()
 
@@ -440,7 +436,7 @@ class Gui:
     def _create_cobmo_data(self, index: int, guip: GuiParametersObj) -> None:
         """Create a combo box for data selection."""
 
-        if len(guip.data_keys) > 1:
+        if len(guip.data_keys) > 0:
             key = guip.get_current_data_name()
             imgui.push_id("ColorsCombo " + str(index))
             items = guip.data_keys

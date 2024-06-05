@@ -16,8 +16,9 @@ class Shading(IntEnum):
     AMBIENT = 1
     DIFFUSE = 2
     WIRESHADED = 3
-    SHADOWS = 4
-    PICKING = 5
+    SHADOWS_STATIC = 4
+    SHADOWS_DYNAMIC = 5
+    PICKING = 6
 
 
 class ColorMaps(IntEnum):
