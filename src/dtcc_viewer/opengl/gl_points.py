@@ -6,7 +6,7 @@ from string import Template
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl.action import Action
-from dtcc_viewer.opengl.wrp_data import MeshDataWrapper, PointsDataWrapper
+from dtcc_viewer.opengl.data_wrapper import MeshDataWrapper, PointsDataWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parameters import GuiParametersPC, GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox

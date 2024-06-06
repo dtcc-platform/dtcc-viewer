@@ -3,7 +3,7 @@ from dtcc_model import Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
-from dtcc_viewer.opengl.wrp_data import MLSDataWrapper
+from dtcc_viewer.opengl.data_wrapper import MLSDataWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper

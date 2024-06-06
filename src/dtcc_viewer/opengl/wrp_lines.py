@@ -3,8 +3,8 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 from shapely.geometry import LineString, MultiLineString
-from dtcc_viewer.opengl.wrp_data import LSDataWrapper, MLSDataWrapper
-from dtcc_viewer.opengl.wrp_data import PointsDataWrapper
+from dtcc_viewer.opengl.data_wrapper import LSDataWrapper, MLSDataWrapper
+from dtcc_viewer.opengl.data_wrapper import PointsDataWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from typing import Any
 
