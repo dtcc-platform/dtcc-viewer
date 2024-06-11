@@ -45,11 +45,29 @@ class Scene:
     mts: int
 
     def __init__(self):
+        """
+        Initialize the Scene.
+
+        This method sets up the wrappers list and retrieves the maximum texture size
+        supported by the graphics card.
+        """
         self.wrappers = []
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         info("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
+        """
+        Add a mesh to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the mesh.
+        mesh : Mesh
+            Mesh object to be added.
+        data : Any, optional
+            Additional data associated with the mesh.
+        """
         if mesh is not None and isinstance(mesh, Mesh):
             info(f"Mesh called '{name}' added to scene")
             self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
@@ -57,6 +75,16 @@ class Scene:
             warning(f"Failed to add Mesh called '{name}' to the scene")
 
     def add_multisurface(self, name: str, ms: MultiSurface):
+        """
+        Add a MultiSurface to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the MultiSurface.
+        ms : MultiSurface
+            MultiSurface object to be added.
+        """
         if ms is not None and isinstance(ms, MultiSurface):
             info(f"MultiSurface called '{name}' added to scene")
             self.wrappers.append(MultiSurfaceWrapper(name, ms, self.mts))
@@ -64,6 +92,16 @@ class Scene:
             warning(f"Failed to add MultiSurface called '{name}' to the scene")
 
     def add_surface(self, name: str, surface: Surface):
+        """
+        Add a surface to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the surface.
+        surface : Surface
+            Surface object to be added.
+        """
         if surface is not None and isinstance(surface, Surface):
             info(f"Surface called '{name}' added to scene")
             self.wrappers.append(SurfaceWrapper(name, surface, self.mts))
@@ -71,6 +109,16 @@ class Scene:
             warning(f"Failed to add Surface called '{name}' added to the scene")
 
     def add_city(self, name: str, city: City):
+        """
+        Add a city to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the city.
+        city : City
+            City object to be added.
+        """
         if city is not None and isinstance(city, City):
             info(f"City called '{name}' added to scene")
             self.wrappers.append(CityWrapper(name, city, self.mts))
@@ -78,6 +126,16 @@ class Scene:
             warning(f"Failed to add City called '{name}' to the scene")
 
     def add_object(self, name: str, obj: Object):
+        """
+        Add an object to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the object.
+        obj : Object
+            Object to be added.
+        """
         if obj is not None and isinstance(obj, Object):
             info(f"Object called '{name}' added to scene")
             self.wrappers.append(ObjectWrapper(name, obj, self.mts))
@@ -87,6 +145,20 @@ class Scene:
     def add_pointcloud(
         self, name: str, pc: PointCloud, size: float = 0.2, data: np.ndarray = None
     ):
+        """
+        Add a point cloud to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the point cloud.
+        pc : PointCloud
+            PointCloud object to be added.
+        size : float, optional
+            Size of the points in the point cloud.
+        data : np.ndarray, optional
+            Additional data associated with the point cloud.
+        """
         if pc is not None and isinstance(pc, PointCloud):
             info(f"Point could called '{name}' added to scene")
             self.wrappers.append(PointCloudWrapper(name, pc, self.mts, size, data=data))
@@ -94,6 +166,18 @@ class Scene:
             warning(f"Failed to add PointCould called '{name}' to the scene")
 
     def add_linestring(self, name: str, ls: LineString, data: Any = None):
+        """
+        Add a line string to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the line string.
+        ls : LineString
+            LineString object to be added.
+        data : Any, optional
+            Additional data associated with the line string.
+        """
         if ls is not None and isinstance(ls, LineString):
             info(f"List of LineStrings called '{name}' added to scene")
             self.wrappers.append(LineStringWrapper(name, ls, self.mts, data))
@@ -101,6 +185,18 @@ class Scene:
             warning(f"Failed to add LineString '{name}' to the scene")
 
     def add_multilinestring(self, name: str, mls: MultiLineString, data: Any = None):
+        """
+        Add a multi-line string to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the multi-line string.
+        mls : MultiLineString
+            MultiLineString object to be added.
+        data : Any, optional
+            Additional data associated with the multi-line string.
+        """
         if mls is not None and isinstance(mls, MultiLineString):
             info(f"MultiLineString called '{name}' added to scene")
             self.wrappers.append(MultiLineStringWrapper(name, mls, self.mts, data))
@@ -108,6 +204,16 @@ class Scene:
             warning(f"Failed to att MultiLineString called '{name}' to the scene")
 
     def add_building(self, name: str, building: Building):
+        """
+        Add a building to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the building.
+        building : Building
+            Building object to be added.
+        """
         if building is not None and isinstance(building, Building):
             info(f"Building called '{name}' added to scene")
             self.wrappers.append(BuildingWrapper(name, building, self.mts))
@@ -115,6 +221,16 @@ class Scene:
             warning(f"Failed to add Building called '{name}' to the scene")
 
     def add_raster(self, name: str, raster: Raster):
+        """
+        Add a raster to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the raster.
+        raster : Raster
+            Raster object to be added.
+        """
         max_size = 16384
         if raster is not None and isinstance(raster, Raster):
             if np.max(raster.data.shape) > max_size:
@@ -127,6 +243,16 @@ class Scene:
             warning(f"Failed to add raster called '{name}' to the scene")
 
     def add_geometries(self, name: str, geometries: list[Geometry]):
+        """
+        Add a collection of geometries to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the geometry collection.
+        geometries : list[Geometry]
+            List of Geometry objects to be added.
+        """
         if geometries is not None and isinstance(geometries, list):
             info(f"Geometry collection called '{name}' added to scene")
             self.wrappers.append(GeometriesWrapper(name, geometries, self.mts))
@@ -134,6 +260,16 @@ class Scene:
             warning(f"Failed to add geometry collection called '{name}' to scene")
 
     def add_bounds(self, name: str, bounds: Bounds):
+        """
+        Add bounds to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the bounds.
+        bounds : Bounds
+            Bounds object to be added.
+        """
         if bounds is not None and isinstance(bounds, Bounds):
             info(f"Bounds called '{name}' added to scene")
             self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
@@ -141,6 +277,16 @@ class Scene:
             warning(f"Failed to add bounds called '{name}' to scene")
 
     def add_grid(self, name: str, grid: Grid):
+        """
+        Add a grid to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the grid.
+        grid : Grid
+            Grid object to be added.
+        """
         if grid is not None and isinstance(grid, Grid):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(GridWrapper(name, grid, self.mts))
@@ -148,6 +294,16 @@ class Scene:
             warning(f"Failed to add grid called '{name}' to scene")
 
     def add_volume_grid(self, name: str, grid: VolumeGrid):
+        """
+        Add a volume grid to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the volume grid.
+        grid : VolumeGrid
+            VolumeGrid object to be added.
+        """
         if grid is not None and isinstance(grid, VolumeGrid):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeGridWrapper(name, grid, self.mts))
@@ -155,6 +311,16 @@ class Scene:
             warning(f"Failed to add grid called '{name}' to scene")
 
     def add_volume_mesh(self, name: str, volume_mesh: VolumeMesh):
+        """
+        Add a volume mesh to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the volume mesh.
+        volume_mesh : VolumeMesh
+            VolumeMesh object to be added.
+        """
         if volume_mesh is not None and isinstance(volume_mesh, VolumeMesh):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeMeshWrapper(name, volume_mesh, self.mts))
@@ -162,6 +328,16 @@ class Scene:
             warning(f"Failed to add grid called '{name}' to scene")
 
     def add_roadnetwork(self, name: str, road_network: Any):
+        """
+        Add a road network to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the road network.
+        road_network : Any
+            RoadNetwork object to be added.
+        """
         if road_network is not None and isinstance(road_network, RoadNetwork):
             info(f"Road network called '{name}' added to scene")
             self.wrappers.append(RoadNetworkWrapper(name, road_network, self.mts))
@@ -169,10 +345,13 @@ class Scene:
             warning(f"Failed to add road network called '{name}' to scene")
 
     def preprocess_drawing(self):
-        """Preprocess bounding box calculation for all scene objects"""
+        """
+        Preprocess bounding box calculation for all scene objects.
 
-        # Calculate bounding box for the entire scene including the vector that is
-        # used to center move everything to the origin.
+        This method calculates the bounding box for the entire scene, including
+        centering all objects in the scene, and preprocesses each wrapper object
+        for drawing.
+        """
         self.bb = self._calculate_bb()
 
         if self.bb is None:
@@ -188,7 +367,17 @@ class Scene:
         return True
 
     def _calculate_bb(self):
-        """Calculate bounding box of the scene"""
+        """
+        Calculate the bounding box of the scene.
+
+        This method calculates the bounding box based on the vertices of all wrapper
+        objects in the scene.
+
+        Returns
+        -------
+        BoundingBox or None
+            The bounding box of the scene, or None if no vertices are found.
+        """
 
         # Flat array of vertices [x1,y1,z1,x2,y2,z2, ...]
         vertices = np.array([])
@@ -204,7 +393,12 @@ class Scene:
             return None
 
     def offset_mesh_part_ids(self):
-        """Offset submesh ids to enable clicking"""
+        """
+        Offset mesh parts IDs to enable clicking.
+
+        This method offsets the IDs of mesh parts in the scene to ensure unique
+        identifiers for each part, facilitating interactions like clicking.
+        """
         next_id = 0
         for wrp in self.wrappers:
             if isinstance(wrp, MeshWrapper):
@@ -244,6 +438,21 @@ class Scene:
                     next_id = self.update_ids(wrp.mesh_env_wrp, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
+        """
+        Update IDs of a mesh wrapper's parts.
+
+        Parameters
+        ----------
+        mesh_wrp : MeshWrapper
+            MeshWrapper object whose part IDs need to be updated.
+        next_id : int
+            The next ID to be assigned.
+
+        Returns
+        -------
+        int
+            The updated next ID after assigning IDs to the mesh wrapper's parts.
+        """
         max_id = np.max(mesh_wrp.parts.ids)
         mesh_wrp.parts.offset_ids(next_id)
         mesh_wrp.update_ids_from_parts()
