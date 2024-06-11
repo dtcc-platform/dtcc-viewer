@@ -10,6 +10,27 @@ from typing import Any
 
 
 class DataWrapper(ABC):
+    """
+    Abstract base class for handling data transformation and processing
+    for use in OpenGL applications.
+
+    Attributes
+    ----------
+    data_mat_dict : dict
+        Dictionary of data matrices.
+    data_min_max : dict
+        Dictionary of data value caps.
+    texel_x : np.ndarray
+        Texel indices for x to identify the data in a texture.
+    texel_y : np.ndarray
+        Texel indices for y to identify the data in a texture.
+    row_count : int
+        Number of rows in the data matrix.
+    col_count : int
+        Number of columns in the data matrix.
+    max_tex_size : int
+        Max texture size dictated by the graphics card.
+    """
 
     data_mat_dict: dict  # Dictionary of data matrices
     data_min_max: dict  # Dictionary of data value caps
@@ -21,21 +42,52 @@ class DataWrapper(ABC):
 
     @abstractmethod
     def add_data(self, name: str, data: np.ndarray):
+        """Add data to the wrapper."""
         pass
 
     @abstractmethod
     def _process_data(self, name: str, data: np.ndarray):
+        """Process data."""
         pass
 
     def _calc_matrix_format(self, d_count: int):
+        """
+        Calculate the format of the data matrix.
+
+        Parameters
+        ----------
+        d_count : int
+            Data count.
+        """
         self.row_count = math.ceil(d_count / self.max_tex_size)
         self.col_count = self.max_tex_size
         info(f"Data matrix has {self.row_count} rows and {self.col_count} columns.")
 
     def get_keys(self) -> list[str]:
+        """
+        Get the keys of the data matrix dictionary.
+
+        Returns
+        -------
+        list of str
+            Keys of the data matrix dictionary.
+        """
         return list(self.data_mat_dict.keys())
 
     def _reformat_data_for_texture(self, data: np.ndarray):
+        """
+        Reformat data to store it as textures to enable quick updates.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be reformatted.
+
+        Returns
+        -------
+        np.ndarray
+            Reformatted data.
+        """
         new_data = np.zeros((self.row_count, self.col_count))
         new_data = new_data.flatten()
         new_data[0 : len(data)] = data
@@ -45,7 +97,14 @@ class DataWrapper(ABC):
         return new_data
 
     def _calc_texel_indices(self, d_count: int):
-        # Set texture coordinates
+        """
+        Calculate texel indices for the data so it can be retrieved from the texture.
+
+        Parameters
+        ----------
+        d_count : int
+            Data count.
+        """
         if d_count < self.max_tex_size:
             texel_indices_x = np.arange(0, d_count)
             texel_indices_y = np.zeros(d_count)
@@ -61,26 +120,44 @@ class DataWrapper(ABC):
         info(f"Texel indices for DataWrapper computed.")
 
     def is_numeric(self, value):
+        """Check if the value is numeric."""
         return isinstance(value, (int, float))
 
     def all_is_numeric(self, data):
+        """Check if all items in the data are numeric."""
         return all(isinstance(item, numbers.Number) for item in data)
 
 
 class MeshDataWrapper(DataWrapper):
-    """Wrapper class for mesh data to be used in OpenGL.
+    """
+    Wrapper class for mesh data to be used in OpenGL.
 
-    Takes an 1d array of data and transforms it into a 2d array where the width is
+    Takes a 1D array of data and transforms it into a 2D array where the width is
     the max_texture_size. This is necessary for OpenGL to handle large data sets
-    as 2d textures.
+    as 2D textures.
+
+    Attributes
+    ----------
+    v_count : int
+        Number of vertices in the original mesh.
+    f_count : int
+        Number of faces in the original mesh.
     """
 
-    v_count: int  # Number of vertices in the original mesh
-    f_count: int  # Number of faces in the original mesh
-    new_v_count: int  # Number of vertices in the restructured mesh
+    v_count: int
+    f_count: int
 
     def __init__(self, mesh: Mesh, mts: int) -> None:
+        """
+        Initialize the MeshDataWrapper.
 
+        Parameters
+        ----------
+        mesh : Mesh
+            The mesh object.
+        mts : int
+            Max texture size.
+        """
         self.data_mat_dict = {}
         self.data_min_max = {}
         self.max_tex_size = mts
@@ -95,6 +172,22 @@ class MeshDataWrapper(DataWrapper):
         self._calc_texel_indices(d_count)
 
     def add_data(self, name: str, data: np.ndarray):
+        """
+        Add data to the wrapper.
+
+        Parameters
+        ----------
+        name : str
+            Name of the data.
+        data : np.ndarray
+            Data to be added.
+
+        Returns
+        -------
+        bool
+            True if the data was added successfully, False otherwise.
+        """
+
         (data_mat, val_caps) = self._process_data(data)
 
         if (data_mat is not None) and (val_caps is not None):
@@ -107,6 +200,23 @@ class MeshDataWrapper(DataWrapper):
             return False
 
     def add_parts_data(self, name: str, data: np.ndarray, parts: Parts):
+        """
+        Add parts data to the wrapper.
+
+        Parameters
+        ----------
+        name : str
+            Name of the data.
+        data : np.ndarray
+            Data to be added.
+        parts : Parts
+            Parts object associated with the data.
+
+        Returns
+        -------
+        bool
+            True if the data was added successfully, False otherwise.
+        """
         (data_mat, val_caps) = self._process_parts_data(data, parts)
 
         if (data_mat is not None) and (val_caps is not None):
@@ -119,7 +229,21 @@ class MeshDataWrapper(DataWrapper):
             return False
 
     def _process_parts_data(self, data: np.ndarray, parts: Parts):
+        """
+        Process parts data.
 
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be processed.
+        parts : Parts
+            Parts object associated with the data.
+
+        Returns
+        -------
+        tuple
+            Processed data matrix and value caps, or (None, None) if processing fails.
+        """
         if parts.f_count != len(self.mesh.faces):
             warning(f"Parts face count does not match mesh face count.")
             return None, None
@@ -132,7 +256,7 @@ class MeshDataWrapper(DataWrapper):
             warning(f"Attribute data contains non-numeric entities.")
             return None, None
 
-        # For example, if data is per building and submeshes are used to define building
+        # For example, if data is per building and parts are used to define building
         if len(data) == parts.count:
             f_counts = parts.face_count_per_part
             face_data = []
@@ -149,18 +273,55 @@ class MeshDataWrapper(DataWrapper):
             return data_mat, val_caps
 
     def _face_data_2_new_vertex_structure(self, data: np.ndarray):
-        """Restructure per face data to match vertex structure with 3 unique vertices per face."""
+        """
+        Restructure per face data to match vertex structure with 3 unique vertices per face.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be restructured.
+
+        Returns
+        -------
+        np.ndarray
+            Restructured data.
+        """
         face_indices = np.arange(0, len(self.mesh.faces))
         face_indices = np.repeat(face_indices, 3)  # Repeat to match vertex count
         data_res = data[face_indices]
         return data_res
 
     def _vertex_data_2_new_vertex_structure(self, data: np.ndarray):
+        """
+        Restructure vertex data to match the new vertex structure.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be restructured.
+
+        Returns
+        -------
+        np.ndarray
+            Restructured data.
+        """
         data_res = data[self.mesh.faces.flatten()]  # Restructure the data
         return data_res
 
     def _process_data(self, data: np.ndarray):
-        """Check so the data count matches the vertex or face count."""
+        """
+        Check if the data count matches the point count.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be processed.
+
+        Returns
+        -------
+        tuple
+            Processed data matrix and value caps, or (None, None) if processing fails.
+        """
         if len(data) == self.f_count:
             data_res = self._face_data_2_new_vertex_structure(data)
             data_mat = self._reformat_data_for_texture(data_res)
@@ -181,12 +342,28 @@ class MeshDataWrapper(DataWrapper):
 
 
 class PointsDataWrapper(DataWrapper):
-    """Wrapper class for points data to be used in OpenGL."""
+    """
+    Wrapper class for points data to be used in OpenGL.
+
+    Attributes
+    ----------
+    p_count : int
+        Number of points in the point cloud.
+    """
 
     p_count: int  # Number of points in the point cloud
 
     def __init__(self, n_points: int, mts: int) -> None:
+        """
+        Initialize the PointsDataWrapper.
 
+        Parameters
+        ----------
+        n_points : int
+            Number of points in the point cloud.
+        mts : int
+            Max texture size.
+        """
         self.data_mat_dict = {}
         self.data_min_max = {}
         self.max_tex_size = mts
@@ -197,6 +374,21 @@ class PointsDataWrapper(DataWrapper):
         self._calc_texel_indices(d_count)
 
     def add_data(self, name: str, data: np.ndarray):
+        """
+        Add data to the wrapper.
+
+        Parameters
+        ----------
+        name : str
+            Name of the data.
+        data : np.ndarray
+            Data to be added.
+
+        Returns
+        -------
+        bool
+            True if the data was added successfully, False otherwise.
+        """
         (data_mat, val_caps) = self._process_data(data)
 
         if (data_mat is not None) and (val_caps is not None):
@@ -209,7 +401,19 @@ class PointsDataWrapper(DataWrapper):
             return False
 
     def _process_data(self, data: np.ndarray):
-        """Check so the data count matches the vertex or face count."""
+        """
+        Check if the data count matches the point count.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be processed.
+
+        Returns
+        -------
+        tuple or (None, None)
+            Processed data matrix and value caps if successful, otherwise (None, None).
+        """
         if len(data) != self.p_count:  # TODO: Allow data to be associated with faces
             warning(f"Data count does not match point count.")
             return None, None
@@ -220,13 +424,31 @@ class PointsDataWrapper(DataWrapper):
 
 
 class LinesDataWrapper(DataWrapper):
-    """Wrapper class for line string list data to be used in OpenGL."""
+    """
+    Wrapper class for line string list data to be used in OpenGL.
+
+    Attributes
+    ----------
+    v_count : int
+        Number of vertices.
+    s_count : int
+        Number of segments.
+    """
 
     v_count: int  # Number of vertices
     s_count: int  # Number of segments
 
     def __init__(self, v_count: int, mts: int) -> None:
+        """
+        Initialize the LinesDataWrapper.
 
+        Parameters
+        ----------
+        v_count : int
+            Number of vertices.
+        mts : int
+            Max texture size.
+        """
         self.data_mat_dict = {}
         self.data_min_max = {}
         self.max_tex_size = mts
@@ -237,6 +459,21 @@ class LinesDataWrapper(DataWrapper):
         self._calc_texel_indices(d_count)
 
     def add_data(self, name: str, data: np.ndarray):
+        """
+        Add data to the wrapper.
+
+        Parameters
+        ----------
+        name : str
+            Name of the data.
+        data : np.ndarray
+            Data to be added.
+
+        Returns
+        -------
+        bool
+            True if the data was added successfully, False otherwise.
+        """
         (data_mat, val_caps) = self._process_data(data)
 
         if (data_mat is not None) and (val_caps is not None):
@@ -249,9 +486,22 @@ class LinesDataWrapper(DataWrapper):
             return False
 
     def _process_data(self, data: np.ndarray):
-        # TODO: Allow data to be associated with segments instead of vertices.
+        """
+        Check if the data count matches the vertex count.
 
-        """Check so the data count matches the vertex count."""
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to be processed.
+
+        Returns
+        -------
+        tuple
+            Processed data matrix and value caps, or (None, None) if processing fails.
+        """
+
+        # TODO: Allow data to also be associated with segments.
+
         if len(data) != self.v_count:
             warning(f"Data count does not match vertex count.")
             return None, None
