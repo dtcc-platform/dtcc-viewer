@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import Object, Surface, MultiSurface
+from dtcc_model import Object, Surface, MultiSurface, LineString, MultiLineString
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
@@ -12,7 +12,6 @@ from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrapper import Wrapper
-from shapely.geometry import LineString, MultiLineString
 
 
 class ObjectWrapper(Wrapper):
@@ -45,6 +44,7 @@ class ObjectWrapper(Wrapper):
     mesh_wrp_2: MeshWrapper = None
     mesh_wrp_3: MeshWrapper = None
     lss_wrp: LineStringWrapper = None
+    mls_wrp: MultiLineStringWrapper = None
     pc_wrp: PointCloudWrapper = None
 
     def __init__(self, name: str, obj: Object, mts: int) -> None:
@@ -72,14 +72,19 @@ class ObjectWrapper(Wrapper):
         if mesh_2 is not None:
             self.mesh_wrp_2 = MeshWrapper("MS", mesh_2, mts, None, parts_2)
 
-        # Extract line strings from the object and its children
-        lineStrings = self._extract_linestrings(obj)
+        # Extract line strings as multi linestrings from the object and its children
+        mls = self._extract_linestrings(obj)
+        if mls is not None:
+            if isinstance(mls, MultiLineString):
+                self.lss_wrp = MultiLineStringWrapper("Linestrings", mls, mts)
 
-        if lineStrings is not None:
-            if isinstance(lineStrings, LineString):
-                self.lss_wrp = LineStringWrapper("LineStrings", lineStrings, mts)
-            elif isinstance(lineStrings, MultiLineString):
-                self.lss_wrp = MultiLineStringWrapper("Multi LS", lineStrings, mts)
+        mlss = self._extract_multi_line_strings(obj)
+
+        if mlss is not None:
+            if isinstance(mlss, list):
+                for i, mls in enumerate(mlss):
+                    name = "Multilinestrings" + str(i)
+                    self.mls_wrp = MultiLineStringWrapper(name, mls, mts)
 
         # Extract line strings from the object and its children
         pc = self._extract_point_cloud(obj)
@@ -126,17 +131,28 @@ class ObjectWrapper(Wrapper):
                 return geom
         return None
 
-    def _extract_linestrings(self, obj: Object):
+    def _extract_linestrings(self, obj: Object) -> MultiLineString:
         line_string = obj.flatten_geometry(GeometryType.LINESTRING)
-
         if isinstance(line_string, LineString):
-            return line_string
+            return MultiLineString(linestrings=[line_string])
         elif isinstance(line_string, list):
             lss = []
             for ls in line_string:
                 if isinstance(ls, LineString):
                     lss.append(ls)
-            return MultiLineString(lss)
+            return MultiLineString(linestrings=lss)
+        else:
+            return None
+
+    def _extract_multi_line_strings(self, obj: Object) -> list[MultiLineString]:
+        mlss = obj.flatten_geometry(GeometryType.MULTILINESTRING)
+        if isinstance(mlss, MultiLineString):
+            return [mlss]
+        elif isinstance(mlss, list):
+            mls_list = []
+            for mls in mlss:
+                if isinstance(mls, MultiLineString):
+                    mls_list.append(mls)
         else:
             return None
 

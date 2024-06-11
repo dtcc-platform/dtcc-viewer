@@ -3,10 +3,11 @@ from dtcc_model import Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
-from dtcc_viewer.opengl.data_wrapper import MLSDataWrapper
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.wrapper import Wrapper
+from dtcc_viewer.opengl.data_wrapper import LinesDataWrapper
 from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper
+from dtcc_model import MultiLineString
 from dtcc_model import RoadNetwork
 from pprint import PrettyPrinter
 from typing import Any
@@ -27,7 +28,7 @@ class RoadNetworkWrapper(Wrapper):
     name: str
     bb_local: BoundingBox
     bb_global: BoundingBox = None
-    data_wrapper: MLSDataWrapper = None
+    data_wrapper: LinesDataWrapper = None
 
     def __init__(
         self,
@@ -52,11 +53,17 @@ class RoadNetworkWrapper(Wrapper):
         self.name = name
         self.data_wrapper = None
         mls = roadnetwork.multilinestrings
-        self.mls_wrp = MultiLineStringWrapper(name, mls, mts, data, has_z=False)
+        self.set_zero_z(mls)
+        self.mls_wrp = MultiLineStringWrapper(name, mls, mts, data)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         if self.mls_wrp is not None:
             self.mls_wrp.preprocess_drawing(bb_global)
+
+    def set_zero_z(self, mls: MultiLineString):
+        for ls in mls.linestrings:
+            if ls.vertices.shape[1] == 3:
+                ls.vertices[:, 2] = 0.0
 
     def get_vertex_positions(self):
         if self.mls_wrp is not None:

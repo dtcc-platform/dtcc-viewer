@@ -3,7 +3,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
 
-from dtcc_viewer.opengl.data_wrapper import LSDataWrapper, MLSDataWrapper
+from dtcc_viewer.opengl.data_wrapper import LinesDataWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_model import LineString, MultiLineString
 from typing import Any
@@ -18,6 +18,8 @@ class LineStringWrapper(Wrapper):
 
     Attributes
     ----------
+    data_wrapper : LinesDataWrapper
+        Data wrapper for the linestring.
     vertices : np.ndarray
         Array of vertex coordinates in the format [n_points x 3].
     indices : np.ndarray
@@ -32,7 +34,7 @@ class LineStringWrapper(Wrapper):
         Global bounding box for the entire scene.
     """
 
-    data_wrapper: LSDataWrapper
+    data_wrapper: LinesDataWrapper
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
     name: str
@@ -45,7 +47,7 @@ class LineStringWrapper(Wrapper):
         self.mts = mts
 
         v_count = len(ls.vertices)
-        self.data_wrapper = LSDataWrapper(ls, v_count, self.mts)
+        self.data_wrapper = LinesDataWrapper(v_count, self.mts)
         self._restructure_linestring(ls)
         self._append_data(data)
 
@@ -84,15 +86,19 @@ class LineStringWrapper(Wrapper):
         indices2 = np.arange(1, l_count + 1, dtype=int)
         indices[0:l_count, 0] = indices1
         indices[0:l_count, 1] = indices2
-        vertices[0 : 0 + v_count, 0:3] = line_string.vertices[:, 0:3]
-        # vertices[0 : 0 + v_count, 3] = 0.0
+
+        if line_string.vertices.shape[1] == 2:
+            vertices[0 : 0 + v_count, 0:2] = line_string.vertices[:, 0:2]
+        elif line_string.vertices.shape[1] == 3:
+            vertices[0 : 0 + v_count, 0:3] = line_string.vertices[:, 0:3]
+        else:
+            warning("Invalid number of columns in line string vertices")
 
         indices = indices.flatten()
         vertices = vertices.flatten()
         vertices[3::6] = self.data_wrapper.texel_x
         vertices[4::6] = self.data_wrapper.texel_y
 
-        # Format and flatten the vertices and indices
         self.vertices = np.array(vertices, dtype="float32")
         self.indices = np.array(indices, dtype="uint32")
 
@@ -125,6 +131,8 @@ class MultiLineStringWrapper(Wrapper):
 
     Attributes
     ----------
+    data_wrapper : LinesDataWrapper
+        Data wrapper for the multilinestring.
     vertices : np.ndarray
         Array of vertex coordinates in the format [n_points x 3].
     indices : np.ndarray
@@ -137,7 +145,7 @@ class MultiLineStringWrapper(Wrapper):
         Global bounding box for the entire scene.
     """
 
-    dict_data: dict
+    data_wrapper: LinesDataWrapper
     vertices: np.ndarray  # [n_vertices x 3] = [v1,v2,v3,v4,.. n_vertices]
     indices: np.ndarray  # [n_roads x 2] = [[v3, v2,], [v5, v2]...]
     name: str
@@ -150,15 +158,13 @@ class MultiLineStringWrapper(Wrapper):
         mls: MultiLineString,
         mts: int,
         data: Any = None,
-        has_z: bool = True,
     ) -> None:
         """Initialize a line string wrapper object."""
         self.name = name
         self.mts = mts
-        self.has_z = has_z
 
         v_count = self._get_vertex_count(mls)
-        self.data_wrapper = MLSDataWrapper(mls, v_count, self.mts)
+        self.data_wrapper = LinesDataWrapper(v_count, self.mts)
         self._restructure_multilinestring(mls)
         self._append_data(data)
 
@@ -212,9 +218,13 @@ class MultiLineStringWrapper(Wrapper):
             indices2 = np.arange(idx1 + 1, idx1 + l_count + 1, dtype=int)
             indices[idx2 : (idx2 + l_count), 0] = indices1
             indices[idx2 : (idx2 + l_count), 1] = indices2
-            vertices[idx1 : (idx1 + v_count), 0:3] = ls.vertices[:, 0:3]
-            if not self.has_z:
-                vertices[idx1 : (idx1 + v_count), 2] = 0.0
+
+            if ls.vertices.shape[1] == 2:
+                vertices[idx1 : (idx1 + v_count), 0:2] = ls.vertices[:, 0:2]
+            elif ls.vertices.shape[1] == 3:
+                vertices[idx1 : (idx1 + v_count), 0:3] = ls.vertices[:, 0:3]
+            else:
+                warning("Invalid number of columns in line string vertices")
 
             idx1 += v_count
             idx2 += l_count
@@ -224,7 +234,6 @@ class MultiLineStringWrapper(Wrapper):
         vertices[3::6] = self.data_wrapper.texel_x
         vertices[4::6] = self.data_wrapper.texel_y
 
-        # Format and flatten the vertices and indices
         self.vertices = np.array(vertices, dtype="float32")
         self.indices = np.array(indices, dtype="uint32")
 

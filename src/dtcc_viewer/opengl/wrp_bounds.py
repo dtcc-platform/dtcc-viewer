@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.logging import info, warning
-from shapely.geometry import LineString, Point
+from dtcc_model import LineString
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from typing import Any
@@ -41,9 +41,14 @@ class BoundsWrapper(Wrapper):
         return self.ls_wrp.get_vertex_positions()
 
     def _create_linestring(self, bounds: Bounds):
-        pt1 = Point(bounds.xmin, bounds.ymin, 0)
-        pt2 = Point(bounds.xmin, bounds.ymax, 0)
-        pt3 = Point(bounds.xmax, bounds.ymax, 0)
-        pt4 = Point(bounds.xmax, bounds.ymin, 0)
+        vertices = np.array(
+            [
+                [bounds.xmin, bounds.ymin, 0],
+                [bounds.xmin, bounds.ymax, 0],
+                [bounds.xmax, bounds.ymax, 0],
+                [bounds.xmax, bounds.ymin, 0],
+                [bounds.xmin, bounds.ymin, 0],
+            ]
+        )
 
-        return LineString([pt1, pt2, pt3, pt4, pt1])
+        return LineString(vertices=vertices)

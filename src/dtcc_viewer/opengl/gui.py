@@ -204,13 +204,11 @@ class Gui:
         if expanded:
             guip = model.guip
 
-
-            imgui.begin_child("BoxModel", 0, 35, border=True)
-
-            # Display mode combo box
-            self._create_combo_display(meshes, guip)
-
-            imgui.end_child()
+            # Display mode combo box for meshes
+            if len(meshes) > 0:
+                imgui.begin_child("BoxModel", 0, 35, border=True)
+                self._create_combo_display(meshes, guip)
+                imgui.end_child()
 
             # The id ensures gui component has a unique identifyer while they may have
             # the same name

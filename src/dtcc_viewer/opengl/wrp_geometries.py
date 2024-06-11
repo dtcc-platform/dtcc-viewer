@@ -17,7 +17,7 @@ from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
-from shapely.geometry import LineString, MultiLineString
+from dtcc_model import LineString, MultiLineString
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_builder import *
 from dtcc_builder.meshing import mesh_multisurfaces

@@ -40,7 +40,7 @@ class GuiParametersGlobal:
 
     def __init__(self):
         """Initialize the GuiParameters object."""
-        self.color = [0.05, 0.1, 0.25, 1]
+        self.color = [0.17, 0.25, 0.42, 1.0]  # [0.05, 0.1, 0.25, 1]
         self.text_color = invert_color(self.color)
         self.gui_width = 320
         self.gui_height = 200

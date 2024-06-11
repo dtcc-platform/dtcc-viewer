@@ -114,56 +114,7 @@ def multi_geometry_example_2():
     window.render(scene)
 
 
-def multi_geometry_example_1():
-    pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
-    all_pcs = split_pc_in_stripes(3, pc, Direction.x)
-
-    mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
-    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
-    all_meshes = utils.split_mesh_in_stripes(3, mesh_tri, face_mid_pts, Direction.y)
-
-    window = Window(1200, 800)
-    scene = Scene()
-
-    data = pc.points[:, Direction.x]
-    scene.add_pointcloud("pc " + str(i), pc, 0.2, data)
-
-    for i, mesh in enumerate(all_meshes):
-        data = mesh.vertices[:, Direction.y]
-        scene.add_mesh("Mesh " + str(i), mesh, data)
-
-    window.render(scene)
-
-
 def linestring_example_2():
-    lss = []
-
-    for i in range(100):
-        ls = create_ls_circle(Point(0, 0, 0), 1 + i, 100)
-        lss.append(ls)
-
-    mls = ShapelyMultiLineString(lss)
-
-    x_vals = np.array([pt[0] for ls in lss for pt in ls.coords])
-    y_vals = np.array([pt[1] for ls in lss for pt in ls.coords])
-    z_vals = np.array([pt[2] for ls in lss for pt in ls.coords])
-
-    data_dict = {}
-    data_dict["vertex_x"] = x_vals
-    data_dict["vertex_y"] = y_vals
-    data_dict["vertex_z"] = z_vals
-    data_dict["vertex_x2"] = x_vals * x_vals
-    data_dict["vertex_y2"] = y_vals * y_vals
-    data_dict["vertex_z2"] = z_vals * z_vals
-
-    window = Window(1200, 800)
-    scene = Scene()
-    scene.add_multilinestring("Multi line strings", mls, data=data_dict)
-
-    window.render(scene)
-
-
-def linestring_example_3():
     # Create instances of LineString
     linestring = LineString(vertices=np.array([[0, 5], [1, 1], [2, 1], [4, 3], [0, 4]]))
     linestring.view()
@@ -179,6 +130,27 @@ def multilinestring_example_1():
     multilinestring.view()
 
 
+def multi_geometry_example_1():
+    pc = pointcloud.load("../../../data/models/PointCloud_HQ.csv")
+    all_pcs = split_pc_in_stripes(3, pc, Direction.x)
+
+    mesh_tri = trimesh.load_mesh("../../../data/models/CitySurface.obj")
+    face_mid_pts = utils.calc_face_mid_points(mesh_tri)
+    all_meshes = utils.split_mesh_in_stripes(3, mesh_tri, face_mid_pts, Direction.y)
+
+    window = Window(1200, 800)
+    scene = Scene()
+
+    data = pc.points[:, Direction.x]
+    scene.add_pointcloud("pc", pc, 0.2, data)
+
+    for i, mesh in enumerate(all_meshes):
+        data = mesh.vertices[:, Direction.y]
+        scene.add_mesh("Mesh " + str(i), mesh, data)
+
+    window.render(scene)
+
+
 def multilinestring_example_2():
     lss = []
     for i in range(15):
@@ -188,6 +160,33 @@ def multilinestring_example_2():
     window = Window(1200, 800)
     scene = Scene()
     scene.add_multilinestring("MultiLineString", mls)
+    window.render(scene)
+
+
+def multilinestring_example_3():
+    lss = []
+
+    for i in range(100):
+        ls = create_ls_circle(Point(0, 0, 0), 1 + i, 100)
+        lss.append(ls)
+
+    mls = MultiLineString(linestrings=lss)
+
+    x_vals = np.array([pt[0] for ls in lss for pt in ls.vertices])
+    y_vals = np.array([pt[1] for ls in lss for pt in ls.vertices])
+    z_vals = np.array([pt[2] for ls in lss for pt in ls.vertices])
+
+    data_dict = {}
+    data_dict["vertex_x"] = x_vals
+    data_dict["vertex_y"] = y_vals
+    data_dict["vertex_z"] = z_vals
+    data_dict["vertex_x2"] = x_vals * x_vals
+    data_dict["vertex_y2"] = y_vals * y_vals
+    data_dict["vertex_z2"] = z_vals * z_vals
+
+    window = Window(1200, 800)
+    scene = Scene()
+    scene.add_multilinestring("Multi line strings", mls, data=data_dict)
     window.render(scene)
 
 
@@ -367,10 +366,12 @@ def geometries_example():
     vmesh.vertices += np.array([20, -20, 0])
 
     bounds = Bounds(-20, -20, -10, -10, 0, 0)
-    grid = Grid(width=30, height=50, bounds=bounds)
+    grid = Grid(width=30, height=50)
+    grid.bounds = bounds
 
     bounds = Bounds(10, 10, 20, 20, 0, 10)
-    vgrid = VolumeGrid(width=30, height=50, depth=20, bounds=bounds)
+    vgrid = VolumeGrid(width=30, height=50, depth=20)
+    vgrid.bounds = bounds
 
     bounds = Bounds(-30, -30, 30, 30, 0, 0)
 
@@ -530,25 +531,12 @@ if __name__ == "__main__":
     # mesh_example_3()
     # mesh_example_4()
     # mesh_example_5()
-    # multi_geometry_example_1()
-    multi_geometry_example_2()
-    # building_example_2()
-    # linestring_example_3()
+    # multilinestring_example_3()
+    # linestring_example_2()
     # multilinestring_example_1()
     # multilinestring_example_2()
-    # city_example_1()
-    # city_example_2()
-    # city_example_3()
-    # city_example_4()
-    # city_example_5()
-    # building_example_1()
-    # building_example_3()
-    # object_example_1()
-    # object_example_2()
-    # raster_example_1()
-    # raster_example_2()
-    # raster_example_3()
-    # raster_example_4()
+    # multi_geometry_example_1()
+    # multi_geometry_example_2()
     # geometries_example()
     # bounds_example()
     # multisurface_example()
@@ -559,5 +547,20 @@ if __name__ == "__main__":
     # volume_mesh_example_2()
     # volume_mesh_example_3()
     # volume_mesh_example_4()
+    # raster_example_1()
+    # raster_example_2()
+    # raster_example_3()
+    # raster_example_4()
+
     # road_network_example()
+    # building_example_2()
+    # city_example_1()
+    # city_example_2()
+    # city_example_3()
+    city_example_4()
+    # city_example_5()
+    # building_example_1()
+    # building_example_3()
+    # object_example_1()
+    # object_example_2()
     # crasch_test()
