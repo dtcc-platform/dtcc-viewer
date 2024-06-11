@@ -29,8 +29,42 @@ class Gui:
     """Graphical user interface (GUI) calss built on imgui and GLFW.
 
     This class has settings and methods for creating a GUI window and components
-    for interacting with Mesh and PointCloud objects.
+    for interacting with Mesh, Lines and Points objects.
 
+    The GUI class has a method for rendering GUI components for a the over all apperance
+    of the model like backround color, camera view, clipping planes, grid and coordinate
+    axis. Then there are methods for rendering GUI components for each object of type
+    gl_mesh, gl_points, gl_lines and gl_raster.
+
+    Imgui is a imeadiate mode GUI library which means that the GUI is rendered every
+    frame and the state of the GUI is not stored. The interface is drawn directly in
+    the main loop and components in the interface directly manipulate the parameters of
+    the application. The benefints of this approach is that the GUI is simple to use and
+    easy to implement. The downside is that the GUI becomes slow and less responsive
+    when the frame rate for the application is low.
+
+    Attributes
+    ----------
+    min_width : int
+        Minimum width of the GUI window.
+    min_height : int
+        Minimum height of the GUI window.
+    max_width : int
+        Maximum width of the GUI window.
+    max_height : int
+        Maximum height of the GUI window.
+    margin : int
+        Margin for the GUI window.
+    id : int
+        Unique identifier for GUI components.
+    shading_names : list[str]
+        Names of shading styles.
+    cmaps_names : list[str]
+        Names of color maps.
+    camera_view_names : list[str]
+        Names of camera views.
+    selected : int
+        Selected item index.
     """
 
     min_width: int
@@ -59,6 +93,7 @@ class Gui:
         self.selected = 0
 
     def render(self, model: GlModel, impl: GlfwRenderer, gguip: GuiParametersGlobal):
+        """Render the GUI window and components for the model."""
         self._init_gui(impl)
 
         # Draw window with GUI controls
@@ -77,6 +112,7 @@ class Gui:
         self._end_gui(impl)
 
     def _init_gui(self, impl: GlfwRenderer) -> None:
+        """Initialize the GUI drawing environment with window size constraints."""
         self.min_width = 320
         self.max_width = 320
         self.min_height = 20
@@ -183,6 +219,7 @@ class Gui:
     def _create_clip_slider(
         self, name: str, clip_bool: bool, clip_dist: float, min=-1.0, max=1.0
     ):
+        """Create a slider for adjusting clipping planes."""
         imgui.push_id(name + "1")
         [changed, clip_bool] = imgui.checkbox(name, clip_bool)
         imgui.pop_id()
@@ -194,7 +231,7 @@ class Gui:
         return clip_bool, clip_dist
 
     def _draw_model_gui(self, model: GlModel) -> None:
-        """Draw GUI for model."""
+        """Draw GUI for model with meshes, lines, points and rasters."""
         meshes = model.filter_gl_type(GlMesh)
         pointclouds = model.filter_gl_type(GlPoints)
         linestrings = model.filter_gl_type(GlLines)
@@ -228,10 +265,12 @@ class Gui:
                 self._draw_rst_gui(rst.guip, self._get_id())
 
     def _get_id(self):
+        """Get a unique identifier for GUI components."""
         self.id += 1
         return self.id
 
     def _end_win_1(self, impl: GlfwRenderer) -> None:
+        """End the first window."""
         imgui.end()
 
     def _end_gui(self, impl: GlfwRenderer) -> None:
@@ -367,8 +406,8 @@ class Gui:
         return selected
 
     def _create_combo_display(self, meshes: list[GlMesh], guip: GuiParametersModel):
-        if len(meshes) > 0:
-            # Display mode combo box
+        """Create a combo box for selecting display mode."""
+        if len(meshes) > 0:  # Only create combo box if there are meshes
             imgui.push_id("Combo")
 
             items = self.shading_names
@@ -503,6 +542,7 @@ class Gui:
         )
 
     def _init_win_2(self, impl: GlfwRenderer) -> None:
+        """Initialize the second window with data display."""
         imgui.set_next_window_size_constraints(
             (self.min_width, self.min_height), (self.max_width, self.max_height)
         )
@@ -517,10 +557,11 @@ class Gui:
         imgui.set_window_position_labeled("Properties", self.margin, self.margin)
 
     def _end_win_2(self) -> None:
+        """End the second window."""
         imgui.end()
 
     def _draw_help(self) -> None:
-        """Draw GUI elements for adjusting appearance settings like background color."""
+        """Draw box with text for instructions."""
         width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Help")
         if expanded:
@@ -571,7 +612,7 @@ class Gui:
         self._draw_separator()
 
     def _draw_data(self, model: GlModel) -> None:
-        """Draw GUI elements for adjusting appearance settings like background color."""
+        """Draw box with data for the model stats."""
         width = self.text_width
         [expanded, visible] = imgui.collapsing_header("Data")
         mhs = model.filter_gl_type(GlMesh)
@@ -587,6 +628,7 @@ class Gui:
     def _draw_model_stats(
         self, mhs: list[GlMesh], pcs: list[GlPoints], lss: list[GlLines]
     ) -> None:
+        """Draw GUI elements for displaying model statistics."""
         v_count, f_count, l_count = 0, 0, 0
         data_dict = {}
 
@@ -632,6 +674,7 @@ class Gui:
         imgui.end_child()
 
     def _draw_model_data(self, model: GlModel) -> None:
+        """Draw GUI elements for displaying data for the selected object."""
         imgui.begin_child("ModelData", 0, 250, border=True)
         imgui.text("SELECTED OBJECT DATA:")
         if model.guip.picked_id != -1:
@@ -662,7 +705,7 @@ class Gui:
         return space
 
     def _draw_data_table(self, data_dict: dict) -> None:
-
+        """Draw data dict as a table."""
         # Define the column headers
         imgui.columns(2, "dict_table")
         imgui.set_column_width(0, 180)
@@ -684,6 +727,7 @@ class Gui:
         imgui.text("FPS: " + str(guip.fps))
 
     def wrap_text(self, text, width):
+        """Wrap text to fit within a given width."""
         lines = []
         current_line = ""
         words = text.split()

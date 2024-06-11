@@ -2,20 +2,56 @@ import numpy as np
 import glfw
 from dtcc_viewer.opengl.utils import invert_color
 from dtcc_viewer.opengl.utils import Shading, RasterType, CameraProjection, CameraView
-from dtcc_viewer.opengl.utils import ColorMaps
 from dtcc_viewer.logging import info, warning
 from abc import ABC, abstractmethod
 
 
-class KeyboardParameters:
-    """Class representing keyboard parameters for the viewer."""
-
-    def __init__(self):
-        pass
-
-
 class GuiParametersGlobal:
-    """Class representing GUI parameters for the viewer."""
+    """Class representing global GUI parameters for the viewer.
+
+    Attributes
+    ----------
+    color : list
+        Background color.
+    text_color : list
+        Text color derived from the background color.
+    gui_width : int
+        Width of the GUI.
+    gui_height : int
+        Height of the GUI.
+    single_date : bool
+        Flag to indicate single date mode.
+    period : bool
+        Flag to indicate period mode.
+    clip_bool : list
+        Clipping boolean values.
+    clip_dir : list
+        Clipping directions.
+    clip_dist : list
+        Clipping distances.
+    show_grid : bool
+        Flag to show the grid.
+    show_axes : bool
+        Flag to show the axes.
+    grid_sf : float
+        Grid scale factor.
+    grid_adapt : bool
+        Flag to adapt grid.
+    axes_sf : float
+        Axes scale factor.
+    time : float
+        Current time.
+    time_acum : float
+        Accumulated time.
+    fps_counter : int
+        Frame per second counter.
+    camera_projection : CameraProjection
+        Camera projection type.
+    camera_view : CameraView
+        Camera view type.
+    update_camera : bool
+        Flag to update the camera.
+    """
 
     color: list
     text_color: list
@@ -65,7 +101,6 @@ class GuiParametersGlobal:
 
     def calc_fps(self):
         """Perform FPS calculations for the rendering loop."""
-
         new_time = glfw.get_time()
         time_passed = new_time - self.time
         self.time = new_time
@@ -79,6 +114,34 @@ class GuiParametersGlobal:
 
 
 class GuiParametersModel:
+    """Class representing GUI parameters for the model.
+
+    Attributes
+    ----------
+    name : str
+        Name of the model.
+    show : bool
+        Flag to show the model.
+    shading : Shading
+        Shading type for the model.
+    animate_light : bool
+        Flag to animate light.
+    picked_id : int
+        ID of the picked element.
+    picked_uuid : str
+        UUID of the picked element.
+    picked_mesh_face_count : int
+        Face count of the picked mesh.
+    picked_mesh_vertex_count : int
+        Vertex count of the picked mesh.
+    picked_attributes : str
+        Attributes of the picked element.
+    picked_cp : np.ndarray
+        Picked control points.
+    picked_size : float
+        Size of the picked element.
+    """
+
     name: str
     show: bool
     shading: Shading
@@ -92,6 +155,15 @@ class GuiParametersModel:
     picked_size: float
 
     def __init__(self, name: str, shading: Shading) -> None:
+        """Initialize the GuiParametersModel object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the model.
+        shading : Shading
+            Shading type for the model.
+        """
         self.name = name
         self.show = True
         self.shading = shading
@@ -104,7 +176,39 @@ class GuiParametersModel:
 
 
 class GuiParametersObj(ABC):
-    """Common parameters for object representation in the GUI."""
+    """Common parameters for object representation in the GUI.
+
+    Attributes
+    ----------
+    name : str
+        Name of the object.
+    show : bool
+        Flag to show the object.
+    color : bool
+        Flag to enable color.
+    invert_cmap : bool
+        Flag to invert the color map.
+    update_caps : bool
+        Flag to update capabilities.
+    update_data_tex : bool
+        Flag to update data texture.
+    cmap_idx : int
+        Color map index.
+    data_idx : int
+        Data index.
+    data_min : float
+        Minimum data value.
+    data_max : float
+        Maximum data value.
+    data_keys : list
+        List of data keys.
+    dict_slider_caps : dict
+        Dictionary of slider capabilities.
+    dict_min_max : dict
+        Dictionary of minimum and maximum values.
+    dict_sldr_val : dict
+        Dictionary of slider values.
+    """
 
     name: str
     show: bool
@@ -122,6 +226,17 @@ class GuiParametersObj(ABC):
     dict_sldr_val: dict
 
     def set_default_values(self, name: str, dict_mat_data: dict, dict_min_max: dict):
+        """Set default values for the object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the object.
+        dict_mat_data : dict
+            Dictionary of material data.
+        dict_min_max : dict
+            Dictionary of minimum and maximum values.
+        """
         self.name = name
         self.show = True
         self.color = True
@@ -141,21 +256,48 @@ class GuiParametersObj(ABC):
             self.dict_sldr_val[key] = [min_max[0], min_max[1]]
 
     def get_current_data_name(self):
+        """Get the name of the current data.
+
+        Returns
+        -------
+        str
+            The name of the current data.
+        """
         return self.data_keys[self.data_idx]
 
     def calc_min_max(self):
+        """Calculate minimum and maximum values for the current data."""
         key = self.get_current_data_name()
         self.data_min = self.dict_sldr_val[key][0]
         self.data_max = self.dict_sldr_val[key][1]
 
 
 class GuiParametersMesh(GuiParametersObj):
-    """Class representing GUI parameters for meshes."""
+    """Class representing GUI parameters for meshes.
+
+    Attributes
+    ----------
+    show_fnormals : bool
+        Flag to show face normals.
+    show_vnormals : bool
+        Flag to show vertex normals.
+    """
 
     show_fnormals: bool
     show_vnormals: bool
 
     def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
+        """Initialize the GuiParametersMesh object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the mesh.
+        dict_mat_data : dict
+            Dictionary of material data.
+        dict_min_max : dict
+            Dictionary of minimum and maximum values.
+        """
         self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.show_fnormals = False
@@ -163,22 +305,107 @@ class GuiParametersMesh(GuiParametersObj):
 
 
 class GuiParametersPC(GuiParametersObj):
-    """Class representing GUI parameters for point clouds."""
+    """Class representing GUI parameters for point clouds.
+
+    Attributes
+    ----------
+    point_scale : float
+        Scale factor for points.
+    """
 
     def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
-        """Initialize the GuiParametersPC object."""
+        """Initialize the GuiParametersPC object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the point cloud.
+        dict_mat_data : dict
+            Dictionary of material data.
+        dict_min_max : dict
+            Dictionary of minimum and maximum values.
+        """
+
         self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.point_scale = 1.0
 
 
 class GuiParametersLines(GuiParametersObj):
-    """Class representing GUI parameters for road networks."""
+    """Class representing GUI parameters for road networks.
+
+    Attributes
+    ----------
+    line_scale : float
+        Scale factor for lines.
+    """
 
     def __init__(self, name: str, dict_mat_data: dict, dict_min_max: dict) -> None:
+        """Initialize the GuiParametersLines object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the road network.
+        dict_mat_data : dict
+            Dictionary of material data.
+        dict_min_max : dict
+            Dictionary of minimum and maximum values.
+        """
         self.set_default_values(name, dict_mat_data, dict_min_max)
         self.calc_min_max()
         self.line_scale = 1.0
+
+
+class GuiParametersRaster:
+    """Class representing GUI parameters for raster data.
+
+    Attributes
+    ----------
+    name : str
+        Name of the raster.
+    show : bool
+        Flag to show the raster.
+    color : bool
+        Flag to enable color.
+    invert_cmap : bool
+        Flag to invert the color map.
+    update_caps : bool
+        Flag to update capabilities.
+    type : RasterType
+        Type of raster.
+    update_data_tex : bool
+        Flag to update data texture.
+    channels : list
+        List of channels to draw.
+    cmap_idx : int
+        Color map index.
+    """
+
+    def __init__(self, name, type: RasterType) -> None:
+        """Initialize the GuiParametersRaster object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the raster.
+        type : RasterType
+            Type of raster.
+        """
+        self.name = name
+        self.show = True
+        self.color = True
+        self.invert_cmap = False
+        self.update_caps = False
+        self.type = type
+        self.update_data_tex = False
+
+        # 1 = draw, 0 = do not draw
+        self.channels = [1, 1, 1, 1]
+        self.cmap_idx = 0
+
+    def calc_data_min_max(self):
+        pass
 
 
 class GuiParametersDates:
@@ -214,21 +441,3 @@ class GuiParametersDates:
         self.month_end = self.month_start
         self.day_end = self.day_start
         self.hour_end = self.hour_start
-
-
-class GuiParametersRaster:
-    def __init__(self, name, type: RasterType) -> None:
-        self.name = name
-        self.show = True
-        self.color = True
-        self.invert_cmap = False
-        self.update_caps = False
-        self.type = type
-        self.update_data_tex = False
-
-        # 1 = draw, 0 = do not draw
-        self.channels = [1, 1, 1, 1]
-        self.cmap_idx = 0
-
-    def calc_data_min_max(self):
-        pass
