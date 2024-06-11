@@ -34,6 +34,13 @@ class GlPoints(GlObject):
     It provides methods to set up the rendering environment, bind shaders,
     and perform the necessary transformations for visualization.
 
+    Each particle is represented by a circular mesh disc with a number of sides given
+    by the particle count to ensure good performance and visual quality. The particles
+    rendered using instanced rendering to improve performance. Each mesh disc is also
+    transformed to face the camera using billboarding. The color of the mesh disc is
+    brighter in the center and darker at the edge to give a 3D effect which makes the
+    particles look like spheres but with much fewer triangles.
+
     Attributes
     ----------
     vertices : np.ndarray
@@ -42,6 +49,8 @@ class GlPoints(GlObject):
         Face indices for one single instance of the particle mesh geometry.
     guip : GuiParametersPC
         GuiParametersPC object for managing GUI parameters.
+    name : str
+        Name of the point cloud.
     low_count : int
         Upper limit for particle count to determine highest resolution.
     upper_count : int
@@ -50,6 +59,20 @@ class GlPoints(GlObject):
         Edge count for lowest resolution for discs.
     upper_sides : int
         Edge count for highest resolution for discs.
+    bb_local : BoundingBox
+        Local bounding box for the point cloud.
+    bb_global : BoundingBox
+        Global bounding box for the entire scene.
+    uniform_locs : dict
+        Uniform locations for the shader program.
+    shader : int
+        Shader program.
+    p_size : float
+        Particle size.
+    n_points : int
+        Number of particles in point cloud.
+    n_sides : int
+        Number of sides for the particle mesh instance geometry.
     """
 
     vertices: np.ndarray  # Vertices for single instance of the particle mesh geometry
@@ -107,10 +130,10 @@ class GlPoints(GlObject):
         view = action.camera.get_view_matrix(action.gguip)
         glUniformMatrix4fv(self.uniform_locs["view"], 1, GL_FALSE, view)
 
-        cam_pos = action.camera.position
-        cam_tar = action.camera.target
-        tans = self._get_billboard_transform(cam_pos, cam_tar)
-        glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, tans)
+        cam_position = action.camera.position
+        cam_target = action.camera.target
+        model = self._get_billboard_transform(cam_position, cam_target)
+        glUniformMatrix4fv(self.uniform_locs["model"], 1, GL_FALSE, model)
 
         self._set_clipping_uniforms(action.gguip)
 
@@ -187,7 +210,8 @@ class GlPoints(GlObject):
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
 
-        # 2 is layout location, 1 means every instance will have it's own attribute (translation in this case).
+        # 2 is layout location, 1 means every instance will have it's own attribute
+        # a translation in this case.
         glVertexAttribDivisor(2, 1)
 
         self.texel_VBO = glGenBuffers(1)
@@ -198,7 +222,8 @@ class GlPoints(GlObject):
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
 
-        # 3 is layout location, 1 means every instance will have it's own attribute (texel incices in this case).
+        # 3 is layout location, 1 means every instance will have it's own attribute
+        # two texel incices in this case.
         glVertexAttribDivisor(3, 1)
 
     def _bind_vao(self) -> None:

@@ -145,6 +145,16 @@ class Window:
         self._update_window_framebuffer_size()
 
     def _preprocess_model(self, scene: Scene):
+        """Preprocess the scene model.
+
+        This method processes the scene objects and prepares them for rendering.
+        It converts scene wrappers into OpenGL objects and sets up the rendering model.
+
+        Parameters
+        ----------
+        scene : Scene
+            The scene containing objects to be preprocessed.
+        """
         self.gl_objects = []
 
         scene.offset_mesh_part_ids()
@@ -275,11 +285,11 @@ class Window:
         return True
 
     def render(self, scene: Scene):
-        """Render single or multiple MeshData and/or PointCloudData objects.
+        """Render single or multiple objects.
 
-        This method renders multiple meshes and point clouds in the window.
-        It updates the rendering loop, handles user interactions, and displays
-        the GUI elements for each rendered object.
+        This method renders multiple meshes, line collections and and point clouds in
+        the window. It updates the rendering loop, handles user interactions, and
+        displays the GUI elements for each rendered object.
 
         Parameters
         ----------
@@ -363,6 +373,11 @@ class Window:
         self.model.create_picking_fbo(self.action)
 
     def _update_window_framebuffer_size(self):
+        """Update the window framebuffer size.
+
+        This method updates the size of the framebuffer and the viewport, when the user
+        resizes the window and adjusts the action parameters accordingly.
+        """
         fbuf_size = glfw.get_framebuffer_size(self.window)
         win_size = glfw.get_window_size(self.window)
         fb_width = fbuf_size[0]
@@ -373,6 +388,11 @@ class Window:
         self.action.update_window_size(fb_width, fb_height, win_width, win_height)
 
     def _clipping_planes(self):
+        """Enable or disable clipping planes based on GUI parameters.
+
+        This method enables or disables the clipping planes based on the settings
+        specified in the GUI parameters.
+        """
         if self.action.gguip.clip_bool[0]:
             glEnable(GL_CLIP_DISTANCE0)
         else:

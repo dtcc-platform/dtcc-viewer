@@ -64,59 +64,113 @@ class GlMesh(GlObject):
     This class handles the rendering of mesh data using OpenGL. It provides methods to
     set up the rendering environment, binding and rendering with a range of different
     shaders, and perform the necessary transformations camera interaction, perspective
-    projection and other features needed for visualization.
+    and orthographic projection and other features needed for visualization.
 
+    The GlMesh class has a setup with VAO, VBO, EBO, vertices and indices in a array
+    called faces for rendering triangles with a range of different shaders. There is
+    also an other setup of VAO, VBO, EBO for using the same vertices and rendering
+    lines where the indices are stored in an array called edges.
+
+    Attributes
+    ----------
+    VAO_triangels : int
+        OpenGL Vertex attribut object for triangles
+    VBO_triangels : int
+        OpenGL Vertex buffer object for triangles
+    EBO_triangels : int
+        OpenGL Element buffer object for triangles
+    VAO_edge : int
+        OpenGL Vertex attribut object for wireframe edges
+    VBO_edge : int
+        OpenGL Vertex buffer object for wireframe edges
+    EBO_edge : int
+        OpenGL Element buffer object for wireframe edges
+    guip : GuiParametersMesh
+        Information used by the Gui
+    vertices : np.ndarray
+        1D array of vertices with the structure  [x, y, z, tx, ty, nx, ny, nz, id, ...]
+    faces : np.ndarray
+        1D array vertex of indices. Each face has 3 unique vertices [f1_v1, f1_v2, f1_v3, f2_v1, ...]
+    edges : np.ndarray
+        1D array of vertex indices. Each edge has 2 unique vertices [e1_v1, e1_v2, e2_v1, ...]
+    n_vertices : int
+        Number of vertices
+    n_faces : int
+        Number of faces
+    n_edges : int
+        Number of edges
+    bb_local : BoundingBox
+        Bounding box for this particular mesh
+    bb_global : BoundingBox
+        Bounding box for the entire scene
+    uloc_line : dict
+        Uniform locations for the lines shader
+    uloc_ambi : dict
+        Uniform locations for the ambient shader
+    uloc_diff : dict
+        Uniform locations for the diffuse shader
+    uloc_shdw : dict
+        Uniform locations for the shadow shader
+    uloc_shmp : dict
+        Uniform locations for the shadow shader
+    uloc_fnor : dict
+        Uniform locations for the face normals shader
+    uloc_vnor : dict
+        Uniform locations for the vertex normals shader
+    shader_line : int
+        Shader program for the lines
+    shader_ambi : int
+        Shader program for ambient mesh rendering
+    shader_diff : int
+        Shader program for diffuse mesh rendering
+    shader_shdw : int
+        Shader program for rendering of diffuse mesh with shadow map
+    shader_shmp : int
+        Shader program for rendering of diffuse mesh with shadow map
+    shader_fnor : int
+        Shader program for rendering face normals
+    shader_vnor : int
+        Shader program for rendering vertex normals
+    diameter_xy : float
+        Size of the model as diameter
+    radius_xy : float
+        Size of model as radius
+    parts : Parts
+        Defines clickable mesh parts and their attributes
     """
 
-    # Mesh based parameters
-    VAO_triangels: int  # OpenGL Vertex attribut object for triangles
-    VBO_triangels: int  # OpenGL Vertex buffer object for triangles
-    EBO_triangels: int  # OpenGL Element buffer object for triangles
-    VAO_edge: int  # OpenGL Vertex attribut object for wireframe edges
-    VBO_edge: int  # OpenGL Vertex buffer object for wireframe edges
-    EBO_edge: int  # OpenGL Element buffer object for wireframe edges
-
-    guip: GuiParametersMesh  # Information used by the Gui
-    vertices: (
-        np.ndarray
-    )  # [n_vertices x 10] each row (x, y, z, r, g, b, nx, ny, nz, id)
-    faces: np.ndarray  # [n_faces x 3] each row has three vertex indices
-    edges: np.ndarray  # [n_edges x 2] each row has
-
-    n_vertices: int  # Number of vertices
-    n_faces: int  # Number of faces
-
-    bb: np.ndarray  # Bounding box [xmin, xmax, ymin, ymax, zmin, zmax]
+    VAO_triangels: int
+    VBO_triangels: int
+    EBO_triangels: int
+    VAO_edge: int
+    VBO_edge: int
+    EBO_edge: int
+    guip: GuiParametersMesh
+    vertices: np.ndarray
+    faces: np.ndarray
+    edges: np.ndarray
+    n_vertices: int
+    n_faces: int
+    n_edges: int
     bb_local: BoundingBox
     bb_global: BoundingBox
-
-    uloc_line: dict  # Uniform locations for the lines shader
-    uloc_ambi: dict  # Uniform locations for the ambient shader
-    uloc_diff: dict  # Uniform locations for the diffuse shader
-    uloc_shdw: dict  # Uniform locations for the shadow shader
-    uloc_shmp: dict  # Uniform locations for the shadow shader
-    uloc_fnor: dict  # Uniform locations for the face normals shader
-    uloc_vnor: dict  # Uniform locations for the vertex normals shader
-
-    shader_line: int  # Shader program for the lines
-    shader_ambi: int  # Shader program for ambient mesh rendering
-    shader_diff: int  # Shader program for diffuse mesh rendering
-    shader_shdw: int  # Shader program for rendering of diffuse mesh with shadow map
-    shader_shmp: int  # Shader program for rendering of diffuse mesh with shadow map
-    shader_fnor: int  # Shader program for rendering face normals
-    shader_vnor: int  # Shader program for rendering vertex normals
-
-    # Scene based parameters
-    diameter_xy: float  # Size of the model as diameter
-    radius_xy: float  # Size of model as radius
-    light_position: np.ndarray  # position of light that casts shadows [1 x 3]
-    light_color: np.ndarray  # color of scene light [1 x 3]
-    loop_counter: int  # loop counter for animation of scene light source
-
-    parts: Parts  # Defines clickable objects and their metadata in the mesh
-
-    cast_shadows: bool  # If the mesh should cast shadows
-    recieve_shadows: bool  # If the mesh should recieve shadows
+    uloc_line: dict
+    uloc_ambi: dict
+    uloc_diff: dict
+    uloc_shdw: dict
+    uloc_shmp: dict
+    uloc_fnor: dict
+    uloc_vnor: dict
+    shader_line: int
+    shader_ambi: int
+    shader_diff: int
+    shader_shdw: int
+    shader_shmp: int
+    shader_fnor: int
+    shader_vnor: int
+    diameter_xy: float
+    radius_xy: float
+    parts: Parts
 
     def __init__(self, mesh_wrapper: MeshWrapper):
         """Initialize the MeshGL object with vertex, face, and edge information."""
@@ -128,15 +182,16 @@ class GlMesh(GlObject):
         self.parts = mesh_wrapper.parts
         self.data_wrapper = mesh_wrapper.data_wrapper
 
+        # 9 data points per vertex: [x, y, z, tx, ty, nx, ny, nz, id]
         self.n_vertices = len(self.vertices) // 9
+        # 3 indices per face: [f1_v1, f1_v2, f1_v3]
         self.n_faces = len(self.faces) // 3
+        # 2 indices per edge: [e1_v1, e1_v2]
+        self.n_edges = len(self.edges) // 2
 
         data_mat_dict = self.data_wrapper.data_mat_dict
         data_min_max = self.data_wrapper.data_min_max
         self.guip = GuiParametersMesh(self.name, data_mat_dict, data_min_max)
-
-        self.cast_shadows = True
-        self.recieve_shadows = True
 
         self.bb_local = mesh_wrapper.bb_local
         self.bb_global = mesh_wrapper.bb_global
@@ -153,9 +208,11 @@ class GlMesh(GlObject):
         self.texture_idx = None
 
     def get_vertex_ids(self):
+        """Get the vertex ids from the vertices array."""
         return self.vertices[8::9]
 
     def get_average_vertex_position(self, indices):
+        """Get the average position of a set of vertices."""
         if np.max(indices) > self.n_vertices or np.min(indices) < 0:
             warning("Index out of bounds")
             return None
@@ -171,6 +228,7 @@ class GlMesh(GlObject):
         return avrg_pt, radius
 
     def _create_textures(self) -> None:
+        """Create textures for data."""
         self._create_data_texture()
 
     def _create_geometry(self) -> None:
@@ -455,6 +513,7 @@ class GlMesh(GlObject):
         )
 
     def _create_shader_normals(self) -> None:
+        """Create shaders for rendering normals."""
 
         # Face normal shader
         self.shader_fnor = compileProgram(
@@ -495,13 +554,7 @@ class GlMesh(GlObject):
         mguip: GuiParametersModel,
         ws_pass=0,
     ):
-        """Render wireframe lines of the mesh.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            The Interaction object containing camera and user interaction information.
-        """
+        """Render wireframe lines of the mesh."""
         self._bind_shader_lines()
         self._bind_data_texture()
 
@@ -607,6 +660,8 @@ class GlMesh(GlObject):
         env: Environment,
         mguip: GuiParametersModel,
     ) -> None:
+        """Render the mesh with wireframe and shaded rendering."""
+
         glEnable(GL_POLYGON_OFFSET_FILL)
         glPolygonOffset(1.0, 1.0)
         self.render_diffuse(action, env, mguip, ws_pass=1)
@@ -617,6 +672,7 @@ class GlMesh(GlObject):
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     def render_shadows_pass1(self, lsm: np.ndarray):
+        """Render the shadow map for the mesh."""
         glUseProgram(self.shader_shmp)
         glUniformMatrix4fv(self.uloc_shmp["lsm"], 1, GL_FALSE, lsm)
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
@@ -630,6 +686,8 @@ class GlMesh(GlObject):
         mguip: GuiParametersModel,
         lsm: np.ndarray,
     ) -> None:
+        """Render the mesh with shadows by sampling the shadowmap."""
+
         # Setup uniforms for rendering with shadows
         self._bind_shader_shadows()
         self._bind_data_texture()
@@ -666,7 +724,7 @@ class GlMesh(GlObject):
         self._unbind_data_texture()
 
     def render_normals(self, action: Action) -> None:
-
+        """Render face and vertex normals of the mesh."""
         if self.guip.show_fnormals:
             self._render_face_normals(action)
 
@@ -674,7 +732,7 @@ class GlMesh(GlObject):
             self._render_vertex_normals(action)
 
     def _render_face_normals(self, action: Action) -> None:
-
+        """Render face normals of the mesh."""
         self._bind_shader_fnormals()
         model = action.camera.get_move_matrix()
         view = action.camera.get_view_matrix(action.gguip)
@@ -693,7 +751,7 @@ class GlMesh(GlObject):
         self._unbind_shader()
 
     def _render_vertex_normals(self, action: Action) -> None:
-
+        """Render vertex normals of the mesh."""
         self._bind_shader_vnormals()
         model = action.camera.get_move_matrix()
         view = action.camera.get_view_matrix(action.gguip)
@@ -740,7 +798,7 @@ class GlMesh(GlObject):
         glUseProgram(self.shader_line)
 
     def _bind_shader_ambient(self) -> None:
-        """Bind the shader for basic shading."""
+        """Bind the shader for ambient shading."""
         glUseProgram(self.shader_ambi)
 
     def _bind_shader_diffuse(self) -> None:
@@ -769,6 +827,7 @@ class GlMesh(GlObject):
         mguip: GuiParametersModel,
         ws_pass: int = 0,
     ):
+        """Set the clipping uniforms for the shader."""
         (xdom, ydom, zdom) = self._get_clip_domains()
 
         if mguip.shading == Shading.WIREFRAME or ws_pass == 2:
@@ -789,6 +848,7 @@ class GlMesh(GlObject):
             glUniform1f(self.uloc_shdw["clip_z"], (zdom * gguip.clip_dist[2]))
 
     def _get_clip_domains(self):
+        """Get the clip domains for the mesh."""
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

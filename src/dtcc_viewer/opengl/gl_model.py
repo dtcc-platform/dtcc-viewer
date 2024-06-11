@@ -34,47 +34,99 @@ class GlModel:
     This class contains a collection of meshes, point clouds, line stings, rasters and
     related features for rendering of effects lite shadows and coloring for object
     picking.
+
+    The GlModel calss has the shader for shadow maps and object picking since these are
+    "global" actions performed for the whole model. For example, one GlMesh may cast
+    shadows on another GlMesh so the shadow map needs to be rendered for the two meshes
+    simultaneously.
+
+    The model class also has a VAO, VBO, EBO, quad vertices and quad indices for the
+    purpouse of debuging global features like the shadow map and the picking textures.
+    In such cases, the quad is drawn on the whole screen and the texture is applied to
+    the quad for display.
+
+    The model class also holds the texture slots which are used to do two things: 1) to
+    render shadow maps and picking textures, 2) to store data for visualisation. The
+    number of texture slots available is limited by the graphics card typcally in the
+    range of 16-32. Thats means 14-30 slots are available for data storage. Each
+    GlObject in the model is given 1 texture slot for data storage.
+
+    Attributes
+    ----------
+    gl_objects: list[GlObject]
+        A list that contains all the OpenGL objects (`GlObject`) that belong to this model.
+    env: Environment
+        Collection of environment data like light sources etc.
+    guip: GuiParametersModel
+        Graphical user interface parameters for the model.
+    VAO_debug: int
+        OpenGL Vertex attribut object for debug quad.
+    VB0_debug: int
+        OpenGL Vertex buffer object for debug quad.
+    EBO_debug: int
+        OpenGL Element buffer object for debug quad.
+    quad_vertices: np.ndarray
+        Vertices for the debug quad.
+    quad_indices: np.ndarray
+        Indices for the debug quad.
+    uloc_shmp: dict
+        Uniform locations for the shadow map shader.
+    uloc_dbsh: dict
+        Uniform locations for redering the shadow map on a quad.
+    uloc_dbpi: dict
+        Uniform locations for rendering picking texture on a quad.
+    uloc_pick: dict
+        Uniform locations for the picking shader.
+    shader_shmp: int
+        Shader program for rendering of the shadow map.
+    shader_pick: int
+        Shader program for picking.
+    shader_dbsh: int
+        Shader program for debug rendering of the shadow map to a quad.
+    shader_dbpi: int
+        Shader program for debug rendering of picking texture to a quad.
+    FBO_shadows: int
+        OpenGL Frame Buffer Objects.
+    shadow_depth_map: int
+        Depth map identifier.
+    shadow_map_resolution: int
+        Resolution of the shadow map, same in x and y.
+    shadow_border_color: np.ndarray
+        Color for the border of the shadow map.
+    lsm: np.ndarray
+        Light space matrix for shadow map rendering.
+    tex_slot_shadow_map: int
+        GL_TEXTURE0, GL_TEXTURE1, etc.
+    tex_slot_picking: int
+        GL_TEXTURE0, GL_TEXTURE1, etc.
     """
 
     gl_objects: list[GlObject]
-
-    guip: GuiParametersModel  # Gui parameters for the model
-    env: Environment  # Collection of environment data like light sources etc.
-
-    # The model class has a VAO, VBO and EBO for a debug quad which are used to render
-    # global features like the shadow map and the picking textures to the screen.
-    VAO_debug: int  # OpenGL Vertex attribut object for debug quad
-    VBO_debug: int  # OpenGL Vertex buffer object for debug quad
-    EBO_debug: int  # OpenGL Element buffer object for debug quad
-
-    quad_vertices: np.ndarray  # Vertices for the debug quad
-    quad_indices: np.ndarray  # Indices for the debug quad
-
-    # The model calss has uniform locations for the shadow map shader and the picking
-    # shader since these are "global" actions performed for the whole model
-    uloc_shmp: dict  # Uniform locations for the shadow map shader
-    uloc_dbsh: dict  # Uniform locations for redering the shadow map on a quad
-    uloc_dbpi: dict  # Uniform locations for rendering picking texture on a quad
-    uloc_pick: dict  # Uniform locations for the picking shader
-
-    # The GlModel calss also has the shader for shadow maps and picking rendering
-    # since these are "global" actions performed for the whole model. For example, one
-    # GlMesh may cast shadows on another GlMesh so the shadow map needs to be rendered
-    # for the entire model.
-    shader_shmp: int  # Shader program for rendering of the shadow map
-    shader_pick: int  # Shader program for picking
-    shader_dbsh: int  # Shader program for debug rendering of the shadow map to a quad
-    shader_dbpi: int  # Shader program for debug rendering of picking texture to a quad
-
-    FBO_shadows: int  # OpenGL Frame Buffer Objects
-    shadow_depth_map: int  # Depth map identifier
-    shadow_map_resolution: int  # Resolution of the shadow map, same in x and y.
-    shadow_border_color: np.ndarray  # color for the border of the shadow map
-    lsm: np.ndarray  # Light space matrix for shadow map rendering
-
-    tex_slot_shadow_map: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
+    guip: GuiParametersModel
+    env: Environment
+    VAO_debug: int
+    VBO_debug: int
+    EBO_debug: int
+    quad_vertices: np.ndarray
+    quad_indices: np.ndarray
+    uloc_shmp: dict
+    uloc_dbsh: dict
+    uloc_dbpi: dict
+    uloc_pick: dict
+    shader_shmp: int
+    shader_pick: int
+    shader_dbsh: int
+    shader_dbpi: int
+    FBO_shadows: int
+    shadow_depth_map: int
+    shadow_map_resolution: int
+    shadow_border_color: np.ndarray
+    lsm: np.ndarray
+    tex_slot_shadow_map: int
+    tex_slot_picking: int
 
     def __init__(self, gl_objects: list[GlObject], bb_global: BoundingBox):
+        """Initialize the GlModel object."""
         self.gl_objects = gl_objects
 
         self.guip = GuiParametersModel("Model", shading=Shading.WIRESHADED)
@@ -104,6 +156,7 @@ class GlModel:
         return True
 
     def filter_gl_type(self, gl_type):
+        """Filter the gl_objects list by type."""
         if gl_type == GlMesh:
             return [mesh for mesh in self.gl_objects if isinstance(mesh, GlMesh)]
         elif gl_type == GlPoints:
@@ -122,6 +175,7 @@ class GlModel:
         self.loop_counter = 120
 
     def create_picking_fbo(self, action: Action) -> None:
+        """Create a frame buffer object for object picking."""
         window_w = action.fbuf_width
         window_h = action.fbuf_height
 
@@ -129,7 +183,7 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_picking)  # Bind our frame buffer
 
         self.pick_texture = glGenTextures(1)
-        glActiveTexture(self.tex_slot_picking)
+        glActiveTexture(self.tex_slot_picking)  # Activate assigned texture slot
         glBindTexture(GL_TEXTURE_2D, self.pick_texture)
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB, window_w, window_h, 0, GL_RGB, GL_FLOAT, None
@@ -154,13 +208,15 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Unbind our frame buffer
 
     def _distribute_texture_slots(self) -> None:
-        """Distribute texture slots to all the meshes, pointclouds, linestrings."""
+        """Distribute texture slots to all the meshes, pointclouds, lines."""
 
         texture_slots = self._get_texture_slots()
 
         # The first slot GL_TEXTURE0 is reserved for the shadow map
         self.tex_slot_shadow_map = texture_slots[0]
         self.tex_idx_shadow_map = 0
+
+        # The second slot GL_TEXTURE1 is reserved for the picking texture
         self.tex_slot_picking = texture_slots[1]
         self.tex_idx_picking = 1
 
@@ -178,6 +234,7 @@ class GlModel:
         return True
 
     def _create_debug_quad(self) -> None:
+        """Create a quad for debuging purposes."""
         tex_min = 0
         tex_max = 1
 
@@ -249,7 +306,7 @@ class GlModel:
 
         # Creating a texture which will be used as the framebuffers depth buffer
         self.shadow_depth_map = glGenTextures(1)
-        glActiveTexture(self.tex_slot_shadow_map)
+        glActiveTexture(self.tex_slot_shadow_map)  # Activate assigned texture slot
         glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
         self.shadow_map_resolution = 1024 * 8
         glTexImage2D(
@@ -285,7 +342,7 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def _create_shader_debug_shadows(self) -> None:
-        """Create shader for rendering shadow map."""
+        """Create shader for rendering the shadow map onto a quad for debugging."""
 
         self.shader_dbsh = compileProgram(
             compileShader(vertex_shader_debug_shadows, GL_VERTEX_SHADER),
@@ -293,7 +350,7 @@ class GlModel:
         )
 
     def _create_shader_picking(self) -> None:
-        """Create shader for picking."""
+        """Create shader for picking rendering."""
 
         self.shader_pick = compileProgram(
             compileShader(vertex_shader_picking, GL_VERTEX_SHADER),
@@ -311,7 +368,7 @@ class GlModel:
         self.uloc_pick["clip_z"] = glGetUniformLocation(self.shader_pick, "clip_z")
 
     def _create_shader_debug_picking(self) -> None:
-        """Create shader for rendering shadow map."""
+        """Create shader for rendering the picking texture onto a quad."""
 
         self.shader_dbpi = compileProgram(
             compileShader(vertex_shader_debug_picking, GL_VERTEX_SHADER),
@@ -323,11 +380,13 @@ class GlModel:
         )
 
     def zoom_selected(self, action: Action) -> None:
+        """Zoom the camera to the selected object."""
         if self.guip.picked_cp is None or self.guip.picked_size is None:
             action.update_zoom_selected = False
             info("Zoom selected: No object selected for zooming")
             return
 
+        # Calculate the distance to the target object
         distance_to_target = 5.0 * self.guip.picked_size
         target = self.guip.picked_cp
         action.zoom_selected(distance_to_target, target)
@@ -337,6 +396,7 @@ class GlModel:
         )
 
     def evaluate_picking(self, action: Action) -> None:
+        """Evaluate the picking texture to find the picked object."""
         if not action.mouse_on_gui:
             self._draw_picking_texture(action)
             self._evaluate_picking(action)
@@ -344,6 +404,8 @@ class GlModel:
             action.picking = False
 
     def _draw_picking_texture(self, action: Action) -> None:
+        """Draw the picking texture to the frame buffer."""
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Camera input
@@ -375,6 +437,7 @@ class GlModel:
                     obj.triangles_draw_call()
 
     def _evaluate_picking(self, action: Action) -> None:
+        """Get picking texture color under the mouse click and compute object id."""
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         x = action.picked_x
         y = action.picked_y
@@ -407,6 +470,7 @@ class GlModel:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def _render_pick_texture(self, action: Action) -> None:
+        """Render the picking texture to a quad that spans the screen for debugging."""
         self._draw_picking_texture(action)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -425,6 +489,7 @@ class GlModel:
         glEnable(GL_DEPTH_TEST)
 
     def render(self, action: Action) -> None:
+        """Render all gl_objects in the model."""
         self._render_meshes(action)
         self._render_points(action)
         self._render_lines(action)
@@ -435,6 +500,7 @@ class GlModel:
         self._update_data_textures()
 
     def _render_meshes(self, action: Action) -> None:
+        """Render meshes base of display mode."""
         self.guip.animate_light = False
         if self.guip.shading == Shading.WIREFRAME:
             self._render_wireframe(action)
@@ -457,12 +523,14 @@ class GlModel:
         self._render_normals(action)
 
     def _render_normals(self, action: Action) -> None:
+        """Render normals for all meshes."""
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
                     obj.render_normals(action)
 
     def _render_points(self, action: Action) -> None:
+        """Render point clouds."""
         for obj in self.gl_objects:
             if isinstance(obj, GlPoints):
                 guip = obj.guip
@@ -470,6 +538,7 @@ class GlModel:
                     obj.render(action)
 
     def _render_lines(self, action: Action) -> None:
+        """Render lines"""
         for obj in self.gl_objects:
             if isinstance(obj, GlLines):
                 guip = obj.guip
@@ -477,6 +546,7 @@ class GlModel:
                     obj.render(action)
 
     def _render_rasters(self, action: Action) -> None:
+        """Render rasters"""
         for obj in self.gl_objects:
             if isinstance(obj, GlRaster):
                 guip = obj.guip
@@ -484,33 +554,35 @@ class GlModel:
                     obj.render(action)
 
     def _render_wireframe(self, action: Action) -> None:
+        """Render meshes in wireframe display mode."""
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
                     obj.render_wireframe(action, self.env, self.guip)
 
     def _render_ambient(self, action: Action) -> None:
+        """Render meshes in ambient display mode."""
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
                     obj.render_ambient(action, self.guip)
 
     def _render_diffuse(self, action: Action) -> None:
+        """Render meshes in diffuse display mode."""
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
                     obj.render_diffuse(action, self.env, self.guip)
 
     def _render_wireshaded(self, action: Action) -> None:
+        """Render meshes in wireshaded display mode."""
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
                 if obj.guip.show:
                     obj.render_wireshaded(action, self.env, self.guip)
 
     def _render_shadows(self, action: Action) -> None:
-        """Generates a shadow map and renders the mesh with shadows by sampling that
-        shadow map.
-        """
+        """Generates a shadow map and renders the mesh with shadows."""
         if action.show_shadow_texture:
             self._render_shadows_pass1(action)
             self._render_debug_shadow_map(action)
@@ -534,9 +606,6 @@ class GlModel:
 
         glViewport(0, 0, self.shadow_map_resolution, self.shadow_map_resolution)
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO_shadows)
-
-        # glActiveTexture(self.texture_slot) # GL_TEXTURE0
-        # glBindTexture(GL_TEXTURE_2D, self.shadow_depth_map)
 
         # Only clearing depth buffer since there is no color attachement
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -565,6 +634,7 @@ class GlModel:
                     obj.render_shadows_pass2(action, self.env, self.guip, self.lsm)
 
     def _render_debug_shadow_map(self, interaction: Action) -> None:
+        """Render the shadow map to a quad for debugging."""
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glViewport(0, 0, interaction.fbuf_width, interaction.fbuf_height)
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -575,23 +645,28 @@ class GlModel:
         self._debug_quad_draw_call()
 
     def _debug_quad_draw_call(self) -> None:
+        """Draw the debug quad."""
         glBindVertexArray(self.VAO_debug)
         glDrawElements(GL_TRIANGLES, len(self.quad_indices), GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
 
     def _update_light_position(self) -> None:
+        """Update the light position for dynamic shadows."""
         if self.guip.animate_light:
             self.env._calc_light_position()
 
     def _update_data_caps(self):
+        """Update the data value caps for sliders."""
         for obj in self.gl_objects:
             obj.update_data_caps()
 
     def _update_data_textures(self):
+        """Update the data textures for visualisation."""
         for obj in self.gl_objects:
             obj.update_data_texture()
 
     def _find_object_from_id(self, id):
+        """Find the object that has the id and set the picked object."""
         self.guip.picked_uuid = None
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):  # Only meshes are pickable atm
@@ -601,6 +676,7 @@ class GlModel:
                         break
 
     def _find_data_from_id(self, id):
+        """Calculate mesh related the data for the picked object."""
         sucess = False
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):
@@ -624,7 +700,7 @@ class GlModel:
             self.guip.picked_size = None
 
     def _get_texture_slots(self):
-
+        """Get the available texture slots."""
         texture_slots = [
             GL_TEXTURE0,
             GL_TEXTURE1,
@@ -647,6 +723,7 @@ class GlModel:
         return texture_slots
 
     def _get_clip_domains(self):
+        """Get the clipping domains."""
         xdom = 0.5 * self.env.bb_global.xdom
         ydom = 0.5 * self.env.bb_global.ydom
         zdom = 0.5 * self.env.bb_global.zdom

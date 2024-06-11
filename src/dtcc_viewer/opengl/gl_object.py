@@ -15,15 +15,31 @@ from dtcc_viewer.opengl.environment import Environment
 
 
 class GlObject(ABC):
+    """
+    Abstract base class for OpenGL objects.
 
-    guip: GuiParametersObj  # GUI parameters
+    Attributes
+    ----------
+    guip: GuiParametersObj
+        GUI parameters.
+    data_wrapper: DataWrapper
+        Data wrapper for the mesh.
+    data_texture: int
+        Texture for data.
+    texture_slot: int
+        Texture slot for OpenGL texture unit.
+    texture_idx: int
+        Texture index, 0 for ``GL_TEXTURE0``, 1 for ``GL_TEXTURE1``, etc.
+    """
 
-    data_wrapper: DataWrapper  # Data wrapper for the mesh
-    data_texture: int  # Texture for data
-    texture_slot: int  # GL_TEXTURE0, GL_TEXTURE1, etc.
-    texture_idx: int  # Texture index 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, etc.
+    guip: GuiParametersObj
+    data_wrapper: DataWrapper
+    data_texture: int
+    texture_slot: int
+    texture_idx: int
 
     def preprocess(self):
+        """Preprocess method to create textures, geometry, and shaders."""
         self._create_textures()
         self._create_geometry()
         self._create_shaders()
@@ -41,8 +57,22 @@ class GlObject(ABC):
         pass
 
     def _create_data_texture(self) -> None:
-        """Create texture for data."""
+        """Create texture for data storage.
 
+        TODO: Enable vector data to be stored in a texture.
+        In OpenGL, textures can have multiple channels for data storage, typically
+        represented by different color components such as red, green, blue, and alpha.
+        In this current implementation only the red channel (GL_RED) is being used to
+        store data, which means each texel (texture element) in the texture contains a
+        single floating-point value. When accessing the texture in the shader using
+        texelFetch (see shader code), only the red channel (r) of the texel is used to
+        retrieve floating-point values.
+
+        To enable vector data to be stored in a texture, multiple channels can
+        be used by configuring the texture with a different internal format, such as
+        GL_RGB or GL_RGBA, and appropriately handle the data in shader code, by
+        access
+        """
         self.data_texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.data_texture)
 
@@ -71,6 +101,7 @@ class GlObject(ABC):
         )
 
     def _update_data_texture(self):
+        """Update the data texture with the current data."""
         index = self.guip.data_idx
         key = self.data_wrapper.get_keys()[index]
         width = self.data_wrapper.col_count
@@ -86,11 +117,13 @@ class GlObject(ABC):
         info(f"Data texture updated. Time elapsed: {toc - tic:0.4f} seconds")
 
     def update_data_texture(self):
+        """Update the data texture if the user has triggered an update."""
         if self.guip.update_data_tex:
             self._update_data_texture()
             self.guip.update_data_tex = False
 
     def update_data_caps(self):
+        """Update the data min and max values if the user has triggered an update."""
         if self.guip.update_caps:
             self.guip.calc_min_max()
             self.guip.update_caps = False
