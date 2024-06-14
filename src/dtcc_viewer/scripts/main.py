@@ -12,7 +12,7 @@ from dtcc_viewer import utils
 from dtcc_io import pointcloud, meshes, roadnetwork
 from dtcc_io import load_raster, load_roadnetwork
 from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
-from dtcc_model import VolumeMesh, LineString, MultiLineString
+from dtcc_model import VolumeMesh, LineString, MultiLineString, Building, RoadNetwork
 from dtcc_model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
@@ -20,8 +20,6 @@ from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import Point
-from shapely.geometry import MultiLineString as ShapelyMultiLineString
-from shapely.geometry import LineString as ShapelyLineString
 from dtcc_builder import clean_building_surfaces
 
 
@@ -203,6 +201,27 @@ def city_example_2():
 
 def city_example_3():
     city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    building_year = [1900, 1920, 1930, 1945, 1960, 1980, 2000, 2010, 2020, 2030]
+    residents = np.arange(10) + 5
+
+    for i, building in enumerate(city.buildings):
+        building.attributes["energy consumption"] = i
+        building.attributes["no residents"] = residents[i % len(residents)]
+        building.attributes["year"] = building_year[i % len(building_year)]
+    city.view()
+
+
+def city_example_4():
+    file1 = "../../../data/models/citygml_loz_buildings_energy_20230819.json"
+    file2 = "../../../data/models/lozenets_citygml2cityjson.json"
+    file3 = "../../../data/models/lozenets_citygml2cityjson_lod1_replaced.json"
+    file4 = "../../../data/models/lozenets_citygml2cityjson_with_facades_2.json"
+    city = dtcc_io.load_cityjson(file1)
+    city.view()
+
+
+def city_example_5():
+    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
     n = 30
@@ -226,27 +245,6 @@ def city_example_3():
     vgrid.add_field(field4)
     city.add_geometry(vgrid, "volume_grid")
 
-    city.view()
-
-
-def city_example_4():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
-    building_year = [1900, 1920, 1930, 1945, 1960, 1980, 2000, 2010, 2020, 2030]
-    residents = np.arange(10) + 5
-
-    for i, building in enumerate(city.buildings):
-        building.attributes["energy consumption"] = i
-        building.attributes["no residents"] = residents[i % len(residents)]
-        building.attributes["year"] = building_year[i % len(building_year)]
-    city.view()
-
-
-def city_example_5():
-    file1 = "../../../data/models/citygml_loz_buildings_energy_20230819.json"
-    file2 = "../../../data/models/lozenets_citygml2cityjson.json"
-    file3 = "../../../data/models/lozenets_citygml2cityjson_lod1_replaced.json"
-    file4 = "../../../data/models/lozenets_citygml2cityjson_with_facades_2.json"
-    city = dtcc_io.load_cityjson(file1)
     city.view()
 
 
@@ -516,6 +514,47 @@ def crasch_test():
     scene.add_geometries("crasch geo", wrong_list)
     scene.add_bounds("crasch bounds", None)
     scene.add_bounds("crasch bounds", wrong_input)
+    window.render(scene)
+
+
+def crasch_empty_geometry():
+
+    window = Window(1200, 800)
+    scene = Scene()
+    vertices = np.array([])
+    faces = np.array([])
+
+    mesh = Mesh(vertices=vertices, faces=faces)
+    ms = MultiSurface(surfaces=[])
+    srf = Surface()
+    mls = MultiLineString(linestrings=[])
+    ls = LineString(vertices=np.array([]))
+    pc = PointCloud(points=np.array([]))
+    city = City()
+    obj = Object()
+    grid = Grid()
+    vgrid = VolumeGrid()
+    building = Building()
+    roadnetwork = RoadNetwork()
+    vmesh = VolumeMesh()
+    bounds = Bounds()
+    raster = Raster(data=np.array([]))
+
+    scene.add_mesh("empty mesh", mesh)
+    scene.add_multisurface("empty ms", ms)
+    scene.add_surface("empty srf", srf)
+    scene.add_city("empty city", city)
+    scene.add_object("empty obj", obj)
+    scene.add_pointcloud("empty pc", pc)
+    scene.add_linestring("empty ls", ls)
+    scene.add_multilinestring("empty mls", mls)
+    scene.add_grid("empty grid", grid)
+    scene.add_volume_grid("empty vgrid", vgrid)
+    scene.add_building("empty building", building)
+    scene.add_roadnetwork("empty roadnetwork", roadnetwork)
+    scene.add_volume_mesh("empty vmesh", vmesh)
+    scene.add_bounds("empty bounds", bounds)
+    scene.add_raster("empty raster", raster)
 
     window.render(scene)
 
@@ -534,24 +573,23 @@ if __name__ == "__main__":
     # linestring_example_2()
     # multilinestring_example_1()
     # multilinestring_example_2()
-    multilinestring_example_3()
-    multi_geometry_example_1()
-    multi_geometry_example_2()
-    geometries_example()
-    bounds_example()
-    multisurface_example()
-    surface_example()
-    grid_example()
-    volume_grid_example()
-    volume_mesh_example()
-    volume_mesh_example_2()
-    volume_mesh_example_3()
-    volume_mesh_example_4()
-    raster_example_1()
-    raster_example_2()
-    raster_example_3()
-    raster_example_4()
-
+    # multilinestring_example_3()
+    # multi_geometry_example_1()
+    # multi_geometry_example_2()
+    # geometries_example()
+    # bounds_example()
+    # multisurface_example()
+    # surface_example()
+    # grid_example()
+    # volume_grid_example()
+    # volume_mesh_example()
+    # volume_mesh_example_2()
+    # volume_mesh_example_3()
+    # volume_mesh_example_4()
+    # raster_example_1()
+    # raster_example_2()
+    # raster_example_3()
+    # raster_example_4()
     # road_network_example()
     # building_example_2()
     # city_example_1()
@@ -564,3 +602,4 @@ if __name__ == "__main__":
     # object_example_1()
     # object_example_2()
     # crasch_test()
+    # crasch_empty_geometry()

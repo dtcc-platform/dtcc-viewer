@@ -68,7 +68,7 @@ class Scene:
         data : Any, optional
             Additional data associated with the mesh.
         """
-        if mesh is not None and isinstance(mesh, Mesh):
+        if mesh is not None and isinstance(mesh, Mesh) and self.has_geom(mesh, name):
             info(f"Mesh called '{name}' added to scene")
             self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
         else:
@@ -85,13 +85,13 @@ class Scene:
         ms : MultiSurface
             MultiSurface object to be added.
         """
-        if ms is not None and isinstance(ms, MultiSurface):
+        if ms is not None and isinstance(ms, MultiSurface) and self.has_geom(ms, name):
             info(f"MultiSurface called '{name}' added to scene")
             self.wrappers.append(MultiSurfaceWrapper(name, ms, self.mts))
         else:
             warning(f"Failed to add MultiSurface called '{name}' to the scene")
 
-    def add_surface(self, name: str, surface: Surface):
+    def add_surface(self, name: str, srf: Surface):
         """
         Add a surface to the scene.
 
@@ -102,9 +102,9 @@ class Scene:
         surface : Surface
             Surface object to be added.
         """
-        if surface is not None and isinstance(surface, Surface):
+        if srf is not None and isinstance(srf, Surface) and self.has_geom(srf, name):
             info(f"Surface called '{name}' added to scene")
-            self.wrappers.append(SurfaceWrapper(name, surface, self.mts))
+            self.wrappers.append(SurfaceWrapper(name, srf, self.mts))
         else:
             warning(f"Failed to add Surface called '{name}' added to the scene")
 
@@ -119,7 +119,7 @@ class Scene:
         city : City
             City object to be added.
         """
-        if city is not None and isinstance(city, City):
+        if city is not None and isinstance(city, City) and self.has_geom(city, name):
             info(f"City called '{name}' added to scene")
             self.wrappers.append(CityWrapper(name, city, self.mts))
         else:
@@ -159,7 +159,7 @@ class Scene:
         data : np.ndarray, optional
             Additional data associated with the point cloud.
         """
-        if pc is not None and isinstance(pc, PointCloud):
+        if pc is not None and isinstance(pc, PointCloud) and self.has_geom(pc, name):
             info(f"Point could called '{name}' added to scene")
             self.wrappers.append(PointCloudWrapper(name, pc, self.mts, size, data=data))
         else:
@@ -178,7 +178,7 @@ class Scene:
         data : Any, optional
             Additional data associated with the line string.
         """
-        if ls is not None and isinstance(ls, LineString):
+        if ls is not None and isinstance(ls, LineString) and self.has_geom(ls, name):
             info(f"List of LineStrings called '{name}' added to scene")
             self.wrappers.append(LineStringWrapper(name, ls, self.mts, data))
         else:
@@ -197,7 +197,11 @@ class Scene:
         data : Any, optional
             Additional data associated with the multi-line string.
         """
-        if mls is not None and isinstance(mls, MultiLineString):
+        if (
+            mls is not None
+            and isinstance(mls, MultiLineString)
+            and self.has_geom(mls, name)
+        ):
             info(f"MultiLineString called '{name}' added to scene")
             self.wrappers.append(MultiLineStringWrapper(name, mls, self.mts, data))
         else:
@@ -214,7 +218,11 @@ class Scene:
         building : Building
             Building object to be added.
         """
-        if building is not None and isinstance(building, Building):
+        if (
+            building is not None
+            and isinstance(building, Building)
+            and self.has_geom(building, name)
+        ):
             info(f"Building called '{name}' added to scene")
             self.wrappers.append(BuildingWrapper(name, building, self.mts))
         else:
@@ -232,7 +240,11 @@ class Scene:
             Raster object to be added.
         """
         max_size = 16384
-        if raster is not None and isinstance(raster, Raster):
+        if (
+            raster is not None
+            and isinstance(raster, Raster)
+            and self.has_geom(raster, name)
+        ):
             if np.max(raster.data.shape) > max_size:
                 info(f"Multi raster called '{name}' added to scene")
                 self.wrappers.append(MultiRasterWrapper(name, raster, max_size))
@@ -270,7 +282,11 @@ class Scene:
         bounds : Bounds
             Bounds object to be added.
         """
-        if bounds is not None and isinstance(bounds, Bounds):
+        if (
+            bounds is not None
+            and isinstance(bounds, Bounds)
+            and self.has_geom(bounds, name)
+        ):
             info(f"Bounds called '{name}' added to scene")
             self.wrappers.append(BoundsWrapper(name, bounds, self.mts))
         else:
@@ -287,7 +303,7 @@ class Scene:
         grid : Grid
             Grid object to be added.
         """
-        if grid is not None and isinstance(grid, Grid):
+        if grid is not None and isinstance(grid, Grid) and self.has_geom(grid, name):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(GridWrapper(name, grid, self.mts))
         else:
@@ -304,7 +320,11 @@ class Scene:
         grid : VolumeGrid
             VolumeGrid object to be added.
         """
-        if grid is not None and isinstance(grid, VolumeGrid):
+        if (
+            grid is not None
+            and isinstance(grid, VolumeGrid)
+            and self.has_geom(grid, name)
+        ):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeGridWrapper(name, grid, self.mts))
         else:
@@ -321,7 +341,11 @@ class Scene:
         volume_mesh : VolumeMesh
             VolumeMesh object to be added.
         """
-        if volume_mesh is not None and isinstance(volume_mesh, VolumeMesh):
+        if (
+            volume_mesh is not None
+            and isinstance(volume_mesh, VolumeMesh)
+            and self.has_geom(volume_mesh, name)
+        ):
             info(f"Grid called '{name}' added to scene")
             self.wrappers.append(VolumeMeshWrapper(name, volume_mesh, self.mts))
         else:
@@ -338,7 +362,11 @@ class Scene:
         road_network : Any
             RoadNetwork object to be added.
         """
-        if road_network is not None and isinstance(road_network, RoadNetwork):
+        if (
+            road_network is not None
+            and isinstance(road_network, RoadNetwork)
+            and self.has_geom(road_network, name)
+        ):
             info(f"Road network called '{name}' added to scene")
             self.wrappers.append(RoadNetworkWrapper(name, road_network, self.mts))
         else:
@@ -458,3 +486,44 @@ class Scene:
         mesh_wrp.update_ids_from_parts()
         next_id += max_id + 1
         return next_id
+
+    def has_geom(self, obj: Any, name: str):
+        """
+        Trying to catch objects without geometry.
+
+        Returns
+        -------
+        bool
+            True if the scene has geometry, False otherwise.
+        """
+
+        # Conditions for checking if an object has geometry
+        conditions = {
+            Mesh: lambda obj: len(obj.vertices) > 2 and len(obj.faces) > 0,
+            MultiSurface: lambda obj: len(obj.surfaces) > 0,
+            Surface: lambda obj: len(obj.vertices) > 2,
+            City: lambda obj: len(obj.buildings) > 0 or obj.terrain is not None,
+            MultiLineString: lambda obj: len(obj.linestrings) > 0,
+            LineString: lambda obj: len(obj.vertices) > 1,
+            PointCloud: lambda obj: len(obj.points) > 0,
+            VolumeGrid: lambda obj: len(obj.coordinates()) > 2,
+            Grid: lambda obj: len(obj.coordinates()) > 2,
+            Building: lambda obj: len(obj.children) > 0 or len(obj.geometry) > 0,
+            RoadNetwork: lambda obj: len(obj.vertices) > 0,
+            VolumeMesh: lambda obj: len(obj.vertices) > 3 and len(obj.cells) > 0,
+            Bounds: lambda obj: obj.width != 0.0 and obj.height != 0.0,
+            Raster: lambda obj: len(obj.data) > 0,
+        }
+
+        if obj is not None:
+            for obj_type, condition in conditions.items():
+                if isinstance(obj, obj_type):
+                    if condition(obj):
+                        return True
+                    else:
+                        obj_class_name = obj.__class__.__name__
+                        warning(f"{obj_class_name} called '{name}' has no geometry")
+                        return False
+
+        # Assume it has geometry if the object is None or not one of the specified types
+        return True
