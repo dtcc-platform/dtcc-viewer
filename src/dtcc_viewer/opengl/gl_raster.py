@@ -30,54 +30,81 @@ from dtcc_viewer.shaders.shaders_color_maps import (
 
 
 class GlRaster(GlObject):
-    """A class for rendering road networks using OpenGL.
+    """A class for rendering rasters using OpenGL.
 
-    This class handles the rendering of road networks using OpenGL.
-    It provides methods to set up the rendering environment, bind shaders,
-    and perform the necessary transformations for visualization.
+    Three types of rasters can be handled: data, RGB, and RGBA. The data raster
+    stores data and displays it using a color map. The RGB(A) raster displays RGB(A)
+    data using the specified channels.
+
+    TODO: Split the data, RGB, and RGBA rasters into separate classes with a common
+    base class.
+
+
+    Attributes
+    ----------
+    vertices : np.ndarray
+        Vertices for the quad on which to draw the raster texture.
+    indices : np.ndarray
+        Indices for the quad.
+    guip : GuiParametersRaster
+        GUI parameters for the texture quad.
+    name : str
+        Name of the raster.
+    n_vertices : int
+        Number of vertices.
+    n_lines : int
+        Number of lines.
+    bb_local : BoundingBox
+        Local bounding box.
+    bb_global : BoundingBox
+        Global bounding box.
+    type : RasterType
+        Type of raster.
+    data_texture : int
+        Texture for the data.
+    rgb_texture : int
+        Texture for the color.
+    uniform_locs : dict
+        Uniform locations for the shader program.
+    shader : int
+        Shader program.
+    VAO : int
+        Vertex array object.
+    VBO : int
+        Vertex buffer object.
+    EBO : int
+        Element buffer object.
     """
 
-    vertices: np.ndarray  # All vertices in the road network
-    indices: np.ndarray  #  Quad indices
-    guip: GuiParametersRaster  # GUI parameters for the texture quad
-    name: str  # Name of the line string
-
-    n_vertices: int  # Number of vertices
-    n_lines: int  # Number of lines
-
+    vertices: np.ndarray
+    indices: np.ndarray
+    guip: GuiParametersRaster
+    name: str
     bb_local: BoundingBox
     bb_global: BoundingBox
-
-    type: RasterType  # Type of raster
-    data_texture: int  # Texture for the data
-    rgb_texture: int  # Texture for the color
-
-    uniform_locs: dict  # Uniform locations for the shader program
-    shader: int  # Shader program
-
-    VAO: int  # Vertex array object
-    VBO: int  # Vertex buffer object
-    EBO: int  # Element buffer object
+    type: RasterType
+    data_texture: int
+    rgb_texture: int
+    uniform_locs: dict
+    shader: int
+    VAO: int
+    VBO: int
+    EBO: int
 
     def __init__(self, raster_w: RasterWrapper):
-        """Initialize the RoadNetworkGL object and set up rendering."""
-
+        """Initialize the GlRaster object and set up rendering."""
         self.vertices = raster_w.vertices
         self.indices = raster_w.indices
-
         self.type = raster_w.type
         self.data = raster_w.data
         self.data_min = np.min(self.data)
         self.data_max = np.max(self.data)
-
         self.data_texture = None
         self.rgb_texture = None
         self.rgba_texture = None
         self.aspect_ratio = 1.0
-
         self.shader = 0
         self.uniform_locs = {}
-
         self.guip = GuiParametersRaster(raster_w.name, self.type)
         self.bb_local = raster_w.bb_local
         self.bb_global = raster_w.bb_global
@@ -86,6 +113,7 @@ class GlRaster(GlObject):
         self._get_max_texture_slots()
 
     def preprocess(self):
+        """Preprocess method to create textures, geometry, and shaders."""
         self._create_textures()
         self._create_geometry()
         self._create_shaders()
@@ -118,17 +146,19 @@ class GlRaster(GlObject):
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
 
     def _get_max_texture_size(self):
+        """Get max texture size for raster textures."""
         max_texture_size = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         info(f"Max texture size: {max_texture_size} x {max_texture_size}")
 
     def _get_max_texture_slots(self):
+        """Get max texture slots for raster textures."""
         n_slots = glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)
         n_slots_2 = glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS)
         info(f"Max texture slots: {n_slots}")
         info(f"Max texture slots: {n_slots_2}")
 
     def _create_textures(self) -> None:
-
+        """Create textures for the raster."""
         if self.type == RasterType.Data:
             self._create_data_texture()
         elif self.type == RasterType.RGB:
@@ -140,8 +170,8 @@ class GlRaster(GlObject):
         info(f"Data shape: {self.data.shape}")
 
     def _create_data_texture(self):
-
-        # Assuming your data is stored in a 2D array named data, with width and height dimensions
+        """Create texture for data storage."""
+        # Assuming data is stored in a 2D array, with width and height dimensions
         self.width = self.data.shape[0]
         self.height = self.data.shape[1]
         self.aspect_ratio = self.width / self.height
@@ -175,7 +205,7 @@ class GlRaster(GlObject):
         glBindTexture(GL_TEXTURE_2D, 0)
 
     def _create_rgb_texture(self):
-
+        """Create texture for RGB data storage."""
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
         self.width = self.data.shape[0]
         self.height = self.data.shape[1]
@@ -210,7 +240,7 @@ class GlRaster(GlObject):
         glBindTexture(GL_TEXTURE_2D, 0)
 
     def _create_rgba_texture(self):
-
+        """Create texture for RGBA data storage."""
         # Assuming your data is stored in a 2D array named data, with width and height dimensions
         self.width = self.data.shape[0]
         self.height = self.data.shape[1]
@@ -320,13 +350,13 @@ class GlRaster(GlObject):
         glUniform1f(self.uniform_locs["asp_rat"], self.aspect_ratio)
 
     def update_data_caps(self):
+        """Update data min and max values."""
         if self.guip.update_caps:
             self.guip.calc_data_min_max()
             self.guip.update_caps = False
 
     def render(self, action: Action) -> None:
-        """Render roads as lines in the road network."""
-
+        """Render raster."""
         if self.type == RasterType.Data:
             self._render_data(action)
         elif self.type == RasterType.RGB:
@@ -335,7 +365,7 @@ class GlRaster(GlObject):
             self._render_rgba(action)
 
     def _render_data(self, action: Action) -> None:
-
+        """Render the data raster."""
         glUseProgram(self.shader)
 
         # Bind the texture
@@ -351,7 +381,7 @@ class GlRaster(GlObject):
         self._draw_call()
 
     def _render_rgb(self, action: Action) -> None:
-
+        """Render the RGB raster."""
         glUseProgram(self.shader)
 
         # Bind the texture
@@ -366,7 +396,7 @@ class GlRaster(GlObject):
         self._draw_call()
 
     def _render_rgba(self, action: Action) -> None:
-
+        """Render the RGBA raster."""
         glUseProgram(self.shader)
 
         glActiveTexture(GL_TEXTURE0)  # Activate texture unit 0
@@ -380,8 +410,7 @@ class GlRaster(GlObject):
         self._draw_call()
 
     def _render_common(self, action: Action):
-
-        # MVP Calculations
+        """Common rendering code for all raster types."""
         move = action.camera.get_move_matrix()
         view = action.camera.get_view_matrix(action.gguip)
         proj = action.camera.get_projection_matrix(action.gguip)
@@ -393,12 +422,14 @@ class GlRaster(GlObject):
         pass
 
     def _draw_call(self):
+        """Draw call for the raster."""
         glBindVertexArray(self.VAO)
         glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
         glUseProgram(0)
 
     def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
+        """Set clipping uniforms for the shader program."""
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

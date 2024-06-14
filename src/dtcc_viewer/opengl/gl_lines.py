@@ -36,6 +36,47 @@ class GlLines(GlObject):
     This class handles the rendering of road networks using OpenGL.
     It provides methods to set up the rendering environment, bind shaders,
     and perform the necessary transformations for visualization.
+
+    Attributes
+    ----------
+    vertices : np.ndarray
+        All vertices in the road network.
+    line_indices : np.ndarray
+        Line indices for roads [[2 x n_roads],].
+    guip : GuiParametersLines
+        GUI parameters for the lines.
+    name : str
+        Name of the line string.
+    n_vertices : int
+        Number of vertices.
+    n_lines : int
+        Number of lines.
+    bb_local : BoundingBox
+        Local bounding box.
+    bb_global : BoundingBox
+        Global bounding box.
+    uniform_locs : dict
+        Uniform locations for the shader program.
+    shader : int
+        Shader program.
+    model_loc : int
+        Uniform location for model matrix.
+    view_loc : int
+        Uniform location for view matrix.
+    project_loc : int
+        Uniform location for projection matrix.
+    color_by_loc : int
+        Uniform location for color by variable.
+    scale_loc : int
+        Uniform location for scaling parameter.
+    cp_locs : list[int]
+        Uniform location for clipping plane [x,y,z].
+    VAO : int
+        Vertex array object.
+    VBO : int
+        Vertex buffer object.
+    EBO : int
+        Element buffer object.
     """
 
     vertices: np.ndarray  # All vertices in the road network
@@ -64,7 +105,15 @@ class GlLines(GlObject):
     EBO: int  # Element buffer object
 
     def __init__(self, wrapper: LineStringWrapper, draw_colors: bool = True):
-        """Initialize the RoadNetworkGL object and set up rendering."""
+        """Initialize the RoadNetworkGL object and set up rendering.
+
+        Parameters
+        ----------
+        wrapper : LineStringWrapper
+            Wrapper for line string data.
+        draw_colors : bool, optional
+            Whether to draw colors (default is True).
+        """
 
         self.vertices = wrapper.vertices
         self.line_indices = wrapper.indices
@@ -161,7 +210,13 @@ class GlLines(GlObject):
         self.uniform_locs["data_tex"] = glGetUniformLocation(self.shader, "data_tex")
 
     def render(self, action: Action) -> None:
-        """Render roads as lines in the road network."""
+        """Render lines.
+
+        Parameters
+        ----------
+        action : Action
+            The action containing camera and GUI parameters.
+        """
 
         self._bind_vao()
         self._bind_shader()
@@ -208,6 +263,13 @@ class GlLines(GlObject):
         glBindVertexArray(0)
 
     def _set_clipping_uniforms(self, gguip: GuiParametersGlobal):
+        """Set the clipping uniforms for the shader program.
+
+        Parameters
+        ----------
+        gguip : GuiParametersGlobal
+            Global GUI parameters.
+        """
         xdom = 0.5 * np.max([self.bb_local.xdom, self.bb_global.xdom])
         ydom = 0.5 * np.max([self.bb_local.ydom, self.bb_global.ydom])
         zdom = 0.5 * np.max([self.bb_local.zdom, self.bb_global.zdom])

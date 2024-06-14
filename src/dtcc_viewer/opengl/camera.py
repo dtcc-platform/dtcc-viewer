@@ -7,47 +7,47 @@ from dtcc_viewer.logging import info, warning
 
 
 class Camera:
-    """Camera used for viewing geometry and nagivation in a GLFW window.
+    """Camera used for viewing geometry and navigation in a GLFW window.
 
     This class defines a camera with various attributes and methods for controlling
     its position, orientation, and view matrix.
 
     Attributes
     ----------
-    camera_pos : Vector3
+    position : Vector3
         The position of the camera.
-    camera_front : Vector3
-        The front direction of the camera.
-    camera_up : Vector3
-        The up direction of the camera.
-    camera_right : Vector3
-        The right direction of the camera.
-    camera_target : Vector3
-        The target point that the camera is looking at.
-    camera_direction : Vector3
-        The direction vector from the camera position to the target.
+    front : Vector3
+        The front direction vector of the camera.
+    up : Vector3
+        The up direction vector of the camera.
+    right : Vector3
+        The right direction vector of the camera.
+    target : Vector3
+        The target point the camera is looking at.
+    direction : Vector3
+        The direction from the camera to the target.
     distance_to_target : float
-        The distance from the camera position to the target.
-    width : int
-        The width of the camera's viewport.
-    heigh : int
-        The height of the camera's viewport.
+        The distance from the camera to the target.
     aspect_ratio : float
         The aspect ratio of the camera's viewport.
     near_plane : float
         The near clipping plane distance.
     far_plane : float
         The far clipping plane distance.
-    fov : int
-        The field of view angle.
+    fov : float
+        The field of view of the camera in degrees.
     mouse_sensitivity : float
-        The sensitivity of mouse movement for rotation.
+        The sensitivity of the camera to mouse movements.
     scroll_sensitivity : float
-        The sensitivity of mouse scroll for zooming.
-    jaw : int
-        The yaw rotation angle.
-    pitch : int
-        The pitch rotation angle.
+        The sensitivity of the camera to scroll movements.
+    yaw : float
+        The yaw angle of the camera.
+    pitch : float
+        The pitch angle of the camera.
+    init_camera : dict
+        The initial camera settings saved for reset.
+    rotation_lock : bool
+        Whether the camera's rotation is locked.
     """
 
     postion: Vector3
@@ -148,12 +148,14 @@ class Camera:
         self.rotation_lock = not self.rotation_lock
 
     def _set_top_view(self):
+        """Set the camera to a top-down view."""
         self.rotation_lock = True
         self.yaw = -90
         self.pitch = 89.99
         self.update_camera_vectors()
 
     def _set_front_view(self):
+        """Set the camera to a front view."""
         self.rotation_lock = True
         self.target[2] = 0.0
         self.yaw = -90
@@ -161,6 +163,7 @@ class Camera:
         self.update_camera_vectors()
 
     def _set_back_view(self):
+        """Set the camera to a back view."""
         self.rotation_lock = True
         self.target[2] = 0.0
         self.yaw = 90
@@ -168,6 +171,7 @@ class Camera:
         self.update_camera_vectors()
 
     def _set_left_view(self):
+        """Set the camera to a left-side view."""
         self.rotation_lock = True
         self.target[2] = 0.0
         self.yaw = 180
@@ -175,6 +179,7 @@ class Camera:
         self.update_camera_vectors()
 
     def _set_right_view(self):
+        """Set the camera to a right-side view."""
         self.rotation_lock = True
         self.target[2] = 0.0
         self.yaw = 0
@@ -182,13 +187,20 @@ class Camera:
         self.update_camera_vectors()
 
     def _set_persepective_view(self):
+        """Set the camera to a perspective view."""
         self.rotation_lock = False
         self.yaw = -90
         self.pitch = 30
         self.update_camera_vectors()
 
     def update_view(self, camera_view: CameraView):
+        """Update the camera view based on the specified view type.
 
+        Parameters
+        ----------
+        camera_view : CameraView
+            The desired camera view type.
+        """
         if camera_view == CameraView.PERSPECTIVE:
             self._set_persepective_view()
         elif camera_view == CameraView.TOP:
@@ -203,6 +215,15 @@ class Camera:
             self._set_right_view()
 
     def zoom_selected(self, dtt: float, new_target: Vector3):
+        """Zoom in on the selected target.
+
+        Parameters
+        ----------
+        dtt : float
+            The distance to the target.
+        new_target : Vector3
+            The new target position.
+        """
         self.target = new_target
         self.distance_to_target = dtt
         self.update_camera_vectors()

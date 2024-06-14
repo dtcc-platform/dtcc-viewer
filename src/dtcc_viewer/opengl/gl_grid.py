@@ -19,7 +19,39 @@ from dtcc_viewer.shaders.shaders_grid import (
 
 
 class GlGrid:
-    """A class for rendering a grid and coordinate axes for the OpenGL scene."""
+    """A class for rendering a grid and coordinate axes for the OpenGL scene.
+
+    This class handles the setup and rendering of a grid and coordinate axes in an
+    OpenGL scene. It provides methods to create the grid geometry, compile shaders, and
+    render the grid with adjustable size and spacing.
+
+    Attributes
+    ----------
+    bb_global : BoundingBox
+        The global bounding box of the scene.
+    ulocs_grid : dict
+        Uniform locations for the shader program.
+    shader_grid : int
+        Shader program.
+    VAO_grid : int
+        Vertex array object.
+    VBO_grid : int
+        Vertex buffer object.
+    EBO_grid : int
+        Element buffer object.
+    nx : int
+        Number of grid lines in the x direction.
+    ny : int
+        Number of grid lines in the y direction.
+    grid_coords : np.ndarray
+        Coordinates for the grid lines.
+    grid_indices : np.ndarray
+        Indices for the grid lines.
+    size : np.ndarray
+        Grid sizes for the grid lines.
+    grid_spaces : np.ndarray
+        Grid spacings for the grid lines.
+    """
 
     bb_global: BoundingBox
     ulocs_grid: dict  # Uniform locations for the shader program

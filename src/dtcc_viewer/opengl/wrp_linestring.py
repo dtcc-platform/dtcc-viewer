@@ -207,7 +207,7 @@ class MultiLineStringWrapper(Wrapper):
         indices = np.zeros([l_count_tot, 2], dtype=int)
 
         # vertices = [x, y, z, tx, ty, id, x, y, z ...]
-        vertices = np.zeros([v_count_tot, 6])
+        vertices = np.zeros([v_count_tot, 6], dtype=float)
 
         idx1 = 0
         idx2 = 0

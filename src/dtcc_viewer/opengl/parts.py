@@ -9,7 +9,7 @@ class Parts:
 
     Each part is a subset of a mesh with its own face indices. The class also stores
     meta data and ids for each part. The ids are used to identify clickable objects
-    in the scene and to retrieve meta data for display
+    in the scene and to retrieve meta data for display.
 
 
     Attributes
@@ -18,11 +18,20 @@ class Parts:
         Array of face indices for the start of each part.
     face_end_indices : np.ndarray[int]
         Array of face indices for the end of each part.
-
-    bb : BoundingBox
-        Bounding box for the entire collection of objects in the scene.
-    max_tex_size : int
-        Maximum texture size allowed by the graphics card.
+    face_count_per_part : np.ndarray[int]
+        Number of faces for each part.
+    ids : np.ndarray[int]
+        Array of ids for each part.
+    selected : np.ndarray[bool]
+        Array of boolean values for each part.
+    attributes : dict
+        Dictionary of attributes for each part.
+    ids_2_uuids : dict
+        Mapping between id (int) and uuid (str).
+    count : int
+        Number of parts.
+    f_count : int
+        Total number of faces.
     """
 
     face_start_indices: np.ndarray
@@ -30,12 +39,10 @@ class Parts:
     face_count_per_part: np.ndarray
     ids: np.ndarray
     selected: np.ndarray
-    mid_points: np.ndarray
-    sizes: np.ndarray
     attributes: dict
-    ids_2_uuids: dict  # Mapping between id (int) and uuid (str)
-    count: int  # Number of parts
-    f_count: int  # Total number of faces
+    ids_2_uuids: dict
+    count: int
+    f_count: int
 
     def __init__(
         self,
@@ -49,8 +56,6 @@ class Parts:
     def _process_data(
         self, meshes: list[Mesh], uuids: list[str], attributes: list[dict]
     ):
-        self.mid_points = []
-        self.sizes = []
         face_count_per_part = []
         face_start_indices = []
         face_end_indices = []
@@ -82,8 +87,6 @@ class Parts:
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
         self.ids = np.array(ids)
-        self.mid_points = np.array(self.mid_points)
-        self.sizes = np.array(self.sizes)
 
         if attributes is not None:
             self.attributes = {key: value for key, value in zip(ids, attributes)}

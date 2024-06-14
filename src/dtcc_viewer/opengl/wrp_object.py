@@ -24,17 +24,21 @@ class ObjectWrapper(Wrapper):
     Attributes
     ----------
     name : str
-        The name of the object
+        The name of the object.
     shading : MeshShading
         Shading setting for the rendering.
-    bb_local : BoundingBox
-        Bounding box for this object and its children.
     bb_global: BoundingBox
         Bounding box all objects in the entire scene.
-    mesh_wrapper : MeshWrapper
-        MeshWrapper for the object and all its children
-    submeshes : list[Submesh]
-        List of Submeshes used to defined clickable objects in the mesh
+    mesh_wrp_1 : MeshWrapper
+        MeshWrapper for the mesh objects.
+    mesh_wrp_2 : MeshWrapper
+        MeshWrapper for the multisurface objects.
+    lss_wrp : LineStringWrapper
+        LineStringWrapper for the linestrings.
+    mls_wrp : MultiLineStringWrapper
+        MultiLineStringWrapper for the multilinestrings.
+    pc_wrp : PointCloudWrapper
+        PointCloudWrapper for the point clouds.
     """
 
     name: str
@@ -42,7 +46,6 @@ class ObjectWrapper(Wrapper):
     bb_global: BoundingBox = None
     mesh_wrp_1: MeshWrapper = None
     mesh_wrp_2: MeshWrapper = None
-    mesh_wrp_3: MeshWrapper = None
     lss_wrp: LineStringWrapper = None
     mls_wrp: MultiLineStringWrapper = None
     pc_wrp: PointCloudWrapper = None
@@ -60,8 +63,6 @@ class ObjectWrapper(Wrapper):
             Max texture size for the OpenGL context.
         """
         self.name = name
-        self.shading = Shading.WIRESHADED
-        self.dict_data = {}
 
         # Extract meshes from the object and its children
         (mesh_1, parts_1) = self._extract_mesh_from_mesh(obj)

@@ -36,22 +36,31 @@ class GeometriesWrapper(Wrapper):
     ----------
     name : str
         The name of the geometry collection
-    bb_local : BoundingBox
-        Bounding box for this geometry collection.
-    bb_global: BoundingBox
-        Bounding box all objects in the entire scene.
+    mls_wrps : list[MultiLineStringWrapper]
+        MultiLineStringWrapper for multi line strings
+    lss_wrps : list[LineStringWrapper]
+        LineStringWrapper for a line string
     mesh_wrps : list[MeshWrapper]
         MeshWrapper for buildings
-    lss_wrps : list[LineStringWrapper]
-        LineStringWrapper for line strings
     pc_wrps : list[PointCloudWrapper]
         PointCloudWrapper for point clouds
+    ms_wrps : list[MultiSurfaceWrapper]
+        MultiSurfaceWrapper for multi surfaces
+    srf_wrps : list[SurfaceWrapper]
+        SurfaceWrapper for surfaces
+    bnds_wrps : list[BoundsWrapper]
+        BoundsWrapper for bounds
+    vmesh_wrps : list[VolumeMeshWrapper]
+        VolumeMeshWrapper for volume meshes
+    grd_wrps : list[GridWrapper]
+        GridWrapper for grids
+    vgrd_wrps : list[VolumeGridWrapper]
+        VolumeGridWrapper for volume grids
     """
 
     name: str
-    bb_global: BoundingBox = None
     mls_wrps: list[MultiLineStringWrapper]
-    ls_wrps: list[LineStringWrapper]
+    lss_wrps: list[LineStringWrapper]
     mesh_wrps: list[MeshWrapper]
     pc_wrps: list[PointCloudWrapper]
     ms_wrps: list[MultiSurfaceWrapper]
@@ -84,7 +93,7 @@ class GeometriesWrapper(Wrapper):
         self.ms_wrps = self._create_ms_wrappers(mss, mts)
         self.pc_wrps = self._create_pc_wrappers(pcs, mts)
         self.mls_wrps = self._create_mls_wrappers(mls, mts)
-        self.ls_wrps = self._create_ls_wrappers(lss, mts)
+        self.lss_wrps = self._create_ls_wrappers(lss, mts)
         self.bnds_wrps = self._create_bnd_wrappers(bds, mts)
         self.vmesh_wrps = self._create_vmesh_wrappers(vmsh, mts)
         self.grd_wrps = self._create_grd_wrappers(grds, mts)
@@ -106,7 +115,7 @@ class GeometriesWrapper(Wrapper):
         for mls_wrp in self.mls_wrps:
             mls_wrp.preprocess_drawing(bb_global)
 
-        for ls_wrp in self.ls_wrps:
+        for ls_wrp in self.lss_wrps:
             ls_wrp.preprocess_drawing(bb_global)
 
         for bnd_wrp in self.bnds_wrps:
@@ -144,7 +153,7 @@ class GeometriesWrapper(Wrapper):
             vertex_pos = ms_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
-        for ls_wrp in self.ls_wrps:
+        for ls_wrp in self.lss_wrps:
             vertex_pos = ls_wrp.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 

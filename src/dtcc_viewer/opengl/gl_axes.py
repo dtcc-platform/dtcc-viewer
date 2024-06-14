@@ -14,7 +14,34 @@ from dtcc_viewer.shaders.shaders_axes import vertex_shader_axes, fragment_shader
 
 
 class GlAxes:
-    """A class for rendering coordinate axes for the OpenGL scene."""
+    """A class for rendering coordinate axes for the OpenGL scene.
+
+    This class handles the setup and rendering of coordinate axes in an OpenGL scene.
+    It provides methods to create the axis geometry, compile shaders, and render.
+
+    Attributes
+    ----------
+    bb_local : BoundingBox
+        The local bounding box of the scene.
+    bb_global : BoundingBox
+        The global bounding box of the scene.
+    ulocs_axes : dict
+        Uniform locations for the shader program.
+    shader_axes : int
+        Shader program.
+    VAO : int
+        Vertex array object.
+    VBO : int
+        Vertex buffer object.
+    EBO : int
+        Element buffer object.
+    vertices : np.ndarray
+        All vertices in the mesh.
+    indices : np.ndarray
+        Mesh faces.
+    size : np.ndarray
+        Sizes for the grid lines.
+    """
 
     bb_local: BoundingBox
     bb_global: BoundingBox
@@ -31,7 +58,15 @@ class GlAxes:
     size: np.ndarray  # Grid sizes for the grid lines
 
     def __init__(self, size: float, zpos: float):
+        """Initialize the GlAxes object with size and z-position.
 
+        Parameters
+        ----------
+        size : float
+            The size of the axes.
+        zpos : float
+            The z-position of the axes.
+        """
         self.ulocs = {}
         self.size = size
 
@@ -47,7 +82,18 @@ class GlAxes:
         self._create_shader()
 
     def _create_mesh(self, h: float, r: float, n: int) -> None:
-        """Create a grid for rendering."""
+        """Create the mesh for the axes arrows. The x-arrow is red, y-arrow is green,
+        and z-arrow is blue.
+
+        Parameters
+        ----------
+        h : float
+            The height of the axes.
+        r : float
+            The radius of the axes.
+        n : int
+            The number of segments for the cylinders and cones.
+        """
 
         x_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.x, r, h, n)
         x_cone = create_cone_mesh(Point(h, 0, 0), Direction.x, r * 2.5, r * 5, n)
@@ -140,15 +186,17 @@ class GlAxes:
 
     def _update_size(self, action: Action) -> None:
         """Update axes scale based on zoom level."""
-
         action.gguip.axes_sf = 0.05 * action.camera.distance_to_target
 
     def render(self, action: Action) -> None:
+        """Render the axes if the corresponding GUI parameter is set."""
         if action.gguip.show_axes:
             self._update_size(action)
             self._render(action)
 
     def _render(self, action: Action) -> None:
+        """Render the axes."""
+
         glBindVertexArray(self.VAO)
         glUseProgram(self.shader)
 

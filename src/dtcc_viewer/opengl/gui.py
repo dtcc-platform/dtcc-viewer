@@ -36,12 +36,12 @@ class Gui:
     axis. Then there are methods for rendering GUI components for each object of type
     gl_mesh, gl_points, gl_lines and gl_raster.
 
-    Imgui is a imeadiate mode GUI library which means that the GUI is rendered every
+    Imgui is an immediate mode GUI library which means that the GUI is rendered every
     frame and the state of the GUI is not stored. The interface is drawn directly in
     the main loop and components in the interface directly manipulate the parameters of
     the application. The benefints of this approach is that the GUI is simple to use and
     easy to implement. The downside is that the GUI becomes slow and less responsive
-    when the frame rate for the application is low.
+    if the frame rate for the application is low.
 
     Attributes
     ----------

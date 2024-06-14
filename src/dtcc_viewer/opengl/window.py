@@ -194,7 +194,7 @@ class Window:
                     self.gl_objects.append(GlMesh(ms.mesh_wrp))
                 for mls_wrp in wrapper.mls_wrps:
                     self.gl_objects.append(GlLines(mls_wrp))
-                for ls_wrp in wrapper.ls_wrps:
+                for ls_wrp in wrapper.lss_wrps:
                     self.gl_objects.append(GlLines(ls_wrp))
                 for bnds_wrp in wrapper.bnds_wrps:
                     self.gl_objects.append(GlLines(bnds_wrp.ls_wrp))

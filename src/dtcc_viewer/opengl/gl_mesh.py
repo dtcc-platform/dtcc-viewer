@@ -171,6 +171,8 @@ class GlMesh(GlObject):
     diameter_xy: float
     radius_xy: float
     parts: Parts
+    cast_shadows: bool
+    receive_shadows: bool
 
     def __init__(self, mesh_wrapper: MeshWrapper):
         """Initialize the MeshGL object with vertex, face, and edge information."""
@@ -206,6 +208,9 @@ class GlMesh(GlObject):
 
         self.texture_slot = None
         self.texture_idx = None
+
+        self.cast_shadows = True
+        self.receive_shadows = True
 
     def get_vertex_ids(self):
         """Get the vertex ids from the vertices array."""

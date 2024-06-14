@@ -15,6 +15,7 @@ from dtcc_viewer.shaders.shaders_base_quad import (
 
 
 class GlQuad:
+    """OpenGL quad for debugging purposes. Not used yet."""
 
     size: float
     vertices: np.ndarray
