@@ -1,4 +1,4 @@
-from dtcc_model import Surface, MultiSurface
+from dtcc_core.model import Surface
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 

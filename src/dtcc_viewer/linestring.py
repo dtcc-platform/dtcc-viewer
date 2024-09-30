@@ -1,4 +1,4 @@
-from dtcc_model import LineString, MultiLineString
+from dtcc_core.model import LineString
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 

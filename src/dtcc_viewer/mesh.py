@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import Mesh
+from dtcc_core.model import Mesh
 from dtcc_viewer.opengl.utils import Shading
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene

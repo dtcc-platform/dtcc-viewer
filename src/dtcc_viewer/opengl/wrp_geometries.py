@@ -1,14 +1,14 @@
 import numpy as np
 from time import time
 from collections import Counter
-from dtcc_model import Geometry, Mesh, Surface, MultiSurface, PointCloud, Bounds
-from dtcc_model import VolumeMesh, Grid, VolumeGrid
+from dtcc_core.model import Geometry, Mesh, Surface, MultiSurface, PointCloud, Bounds
+from dtcc_core.model import VolumeMesh, Grid, VolumeGrid
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
-from dtcc_model.object.object import GeometryType
+from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper
@@ -17,11 +17,11 @@ from dtcc_viewer.opengl.wrp_linestring import MultiLineStringWrapper
 from dtcc_viewer.opengl.wrp_bounds import BoundsWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
-from dtcc_model import LineString, MultiLineString
+from dtcc_core.model import LineString, MultiLineString
 from dtcc_viewer.opengl.wrapper import Wrapper
-from dtcc_builder import *
-from dtcc_builder.meshing import mesh_multisurfaces
-import dtcc_builder as builder
+from dtcc_core.builder import *
+from dtcc_core.builder.meshing import mesh_multisurfaces
+import dtcc_core.builder as builder
 
 
 class GeometriesWrapper(Wrapper):

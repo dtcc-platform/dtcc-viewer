@@ -5,7 +5,7 @@ from dtcc_viewer.logging import info, warning
 
 from dtcc_viewer.opengl.data_wrapper import LinesDataWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
-from dtcc_model import LineString, MultiLineString
+from dtcc_core.model import LineString, MultiLineString
 from typing import Any
 
 

@@ -1,6 +1,6 @@
 import numpy as np
-from dtcc_model import Mesh
-from dtcc_model import Bounds, Raster
+from dtcc_core.model import Mesh
+from dtcc_core.model import Bounds, Raster
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, RasterType
 from dtcc_viewer.opengl.wrapper import Wrapper

@@ -35,10 +35,7 @@ dependencies = [
   "glfw",
   "imgui",
   "triangle@git+https://github.com/drufat/triangle.git",
-  "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
-  "dtcc-common@git+https://github.com/dtcc-platform/dtcc-common.git@develop",
-  "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
+  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
 ]
 
 [project.optional-dependencies]

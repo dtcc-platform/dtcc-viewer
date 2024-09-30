@@ -1,20 +1,20 @@
 import numpy as np
 from time import time
 from collections import Counter
-from dtcc_model import City, MultiSurface, Surface, Building, Mesh, Terrain
+from dtcc_core.model import City, MultiSurface, Surface, Building, Mesh, Terrain
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
-from dtcc_model.object.object import GeometryType
+from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_builder import *
-from dtcc_builder.meshing import mesh_multisurfaces
+from dtcc_core.builder import *
+from dtcc_core.builder.meshing import mesh_multisurfaces
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
-import dtcc_builder as builder
+import dtcc_core.builder as builder
 
 
 class CityWrapper(Wrapper):

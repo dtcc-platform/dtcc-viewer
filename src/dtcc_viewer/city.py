@@ -1,4 +1,4 @@
-from dtcc_model import City
+from dtcc_core.model import City
 from dtcc_viewer.opengl.utils import Shading
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene

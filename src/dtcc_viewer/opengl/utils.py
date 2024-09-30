@@ -1,11 +1,11 @@
 import numpy as np
 import math
 from enum import IntEnum
-from dtcc_model import Mesh, PointCloud
+from dtcc_core.model import Mesh, PointCloud
 from pprint import pp
 import triangle as tr
 from dtcc_viewer.logging import info, warning
-from dtcc_model import MultiSurface, Surface, VolumeMesh, LineString, MultiLineString
+from dtcc_core.model import MultiSurface, Surface, VolumeMesh, LineString, MultiLineString
 from shapely.geometry import Point
 from shapely.geometry import LineString as ShapelyLineString
 from dtcc_viewer.utils import Direction

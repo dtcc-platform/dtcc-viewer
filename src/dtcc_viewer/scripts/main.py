@@ -4,23 +4,23 @@
 import os
 import numpy as np
 import trimesh
-import dtcc_io
+import dtcc_core.io as io
 
 from affine import Affine
 from pprint import pp
 from dtcc_viewer import utils
-from dtcc_io import pointcloud, meshes, roadnetwork
-from dtcc_io import load_raster, load_roadnetwork
-from dtcc_model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
-from dtcc_model import VolumeMesh, LineString, MultiLineString, Building, RoadNetwork
-from dtcc_model.object.object import GeometryType
+from dtcc_core.io import pointcloud, meshes, roadnetwork
+from dtcc_core.io import load_raster, load_roadnetwork
+from dtcc_core.model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
+from dtcc_core.model import VolumeMesh, LineString, MultiLineString, Building, RoadNetwork
+from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import set_log_level
 from shapely.geometry import Point
-from dtcc_builder import clean_building_surfaces
+from dtcc_core.builder import clean_building_surfaces
 
 
 def pointcloud_example_1():

@@ -2,7 +2,7 @@ import numpy as np
 from dtcc_viewer.utils import *
 from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.wrapper import Wrapper
-from dtcc_model import VolumeMesh, Mesh
+from dtcc_core.model import VolumeMesh, Mesh
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from typing import Any

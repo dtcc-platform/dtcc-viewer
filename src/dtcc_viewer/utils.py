@@ -1,7 +1,7 @@
 from pprint import pp
 
 # from dtcc_viewer import *
-from dtcc_model import Mesh, PointCloud, Bounds, VolumeMesh
+from dtcc_core.model import Mesh, PointCloud, Bounds, VolumeMesh
 
 # from dtcc_viewer.colors import *
 from typing import Iterable

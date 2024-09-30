@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import Mesh
+from dtcc_core.model import Mesh
 from pprint import pp
 from dtcc_viewer.logging import info, warning
 

@@ -7,7 +7,7 @@ from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineString
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_lines import LinesWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
-from dtcc_model import Grid, VolumeGrid
+from dtcc_core.model import Grid, VolumeGrid
 from typing import Any
 
 

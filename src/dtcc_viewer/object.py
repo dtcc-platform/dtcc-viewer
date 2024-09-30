@@ -1,5 +1,5 @@
-import numpy as np
-from dtcc_model import Object
+# import numpy as np
+from dtcc_core.model import Object
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from typing import Any

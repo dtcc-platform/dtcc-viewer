@@ -15,9 +15,27 @@ from .linestring import view as view_linestring
 from .multilinestring import view as view_multilinestring
 from .roadnetwork import view as view_roadnetwork
 
-from dtcc_model import Mesh, PointCloud, Object, Surface, MultiSurface, Bounds
-from dtcc_model import Raster, City, Building, Grid, VolumeGrid, VolumeMesh
-from dtcc_model import LineString, MultiLineString, RoadNetwork
+# from dtcc_model import Mesh, PointCloud, Object, Surface, MultiSurface, Bounds
+# from dtcc_model import Raster, City, Building, Grid, VolumeGrid, VolumeMesh
+# from dtcc_model import LineString, MultiLineString, RoadNetwork
+
+from dtcc_core.model import (
+  Mesh, 
+  PointCloud, 
+  Object, 
+  Surface,
+  MultiSurface,
+  Bounds,
+  Raster, 
+  City, 
+  Building, 
+  Grid, 
+  VolumeGrid, 
+  VolumeMesh,
+  LineString, 
+  MultiLineString, 
+  RoadNetwork
+)
 
 # Add model extensions
 PointCloud.add_methods(view_pointcloud, "view")

@@ -15,9 +15,9 @@ from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
-from dtcc_model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
-from dtcc_model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
-from dtcc_model import RoadNetwork, LineString, MultiLineString
+from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
+from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
+from dtcc_core.model import RoadNetwork, LineString, MultiLineString
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning

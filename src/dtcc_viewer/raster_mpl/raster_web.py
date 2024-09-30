@@ -1,5 +1,5 @@
 from dtcc_viewer.notebook_functions import is_notebook
-from dtcc_model import Raster
+from dtcc_core.model import Raster
 from PIL import Image
 
 from .MPLImageViewer import MPLImageViewer

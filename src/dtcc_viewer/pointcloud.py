@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import PointCloud
+from dtcc_core.model import PointCloud
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 

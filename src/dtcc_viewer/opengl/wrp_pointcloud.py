@@ -1,5 +1,5 @@
 import numpy as np
-from dtcc_model import PointCloud, Mesh
+from dtcc_core.model import PointCloud, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.data_wrapper import MeshDataWrapper, PointsDataWrapper

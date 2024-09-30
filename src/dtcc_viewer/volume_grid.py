@@ -1,4 +1,4 @@
-from dtcc_model import VolumeGrid
+from dtcc_core.model import VolumeGrid
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from typing import Any

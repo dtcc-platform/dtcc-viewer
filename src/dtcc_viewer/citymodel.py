@@ -1,11 +1,11 @@
 import folium
 import logging
 import tempfile
-import dtcc_io as io
+import dtcc_core.io as io
 from pathlib import Path
 import tempfile
-from dtcc_model.geometry import Bounds
-from dtcc_model.city import City
+from dtcc_core.model.geometry import Bounds
+from dtcc_core.model import City
 from .notebook_functions import is_notebook
 from .utils import get_random_colors
 from .logging import info
