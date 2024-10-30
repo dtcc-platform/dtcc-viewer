@@ -11,8 +11,8 @@ from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
-from dtcc_model import Mesh
-from dtcc_io import pointcloud, meshes
+from dtcc_core.model import Mesh
+from dtcc_core.io import pointcloud, meshes
 
 from dtcc_viewer.opengl.window import Window
 
