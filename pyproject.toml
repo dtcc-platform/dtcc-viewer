@@ -23,7 +23,6 @@ dependencies = [
   "ipywidgets",
   "matplotlib",
   "colormap",
-  "easydev",
   "numpy",
   "folium >= 0.14.0",
   "pyglet",
@@ -39,3 +38,4 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+dev = ["easydev","black"]
