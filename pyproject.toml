@@ -34,7 +34,6 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-  "triangle@git+https://github.com/drufat/triangle.git",
   "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
 ]
 

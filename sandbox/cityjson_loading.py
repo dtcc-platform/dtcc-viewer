@@ -1,6 +1,5 @@
-import triangle as tr
 import numpy as np
-from dtcc_model import Mesh, PointCloud
+from dtcc_core.model import Mesh, PointCloud
 from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
 import json
 import pprint

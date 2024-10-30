@@ -3,7 +3,6 @@ import math
 from enum import IntEnum
 from dtcc_core.model import Mesh, PointCloud
 from pprint import pp
-import triangle as tr
 from dtcc_viewer.logging import info, warning
 from dtcc_core.model import MultiSurface, Surface, VolumeMesh, LineString, MultiLineString
 from shapely.geometry import Point
@@ -226,77 +225,6 @@ def get_normal_from_surface(vertices, centroid):
         return None
 
     return normal_vector
-
-
-def surface_2_mesh(vertices):
-    vertices = remove_duplicate_vertices(vertices)
-
-    # Capture simple cases
-    if vertices.shape[0] < 3:
-        warning("Surface has fewer then 3 vertices -> returning None")
-        return None, Results.InvalidInput
-    elif vertices.shape[0] == 3:
-        mesh = Mesh(vertices=vertices, faces=np.array([[0, 1, 2]]))
-        return mesh, Results.Success
-    elif vertices.shape[0] == 4:
-        mesh = Mesh(vertices=vertices, faces=np.array([[0, 1, 2], [0, 2, 3]]))
-        return mesh, Results.Success
-
-    centroid = np.mean(vertices, axis=0)
-    surface_normal = get_normal_from_surface(vertices, centroid)
-
-    if surface_normal is None:
-        warning("Surface normal is None -> returning None")
-        return None, Results.FailedNormal
-
-    T = calc_translation_matrix(centroid)
-    R = rodrigues_rotation_matrix(surface_normal, np.array([0, 0, 1]))
-
-    # Calculate the transformation matrix
-    M = R @ T
-
-    det = np.linalg.det(M)
-    singular = np.isclose(det, 0)
-
-    if singular:
-        warning("Singular matrix -> returning None")
-        return None, Results.SingularMatrix
-
-    M_inv = np.linalg.inv(M)
-
-    # Add 1 to the end of each vertex
-    vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
-
-    # Transforming the vertices to the xy-plane
-    for i in range(vertices.shape[0]):
-        vertices[i, :] = M @ vertices[i, :]
-
-    vertices[:, 2] = 0
-
-    # Triangulate the vertices
-    t = tr.triangulate({"vertices": vertices[:, :2]})  # , "a0.2")
-
-    if "triangles" not in t:  # If the triangulation fails
-        warning("Triangulation failed -> returning None")
-        return None, Results.FailedTriangulation
-
-    # Build mesh from untransformed vertices and faces
-    tri_faces = np.array(t["triangles"])
-    vertices = np.array(t["vertices"])
-
-    # Add 0 and then 1 to the end of each vertex
-    vertices = np.hstack((vertices, np.zeros((vertices.shape[0], 1))))
-    vertices = np.hstack((vertices, np.ones((vertices.shape[0], 1))))
-
-    # Transforming the vertices back to 3d position
-    for i in range(vertices.shape[0]):
-        vertices[i, :] = M_inv @ vertices[i, :]
-
-    # Remove last column from vertices
-    mesh = Mesh(vertices=vertices[:, :3], faces=tri_faces)
-
-    return mesh, Results.TriSuccess
-
 
 def concatenate_pcs(pcs: list[PointCloud]):
     v_count_tot = 0
