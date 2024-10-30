@@ -1,14 +1,17 @@
+from distutils.command.build import build
+
 import numpy as np
 from dtcc_core.model import City, MultiSurface, Building, Mesh
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.logging import info, warning
-from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
+# from dtcc_viewer.opengl.utils import surface_2_mesh, concatenate_meshes
 from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 
+from dtcc_core.builder.meshing import mesh_multisurface, mesh_surface, mesh_multisurfaces
 
 class BuildingWrapper(Wrapper):
     """BuildingWrapper restructures data for a building for the purpous of rendering.
@@ -55,17 +58,11 @@ class BuildingWrapper(Wrapper):
 
         building_meshes = []
         flat_geom = self._get_highest_lod_building(building)
+        building_meshes = None
         if isinstance(flat_geom, MultiSurface):
-            for srf in flat_geom.surfaces:
-                (mesh, result) = surface_2_mesh(srf.vertices)
-                if mesh is not None:
-                    building_meshes.append(mesh)
-
-        if len(building_meshes) > 0:
-            # Concatenate all building mesh parts into one building mesh
-            building_mesh = concatenate_meshes(building_meshes)
-            return building_mesh
-
+           building_meshes = mesh_multisurfaces(flat_geom)
+        if building_meshes is not None:
+            return building_meshes
         return None
 
     def preprocess_drawing(self, bb_global: BoundingBox):
