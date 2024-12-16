@@ -1,7 +1,7 @@
 from distutils.command.build import build
 
 import numpy as np
-from dtcc_core.model import City, MultiSurface, Building, Mesh
+from dtcc_core.model import City, MultiSurface, Building, Mesh, Surface
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
@@ -51,7 +51,8 @@ class BuildingWrapper(Wrapper):
 
         mesh = self._get_building_mesh(building)
 
-        self.mesh_wrp = MeshWrapper(name, mesh, mts)
+        if mesh is not None:
+            self.mesh_wrp = MeshWrapper(name, mesh, mts)
 
     def _get_building_mesh(self, building: Building):
         flat_geom = self._get_highest_lod_building(building)
@@ -60,7 +61,11 @@ class BuildingWrapper(Wrapper):
         flat_geom = self._get_highest_lod_building(building)
         building_meshes = None
         if isinstance(flat_geom, MultiSurface):
-           building_meshes = mesh_multisurfaces(flat_geom)
+           building_meshes = mesh_multisurface(flat_geom)
+        elif isinstance(flat_geom, Surface):
+            building_meshes = mesh_surface(flat_geom)
+        elif isinstance(flat_geom, Mesh):
+            building_meshes = flat_geom
         if building_meshes is not None:
             return building_meshes
         return None
@@ -81,6 +86,7 @@ class BuildingWrapper(Wrapper):
 
     def _get_highest_lod_building(self, building: Building):
         lods = [
+            GeometryType.MESH,
             GeometryType.LOD3,
             GeometryType.LOD2,
             GeometryType.LOD1,
