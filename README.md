@@ -1,6 +1,6 @@
 # DTCC Viewer
 
-DTCC Viewer provides light-weight data visualization for DTCC Platform.
+DTCC Viewer provides the visualization functionality for DTCC Platform.
 
 This project is part of the
 [Digital Twin Platform (DTCC Platform)](https://github.com/dtcc-platform/)
@@ -22,7 +22,7 @@ This project is documented as part of the
 This project is licensed under the
 [MIT license](https://opensource.org/licenses/MIT).
 
-Copyright is held by the individual authors as listed at the top of
+Copyrights are held by the individual authors as listed at the top of
 each source file.
 
 ## Community guidelines
