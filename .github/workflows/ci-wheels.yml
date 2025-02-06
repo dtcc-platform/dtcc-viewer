@@ -33,7 +33,7 @@ jobs:
       - name: Run tests
         if: runner.os != 'Windows'
         run: |
-          pytest tests/test*.py --maxfail=1 --disable-warnings --verbose
+          pytest tests/python/test*.py --maxfail=1 --disable-warnings --verbose
 
   # 2) Build a universal wheel + sdist on a single OS
   build_dist:
