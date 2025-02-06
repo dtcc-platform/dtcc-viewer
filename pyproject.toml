@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-  "dtcc-core"
+  "dtcc-core",
 ]
 
 [project.optional-dependencies]
