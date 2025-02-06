@@ -65,7 +65,7 @@ jobs:
     name: Upload to PyPI
     needs: [test, build_dist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    #if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
         with:
