@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
-  "dtcc-core",
+  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
 ]
 
 [project.optional-dependencies]
