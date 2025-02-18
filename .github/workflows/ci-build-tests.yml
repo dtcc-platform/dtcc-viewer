@@ -6,34 +6,31 @@ on:
   pull_request:
     branches: [ "develop" ]
 
-env:
-  BRANCH: develop
-
 jobs:
-  build:
-
-    runs-on: ubuntu-22.04
-    #Placeholder for Docker on our Amazon AWS Runner
-    #container:
-    #  image: ubuntu-latest
-    #  options: --user 1000
-
-
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-    # VN at 16 March 2023: checkout/v3 causes some weird issues, so went for manual cloning instead...
-    #- uses: actions/checkout@v3
-    - name: clone repo
-      run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
-    - name: pip install
-      run: export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install ${{ github.event.repository.name }}/
-    # Not needed for anything apart from dtcc-model
-    #- name: cmake install
-    #run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
-    - name: run tests
-      run: sudo apt-get install python3-opengl && pip install pytest && cd ${{ github.event.repository.name }}/tests && pwd && ls -alt && pytest
-    - name: cleanup op
-      if: always()
-      run : sudo find /Runner/Runner/actions-runner/_work/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
-    # This fails after checkout/v3 was not used
-    #- name: more cleanup ops
-    #  run : pwd && sudo rm -rf /home/ubuntu/Runner/actions-runner/_work/${{ github.event.repository.name }}
+      # 1) Check out repository
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      # 2) Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # 3) Install dependencies from pyproject.toml
+      #    First, upgrade build tools, then install the package
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pytest
+          python -m pip install .  # or `pip install -e .` for editable install
+
+      # 4) Run tests (assuming pytest is used)
+      - name: Run tests
+        run: |
+          cd tests && pytest
