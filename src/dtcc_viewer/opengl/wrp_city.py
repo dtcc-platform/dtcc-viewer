@@ -16,6 +16,10 @@ from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 import dtcc_core.builder as builder
 
+from dtcc_viewer.logging import info, debug
+
+from tqdm import tqdm
+
 
 class CityWrapper(Wrapper):
     """CityWrapper restructures data for the purpous of rendering.
@@ -163,7 +167,9 @@ class CityWrapper(Wrapper):
         uuids = []
         mss = []
         attributes = []
-        for building in city.buildings:
+        for building in tqdm(
+            city.buildings, desc="Perparing buildings", unit=" building", ncols=120
+        ):
             uuid = building.id
             ms = self.get_highest_lod_building(building)
             if isinstance(ms, MultiSurface):
@@ -182,7 +188,7 @@ class CityWrapper(Wrapper):
         valid_attrib = []
         tic = time()
         for i, ms in enumerate(mss):
-            mesh = ms.mesh()
+            mesh = ms.mesh(clean=False)
             if mesh is not None:
                 valid_meshes.append(mesh)
                 valid_uuids.append(uuids[i])
