@@ -1,11 +1,6 @@
 name: Python-only CI and Publish
 
 on:
-  push:
-    branches: [ develop ]
-  pull_request:
-  release:
-    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -33,7 +28,7 @@ jobs:
       - name: Run tests
         if: runner.os != 'Windows'
         run: |
-          pytest tests/python/tests.py --maxfail=1 --disable-warnings --verbose
+          pytest tests/ --maxfail=1 --disable-warnings --verbose
 
   # 2) Build a universal wheel + sdist on a single OS
   build_dist:
