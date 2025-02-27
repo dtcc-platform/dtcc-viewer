@@ -5,13 +5,13 @@ import numpy as np
 import pyrr
 from enum import Enum
 import math
-from dtcc_viewer.opengl_viewer.interaction import Interaction
+from dtcc_viewer.opengl.action import Action
 
 window_w = 1200
 window_h = 800
 
 
-action = Interaction(window_w, window_h)
+action = Action(window_w, window_h)
 
 vs_solid = """ 
 #version 400 core
@@ -251,19 +251,22 @@ def window_resize(window, width, height):
     glViewport(0, 0, window_w, window_h)
     action.update_window_size(window_w, window_h)
 
+
 if not glfw.init():
     raise Exception("glfw can not be initialised!")
-    
+
 glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
 glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 0)
 glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
 glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-window = glfw.create_window(window_w, window_h, "OpenGL Window", None, None)      # Create window
+window = glfw.create_window(
+    window_w, window_h, "OpenGL Window", None, None
+)  # Create window
 
 if not window:
     glfw.terminate()
     raise Exception("glfw window can not be created!")
-    
+
 glfw.set_window_pos(window, 400, 200)
 
 glfw.set_cursor_pos_callback(window, action.mouse_look_callback)
@@ -277,96 +280,517 @@ glfw.set_window_size_callback(window, window_resize)
 glfw.make_context_current(window)
 
 
-
 floor_size = 10
 floor_z = 0.0
 quad_size = 5.0
 
-floor_vertices = [ -floor_size, -floor_size, floor_z, 1, 1, 1, 0, 0, 1,
-                    floor_size, -floor_size, floor_z, 1, 1, 1, 0, 0, 1,
-                   -floor_size,  floor_size, floor_z, 1, 1, 1, 0, 0, 1,
-                    floor_size, -floor_size, floor_z, 1, 1, 1, 0, 0, 1,
-                   -floor_size,  floor_size, floor_z, 1, 1, 1, 0, 0, 1,
-                    floor_size,  floor_size, floor_z, 1, 1, 1, 0, 0, 1]
+floor_vertices = [
+    -floor_size,
+    -floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    floor_size,
+    -floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    -floor_size,
+    floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    floor_size,
+    -floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    -floor_size,
+    floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    floor_size,
+    floor_size,
+    floor_z,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+]
 
-floor_indices = [0,1,2,
-                 3,4,5,]
+floor_indices = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+]
 
-floor_vertices = np.array(floor_vertices, dtype=np.float32) 
-floor_indices = np.array(floor_indices, dtype=np.uint32) 
+floor_vertices = np.array(floor_vertices, dtype=np.float32)
+floor_indices = np.array(floor_indices, dtype=np.uint32)
 
-cube_vertices = [-0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
-                -0.5,-0.5,-0.5,1,0.1490196078,0,0,0,-1,
-                0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
-                -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
-                0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,0,0,-1,
-                0.5,0.5,-0.5,0.7450980392,0.9882352941,0,0,0,-1,
-                -0.5,0.5,0.5,0.7450980392,0.9882352941,0,0,0,1,
-                0.5,0.5,0.5,0,1,0,0,0,1,
-                0.5,-0.5,0.5,0.7450980392,0.9882352941,0,0,0,1,
-                -0.5,0.5,0.5,0.7450980392,0.9882352941,0,0,0,1,
-                0.5,-0.5,0.5,0.7450980392,0.9882352941,0,0,0,1,
-                -0.5,-0.5,0.5,0.9960784314,0.7764705882,0,0,0,1,
-                -0.5,0.5,0.5,0.7450980392,0.9882352941,0,-1,0,0,
-                -0.5,-0.5,0.5,0.9960784314,0.7764705882,0,-1,0,0,
-                -0.5,-0.5,-0.5,1,0.1490196078,0,-1,0,0,
-                -0.5,0.5,0.5,0.7450980392,0.9882352941,0,-1,0,0,
-                -0.5,-0.5,-0.5,1,0.1490196078,0,-1,0,0,
-                -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,-1,0,0,
-                0.5,0.5,0.5,0,1,0,0,1,0,
-                -0.5,0.5,0.5,0.7450980392,0.9882352941,0,0,1,0,
-                -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,1,0,
-                0.5,0.5,0.5,0,1,0,0,1,0,
-                -0.5,0.5,-0.5,0.9960784314,0.7764705882,0,0,1,0,
-                0.5,0.5,-0.5,0.7450980392,0.9882352941,0,0,1,0,
-                0.5,-0.5,0.5,0.7450980392,0.9882352941,0,1,0,0,
-                0.5,0.5,0.5,0,1,0,1,0,0,
-                0.5,0.5,-0.5,0.7450980392,0.9882352941,0,1,0,0,
-                0.5,-0.5,0.5,0.7450980392,0.9882352941,0,1,0,0,
-                0.5,0.5,-0.5,0.7450980392,0.9882352941,0,1,0,0,
-                0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,1,0,0,
-                -0.5,-0.5,0.5,0.9960784314,0.7764705882,0,0,-1,0,
-                0.5,-0.5,0.5,0.7450980392,0.9882352941,0,0,-1,0,
-                0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,0,-1,0,
-                -0.5,-0.5,0.5,0.9960784314,0.7764705882,0,0,-1,0,
-                0.5,-0.5,-0.5,0.9960784314,0.7764705882,0,0,-1,0,
-                -0.5,-0.5,-0.5,1,0.1490196078,0,0,-1,0]
+cube_vertices = [
+    -0.5,
+    0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    0,
+    -1,
+    -0.5,
+    -0.5,
+    -0.5,
+    1,
+    0.1490196078,
+    0,
+    0,
+    0,
+    -1,
+    0.5,
+    -0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    0,
+    -1,
+    -0.5,
+    0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    0,
+    -1,
+    0.5,
+    -0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    0,
+    -1,
+    0.5,
+    0.5,
+    -0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    0,
+    -1,
+    -0.5,
+    0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    0,
+    1,
+    0.5,
+    0.5,
+    0.5,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0.5,
+    -0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    0,
+    1,
+    -0.5,
+    0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    0,
+    1,
+    0.5,
+    -0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    0,
+    1,
+    -0.5,
+    -0.5,
+    0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    0,
+    1,
+    -0.5,
+    0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    -1,
+    0,
+    0,
+    -0.5,
+    -0.5,
+    0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    -1,
+    0,
+    0,
+    -0.5,
+    -0.5,
+    -0.5,
+    1,
+    0.1490196078,
+    0,
+    -1,
+    0,
+    0,
+    -0.5,
+    0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    -1,
+    0,
+    0,
+    -0.5,
+    -0.5,
+    -0.5,
+    1,
+    0.1490196078,
+    0,
+    -1,
+    0,
+    0,
+    -0.5,
+    0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    -1,
+    0,
+    0,
+    0.5,
+    0.5,
+    0.5,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    -0.5,
+    0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    1,
+    0,
+    -0.5,
+    0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    1,
+    0,
+    0.5,
+    0.5,
+    0.5,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    -0.5,
+    0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    1,
+    0,
+    0.5,
+    0.5,
+    -0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    1,
+    0,
+    0.5,
+    -0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    1,
+    0,
+    0,
+    0.5,
+    0.5,
+    0.5,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0.5,
+    0.5,
+    -0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    1,
+    0,
+    0,
+    0.5,
+    -0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    1,
+    0,
+    0,
+    0.5,
+    0.5,
+    -0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    1,
+    0,
+    0,
+    0.5,
+    -0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    1,
+    0,
+    0,
+    -0.5,
+    -0.5,
+    0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    -1,
+    0,
+    0.5,
+    -0.5,
+    0.5,
+    0.7450980392,
+    0.9882352941,
+    0,
+    0,
+    -1,
+    0,
+    0.5,
+    -0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    -1,
+    0,
+    -0.5,
+    -0.5,
+    0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    -1,
+    0,
+    0.5,
+    -0.5,
+    -0.5,
+    0.9960784314,
+    0.7764705882,
+    0,
+    0,
+    -1,
+    0,
+    -0.5,
+    -0.5,
+    -0.5,
+    1,
+    0.1490196078,
+    0,
+    0,
+    -1,
+    0,
+]
 
-cube_indices = [ 0,1,2,
-                3,4,5,
-                6,7,8,
-                9,10,11,
-                12,13,14,
-                15,16,17,
-                18,19,20,
-                21,22,23,
-                24,25,26,
-                27,28,29,
-                30,31,32,
-                33,34,35]
+cube_indices = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+]
 
 cube_vertices = np.array(cube_vertices, dtype=np.float32)
-cube_indices = np.array(cube_indices, dtype=np.uint32) 
+cube_indices = np.array(cube_indices, dtype=np.uint32)
 
-quadVertices =[-quad_size, 0.0, -quad_size,	0.0, 0.0,
-		        quad_size, 0.0, -quad_size, 1.0, 0.0,
-		        quad_size, 0.0,  quad_size, 1.0, 1.0,
+quadVertices = [
+    -quad_size,
+    0.0,
+    -quad_size,
+    0.0,
+    0.0,
+    quad_size,
+    0.0,
+    -quad_size,
+    1.0,
+    0.0,
+    quad_size,
+    0.0,
+    quad_size,
+    1.0,
+    1.0,
+    quad_size,
+    0.0,
+    quad_size,
+    1.0,
+    1.0,
+    -quad_size,
+    0.0,
+    quad_size,
+    0.0,
+    1.0,
+    -quad_size,
+    0.0,
+    -quad_size,
+    0.0,
+    0.0,
+]
 
-		        quad_size, 0.0,  quad_size, 1.0, 1.0,
-		       -quad_size, 0.0,  quad_size, 0.0, 1.0,
-		       -quad_size, 0.0, -quad_size, 0.0, 0.0,]
+quadVertices = np.array(quadVertices, dtype=np.float32)
 
-quadVertices = np.array(quadVertices, dtype=np.float32)     
+screenVertices = [
+    -1.0,
+    -1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    -1.0,
+    1.0,
+    0.0,
+    0.0,
+    1.0,
+    -1.0,
+    -1.0,
+    0.0,
+    0.0,
+    0.0,
+]
 
-screenVertices =[-1.0,-1.0, 0.0, 0.0, 0.0,
-		          1.0,-1.0, 0.0, 1.0, 0.0,
-		          1.0, 1.0, 0.0, 1.0, 1.0,
-
-		          1.0, 1.0, 0.0, 1.0, 1.0,
-		         -1.0, 1.0, 0.0, 0.0, 1.0,
-		         -1.0,-1.0, 0.0, 0.0, 0.0,]
-
-screenVertices = np.array(screenVertices, dtype=np.float32) 
+screenVertices = np.array(screenVertices, dtype=np.float32)
 
 
 # --------------------------------------------------------------------------------#
@@ -382,17 +806,19 @@ glBufferData(GL_ARRAY_BUFFER, len(cube_vertices) * 4, cube_vertices, GL_STATIC_D
 # Element buffer
 cubeEBO = glGenBuffers(1)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO)
-glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(cube_indices)* 4, cube_indices, GL_STATIC_DRAW)
+glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER, len(cube_indices) * 4, cube_indices, GL_STATIC_DRAW
+)
 
-#Position
+# Position
 glEnableVertexAttribArray(0)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
 
-#Color 
+# Color
 glEnableVertexAttribArray(1)
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
 
-#Normal 
+# Normal
 glEnableVertexAttribArray(2)
 glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
 
@@ -406,11 +832,11 @@ glBufferData(GL_ARRAY_BUFFER, len(quadVertices) * 4, quadVertices, GL_STATIC_DRA
 quadVAO = glGenVertexArrays(1)
 glBindVertexArray(quadVAO)
 
-#Position
+# Position
 glEnableVertexAttribArray(0)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
 
-#Texture
+# Texture
 glEnableVertexAttribArray(1)
 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
 
@@ -425,17 +851,20 @@ glBufferData(GL_ARRAY_BUFFER, len(screenVertices) * 4, screenVertices, GL_STATIC
 screenVAO = glGenVertexArrays(1)
 glBindVertexArray(screenVAO)
 
-#Position
+# Position
 glEnableVertexAttribArray(0)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
 
-#Texture
+# Texture
 glEnableVertexAttribArray(1)
 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
 
 
 # ---------------- SOLID SHADER ---------------------#
-solid_shader = compileProgram(compileShader(vs_solid, GL_VERTEX_SHADER), compileShader(fs_solid, GL_FRAGMENT_SHADER))
+solid_shader = compileProgram(
+    compileShader(vs_solid, GL_VERTEX_SHADER),
+    compileShader(fs_solid, GL_FRAGMENT_SHADER),
+)
 glUseProgram(solid_shader)
 model_loc_s = glGetUniformLocation(solid_shader, "model")
 view_loc_s = glGetUniformLocation(solid_shader, "view")
@@ -444,7 +873,10 @@ col_loc_s = glGetUniformLocation(solid_shader, "color")
 
 
 # ---------------- TRANSPARENT SHADER ---------------------#
-trans_shader = compileProgram(compileShader(vs_transparent, GL_VERTEX_SHADER), compileShader(fs_transparent, GL_FRAGMENT_SHADER))
+trans_shader = compileProgram(
+    compileShader(vs_transparent, GL_VERTEX_SHADER),
+    compileShader(fs_transparent, GL_FRAGMENT_SHADER),
+)
 glUseProgram(trans_shader)
 model_loc_t = glGetUniformLocation(trans_shader, "model")
 view_loc_t = glGetUniformLocation(trans_shader, "view")
@@ -452,13 +884,19 @@ project_loc_t = glGetUniformLocation(trans_shader, "project")
 col_loc_t = glGetUniformLocation(trans_shader, "color")
 
 # ---------------- COMPOSITE SHADER ---------------------#
-compo_shader = compileProgram(compileShader(vs_composit, GL_VERTEX_SHADER), compileShader(fs_composit, GL_FRAGMENT_SHADER))
+compo_shader = compileProgram(
+    compileShader(vs_composit, GL_VERTEX_SHADER),
+    compileShader(fs_composit, GL_FRAGMENT_SHADER),
+)
 glUseProgram(compo_shader)
 accum_loc_c = glGetUniformLocation(compo_shader, "accum")
 reveal_loc_c = glGetUniformLocation(compo_shader, "reveal")
 
 # ---------------- COMPOSITE SHADER 2 ---------------------#
-compo_shader_2 = compileProgram(compileShader(vs_composit_2, GL_VERTEX_SHADER), compileShader(fs_composit_2, GL_FRAGMENT_SHADER))
+compo_shader_2 = compileProgram(
+    compileShader(vs_composit_2, GL_VERTEX_SHADER),
+    compileShader(fs_composit_2, GL_FRAGMENT_SHADER),
+)
 glUseProgram(compo_shader_2)
 accum_loc_c_2 = glGetUniformLocation(compo_shader_2, "accum")
 reveal_loc_c_2 = glGetUniformLocation(compo_shader_2, "reveal")
@@ -474,7 +912,10 @@ glUniform3fv(light_pos_loc_c, 1, light_position)
 
 
 # ---------------- SCREEN SHADER ---------------------#
-screen_shader = compileProgram(compileShader(vs_screen, GL_VERTEX_SHADER), compileShader(fs_screen, GL_FRAGMENT_SHADER))
+screen_shader = compileProgram(
+    compileShader(vs_screen, GL_VERTEX_SHADER),
+    compileShader(fs_screen, GL_FRAGMENT_SHADER),
+)
 glUseProgram(screen_shader)
 screen_loc_c = glGetUniformLocation(screen_shader, "screen")
 
@@ -488,29 +929,47 @@ SCR_HEIGHT = window_h
 # Set up attachments for opaque SOLID framebuffer
 opaque_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, opaque_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None
+)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 depth_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, depth_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D,
+    0,
+    GL_DEPTH_COMPONENT,
+    SCR_WIDTH,
+    SCR_HEIGHT,
+    0,
+    GL_DEPTH_COMPONENT,
+    GL_FLOAT,
+    None,
+)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 glBindFramebuffer(GL_FRAMEBUFFER, opaqueFBO)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaque_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0)
-	
-if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE):
-	print("ERROR::FRAMEBUFFER:: Opaque framebuffer is not complete!")
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaque_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0
+)
+
+if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+    print("ERROR::FRAMEBUFFER:: Opaque framebuffer is not complete!")
 
 glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 # Set up attachments for TRANSPARENT framebuffer
 accum_texture = glGenTextures(1)
 glBindTexture(GL_TEXTURE_2D, accum_texture)
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None)
+glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_HALF_FLOAT, None
+)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
@@ -523,28 +982,33 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 glBindTexture(GL_TEXTURE_2D, 0)
 
 glBindFramebuffer(GL_FRAMEBUFFER, transparentFBO)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accum_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, reveal_texture, 0)
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0) # opaque framebuffer's depth texture
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accum_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, reveal_texture, 0
+)
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0
+)  # opaque framebuffer's depth texture
 
 # Don't forget to explicitly tell OpenGL that your transparent framebuffer has two draw buffers
 transparentDrawBuffers = [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1]
-glDrawBuffers(2,transparentDrawBuffers)
+glDrawBuffers(2, transparentDrawBuffers)
 
-if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE):
-	print("ERROR::FRAMEBUFFER:: Transparent framebuffer is not complete!")
+if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+    print("ERROR::FRAMEBUFFER:: Transparent framebuffer is not complete!")
 
 glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 # Main application loop
 while not glfw.window_should_close(window):
-    
-    #---------------------- Camera Update ------------------------------------#
+    # ---------------------- Camera Update ------------------------------------#
 
-    view = action.camera.get_view_matrix()
-    proj = action.camera.get_perspective_matrix()
+    view = action.camera._get_perspective_view_matrix()
+    proj = action.camera._get_perspective_matrix()
 
-    #-------------------- Opaque pass (drawing solid objects) -------------------------#
+    # -------------------- Opaque pass (drawing solid objects) -------------------------#
     # Configure render states
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
@@ -561,7 +1025,7 @@ while not glfw.window_should_close(window):
     # Draw red quad
     model_0 = pyrr.matrix44.create_from_translation(pyrr.Vector3([1.0, 0.0, 0.0]))
     color_0 = pyrr.Vector3([1.0, 0.0, 0.0])
-    
+
     glUniformMatrix4fv(model_loc_s, 1, GL_FALSE, model_0)
     glUniformMatrix4fv(view_loc_s, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_s, 1, GL_FALSE, proj)
@@ -570,8 +1034,8 @@ while not glfw.window_should_close(window):
     glBindVertexArray(cubeVAO)
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
-    #-------------------- Transparent pass -------------------------#
-    
+    # -------------------- Transparent pass -------------------------#
+
     # configure render states
     glDepthMask(GL_FALSE)
     glEnable(GL_BLEND)
@@ -589,7 +1053,7 @@ while not glfw.window_should_close(window):
     # draw blue quad
     model_1 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.25, -1.5, 0.0]))
     color_1 = pyrr.Vector4([0.5, 0.0, 0.5, 0.2])
-    
+
     glUniformMatrix4fv(model_loc_t, 1, GL_FALSE, model_1)
     glUniformMatrix4fv(view_loc_t, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_t, 1, GL_FALSE, proj)
@@ -597,7 +1061,6 @@ while not glfw.window_should_close(window):
     glUniform4fv(col_loc_t, 1, color_1)
     glBindVertexArray(cubeVAO)
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
-
 
     # draw green quad
     model_2 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.5, -3.0, 0.0]))
@@ -610,11 +1073,11 @@ while not glfw.window_should_close(window):
     glUniform4fv(col_loc_t, 1, color_2)
     glBindVertexArray(cubeVAO)
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
-    
+
     # draw blue quad
     model_3 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.75, 1.5, 0.0]))
     color_3 = pyrr.Vector4([0.0, 0.0, 1.0, 0.2])
-    
+
     glUniformMatrix4fv(model_loc_t, 1, GL_FALSE, model_3)
     glUniformMatrix4fv(view_loc_t, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_t, 1, GL_FALSE, proj)
@@ -622,11 +1085,11 @@ while not glfw.window_should_close(window):
     glUniform4fv(col_loc_t, 1, color_3)
     glBindVertexArray(cubeVAO)
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
-    
+
     # draw yellow quad
     model_4 = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 3.0, 0.0]))
     color_4 = pyrr.Vector4([1.0, 0.5, 0.0, 0.2])
-    
+
     glUniformMatrix4fv(model_loc_t, 1, GL_FALSE, model_4)
     glUniformMatrix4fv(view_loc_t, 1, GL_FALSE, view)
     glUniformMatrix4fv(project_loc_t, 1, GL_FALSE, proj)
@@ -636,7 +1099,7 @@ while not glfw.window_should_close(window):
     glDrawElements(GL_TRIANGLES, len(cube_indices), GL_UNSIGNED_INT, None)
 
     # ------------------ Draw composite image (composite pass) ------------------
-	# set render states
+    # set render states
     glDepthFunc(GL_ALWAYS)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -651,17 +1114,19 @@ while not glfw.window_should_close(window):
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, accum_texture)
     glUniform1i(accum_loc_c, 0)
-    
+
     glActiveTexture(GL_TEXTURE1)
-    glBindTexture(GL_TEXTURE_2D, reveal_texture)    
+    glBindTexture(GL_TEXTURE_2D, reveal_texture)
     glUniform1i(reveal_loc_c, 1)
-    
+
     glBindVertexArray(screenVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     # set render states
     glDisable(GL_DEPTH_TEST)
-    glDepthMask(GL_TRUE) # enable depth writes so glClear won't ignore clearing the depth buffer
+    glDepthMask(
+        GL_TRUE
+    )  # enable depth writes so glClear won't ignore clearing the depth buffer
     glDisable(GL_BLEND)
 
     # bind backbuffer
@@ -671,19 +1136,15 @@ while not glfw.window_should_close(window):
 
     # use screen shader
     glUseProgram(screen_shader)
-    
+
     # draw final screen quad
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, opaque_texture)
     glBindVertexArray(screenVAO)
     glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     glfw.poll_events()
     glfw.swap_buffers(window)
-    
 
 
-
-glfw.terminate()    
-
-
+glfw.terminate()

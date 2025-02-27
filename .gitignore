@@ -3,8 +3,25 @@ scratch/
 dtcc-demo-data/
 
 *.las
+*.laz
 *.csv
+*.cpg
+*.dbf
+*.prj
+*.qmd
+*.shp
+*.shx
+*.tif
+*.vtk
+*.vtu
+*.obj
+*.mtl
 !cube_pc.csv
+
+*.city.json
+*.json
+*.html
+*.txt
 
 .idea/
 .vscode/
@@ -17,3 +34,5 @@ __pycache__
 *.so
 *.o
 *.a
+
+*.lock

@@ -1,14 +1,13 @@
 import folium
 import logging
 import tempfile
-import dtcc_io as io
+import dtcc_core.io as io
 from pathlib import Path
 import tempfile
-from dtcc_model.geometry import Bounds
-from dtcc_model.city import City
+from dtcc_core.model.geometry import Bounds
+from dtcc_core.model import City
 from .notebook_functions import is_notebook
-
-from .random_colors import get_random_colors
+from .utils import get_random_colors
 from .logging import info
 
 
@@ -55,7 +54,7 @@ def view(
     color_map="",
     return_html=False,
     show_in_browser=False,
-    view_fields=["id", "height", "error"],
+    view_fields=["id", "height", "ground_height", "error"],
     view_aliases=None,
 ):
     tmp_geojson = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False)
@@ -82,6 +81,10 @@ def view(
         folium.GeoJsonPopup(fields=view_fields, aliases=view_aliases)
     )
     m.add_child(cm_layers)
+
+    # Zoom to the added layer
+    m.fit_bounds(cm_layers.get_bounds())
+
     tmp_geojson.close()
     outpath_dir = outpath.parent
     outpath.unlink()
