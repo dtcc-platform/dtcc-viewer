@@ -414,7 +414,10 @@ class PointsDataWrapper(DataWrapper):
         tuple or (None, None)
             Processed data matrix and value caps if successful, otherwise (None, None).
         """
-        if len(data) != self.p_count:  # TODO: Allow data to be associated with faces
+        if len(data) == 0:
+            warning(f"Data is empty.")
+            return None, None
+        elif len(data) != self.p_count:  # TODO: Allow data to be associated with faces
             warning(f"Data count does not match point count.")
             return None, None
         else:
