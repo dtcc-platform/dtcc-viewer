@@ -4,10 +4,17 @@ from enum import IntEnum
 from dtcc_core.model import Mesh, PointCloud
 from pprint import pp
 from dtcc_viewer.logging import info, warning
-from dtcc_core.model import MultiSurface, Surface, VolumeMesh, LineString, MultiLineString
+from dtcc_core.model import (
+    MultiSurface,
+    Surface,
+    VolumeMesh,
+    LineString,
+    MultiLineString,
+)
 from shapely.geometry import Point
 from shapely.geometry import LineString as ShapelyLineString
 from dtcc_viewer.utils import Direction
+from typing import Optional
 
 
 class Shading(IntEnum):
@@ -225,6 +232,7 @@ def get_normal_from_surface(vertices, centroid):
         return None
 
     return normal_vector
+
 
 def concatenate_pcs(pcs: list[PointCloud]):
     v_count_tot = 0
@@ -622,3 +630,60 @@ def create_tetrahedral_cube_mesh(nx, ny, nz, length=1.0):
     cells = np.array(cells)
     vmesh = VolumeMesh(vertices=vertices, cells=cells)
     return vmesh
+
+
+def mesh_to_pointcloud(
+    mesh: Mesh, num_points: int, seed: Optional[int] = None
+) -> PointCloud:
+    """
+    Sample uniformly over the surface of a mesh and generate a PointCloud.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        The input triangular mesh.
+    num_points : int
+        Total number of points to sample.
+    seed : int, optional
+        Seed for reproducibility.
+
+    Returns
+    -------
+    PointCloud
+        A point cloud sampled over the surface of the mesh.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    # Get triangle vertices
+    v0 = mesh.vertices[mesh.faces[:, 0]]
+    v1 = mesh.vertices[mesh.faces[:, 1]]
+    v2 = mesh.vertices[mesh.faces[:, 2]]
+
+    # Calculate triangle areas using cross product
+    tri_areas = 0.5 * np.linalg.norm(np.cross(v1 - v0, v2 - v0), axis=1)
+
+    # Compute probability distribution over triangles
+    tri_probs = tri_areas / tri_areas.sum()
+
+    # Choose triangles based on surface area
+    chosen_faces = np.random.choice(len(tri_probs), size=num_points, p=tri_probs)
+
+    # Barycentric coordinates sampling
+    r1 = np.random.rand(num_points)
+    r2 = np.random.rand(num_points)
+    sqrt_r1 = np.sqrt(r1)
+
+    u = 1 - sqrt_r1
+    v = r2 * sqrt_r1
+    w = 1 - u - v
+
+    # Get vertices of the chosen triangles
+    tri_v0 = v0[chosen_faces]
+    tri_v1 = v1[chosen_faces]
+    tri_v2 = v2[chosen_faces]
+
+    # Compute random points in triangles
+    points = u[:, None] * tri_v0 + v[:, None] * tri_v1 + w[:, None] * tri_v2
+
+    return PointCloud(points=points)

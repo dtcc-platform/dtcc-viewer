@@ -1,9 +1,5 @@
 from pprint import pp
-
-# from dtcc_viewer import *
 from dtcc_core.model import Mesh, PointCloud, Bounds, VolumeMesh
-
-# from dtcc_viewer.colors import *
 from typing import Iterable
 import trimesh
 import numpy as np
@@ -248,6 +244,8 @@ def get_sub_volume_mesh_from_mask(cell_mask: np.ndarray, vmesh: VolumeMesh) -> M
 
 def get_sub_mesh_from_mask(face_mask: np.ndarray, mesh: Mesh) -> Mesh:
 
+    print("fase_mask")
+    print(face_mask)
     faces = mesh.faces[face_mask, :]
     faces_flat = faces.flatten()
     unique_vertex_indices = np.unique(faces_flat)
