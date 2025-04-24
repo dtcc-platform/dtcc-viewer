@@ -9,7 +9,6 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_core.builder import *
 from dtcc_core.builder.meshing import mesh_multisurfaces
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
