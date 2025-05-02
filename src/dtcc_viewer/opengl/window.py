@@ -13,6 +13,7 @@ from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.gl_grid import GlGrid
 from dtcc_viewer.opengl.gl_axes import GlAxes
+from dtcc_viewer.opengl.gl_north import GlNorth
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_quad import GlQuad
@@ -77,6 +78,7 @@ class Window:
     model: GlModel
     gl_grid: GlGrid
     gl_axes: GlAxes
+    gl_north: GlNorth
     gui: Gui
     guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
@@ -281,6 +283,7 @@ class Window:
         # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
         self.gl_axes = GlAxes(1.0, scene.bb.zmin)
+        self.gl_north = GlNorth(1.0, scene.bb.zmin)
 
         return True
 
@@ -352,6 +355,9 @@ class Window:
 
             # Draw axes
             self.gl_axes.render(self.action)
+
+            # Draw north arrow
+            self.gl_north.render(self.action)
 
             # Render the GUI
             self.gui.render(self.model, self.impl, self.action.gguip)
