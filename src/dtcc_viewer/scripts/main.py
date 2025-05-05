@@ -424,6 +424,11 @@ def volume_mesh_example_2():
     window.render(scene)
 
 
+def north_arrows_example():
+    mesh = create_compass(1.5)
+    mesh.view()
+
+
 def crasch_test():
 
     window = Window(1200, 800)
@@ -529,7 +534,7 @@ if __name__ == "__main__":
     # volume_mesh_example_2()
     # raster_example_1()
     # raster_example_2()
-    city_example_1()
+    # city_example_1()
     # city_example_2()
     # city_example_3()
     # building_example_1()
@@ -537,5 +542,6 @@ if __name__ == "__main__":
     # building_example_3()
     # object_example_1()
     # object_example_2()
+    north_arrows_example()
     # crasch_test()
     # crasch_empty_geometry()

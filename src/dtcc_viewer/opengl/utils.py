@@ -492,59 +492,64 @@ def create_sphere_mesh(center, radius, latitude_segments=20, longitude_segments=
     return mesh
 
 
-def create_arrow_mesh(cp: np.ndarray, dir: np.ndarray, r: float, h: float, n: int):
-    b_vertices = []
-    b_indices = []
-    h_vertices = []
-    h_indices = []
-    angle_increment = 2 * math.pi / n
-    h_body = 0.9 * h
-    r_body = r
-    r_head = 2 * r
+import numpy as np
 
-    dir /= np.linalg.norm(dir)
 
-    # Calculate perpendicular vectors using cross product
-    z = np.array([0.0, 0.0, 1.0])
-    if np.allclose(dir, z):
-        u = np.array([1.0, 0.0, 0.0])
-        v = np.array([0.0, 1.0, 0.0])
-    else:
-        u = np.linalg.norm(np.cross(dir, z))
-        v = np.linalg.norm(np.cross(dir, u))
+def create_compass(size) -> Mesh:
+    """
+    Create a compass rose mesh with 4 arrows and 'N' letter.
 
-    # Generate vertices for the top and bottom circles for the cylinder body
-    for hs in [0, h_body]:
-        for i in range(n):
-            ang = i * angle_increment
-            p = cp + dir * hs + r_body * (u * math.cos(ang) + v * math.sin(ang))
-            b_vertices.append(p)
 
-    # Generate the mesh faces for cylinder body
-    for i in range(n):
-        b_indices.append([i, (i + 1) % n, i + n])
-        b_indices.append([i + n, (i + 1) % n + n, (i + 1) % n])
+    Returns
+    -------
+    Mesh
+        A Mesh representing the compass rose.
+    """
 
-    body_mesh = Mesh(vertices=np.array(b_vertices), faces=np.array(b_indices))
+    vertices = []
+    faces = []
 
-    # Generate vertices cone head
-    for i in range(n):
-        ang = i * angle_increment
-        p = cp + dir * hs + r_head * (u * math.cos(ang) + v * math.sin(ang))
-        h_vertices.append(p)
+    # --- Define points ---
+    r_big = size
+    r_small = 0.25 * size
+    angles_big = np.deg2rad([90.0, 180.0, 270.0, 360])
+    angles_small = np.deg2rad([45.0, 135.0, 225.0, 315.0])
 
-    h_vertices.append(cp + dir * h)
-    h_vertices.append(cp + dir * h_body)
+    dir = [-1.0, 1.0]
+    small_vs = []
+    big_vs = []
+    vertices = []
+    faces = []
 
-    # Generate the mesh faces for the cone head
-    for i in range(n):
-        h_indices.append([i, (i + 1) % n, n])
-        h_indices.append([i, (i + 1) % n, n + 1])
+    idx = 0
 
-    head_mesh = Mesh(vertices=np.array(h_vertices), faces=np.array(h_indices))
+    for j in range(2):
 
-    mesh = concatenate_meshes([body_mesh, head_mesh])
+        origin = np.array([0, 0, dir[j] * 0.1])
 
+        for i, angle in enumerate(angles_small):
+            x_small = r_small * np.cos(angles_small[i])
+            y_small = r_small * np.sin(angles_small[i])
+            small_vs.append([x_small, y_small, 0.0])
+
+            x_big = r_big * np.cos(angles_big[i])
+            y_big = r_big * np.sin(angles_big[i])
+            big_vs.append([x_big, y_big, 0.0])
+
+        for i in range(4):
+            vertices.append(origin)
+            vertices.append(small_vs[i])
+            vertices.append(big_vs[i])
+            faces.append([idx, idx + 1, idx + 2])
+            idx += 3
+
+            vertices.append(origin)
+            vertices.append(big_vs[i])
+            vertices.append(small_vs[(i + 1) % 4])
+            faces.append([idx, idx + 1, idx + 2])
+            idx += 3
+
+    mesh = Mesh(vertices=np.array(vertices), faces=np.array(faces))
     return mesh
 
 
@@ -687,3 +692,217 @@ def mesh_to_pointcloud(
     points = u[:, None] * tri_v0 + v[:, None] * tri_v1 + w[:, None] * tri_v2
 
     return PointCloud(points=points)
+
+
+def create_compass_letters(size=0.5, distance=2.0):
+
+    faces_E = np.array(
+        [
+            [0, 1, 2],
+            [3, 2, 4],
+            [3, 0, 2],
+            [4, 5, 3],
+            [3, 5, 6],
+            [9, 7, 8],
+            [10, 9, 8],
+            [10, 2, 9],
+            [2, 1, 9],
+            [1, 12, 11],
+            [1, 0, 12],
+        ]
+    )
+
+    vertices_E = size * np.array(
+        [
+            [-0.4, -0.2, 0],
+            [-0.4, 0.2, 0],
+            [-0.8, 0, 0],
+            [-0.4, -0.6, 0],
+            [-0.8, -1, 0],
+            [0.8, -1, 0],
+            [0.8, -0.6, 0],
+            [0.8, 0.6, 0],
+            [0.8, 1, 0],
+            [-0.4, 0.6, 0],
+            [-0.8, 1, 0],
+            [0.6, 0.2, 0],
+            [0.6, -0.2, 0],
+        ]
+    )
+
+    faces_S = np.array(
+        [
+            [26, 22, 25],
+            [23, 24, 25],
+            [25, 22, 23],
+            [22, 26, 27],
+            [29, 21, 28],
+            [30, 20, 29],
+            [20, 21, 29],
+            [21, 22, 27],
+            [39, 40, 15],
+            [28, 21, 27],
+            [11, 41, 10],
+            [41, 11, 12],
+            [9, 10, 42],
+            [42, 8, 9],
+            [13, 41, 12],
+            [40, 41, 14],
+            [13, 14, 41],
+            [15, 40, 14],
+            [7, 42, 43],
+            [6, 7, 43],
+            [8, 42, 7],
+            [10, 41, 42],
+            [19, 30, 31],
+            [17, 38, 16],
+            [32, 19, 31],
+            [15, 16, 39],
+            [33, 18, 32],
+            [34, 18, 33],
+            [17, 35, 36],
+            [34, 35, 18],
+            [18, 35, 17],
+            [19, 32, 18],
+            [36, 37, 17],
+            [38, 39, 16],
+            [5, 6, 44],
+            [44, 6, 43],
+            [45, 5, 44],
+            [5, 45, 4],
+            [2, 0, 1],
+            [45, 3, 4],
+            [3, 45, 2],
+            [2, 45, 0],
+            [38, 17, 37],
+            [20, 30, 19],
+        ]
+    )
+
+    vertices_S = size * np.array(
+        [
+            [0.370957, 0.299215, 0],
+            [0.742432, 0.327176, 0],
+            [0.716825, 0.548845, 0],
+            [0.619097, 0.748731, 0],
+            [0.452885, 0.896401, 0],
+            [0.245687, 0.978833, 0],
+            [0.024166, 1.007479, 0],
+            [-0.198607, 0.991232, 0],
+            [-0.410833, 0.922389, 0],
+            [-0.587984, 0.788129, 0],
+            [-0.695647, 0.593699, 0],
+            [-0.715077, 0.372408, 0],
+            [-0.638172, 0.164419, 0],
+            [-0.477425, 0.011067, 0],
+            [-0.273695, -0.079873, 0],
+            [-0.057912, -0.138985, 0],
+            [0.158914, -0.194315, 0],
+            [0.361705, -0.284604, 0],
+            [0.396577, -0.489756, 0],
+            [0.220354, -0.616842, 0],
+            [-0.001297, -0.638744, 0],
+            [-0.217502, -0.586556, 0],
+            [-0.376797, -0.436685, 0],
+            [-0.423533, -0.218943, 0],
+            [-0.789656, -0.250954, 0],
+            [-0.767769, -0.47371, 0],
+            [-0.679549, -0.678854, 0],
+            [-0.527745, -0.842488, 0],
+            [-0.329818, -0.946172, 0],
+            [-0.110962, -0.993499, 0],
+            [0.113066, -1.000544, 0],
+            [0.333561, -0.962167, 0],
+            [0.535612, -0.866527, 0],
+            [0.693524, -0.709054, 0],
+            [0.781724, -0.504252, 0],
+            [0.783963, -0.281321, 0],
+            [0.696056, -0.076894, 0],
+            [0.530235, 0.072117, 0],
+            [0.32523, 0.161676, 0],
+            [0.108579, 0.219858, 0],
+            [-0.109343, 0.27314, 0],
+            [-0.311003, 0.365026, 0],
+            [-0.29052, 0.568219, 0],
+            [-0.084984, 0.645811, 0],
+            [0.138356, 0.635988, 0],
+            [0.319499, 0.515575, 0],
+        ]
+    )
+
+    faces_N = np.array(
+        [
+            [5, 1, 0],
+            [2, 5, 4],
+            [3, 2, 4],
+            [2, 1, 5],
+            [6, 2, 7],
+            [3, 7, 2],
+            [5, 9, 8],
+            [0, 9, 5],
+        ]
+    )
+
+    vertices_N = size * np.array(
+        [
+            [-0.8, 1, 0],
+            [-0.2, 1, 0],
+            [0.4, -0.6, 0],
+            [0.8, -1, 0],
+            [0.2, -1, 0],
+            [-0.4, 0.6, 0],
+            [0.4, 1, 0],
+            [0.8, 1, 0],
+            [-0.4, -1, 0],
+            [-0.8, -1, 0],
+        ]
+    )
+
+    faces_W = np.array(
+        [
+            [11, 1, 2],
+            [3, 10, 11],
+            [0, 1, 11],
+            [0, 11, 12],
+            [3, 4, 8],
+            [8, 4, 5],
+            [6, 8, 5],
+            [2, 3, 11],
+            [10, 3, 9],
+            [9, 3, 8],
+            [8, 6, 7],
+        ]
+    )
+
+    vertices_W = size * np.array(
+        [
+            [-0.8, 1, 0],
+            [-0.5, -1, 0],
+            [-0.2, -1, 0],
+            [0, -0.4, 0],
+            [0.2, -1, 0],
+            [0.5, -1, 0],
+            [0.8, 1, 0],
+            [0.5, 1, 0],
+            [0.3, -0.4, 0],
+            [0.1, 0.2, 0],
+            [-0.1, 0.2, 0],
+            [-0.3, -0.4, 0],
+            [-0.5, 1, 0],
+        ]
+    )
+
+    mesh_E = Mesh(vertices=vertices_E, faces=faces_E)
+    mesh_S = Mesh(vertices=vertices_S, faces=faces_S)
+    mesh_N = Mesh(vertices=vertices_N, faces=faces_N)
+    mesh_W = Mesh(vertices=vertices_W, faces=faces_W)
+
+    # Move the letters to the correct position
+    mesh_E.vertices[:, 0:3] += np.array([distance, 0.0, 0.0])
+    mesh_S.vertices[:, 0:3] += np.array([0.0, -1.0 * distance, 0.0])
+    mesh_N.vertices[:, 0:3] += np.array([0.0, distance, 0.0])
+    mesh_W.vertices[:, 0:3] += np.array([-1.0 * distance, 0.0, 0.0])
+
+    letters_mesh = concatenate_meshes([mesh_E, mesh_S, mesh_N, mesh_W])
+
+    return letters_mesh

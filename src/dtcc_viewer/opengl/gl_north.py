@@ -95,20 +95,33 @@ class GlNorth:
             The number of segments for the cylinders and cones.
         """
 
-        y_axis = create_cylinder_mesh(Point(0, 0, 0), Direction.y, r, h, n)
-        y_cone = create_cone_mesh(Point(0, h, 0), Direction.y, r * 2.5, r * 5, n)
-        y_mesh = concatenate_meshes([y_axis, y_cone])
-        y_color = np.array([0.0, 1.0, 0.0])
-        y_color = np.tile(y_color, (len(y_mesh.vertices), 1))
-        y_color = np.reshape(y_color, (-1, 3))
+        compass_size = 1.0
+
+        compass_mesh = create_compass(compass_size)
+        compass_color = np.array([0.8, 0.8, 0.8])
+        compass_color = np.tile(compass_color, (len(compass_mesh.vertices), 1))
+
+        # Color every second triangle darker
+        color_dark = np.array([0.0, 0.0, 0.0])
+        compass_color[0::6, :] = color_dark
+        compass_color[1::6, :] = color_dark
+        compass_color[2::6, :] = color_dark
+
+        letters_mesh = create_compass_letters(size=0.2, distance=(compass_size * 1.3))
+        letters_color = color_dark
+        letters_color = np.tile(letters_color, (len(letters_mesh.vertices), 1))
+
+        # Combine meshes
+        mesh = concatenate_meshes([compass_mesh, letters_mesh])
+        colors = np.vstack((compass_color, letters_color))
 
         # vertices = [x, y, z, r, g, b, x, y, z...]
-        vertices = np.zeros((len(y_mesh.vertices), 6))
-        vertices[:, 0:3] = y_mesh.vertices
-        vertices[:, 3:6] = y_color
+        vertices = np.zeros((len(mesh.vertices), 6))
+        vertices[:, 0:3] = mesh.vertices
+        vertices[:, 3:6] = colors
 
         self.vertices = np.array(vertices, dtype="float32").flatten()
-        self.indices = np.array(y_mesh.faces, dtype="uint32").flatten()
+        self.indices = np.array(mesh.faces, dtype="uint32").flatten()
 
     def _create_vao(self) -> None:
         """Set up vertex and element buffers for line rendering."""
