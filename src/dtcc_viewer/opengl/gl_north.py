@@ -57,47 +57,30 @@ class GlNorth:
 
     size: np.ndarray  # Size
 
-    def __init__(self, size: float, zpos: float):
+    def __init__(self, size: float, bb: BoundingBox):
         """Initialize the GlAxes object with size and z-position.
 
         Parameters
         ----------
         size : float
             The size of the axes.
-        zpos : float
-            The z-position of the axes.
+        bb : BouindingBox
+            The BoundingBox for the entire scene.
         """
         self.ulocs = {}
         self.size = size
 
-        h = 1.0 * size
-        r = 0.02 * size
-        n = 20
-
-        model_vector = pyrr.Vector3([0.0, 0.0, zpos])
+        model_vector = pyrr.Vector3([1.1 * bb.xmax, 1.1 * bb.ymin, bb.zmin])
         self.model_matrix = pyrr.matrix44.create_from_translation(model_vector)
 
-        self._create_mesh(h, r, n)
+        self._create_mesh()
         self._create_vao()
         self._create_shader()
 
-    def _create_mesh(self, h: float, r: float, n: int) -> None:
-        """Create the mesh for the axes arrows. The x-arrow is red, y-arrow is green,
-        and z-arrow is blue.
+    def _create_mesh(self) -> None:
+        """Create the mesh for the compass."""
 
-        Parameters
-        ----------
-        h : float
-            The height of the axes.
-        r : float
-            The radius of the axes.
-        n : int
-            The number of segments for the cylinders and cones.
-        """
-
-        compass_size = 1.0
-
-        compass_mesh = create_compass(compass_size)
+        compass_mesh = create_compass(self.size)
         compass_color = np.array([0.8, 0.8, 0.8])
         compass_color = np.tile(compass_color, (len(compass_mesh.vertices), 1))
 
@@ -107,7 +90,7 @@ class GlNorth:
         compass_color[1::6, :] = color_dark
         compass_color[2::6, :] = color_dark
 
-        letters_mesh = create_compass_letters(size=0.2, distance=(compass_size * 1.3))
+        letters_mesh = create_compass_letters(0.2 * self.size, self.size * 1.3)
         letters_color = color_dark
         letters_color = np.tile(letters_color, (len(letters_mesh.vertices), 1))
 

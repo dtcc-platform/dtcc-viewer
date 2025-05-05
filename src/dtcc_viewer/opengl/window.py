@@ -283,7 +283,7 @@ class Window:
         # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
         self.gl_axes = GlAxes(1.0, scene.bb.zmin)
-        self.gl_north = GlNorth(1.0, scene.bb.zmin)
+        self.gl_north = GlNorth(0.3, scene.bb)
 
         return True
 

@@ -525,7 +525,7 @@ def create_compass(size) -> Mesh:
 
     for j in range(2):
 
-        origin = np.array([0, 0, dir[j] * 0.1])
+        origin = np.array([0, 0, dir[j] * size * 0.1])
 
         for i, angle in enumerate(angles_small):
             x_small = r_small * np.cos(angles_small[i])
