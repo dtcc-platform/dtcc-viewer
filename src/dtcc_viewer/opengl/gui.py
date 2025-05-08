@@ -707,6 +707,8 @@ class Gui:
     def _draw_data_table(self, data_dict: dict) -> None:
         """Draw data dict as a table."""
         # Define the column headers
+        if len(data_dict) == 0:
+            return
         imgui.columns(2, "dict_table")
         imgui.set_column_width(0, 180)
 
