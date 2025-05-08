@@ -209,8 +209,12 @@ class Gui:
             imgui.text(f"spacing: {gguip.grid_sf} m")
             imgui.push_id("cs")
             [changed, gguip.show_axes] = imgui.checkbox(
-                "coordinate axis", gguip.show_axes
+                "coordinate system", gguip.show_axes
             )
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("compass")
+            [changed, gguip.show_north] = imgui.checkbox("compass", gguip.show_north)
             imgui.pop_id()
             imgui.end_child()
 
