@@ -83,7 +83,12 @@ class GlRaster(GlObject):
     bb_local: BoundingBox
     bb_global: BoundingBox
     type: RasterType
-    data_texture: int
+    data: np.ndarray
+    data_min: float
+    data_max: float
+    data_std: float
+    data_range: float
+    data_mean: float
     rgb_texture: int
     uniform_locs: dict
     shader: int
@@ -93,12 +98,16 @@ class GlRaster(GlObject):
 
     def __init__(self, raster_w: RasterWrapper):
         """Initialize the GlRaster object and set up rendering."""
+        self.name = raster_w.name
         self.vertices = raster_w.vertices
         self.indices = raster_w.indices
         self.type = raster_w.type
         self.data = raster_w.data
         self.data_min = np.min(self.data)
         self.data_max = np.max(self.data)
+        self.data_std = np.std(self.data)
+        self.data_mean = np.mean(self.data)
+        self.data_range = self.data_max - self.data_min
         self.data_texture = None
         self.rgb_texture = None
         self.rgba_texture = None

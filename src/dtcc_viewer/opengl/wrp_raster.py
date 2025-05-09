@@ -17,6 +17,7 @@ class RasterWrapper(Wrapper):
     type: RasterType
     bb_local: BoundingBox
     bb_global: BoundingBox = None
+    data: np.ndarray
 
     def __init__(self, name: str, raster: Raster, vertices: np.ndarray = None) -> None:
         """Initialize the RasterWrapper object."""
