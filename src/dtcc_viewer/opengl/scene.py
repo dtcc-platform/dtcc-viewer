@@ -20,7 +20,7 @@ from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, Volum
 from dtcc_core.model import RoadNetwork, LineString, MultiLineString
 
 # from dtcc_model.roadnetwork import RoadNetwork
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from typing import Any
 
 
@@ -53,7 +53,7 @@ class Scene:
         """
         self.wrappers = []
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
-        info("Max texture size: " + str(self.mts))
+        debug("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """

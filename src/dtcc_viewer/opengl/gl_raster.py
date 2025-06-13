@@ -5,7 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from string import Template
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.gl_object import GlObject
@@ -157,14 +157,14 @@ class GlRaster(GlObject):
     def _get_max_texture_size(self):
         """Get max texture size for raster textures."""
         max_texture_size = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
-        info(f"Max texture size: {max_texture_size} x {max_texture_size}")
+        debug(f"Max texture size: {max_texture_size} x {max_texture_size}")
 
     def _get_max_texture_slots(self):
         """Get max texture slots for raster textures."""
         n_slots = glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)
         n_slots_2 = glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS)
-        info(f"Max texture slots: {n_slots}")
-        info(f"Max texture slots: {n_slots_2}")
+        debug(f"Max texture slots: {n_slots}")
+        debug(f"Max texture slots: {n_slots_2}")
 
     def _create_textures(self) -> None:
         """Create textures for the raster."""
@@ -175,8 +175,8 @@ class GlRaster(GlObject):
         elif self.type == RasterType.RGBA:
             self._create_rgba_texture()
 
-        info(f"Raster texture size: {self.width} x {self.height}")
-        info(f"Data shape: {self.data.shape}")
+        debug(f"Raster texture size: {self.width} x {self.height}")
+        debug(f"Data shape: {self.data.shape}")
 
     def _create_data_texture(self):
         """Create texture for data storage."""

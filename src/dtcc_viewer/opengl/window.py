@@ -4,7 +4,7 @@ import math
 import numpy as np
 from OpenGL.GL import *
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.gl_points import GlPoints
@@ -161,9 +161,8 @@ class Window:
 
         scene.offset_mesh_part_ids()
 
-        info("Preprocessing scene objects...")
-        info(f"Scene has {len(scene.wrappers)} objects.")
-
+        info(f"Scene has {len(scene.wrappers)} wrapper object(s).")
+        info("Converting wrappers to OpenGL objects.")
         for wrapper in scene.wrappers:
             if isinstance(wrapper, ObjectWrapper):
                 if wrapper.mesh_wrp_1 is not None:

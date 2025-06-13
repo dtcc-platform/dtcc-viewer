@@ -3,7 +3,7 @@ from pyrr import Vector3, vector, vector3, matrix44
 from math import sin, cos, radians
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.utils import CameraProjection, CameraView, BoundingBox
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 
 
 class Camera:
@@ -116,7 +116,7 @@ class Camera:
         # Near and far plane scale factor are determined by testing
         self.near_plane = 0.0002 * bb_global.size
         self.far_plane = 20.0 * bb_global.size
-        info(f"Near plane: {self.near_plane:.5f} m, Far plane: {self.far_plane:.0f} m.")
+        debug(f"Near: {self.near_plane:.5f} m, Far : {self.far_plane:.0f} m.")
 
     def save_init_camera(self):
         self.init_camera = {}

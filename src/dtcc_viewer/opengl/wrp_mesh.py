@@ -4,7 +4,7 @@ from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.data_wrapper import MeshDataWrapper
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_viewer.opengl.wrapper import Wrapper
 from pprint import PrettyPrinter
 from typing import Any
@@ -83,7 +83,6 @@ class MeshWrapper(Wrapper):
         self._restructure_mesh(mesh)
 
         if self.parts is None:
-            info("Submesh is None -> faces are used as defualt submeshes")
             self._create_default_mesh_parts(mesh)
         else:
             self._create_ids_from_mesh_parts(self.parts)  # Picking ids
@@ -231,7 +230,7 @@ class MeshWrapper(Wrapper):
             warning(f"Submesh ids and vertices missmatch")
         else:
             # Replace default id with submesh id in the vertices
-            info("Replacing default face ids with submesh ids in the vertices")
+            debug("Replacing default face ids with parts ids in the vertices")
             self.vertices[8::9] = ids_in_vertex_shape
 
     def _create_default_mesh_parts(self, mesh):
