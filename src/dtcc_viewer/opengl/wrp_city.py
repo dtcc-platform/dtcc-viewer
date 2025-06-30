@@ -54,7 +54,7 @@ class CityWrapper(Wrapper):
     vgrid_wrps: list[VolumeGridWrapper] = []
     pc_wrps: list[PointCloudWrapper] = []
 
-    def __init__(self, name: str, city: City, mts: int) -> None:
+    def __init__(self, name: str, city: City, mts: int, view_pointcloud=False) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -88,11 +88,11 @@ class CityWrapper(Wrapper):
         for vgrid in vgrids:
             if vgrid is not None:
                 self.vgrid_wrps.append(VolumeGridWrapper(f"vgrid {i}", vgrid, mts))
-
-        pcs = self._get_pcs(city)
-        for i, pc in enumerate(pcs):
-            if pc is not None:
-                self.pc_wrps.append(PointCloudWrapper(f"pc {i}", pc, mts))
+        if view_pointcloud:
+            pcs = self._get_pcs(city)
+            for i, pc in enumerate(pcs):
+                if pc is not None:
+                    self.pc_wrps.append(PointCloudWrapper(f"pc {i}", pc, mts))
 
         info("CityWrapper initialized")
 

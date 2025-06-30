@@ -108,7 +108,7 @@ class Scene:
         else:
             warning(f"Failed to add Surface called '{name}' added to the scene")
 
-    def add_city(self, name: str, city: City):
+    def add_city(self, name: str, city: City, view_pointcloud: bool = False):
         """
         Add a city to the scene.
 
@@ -121,7 +121,9 @@ class Scene:
         """
         if city is not None and isinstance(city, City) and self.has_geom(city, name):
             info(f"City called '{name}' added to scene")
-            self.wrappers.append(CityWrapper(name, city, self.mts))
+            self.wrappers.append(
+                CityWrapper(name, city, self.mts, view_pointcloud=view_pointcloud)
+            )
         else:
             warning(f"Failed to add City called '{name}' to the scene")
 
