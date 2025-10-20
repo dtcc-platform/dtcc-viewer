@@ -25,3 +25,25 @@ def view(mesh: Mesh, data: Any = None):
     scene = Scene()
     scene.add_mesh("Mesh", mesh, data)
     window.render(scene)
+
+def view_meshes(meshes: list[Mesh], datas: list[Any] = None):
+    """View multiple meshes in 3D with a GLFW window.
+
+    Parameters
+    ----------
+    meshes : list[Mesh]
+        Meshes to be viewed.
+    datas : list[np.ndarray]
+        Data for coloring of meshes. Data should match vertex or face count.
+    shading : MeshShading
+        Shading option for mesh drawing style.
+    """
+
+    window = Window(1200, 800)
+    scene = Scene()
+    for i, mesh in enumerate(meshes):
+        data = None
+        if datas is not None and i < len(datas):
+            data = datas[i]
+        scene.add_mesh(f"Mesh_{i}", mesh, data)
+    window.render(scene)
