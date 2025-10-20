@@ -25,7 +25,6 @@ dtcc-demo-data/
 !denhaag.city.json
 
 *.html
-*.txt
 
 .idea/
 .vscode/
