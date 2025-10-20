@@ -1,14 +1,14 @@
-import folium
 import logging
 import tempfile
-import dtcc_core.io as io
 from pathlib import Path
-import tempfile
-from dtcc_core.model.geometry import Bounds
+
+import dtcc_core.io as io
+import folium
 from dtcc_core.model import City
+
+from .logging import info
 from .notebook_functions import is_notebook
 from .utils import get_random_colors
-from .logging import info
 
 
 def _rgb_to_hexstring(rgb: list[int]) -> str:
