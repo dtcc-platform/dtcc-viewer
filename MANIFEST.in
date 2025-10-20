@@ -1,0 +1,12 @@
+include LICENSE
+include README.md
+include pyimgui/LICENSE
+include pyimgui/README.md
+include pyimgui/HACKING.md
+
+recursive-include pyimgui/imgui *.pyx *.pxd *.cpp *.h *.pxi
+recursive-include pyimgui/config-cpp *.cpp *.h
+recursive-include pyimgui/imgui-cpp *.cpp *.h
+prune pyimgui/imgui-cpp/examples
+prune pyimgui/imgui-cpp/extra_fonts
+recursive-include pyimgui/ansifeed-cpp *.cpp *.h
