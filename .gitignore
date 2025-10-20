@@ -2,6 +2,9 @@ build/
 scratch/
 dtcc-demo-data/
 
+pyimgui/imgui/*.cpp
+pyimgui/imgui/*.h
+
 *.las
 *.laz
 *.csv
