@@ -62,4 +62,5 @@ __all__ = [
     "Window",
     "Scene",
     "Shading",
+    "Situation",
 ]

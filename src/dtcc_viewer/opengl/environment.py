@@ -1,4 +1,5 @@
 from dtcc_viewer.opengl.utils import BoundingBox
+from dtcc_viewer.opengl.situation import Situation
 import numpy as np
 import math
 
@@ -13,20 +14,24 @@ class Environment:
     light_col: np.ndarray  # Light color
     light_pos: np.ndarray  # Light position
     bb_global: BoundingBox
-
     diameter_xy: float
     radius_xy: float
-
     loop_counter: int
+    situation: Situation
 
-    def __init__(self, bounding_box: BoundingBox):
+    def __init__(self, bounding_box: BoundingBox, situation: Situation = None):
         """Initialize the Enivornment object with the provided width and height."""
 
         self.light_col = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.light_pos = np.array([500.0, 500.0, 400.0], dtype=np.float32)
         self.loop_counter = 120
         self.bb_global = bounding_box
+        self.situation = situation
         self._calc_scale()
+
+        if self.situation is not None:
+            self.situation.calc_solar_pos(self.radius_xy, self.bb_global.origin)
+
         self._calc_light_position()
 
     def _calc_scale(self):
@@ -40,10 +45,15 @@ class Environment:
     def _calc_light_position(self) -> np.ndarray:
         """Calculate position animated position of light source which casts shadows."""
 
-        rot_step = self.loop_counter / 120.0
-        x = math.sin(rot_step) * self.radius_xy
-        y = math.cos(rot_step) * self.radius_xy
-        z = abs(math.sin(rot_step / 2.0)) * 0.7 * self.radius_xy
-        self.light_pos = np.array([x, y, z], dtype=np.float32)
+        if self.situation is not None:
+
+            idx = self.loop_counter % len(self.situation.sun_pos)
+            self.light_pos = self.situation.sun_pos[idx]
+        else:
+            rot_step = self.loop_counter / 120.0
+            x = math.sin(rot_step) * self.radius_xy
+            y = math.cos(rot_step) * self.radius_xy
+            z = abs(math.sin(rot_step / 2.0)) * 0.7 * self.radius_xy
+            self.light_pos = np.array([x, y, z], dtype=np.float32)
 
         self.loop_counter += 1

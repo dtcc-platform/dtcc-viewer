@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 import trimesh
 import dtcc_core.io as io
 
@@ -29,6 +30,7 @@ from dtcc_core.model import (
     RoadNetwork,
 )
 from dtcc_core.model.object.object import GeometryType
+from dtcc_viewer.opengl.situation import Situation
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.utils import *
@@ -81,8 +83,15 @@ def mesh_example_3():
 
 
 def mesh_example_4():
+    sit = Situation(
+        lon=22.93,
+        lat=40.64,
+        start=pd.Timestamp("2024-06-01 00:00:00"),
+        end=pd.Timestamp("2024-06-30 23:00:00"),
+        include_night=False,
+    )
     window = Window(1200, 800)
-    scene = Scene()
+    scene = Scene(situation=sit)
     mesh = meshes.load_mesh("../../../data/models/CitySurface.obj")
     pc = PointCloud(points=mesh.vertices)
     scene.add_mesh("MESH", mesh)
@@ -516,7 +525,7 @@ if __name__ == "__main__":
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
-    # mesh_example_4()
+    mesh_example_4()
     # mesh_example_5()
     # linestring_example_2()
     # multilinestring_example_1()
@@ -532,7 +541,7 @@ if __name__ == "__main__":
     # volume_grid_example()
     # volume_mesh_example_1()
     # volume_mesh_example_2()
-    raster_example_1()
+    # raster_example_1()
     # raster_example_2()
     # city_example_1()
     # city_example_2()

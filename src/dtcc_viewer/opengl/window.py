@@ -267,7 +267,7 @@ class Window:
             return False
 
         # Create model from meshes
-        self.model = GlModel(self.gl_objects, scene.bb)
+        self.model = GlModel(self.gl_objects, scene.bb, scene.situation)
 
         # Initialise camera base on bounding box size
         self.action.initialise_camera(scene.bb)
@@ -289,7 +289,7 @@ class Window:
     def render(self, scene: Scene):
         """Render single or multiple objects.
 
-        This method renders multiple meshes, line collections and and point clouds in
+        This method renders multiple meshes, line collections and point clouds in
         the window. It updates the rendering loop, handles user interactions, and
         displays the GUI elements for each rendered object.
 

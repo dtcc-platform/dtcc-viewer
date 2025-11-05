@@ -6,6 +6,7 @@ from .gl_mesh import GlMesh
 from .wrp_mesh import MeshWrapper
 from .action import Action
 from .scene import Scene
+from .situation import Situation
 from .gui import Gui, GuiParametersMesh, GuiParametersPC
 from .gui import GuiParametersLines, GuiParametersGlobal, GuiParametersDates
 from .utils import Shading
@@ -20,6 +21,7 @@ __all__ = [
     "MeshWrapper",
     "Action",
     "Scene",
+    "Situation",
     "Gui",
     "GuiParametersGlobal",
     "GuiParametersMesh",

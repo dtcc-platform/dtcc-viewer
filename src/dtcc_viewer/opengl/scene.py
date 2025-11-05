@@ -15,6 +15,7 @@ from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
+from dtcc_viewer.opengl.situation import Situation
 from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 from dtcc_core.model import RoadNetwork, LineString, MultiLineString
@@ -41,10 +42,11 @@ class Scene:
     """
 
     wrappers: list[Wrapper]
+    situation: Situation
     bb: BoundingBox
     mts: int
 
-    def __init__(self):
+    def __init__(self, situation: Situation = None):
         """
         Initialize the Scene.
 
@@ -52,6 +54,7 @@ class Scene:
         supported by the graphics card.
         """
         self.wrappers = []
+        self.situation = situation
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
         debug("Max texture size: " + str(self.mts))
 

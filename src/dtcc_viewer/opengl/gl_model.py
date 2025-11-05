@@ -14,6 +14,7 @@ from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.environment import Environment
 from dtcc_viewer.opengl.parameters import GuiParametersModel
+from dtcc_viewer.opengl.situation import Situation
 
 from dtcc_viewer.shaders.shaders_debug import (
     vertex_shader_debug_shadows,
@@ -125,12 +126,17 @@ class GlModel:
     tex_slot_shadow_map: int
     tex_slot_picking: int
 
-    def __init__(self, gl_objects: list[GlObject], bb_global: BoundingBox):
+    def __init__(
+        self,
+        gl_objects: list[GlObject],
+        bb_global: BoundingBox,
+        situation: Situation = None,
+    ):
         """Initialize the GlModel object."""
         self.gl_objects = gl_objects
 
         self.guip = GuiParametersModel("Model", shading=Shading.WIRESHADED)
-        self.env = Environment(bb_global)
+        self.env = Environment(bb_global, situation)
 
         self.uloc_shmp = {}
         self.uloc_dbsh = {}

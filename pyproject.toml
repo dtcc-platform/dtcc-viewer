@@ -33,6 +33,7 @@ dependencies = [
   "pillow",
   "glfw",
   "imgui",
+  "pvlib >= 0.9.4",
   "tqdm>=4.66.1",
   "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
 ]
