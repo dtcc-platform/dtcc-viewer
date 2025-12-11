@@ -1,0 +1,6 @@
+Cython>=3.0
+PyOpenGL
+glfw
+wheel
+click
+glibc

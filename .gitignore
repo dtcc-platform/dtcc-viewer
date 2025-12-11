@@ -2,6 +2,9 @@ build/
 scratch/
 dtcc-demo-data/
 
+pyimgui/imgui/*.cpp
+pyimgui/imgui/*.h
+
 *.las
 *.laz
 *.csv
@@ -25,7 +28,6 @@ dtcc-demo-data/
 !denhaag.city.json
 
 *.html
-*.txt
 
 .idea/
 .vscode/
