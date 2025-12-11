@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "glfw",
   "tqdm>=4.66.1",
-  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
+  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@release/0.9.4",
 ]
 
 [tool.setuptools]
