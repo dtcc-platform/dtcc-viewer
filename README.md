@@ -29,3 +29,10 @@ each source file.
 
 Comments, contributions, and questions are welcome. Please engage with
 us through Issues, Pull Requests, and Discussions on our GitHub page.
+
+## Developer notes
+
+This repository uses Git submodules. To build this package from source,
+the submodules first need to be initialized:
+
+    git submodule update --init --recursive
