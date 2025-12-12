@@ -767,9 +767,9 @@ class GlMesh(GlObject):
         glUniformMatrix4fv(self.uloc_vnor["project"], 1, GL_FALSE, proj)
 
         (xdom, ydom, zdom) = self._get_clip_domains()
-        glUniform1f(self.uloc_fnor["clip_x"], (xdom * action.gguip.clip_dist[0]))
-        glUniform1f(self.uloc_fnor["clip_y"], (ydom * action.gguip.clip_dist[1]))
-        glUniform1f(self.uloc_fnor["clip_z"], (zdom * action.gguip.clip_dist[2]))
+        glUniform1f(self.uloc_vnor["clip_x"], (xdom * action.gguip.clip_dist[0]))
+        glUniform1f(self.uloc_vnor["clip_y"], (ydom * action.gguip.clip_dist[1]))
+        glUniform1f(self.uloc_vnor["clip_z"], (zdom * action.gguip.clip_dist[2]))
 
         self.triangles_draw_call()
         self._unbind_shader()
