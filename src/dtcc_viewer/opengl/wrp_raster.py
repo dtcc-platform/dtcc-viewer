@@ -4,7 +4,7 @@ from dtcc_core.model import Bounds, Raster
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox, Shading, RasterType
 from dtcc_viewer.opengl.wrapper import Wrapper
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from pprint import PrettyPrinter
 
 
@@ -17,6 +17,7 @@ class RasterWrapper(Wrapper):
     type: RasterType
     bb_local: BoundingBox
     bb_global: BoundingBox = None
+    data: np.ndarray
 
     def __init__(self, name: str, raster: Raster, vertices: np.ndarray = None) -> None:
         """Initialize the RasterWrapper object."""
@@ -31,13 +32,13 @@ class RasterWrapper(Wrapper):
 
         if raster.channels == 1:
             self.type = RasterType.Data
-            info("1 channel data raster")
+            debug("1 channel data raster")
         elif raster.channels == 3:
             self.type = RasterType.RGB
-            info("3 channel color raster")
+            debug("3 channel color raster")
         elif raster.channels == 4:
             self.type = RasterType.RGBA
-            info("4 channel color raster")
+            debug("4 channel color raster")
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         self.bb_global = bb_global
@@ -157,17 +158,17 @@ class MultiRasterWrapper:
         (sub_data, sub_verts) = self._split_raster(raster, max_size)
         self.raster_wrappers = self._create_raster_wrappers(raster, sub_data, sub_verts)
 
-        info(f"Multi raster wrapper created with {self.sub_count} sub-rasters")
+        debug(f"Multi raster wrapper created with {self.sub_count} sub-rasters")
 
     def _find_raster_type(self, raster: Raster):
         if raster.channels == 1:
-            info("1 channel data raster")
+            debug("1 channel data raster")
             return RasterType.Data
         elif raster.channels == 3:
-            info("3 channel color raster")
+            debug("3 channel color raster")
             return RasterType.RGB
         elif raster.channels == 4:
-            info("4 channel color raster")
+            debug("4 channel color raster")
             return RasterType.RGBA
 
     def _split_raster(self, raster: Raster, size: int):

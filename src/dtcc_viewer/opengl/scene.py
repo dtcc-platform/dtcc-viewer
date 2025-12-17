@@ -15,12 +15,13 @@ from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
+from dtcc_viewer.opengl.situation import Situation
 from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 from dtcc_core.model import RoadNetwork, LineString, MultiLineString
 
 # from dtcc_model.roadnetwork import RoadNetwork
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from typing import Any
 
 
@@ -41,10 +42,11 @@ class Scene:
     """
 
     wrappers: list[Wrapper]
+    situation: Situation
     bb: BoundingBox
     mts: int
 
-    def __init__(self):
+    def __init__(self, situation: Situation = None):
         """
         Initialize the Scene.
 
@@ -52,8 +54,9 @@ class Scene:
         supported by the graphics card.
         """
         self.wrappers = []
+        self.situation = situation
         self.mts = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
-        info("Max texture size: " + str(self.mts))
+        debug("Max texture size: " + str(self.mts))
 
     def add_mesh(self, name: str, mesh: Mesh, data: Any = None):
         """
@@ -108,7 +111,7 @@ class Scene:
         else:
             warning(f"Failed to add Surface called '{name}' added to the scene")
 
-    def add_city(self, name: str, city: City):
+    def add_city(self, name: str, city: City, view_pointcloud: bool = False):
         """
         Add a city to the scene.
 
@@ -121,7 +124,9 @@ class Scene:
         """
         if city is not None and isinstance(city, City) and self.has_geom(city, name):
             info(f"City called '{name}' added to scene")
-            self.wrappers.append(CityWrapper(name, city, self.mts))
+            self.wrappers.append(
+                CityWrapper(name, city, self.mts, view_pointcloud=view_pointcloud)
+            )
         else:
             warning(f"Failed to add City called '{name}' to the scene")
 
@@ -431,8 +436,6 @@ class Scene:
         for wrp in self.wrappers:
             if isinstance(wrp, MeshWrapper):
                 next_id = self.update_ids(wrp, next_id)
-            elif isinstance(wrp, MultiSurfaceWrapper):
-                next_id = self.update_ids(wrp.mesh_wrp, next_id)
             elif isinstance(wrp, MultiSurfaceWrapper):
                 next_id = self.update_ids(wrp.mesh_wrp, next_id)
             elif isinstance(wrp, CityWrapper):

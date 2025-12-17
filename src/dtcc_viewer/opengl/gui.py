@@ -209,8 +209,12 @@ class Gui:
             imgui.text(f"spacing: {gguip.grid_sf} m")
             imgui.push_id("cs")
             [changed, gguip.show_axes] = imgui.checkbox(
-                "coordinate axis", gguip.show_axes
+                "coordinate system", gguip.show_axes
             )
+            imgui.pop_id()
+            imgui.same_line()
+            imgui.push_id("compass")
+            [changed, gguip.show_north] = imgui.checkbox("compass", gguip.show_north)
             imgui.pop_id()
             imgui.end_child()
 
@@ -618,15 +622,19 @@ class Gui:
         mhs = model.filter_gl_type(GlMesh)
         pcs = model.filter_gl_type(GlPoints)
         lss = model.filter_gl_type(GlLines)
-        rst = model.filter_gl_type(GlRaster)
+        rss = model.filter_gl_type(GlRaster)
 
         if expanded:
-            self._draw_model_stats(mhs, pcs, lss)
+            self._draw_model_stats(mhs, pcs, lss, rss)
             self._draw_model_data(model)
         self._draw_separator()
 
     def _draw_model_stats(
-        self, mhs: list[GlMesh], pcs: list[GlPoints], lss: list[GlLines]
+        self,
+        mhs: list[GlMesh],
+        pcs: list[GlPoints],
+        lss: list[GlLines],
+        rss: list[GlRaster],
     ) -> None:
         """Draw GUI elements for displaying model statistics."""
         v_count, f_count, l_count = 0, 0, 0
@@ -649,6 +657,15 @@ class Gui:
             data_dict[f"'{ls.name}' segment count:"] = ls.n_lines
             v_count += ls.n_vertices
             l_count += ls.n_lines
+        for rst in rss:
+            data_dict[f"'{rst.name}' data count:"] = len(rst.data)
+            data_dict[f"'{rst.name}' data type:"] = rst.data.dtype
+            data_dict[f"'{rst.name}' data shape:"] = rst.data.shape
+            data_dict[f"'{rst.name}' data max:"] = rst.data_max
+            data_dict[f"'{rst.name}' data min:"] = rst.data_min
+            data_dict[f"'{rst.name}' data mean:"] = rst.data_mean
+            data_dict[f"'{rst.name}' data std:"] = rst.data_std
+            data_dict[f"'{rst.name}' data range:"] = rst.data_range
 
         space_model_stats = self._calc_space(data_dict, 25, 21)
         space_vis_stats = 75
@@ -707,6 +724,8 @@ class Gui:
     def _draw_data_table(self, data_dict: dict) -> None:
         """Draw data dict as a table."""
         # Define the column headers
+        if len(data_dict) == 0:
+            return
         imgui.columns(2, "dict_table")
         imgui.set_column_width(0, 180)
 

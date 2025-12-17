@@ -2,6 +2,9 @@ build/
 scratch/
 dtcc-demo-data/
 
+pyimgui/imgui/*.cpp
+pyimgui/imgui/*.h
+
 *.las
 *.laz
 *.csv
@@ -14,14 +17,17 @@ dtcc-demo-data/
 *.tif
 *.vtk
 *.vtu
+
 *.obj
+!CitySurface.obj
+
 *.mtl
-!cube_pc.csv
 
 *.city.json
 *.json
+!denhaag.city.json
+
 *.html
-*.txt
 
 .idea/
 .vscode/

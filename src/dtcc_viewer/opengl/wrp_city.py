@@ -9,7 +9,6 @@ from dtcc_viewer.logging import info, warning
 from dtcc_viewer.opengl.utils import concatenate_meshes
 from dtcc_core.model.object.object import GeometryType
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
-from dtcc_core.builder import *
 from dtcc_core.builder.meshing import mesh_multisurfaces
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
@@ -55,7 +54,7 @@ class CityWrapper(Wrapper):
     vgrid_wrps: list[VolumeGridWrapper] = []
     pc_wrps: list[PointCloudWrapper] = []
 
-    def __init__(self, name: str, city: City, mts: int) -> None:
+    def __init__(self, name: str, city: City, mts: int, view_pointcloud=False) -> None:
         """Initialize the MeshData object.
 
         Parameters
@@ -89,11 +88,11 @@ class CityWrapper(Wrapper):
         for vgrid in vgrids:
             if vgrid is not None:
                 self.vgrid_wrps.append(VolumeGridWrapper(f"vgrid {i}", vgrid, mts))
-
-        pcs = self._get_pcs(city)
-        for i, pc in enumerate(pcs):
-            if pc is not None:
-                self.pc_wrps.append(PointCloudWrapper(f"pc {i}", pc, mts))
+        if view_pointcloud:
+            pcs = self._get_pcs(city)
+            for i, pc in enumerate(pcs):
+                if pc is not None:
+                    self.pc_wrps.append(PointCloudWrapper(f"pc {i}", pc, mts))
 
         info("CityWrapper initialized")
 

@@ -4,7 +4,7 @@ import math
 import numpy as np
 from OpenGL.GL import *
 from imgui.integrations.glfw import GlfwRenderer
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.action import Action
 from dtcc_viewer.opengl.gl_points import GlPoints
@@ -13,6 +13,7 @@ from dtcc_viewer.opengl.gl_raster import GlRaster
 from dtcc_viewer.opengl.gl_object import GlObject
 from dtcc_viewer.opengl.gl_grid import GlGrid
 from dtcc_viewer.opengl.gl_axes import GlAxes
+from dtcc_viewer.opengl.gl_north import GlNorth
 from dtcc_viewer.opengl.gl_model import GlModel
 from dtcc_viewer.opengl.gl_mesh import GlMesh
 from dtcc_viewer.opengl.gl_quad import GlQuad
@@ -77,6 +78,7 @@ class Window:
     model: GlModel
     gl_grid: GlGrid
     gl_axes: GlAxes
+    gl_north: GlNorth
     gui: Gui
     guip: GuiParametersGlobal  # Gui parameters common for the whole window
     win_width: int
@@ -159,9 +161,8 @@ class Window:
 
         scene.offset_mesh_part_ids()
 
-        info("Preprocessing scene objects...")
-        info(f"Scene has {len(scene.wrappers)} objects.")
-
+        info(f"Scene has {len(scene.wrappers)} wrapper object(s).")
+        info("Converting wrappers to OpenGL objects.")
         for wrapper in scene.wrappers:
             if isinstance(wrapper, ObjectWrapper):
                 if wrapper.mesh_wrp_1 is not None:
@@ -266,7 +267,7 @@ class Window:
             return False
 
         # Create model from meshes
-        self.model = GlModel(self.gl_objects, scene.bb)
+        self.model = GlModel(self.gl_objects, scene.bb, scene.situation)
 
         # Initialise camera base on bounding box size
         self.action.initialise_camera(scene.bb)
@@ -281,13 +282,14 @@ class Window:
         # Create grid and coordinate axes
         self.gl_grid = GlGrid(scene.bb)
         self.gl_axes = GlAxes(1.0, scene.bb.zmin)
+        self.gl_north = GlNorth(0.3, scene.bb)
 
         return True
 
     def render(self, scene: Scene):
         """Render single or multiple objects.
 
-        This method renders multiple meshes, line collections and and point clouds in
+        This method renders multiple meshes, line collections and point clouds in
         the window. It updates the rendering loop, handles user interactions, and
         displays the GUI elements for each rendered object.
 
@@ -352,6 +354,9 @@ class Window:
 
             # Draw axes
             self.gl_axes.render(self.action)
+
+            # Draw north arrow
+            self.gl_north.render(self.action)
 
             # Render the GUI
             self.gui.render(self.model, self.impl, self.action.gguip)

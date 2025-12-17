@@ -9,7 +9,7 @@ from time import time
 import sys
 
 
-def view(city: City):
+def view(city: City, view_pointcloud: bool = False) -> None:
     """View a mesh in 3D with a GLFW window.
 
     This function is added to the Mesh class in dtcc_model.
@@ -22,6 +22,6 @@ def view(city: City):
     start_time = time()
     window = Window(1200, 800)
     scene = Scene()
-    scene.add_city("City", city)
+    scene.add_city("City", city, view_pointcloud=view_pointcloud)
     debug(f"Adding city took {time() - start_time} seconds")
     window.render(scene)

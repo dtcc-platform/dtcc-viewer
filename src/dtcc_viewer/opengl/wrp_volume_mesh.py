@@ -65,12 +65,12 @@ class VolumeMeshWrapper(Wrapper):
         return mesh
 
     def find_unique(self, data):
-        # Convert vertices to a structured array to hash them efficiently
-        copy = data.view(np.dtype((np.void, data.dtype.itemsize * data.shape[1])))
+        # Convert faces to a structured array to hash them efficiently
+        arr = np.ascontiguousarray(data)
+        copy = arr.view(np.dtype((np.void, arr.dtype.itemsize * arr.shape[1]))).ravel()
         vals, inv, counts = np.unique(copy, return_counts=True, return_inverse=True)
         occurrences = counts[inv]
-        unique_mask = occurrences == 1
-        return unique_mask
+        return (occurrences == 1).ravel()
 
     def _calc_mesh_quality(self, volume_mesh: VolumeMesh):
         data_dict = {}

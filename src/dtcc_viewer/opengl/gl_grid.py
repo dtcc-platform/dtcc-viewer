@@ -6,7 +6,7 @@ from pprint import pp
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from dtcc_viewer.opengl.action import Action
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.utils import BoundingBox
 
@@ -80,7 +80,7 @@ class GlGrid:
 
         self.size = 2.0 * np.max([bb_global.xdom, bb_global.ydom])
 
-        info(f"Grid size: {self.size}")
+        debug(f"Grid size: {self.size}")
         grid_size = (self.size, self.size)
         grid_spacing = (1, 1)
         self._create_grid(grid_size, grid_spacing, bb_global.zmin)

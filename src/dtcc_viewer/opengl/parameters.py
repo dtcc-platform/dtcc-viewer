@@ -33,12 +33,16 @@ class GuiParametersGlobal:
         Flag to show the grid.
     show_axes : bool
         Flag to show the axes.
+    show_north : bool
+        Flag to show the north arrow.
     grid_sf : float
         Grid scale factor.
     grid_adapt : bool
         Flag to adapt grid.
     axes_sf : float
         Axes scale factor.
+    north_sf : float
+        North arrow scale factor.
     time : float
         Current time.
     time_acum : float
@@ -64,9 +68,11 @@ class GuiParametersGlobal:
     clip_dist: list
     show_grid: bool
     show_axes: bool
+    show_north: bool
     grid_sf: float
     grid_adapt: bool
     axes_sf: float
+    north_sf: float
     time: float
     time_acum: float
     fps_counter: int
@@ -95,8 +101,10 @@ class GuiParametersGlobal:
         self.update_camera = False
         self.show_grid = True
         self.show_axes = False
+        self.show_north = False
         self.grid_sf = 1.0
         self.axes_sf = 1.0
+        self.north_sf = 1.0
         self.grid_adapt = True
 
     def calc_fps(self):

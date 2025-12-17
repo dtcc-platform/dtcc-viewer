@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 import trimesh
 import dtcc_core.io as io
 
@@ -11,36 +12,44 @@ from pprint import pp
 from dtcc_viewer import utils
 from dtcc_core.io import pointcloud, meshes, roadnetwork
 from dtcc_core.io import load_raster, load_roadnetwork
-from dtcc_core.model import City, Mesh, PointCloud, Object, Raster, Grid, VolumeGrid, Field
-from dtcc_core.model import VolumeMesh, LineString, MultiLineString, Building, RoadNetwork
+from dtcc_core.model import (
+    City,
+    Mesh,
+    PointCloud,
+    Object,
+    Raster,
+    Grid,
+    VolumeGrid,
+    Field,
+)
+from dtcc_core.model import (
+    VolumeMesh,
+    LineString,
+    MultiLineString,
+    Building,
+    RoadNetwork,
+)
 from dtcc_core.model.object.object import GeometryType
+from dtcc_viewer.opengl.situation import Situation
 from dtcc_viewer.opengl.window import Window
 from dtcc_viewer.opengl.scene import Scene
 from dtcc_viewer.opengl.utils import *
 from dtcc_viewer.utils import *
-from dtcc_viewer.logging import set_log_level
+from dtcc_viewer.logging import debug, info, warning, error, critical
 from shapely.geometry import Point
 from dtcc_core.builder import clean_building_surfaces
 
 
 def pointcloud_example_1():
-    filename_csv = "../../../data/models/PointCloud_HQ.csv"
-    pc = pointcloud.load(filename_csv)
-    data = pc.points[:, 0]
-    pc.view(data=data)
-
-
-def pointcloud_example_2():
-    file = "../../../../dtcc-demo-data/helsingborg-harbour-2022/pointcloud.las"
-    pc = pointcloud.load(file)
-
-    field = Field(name="Field: z", values=pc.points[:, 2])
-    pc.add_field(field)
+    file = "../../../data/models/CitySurface.obj"
+    mesh = meshes.load_mesh(file)
+    pc = mesh_to_pointcloud(mesh, 4000000, 1)
 
     data_dict = {}
-    data_dict["vertex_x2"] = pc.points[:, 0] * pc.points[:, 0]
-    data_dict["vertex_y2"] = pc.points[:, 1] * pc.points[:, 1]
-    data_dict["vertex_z2"] = pc.points[:, 2] * pc.points[:, 2]
+    data_dict["x"] = pc.points[:, 0]
+    data_dict["y"] = pc.points[:, 1]
+    data_dict["z"] = pc.points[:, 2]
+
     pc.view(data=data_dict)
 
 
@@ -74,8 +83,15 @@ def mesh_example_3():
 
 
 def mesh_example_4():
+    sit = Situation(
+        lon=22.93,
+        lat=40.64,
+        start=pd.Timestamp("2024-06-01 00:00:00"),
+        end=pd.Timestamp("2024-06-30 23:00:00"),
+        include_night=False,
+    )
     window = Window(1200, 800)
-    scene = Scene()
+    scene = Scene(situation=sit)
     mesh = meshes.load_mesh("../../../data/models/CitySurface.obj")
     pc = PointCloud(points=mesh.vertices)
     scene.add_mesh("MESH", mesh)
@@ -189,18 +205,12 @@ def multilinestring_example_3():
 
 
 def city_example_1():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city = io.load_cityjson("../../../data/models/denhaag.city.json")
     city.view()
 
 
 def city_example_2():
-    city = dtcc_io.load_cityjson("../../../data/models/rotterdam.city.json")
-    city = clean_building_surfaces(city, GeometryType.LOD2)
-    city.view()
-
-
-def city_example_3():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city = io.load_cityjson("../../../data/models/denhaag.city.json")
     building_year = [1900, 1920, 1930, 1945, 1960, 1980, 2000, 2010, 2020, 2030]
     residents = np.arange(10) + 5
 
@@ -211,17 +221,8 @@ def city_example_3():
     city.view()
 
 
-def city_example_4():
-    file1 = "../../../data/models/citygml_loz_buildings_energy_20230819.json"
-    file2 = "../../../data/models/lozenets_citygml2cityjson.json"
-    file3 = "../../../data/models/lozenets_citygml2cityjson_lod1_replaced.json"
-    file4 = "../../../data/models/lozenets_citygml2cityjson_with_facades_2.json"
-    city = dtcc_io.load_cityjson(file1)
-    city.view()
-
-
-def city_example_5():
-    city = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+def city_example_3():
+    city = io.load_cityjson("../../../data/models/denhaag.city.json")
 
     # Add some geometries to the city
     n = 30
@@ -249,7 +250,7 @@ def city_example_5():
 
 
 def building_example_1():
-    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = io.load_cityjson("../../../data/models/denhaag.city.json")
     building = city_dhg.buildings[5]
     building.view()
 
@@ -257,8 +258,7 @@ def building_example_1():
 def building_example_2():
     window = Window(1200, 800)
     scene = Scene()
-
-    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = io.load_cityjson("../../../data/models/denhaag.city.json")
     for i, building in enumerate(city_dhg.buildings):
         if i < 10:
             scene.add_building(f"building {i}", building)
@@ -267,7 +267,7 @@ def building_example_2():
 
 
 def building_example_3():
-    city_dhg = dtcc_io.load_cityjson("../../../data/models/denhaag.city.json")
+    city_dhg = io.load_cityjson("../../../data/models/denhaag.city.json")
     new_city = City()
     some_buildings = []
     for i, building in enumerate(city_dhg.buildings):
@@ -339,16 +339,6 @@ def raster_example_2():
     raster.view()
 
 
-def raster_example_3():
-    raster = load_raster("../../../data/models/672_61_7550_2017.tif")
-    raster.view()
-
-
-def raster_example_4():
-    raster = load_raster("../../../data/models/652_59_7550_2019.tif")
-    raster.view()
-
-
 def geometries_example():
     origo = Point(0, 0, 0)
     mesh = create_sphere_mesh(Point(20, 0, 0), 3, 50, 50)
@@ -374,7 +364,6 @@ def geometries_example():
     bounds = Bounds(-30, -30, 30, 30, 0, 0)
 
     geometries = [mesh, ls1, ms, bounds, mls, surface, vmesh, grid, vgrid]
-    print(type(geometries))
     window = Window(1200, 800)
     scene = Scene()
     scene.add_geometries("geometries", geometries)
@@ -424,7 +413,7 @@ def volume_grid_example():
     volume_grid.view()
 
 
-def volume_mesh_example():
+def volume_mesh_exampl_1():
     vertices = 10.0 * np.array(
         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, 1]]
     )
@@ -434,35 +423,6 @@ def volume_mesh_example():
 
 
 def volume_mesh_example_2():
-    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
-    vmesh.view()
-
-
-def volume_mesh_example_3():
-    window = Window(1200, 800)
-    scene = Scene()
-    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
-    pc = PointCloud(points=vmesh.vertices)
-    scene.add_volume_mesh("volume mesh", vmesh)
-    scene.add_pointcloud("point cloud", pc)
-    window.render(scene)
-
-
-def volume_mesh_example_4():
-
-    np.set_printoptions(precision=3, suppress=True)
-
-    window = Window(1200, 800)
-    scene = Scene()
-    vmesh = meshes.load_volume_mesh("../../../data/models/volume_mesh_step_34.vtu")
-    cell_mask = np.zeros(len(vmesh.cells), dtype=bool)
-    cell_mask[0::400] = True
-    sub_vmesh = get_sub_volume_mesh_from_mask(cell_mask, vmesh)
-    scene.add_volume_mesh("volume mesh", sub_vmesh)
-    window.render(scene)
-
-
-def volume_mesh_example_5():
     window = Window(1200, 800)
     scene = Scene()
     vmesh = create_tetrahedral_cube_mesh(10, 10, 10, 10)
@@ -473,10 +433,9 @@ def volume_mesh_example_5():
     window.render(scene)
 
 
-def road_network_example():
-    filename = "../../../data/models/helsingborg_road_data.shp"
-    rn = load_roadnetwork(filename)
-    rn.view()
+def north_arrows_example():
+    mesh = create_compass(1.5)
+    mesh.view()
 
 
 def crasch_test():
@@ -561,14 +520,12 @@ def crasch_empty_geometry():
 
 if __name__ == "__main__":
     os.system("clear")
-    print("-------- View test started from main function -------")
-    set_log_level("INFO")
+    info("-------- View test started from main function -------")
     # pointcloud_example_1()
-    # pointcloud_example_2()
     # mesh_example_1()
     # mesh_example_2()
     # mesh_example_3()
-    # mesh_example_4()
+    mesh_example_4()
     # mesh_example_5()
     # linestring_example_2()
     # multilinestring_example_1()
@@ -582,24 +539,18 @@ if __name__ == "__main__":
     # surface_example()
     # grid_example()
     # volume_grid_example()
-    # volume_mesh_example()
+    # volume_mesh_example_1()
     # volume_mesh_example_2()
-    # volume_mesh_example_3()
-    # volume_mesh_example_4()
     # raster_example_1()
     # raster_example_2()
-    # raster_example_3()
-    # raster_example_4()
-    # road_network_example()
-    # building_example_2()
     # city_example_1()
     # city_example_2()
     # city_example_3()
-    # city_example_4()
-    # city_example_5()
     # building_example_1()
+    # building_example_2()
     # building_example_3()
     # object_example_1()
     # object_example_2()
+    # north_arrows_example()
     # crasch_test()
     # crasch_empty_geometry()

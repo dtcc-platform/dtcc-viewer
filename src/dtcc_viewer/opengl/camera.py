@@ -3,7 +3,7 @@ from pyrr import Vector3, vector, vector3, matrix44
 from math import sin, cos, radians
 from dtcc_viewer.opengl.parameters import GuiParametersGlobal
 from dtcc_viewer.opengl.utils import CameraProjection, CameraView, BoundingBox
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 
 
 class Camera:
@@ -116,7 +116,7 @@ class Camera:
         # Near and far plane scale factor are determined by testing
         self.near_plane = 0.0002 * bb_global.size
         self.far_plane = 20.0 * bb_global.size
-        info(f"Near plane: {self.near_plane:.5f} m, Far plane: {self.far_plane:.0f} m.")
+        debug(f"Near: {self.near_plane:.5f} m, Far : {self.far_plane:.0f} m.")
 
     def save_init_camera(self):
         self.init_camera = {}
@@ -229,16 +229,16 @@ class Camera:
         self.update_camera_vectors()
 
     def print(self):
-        print("Camera settings:")
-        print(f"Camera position: {self.position}")
-        print(f"Camera front vector: {self.front}")
-        print(f"Camera up vector: {self.up}")
-        print(f"Camera right vector: {self.front}")
-        print(f"Camera target: {self.target}")
-        print(f"Camera direction vector: {self.direction}")
-        print(f"Camera distance to target: {self.distance_to_target}")
-        print(f"Camera jaw angle: {self.yaw}")
-        print(f"Camera pitch angle: {self.pitch}")
+        info("Camera settings:")
+        info(f"Camera position: {self.position}")
+        info(f"Camera front vector: {self.front}")
+        info(f"Camera up vector: {self.up}")
+        info(f"Camera right vector: {self.right}")
+        info(f"Camera target: {self.target}")
+        info(f"Camera direction vector: {self.direction}")
+        info(f"Camera distance to target: {self.distance_to_target}")
+        info(f"Camera jaw angle: {self.yaw}")
+        info(f"Camera pitch angle: {self.pitch}")
 
     def update_window_aspect_ratio(self, width, height) -> None:
         """Update the camera's viewport dimensions.

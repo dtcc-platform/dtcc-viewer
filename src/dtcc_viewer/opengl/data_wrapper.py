@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import numbers
-from dtcc_viewer.logging import info, warning
+from dtcc_viewer.logging import info, warning, debug
 from dtcc_core.model import Mesh, LineString, MultiLineString
 from dtcc_core.model import PointCloud
 from abc import ABC, abstractmethod
@@ -61,7 +61,7 @@ class DataWrapper(ABC):
         """
         self.row_count = math.ceil(d_count / self.max_tex_size)
         self.col_count = self.max_tex_size
-        info(f"Data matrix has {self.row_count} rows and {self.col_count} columns.")
+        debug(f"Data matrix has {self.row_count} rows and {self.col_count} columns.")
 
     def get_keys(self) -> list[str]:
         """
@@ -93,7 +93,7 @@ class DataWrapper(ABC):
         new_data[0 : len(data)] = data
         new_data = np.reshape(new_data, (self.row_count, self.col_count))
         new_data = np.array(new_data, dtype="float32")
-        info(f"New data shape: {new_data.shape}.")
+        debug(f"New data shape: {new_data.shape}.")
         return new_data
 
     def _calc_texel_indices(self, d_count: int):
@@ -117,7 +117,7 @@ class DataWrapper(ABC):
         self.texel_x = texel_indices_x
         self.texel_y = texel_indices_y
 
-        info(f"Texel indices for DataWrapper computed.")
+        debug(f"Texel indices for DataWrapper computed.")
 
     def is_numeric(self, value):
         """Check if the value is numeric."""
@@ -193,7 +193,7 @@ class MeshDataWrapper(DataWrapper):
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Data called {name} was added to data dictionary.")
+            debug(f"Data called {name} was added to data dictionary.")
             return True
         else:
             warning(f"Data called {name} was not added to data dictionary.")
@@ -222,7 +222,7 @@ class MeshDataWrapper(DataWrapper):
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Attribute data '{name}' was added to data dictionary.")
+            debug(f"Attribute data '{name}' was added to data dictionary.")
             return True
         else:
             warning(f"Attribute data '{name}' was not added to data dictionary.")
@@ -394,7 +394,7 @@ class PointsDataWrapper(DataWrapper):
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Data called '{name}' was added to data dictionary.")
+            debug(f"Data called '{name}' was added to data dictionary.")
             return True
         else:
             warning(f"Data called '{name}' was not added to data dictionary.")
@@ -414,7 +414,10 @@ class PointsDataWrapper(DataWrapper):
         tuple or (None, None)
             Processed data matrix and value caps if successful, otherwise (None, None).
         """
-        if len(data) != self.p_count:  # TODO: Allow data to be associated with faces
+        if len(data) == 0:
+            warning(f"Data is empty.")
+            return None, None
+        elif len(data) != self.p_count:  # TODO: Allow data to be associated with faces
             warning(f"Data count does not match point count.")
             return None, None
         else:
@@ -479,7 +482,7 @@ class LinesDataWrapper(DataWrapper):
         if (data_mat is not None) and (val_caps is not None):
             self.data_mat_dict[name] = data_mat
             self.data_min_max[name] = val_caps
-            info(f"Data called {name} was added to data dictionary.")
+            debug(f"Data called {name} was added to data dictionary.")
             return True
         else:
             warning(f"Data called {name} was not added to data dictionary.")

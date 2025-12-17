@@ -27,10 +27,9 @@ import dtcc_core.builder as builder
 class GeometriesWrapper(Wrapper):
     """GeometriesWrapper restructures a list of geomety for visualisation.
 
-    This class wrapps a list of geometry objects for visualisation. It encapsulates
+    This class wraps a list of geometry objects for visualisation. It encapsulates
     information about buildings, roads etc, various meta data and provides methods to
     create a Mesh representation for the purpous of rendering.
-    the OpenGL functions.
 
     Attributes
     ----------
