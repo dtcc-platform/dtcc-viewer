@@ -34,7 +34,7 @@ dependencies = [
   "pillow",
   "glfw",
   "tqdm>=4.66.1",
-  "dtcc-core == 0.95",
+  "dtcc-core == 0.96",
 ]
 
 [tool.setuptools]
