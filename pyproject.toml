@@ -32,12 +32,11 @@ dependencies = [
   "pyrr",
   "pillow",
   "glfw",
-  "imgui",
-  "pvlib >= 0.9.4",
+  "imgui @ ./pyimgui",
   "tqdm>=4.66.1",
-  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
+  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
 ]
 
 [project.optional-dependencies]
 test = ["pytest"]
-dev = ["easydev","black"]
+dev = ["easydev", "black"]
