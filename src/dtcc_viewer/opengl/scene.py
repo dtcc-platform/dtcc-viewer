@@ -438,8 +438,6 @@ class Scene:
                 next_id = self.update_ids(wrp, next_id)
             elif isinstance(wrp, MultiSurfaceWrapper):
                 next_id = self.update_ids(wrp.mesh_wrp, next_id)
-            elif isinstance(wrp, MultiSurfaceWrapper):
-                next_id = self.update_ids(wrp.mesh_wrp, next_id)
             elif isinstance(wrp, CityWrapper):
                 if wrp.mesh_ter is not None:
                     next_id = self.update_ids(wrp.mesh_ter, next_id)

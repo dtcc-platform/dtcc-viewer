@@ -229,16 +229,16 @@ class Camera:
         self.update_camera_vectors()
 
     def print(self):
-        print("Camera settings:")
-        print(f"Camera position: {self.position}")
-        print(f"Camera front vector: {self.front}")
-        print(f"Camera up vector: {self.up}")
-        print(f"Camera right vector: {self.front}")
-        print(f"Camera target: {self.target}")
-        print(f"Camera direction vector: {self.direction}")
-        print(f"Camera distance to target: {self.distance_to_target}")
-        print(f"Camera jaw angle: {self.yaw}")
-        print(f"Camera pitch angle: {self.pitch}")
+        info("Camera settings:")
+        info(f"Camera position: {self.position}")
+        info(f"Camera front vector: {self.front}")
+        info(f"Camera up vector: {self.up}")
+        info(f"Camera right vector: {self.right}")
+        info(f"Camera target: {self.target}")
+        info(f"Camera direction vector: {self.direction}")
+        info(f"Camera distance to target: {self.distance_to_target}")
+        info(f"Camera jaw angle: {self.yaw}")
+        info(f"Camera pitch angle: {self.pitch}")
 
     def update_window_aspect_ratio(self, width, height) -> None:
         """Update the camera's viewport dimensions.
