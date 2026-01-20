@@ -175,10 +175,14 @@ class Window:
                     self.gl_objects.append(GlPoints(wrapper.pc_wrp))
 
             elif isinstance(wrapper, CityWrapper):
+                if wrapper.mesh_city is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_city))
                 if wrapper.mesh_bld is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_bld))
                 if wrapper.mesh_ter is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_ter))
+                if wrapper.mesh_trees is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_trees))
                 for grid_wrp in wrapper.grid_wrps:
                     self.gl_objects.append(GlLines(grid_wrp.lines_wrp))
                 for vgrid_wrp in wrapper.vgrid_wrps:

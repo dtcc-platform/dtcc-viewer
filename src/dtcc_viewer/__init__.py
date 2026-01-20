@@ -1,4 +1,4 @@
-from .opengl import *
+from .scene_builder import scene
 from .pointcloud import view as view_pointcloud
 from .mesh import view as view_mesh
 from .city import view as view_city
@@ -53,14 +53,11 @@ RoadNetwork.add_methods(view_roadnetwork, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [
+    "scene",
     "view_pointcloud",
     "view_city",
     "view_mesh",
     "view_building",
     "view_object",
     "view_raster",
-    "Window",
-    "Scene",
-    "Shading",
-    "Situation",
 ]

@@ -1,7 +1,7 @@
 import numpy as np
 from time import time
 from collections import Counter
-from dtcc_core.model import City, MultiSurface, Surface, Building, Mesh, Terrain
+from dtcc_core.model import City, MultiSurface, Surface, Building, Mesh, Terrain, Tree
 from dtcc_viewer.utils import *
 from dtcc_viewer.opengl.utils import BoundingBox
 from dtcc_viewer.opengl.parts import Parts
@@ -48,8 +48,10 @@ class CityWrapper(Wrapper):
 
     name: str
     bb_global: BoundingBox = None
+    mesh_city: MeshWrapper = None  # Full city mesh (if provided)
     mesh_bld: MeshWrapper = None
     mesh_ter: MeshWrapper = None
+    mesh_trees: MeshWrapper = None
     grid_wrps: list[GridWrapper] = []
     vgrid_wrps: list[VolumeGridWrapper] = []
     pc_wrps: list[PointCloudWrapper] = []
@@ -69,15 +71,28 @@ class CityWrapper(Wrapper):
         self.name = name
         self.dict_data = {}
 
-        # Read the city model and generate the mesh geometry for buildings and terrain
-        (mesh_t, parts_t) = self._get_terrain_mesh(city)
-        (mesh_b, parts_b) = self._generate_building_mesh(city)
+        # Check if city has a pre-built full mesh
+        full_mesh = city.geometry.get(GeometryType.MESH, None)
 
-        if mesh_t is not None:
-            self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, None, parts_t)
+        if full_mesh is not None:
+            # Use the full mesh directly (skip building/terrain extraction)
+            info("Using pre-built city mesh from city.geometry[MESH]")
+            self.mesh_city = MeshWrapper("city", full_mesh, mts, None, None)
+        else:
+            # Extract terrain and building meshes separately
+            (mesh_t, parts_t) = self._get_terrain_mesh(city)
+            (mesh_b, parts_b) = self._generate_building_mesh(city)
 
-        if mesh_b is not None:
-            self.mesh_bld = MeshWrapper("buildings", mesh_b, mts, None, parts_b)
+            if mesh_t is not None:
+                self.mesh_ter = MeshWrapper("terrain", mesh_t, mts, None, parts_t)
+
+            if mesh_b is not None:
+                self.mesh_bld = MeshWrapper("buildings", mesh_b, mts, None, parts_b)
+
+        # Always extract tree meshes from children
+        (mesh_tr, parts_tr) = self._get_tree_mesh(city)
+        if mesh_tr is not None:
+            self.mesh_trees = MeshWrapper("trees", mesh_tr, mts, None, parts_tr)
 
         grids = self._get_grids(city)
         for i, grid in enumerate(grids):
@@ -97,11 +112,17 @@ class CityWrapper(Wrapper):
         info("CityWrapper initialized")
 
     def preprocess_drawing(self, bb_global: BoundingBox):
+        if self.mesh_city is not None:
+            self.mesh_city.preprocess_drawing(bb_global)
+
         if self.mesh_ter is not None:
             self.mesh_ter.preprocess_drawing(bb_global)
 
         if self.mesh_bld is not None:
             self.mesh_bld.preprocess_drawing(bb_global)
+
+        if self.mesh_trees is not None:
+            self.mesh_trees.preprocess_drawing(bb_global)
 
         for grid in self.grid_wrps:
             grid.preprocess_drawing(bb_global)
@@ -115,12 +136,20 @@ class CityWrapper(Wrapper):
     def get_vertex_positions(self):
         vertices = np.array([])
 
+        if self.mesh_city is not None:
+            vertex_pos = self.mesh_city.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
         if self.mesh_ter is not None:
             vertex_pos = self.mesh_ter.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         if self.mesh_bld is not None:
             vertex_pos = self.mesh_bld.get_vertex_positions()
+            vertices = np.concatenate((vertices, vertex_pos), axis=0)
+
+        if self.mesh_trees is not None:
+            vertex_pos = self.mesh_trees.get_vertex_positions()
             vertices = np.concatenate((vertices, vertex_pos), axis=0)
 
         for grid in self.grid_wrps:
@@ -161,6 +190,29 @@ class CityWrapper(Wrapper):
             return mesh, submeshes
 
         return None, None
+
+    def _get_tree_mesh(self, city: City):
+        meshes = []
+        uuids = []
+        attributes = []
+        tree_list = city.children[Tree]
+
+        for tree in tree_list:
+            mesh = tree.geometry.get(GeometryType.MESH, None)
+            uuid = tree.id
+            if mesh is not None:
+                meshes.append(mesh)
+                uuids.append(uuid)
+                attributes.append(tree.attributes)
+
+        if len(meshes) == 0:
+            info("No tree meshes found in city model")
+            return None, None
+        else:
+            parts = Parts(meshes, uuids, attributes)
+            mesh = concatenate_meshes(meshes)
+            info(f"Tree mesh with {len(mesh.faces)} faces was found from {len(meshes)} tree(s)")
+            return mesh, parts
 
     def _generate_building_mesh(self, city: City):
         uuids = []
@@ -238,10 +290,22 @@ class CityWrapper(Wrapper):
         return geom
 
     def _get_pcs(self, city: City):
+        pcs = []
+
+        # Get point clouds from city itself
         geom = city.geometry.get(GeometryType.POINT_CLOUD, None)
+        if geom is not None:
+            if not isinstance(geom, list):
+                pcs.append(geom)
+            else:
+                pcs.extend(geom)
 
-        if type(geom) != list:
-            geom = [geom]
+        # Get point clouds from child objects (Tree, Building, etc.)
+        for child_type, child_list in city.children.items():
+            for child in child_list:
+                child_geom = child.geometry.get(GeometryType.POINT_CLOUD, None)
+                if child_geom is not None:
+                    pcs.append(child_geom)
 
-        info(f"Found {len(geom)} pc(s) in city model")
-        return geom
+        info(f"Found {len(pcs)} pc(s) in city model")
+        return pcs
