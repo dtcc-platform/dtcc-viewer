@@ -94,6 +94,12 @@ class Parts:
             self.attributes = None
 
     def offset_ids(self, id_offset):
+        # Update attributes dictionary keys to match new IDs
+        if self.attributes is not None:
+            self.attributes = {
+                old_id + id_offset: attrs
+                for old_id, attrs in self.attributes.items()
+            }
         self.ids = self.ids + id_offset
 
     def id_exists(self, id):

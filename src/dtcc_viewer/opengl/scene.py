@@ -3,6 +3,7 @@ from OpenGL.GL import *
 from dtcc_viewer.opengl.wrp_city import CityWrapper
 from dtcc_viewer.opengl.wrp_object import ObjectWrapper
 from dtcc_viewer.opengl.wrp_mesh import MeshWrapper
+from dtcc_viewer.opengl.parts import Parts
 from dtcc_viewer.opengl.wrp_grid import GridWrapper, VolumeGridWrapper
 from dtcc_viewer.opengl.wrp_pointcloud import PointCloudWrapper
 from dtcc_viewer.opengl.wrp_linestring import LineStringWrapper, MultiLineStringWrapper
@@ -76,6 +77,27 @@ class Scene:
             self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data))
         else:
             warning(f"Failed to add Mesh called '{name}' to the scene")
+
+    def add_mesh_with_parts(self, name: str, mesh: Mesh, parts: Parts, data: Any = None):
+        """
+        Add a mesh with pre-defined parts to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the mesh.
+        mesh : Mesh
+            Mesh object to be added.
+        parts : Parts
+            Parts object defining clickable sub-regions of the mesh.
+        data : Any, optional
+            Additional data associated with the mesh.
+        """
+        if mesh is not None and isinstance(mesh, Mesh) and self.has_geom(mesh, name):
+            info(f"Mesh with parts called '{name}' added to scene")
+            self.wrappers.append(MeshWrapper(name, mesh, self.mts, data=data, parts=parts))
+        else:
+            warning(f"Failed to add Mesh with parts called '{name}' to the scene")
 
     def add_multisurface(self, name: str, ms: MultiSurface):
         """
