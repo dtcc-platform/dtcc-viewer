@@ -88,7 +88,7 @@ class Camera:
         self.target = Vector3([0.0, 0.0, 0.0])
         self.direction = Vector3([0.0, 0.0, 0.0])
 
-        self.aspect_ratio = float(width) / float(height)
+        self.aspect_ratio = self._safe_aspect_ratio(width, height, fallback=1.0)
         self.near_plane = 10.0
         self.far_plane = 1000000
         self.fov = 25
@@ -103,6 +103,23 @@ class Camera:
         self.rotation_lock = False
 
         self.update_camera_vectors()
+
+    def _safe_aspect_ratio(self, width, height, fallback: float) -> float:
+        """Compute aspect ratio defensively.
+
+        If height is 0 (common when a GLFW window is minimised), keep a fallback
+        ratio rather than raising.
+        """
+        try:
+            w = int(width)
+            h = int(height)
+        except Exception:
+            return fallback
+
+        if w <= 0 or h <= 0:
+            return fallback
+
+        return float(w) / float(h)
 
     def calc_near_far_planes(self, bb_global: BoundingBox):
         """Calculate the near and far clipping plane distances based on the bounding box.
@@ -241,16 +258,17 @@ class Camera:
         info(f"Camera pitch angle: {self.pitch}")
 
     def update_window_aspect_ratio(self, width, height) -> None:
-        """Update the camera's viewport dimensions.
+        """Update aspect ratio, ignoring transient invalid sizes."""
+        # Keep previous valid value if we get 0 (minimise / race during resize)
+        fallback = self.aspect_ratio if getattr(self, "aspect_ratio", None) else 1.0
+        new_ar = self._safe_aspect_ratio(width, height, fallback=fallback)
 
-        Parameters
-        ----------
-        width : int
-            The new width of the viewport.
-        height : int
-            The new height of the viewport.
-        """
-        self.aspect_ratio = float(width) / float(height)
+        # If sizes are valid, remember them
+        if int(width) > 0 and int(height) > 0:
+            self._last_valid_width = int(width)
+            self._last_valid_height = int(height)
+
+        self.aspect_ratio = new_ar
 
     def set_aspect_ratio(self, aspect_ratio) -> None:
         """Set the camera's aspect ratio.
