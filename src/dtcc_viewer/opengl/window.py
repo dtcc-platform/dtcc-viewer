@@ -89,7 +89,7 @@ class Window:
     time: float
     time_acum: float
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, visible: bool = True):
         """Initialize the OpenGL rendering window and setting up default parameters.
 
         Parameters
@@ -98,7 +98,11 @@ class Window:
             The width of the window in pixels.
         height : int
             The height of the window in pixels.
+        visible : bool
+            Whether to show the window on screen. Set to False for offscreen
+            rendering via screenshot().
         """
+        self._visible = visible
         self.win_width = width
         self.win_height = height
         self.action = Action(width, height)
@@ -114,6 +118,10 @@ class Window:
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+
+        if not visible:
+            glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+
         self.window = glfw.create_window(
             self.win_width, self.win_height, "DTCC Viewer", None, None
         )  # Create window
@@ -122,14 +130,15 @@ class Window:
             glfw.terminate()
             raise Exception("glfw window can not be created!")
 
-        # Calculate screen position for window
-        primary_monitor = glfw.get_primary_monitor()
-        mode = glfw.get_video_mode(primary_monitor)
+        if visible:
+            # Calculate screen position for window
+            primary_monitor = glfw.get_primary_monitor()
+            mode = glfw.get_video_mode(primary_monitor)
 
-        x_pos = (mode.size.width - self.win_width) // 2
-        y_pos = (mode.size.height - self.win_height) // 2
+            x_pos = (mode.size.width - self.win_width) // 2
+            y_pos = (mode.size.height - self.win_height) // 2
 
-        glfw.set_window_pos(self.window, x_pos, y_pos)
+            glfw.set_window_pos(self.window, x_pos, y_pos)
 
         # Calls can be made after the contex is made current
         glfw.make_context_current(self.window)
@@ -365,6 +374,109 @@ class Window:
 
             glfw.swap_buffers(self.window)
 
+        glfw.terminate()
+
+    def screenshot(self, scene: Scene, filepath: str,
+                   width: int | None = None, height: int | None = None):
+        """Render the scene offscreen and save a PNG screenshot.
+
+        Parameters
+        ----------
+        scene : Scene
+            The scene containing objects to render.
+        filepath : str
+            Output PNG file path.
+        width : int, optional
+            FBO width in pixels. Defaults to self.win_width.
+        height : int, optional
+            FBO height in pixels. Defaults to self.win_height.
+        """
+        from PIL import Image
+
+        fbo_w = width or self.win_width
+        fbo_h = height or self.win_height
+
+        if scene.wrappers is None or len(scene.wrappers) == 0:
+            warning("Scene has no objects to render. Screenshot aborted!")
+            self._cleanup()
+            return False
+
+        if not scene.preprocess_drawing():
+            warning("Scene preprocessing failed. Screenshot aborted!")
+            self._cleanup()
+            return False
+
+        if not self._preprocess_model(scene):
+            warning("Model preprocessing failed. Screenshot aborted!")
+            self._cleanup()
+            return False
+
+        # Create dedicated FBO for screenshot
+        fbo = glGenFramebuffers(1)
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo)
+
+        # Color texture (RGBA)
+        color_tex = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, color_tex)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbo_w, fbo_h, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, None)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, color_tex, 0)
+
+        # Depth+stencil renderbuffer
+        rbo = glGenRenderbuffers(1)
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo)
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbo_w, fbo_h)
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                  GL_RENDERBUFFER, rbo)
+
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
+            warning("Screenshot FBO is not complete!")
+            self._cleanup()
+            return False
+
+        # Set viewport and update action for correct aspect ratio
+        glViewport(0, 0, fbo_w, fbo_h)
+        self.action.update_window_size(fbo_w, fbo_h, fbo_w, fbo_h)
+
+        # Render one frame
+        glClearColor(0.0, 0.0, 0.0, 1.0)
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glDepthFunc(GL_LESS)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        if self.model.guip.show:
+            self.model.render(self.action)
+        self.gl_grid.render(self.action)
+        self.gl_axes.render(self.action)
+        self.gl_north.render(self.action)
+
+        # Read pixels
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        data = glReadPixels(0, 0, fbo_w, fbo_h, GL_RGBA, GL_UNSIGNED_BYTE)
+        image = np.frombuffer(data, dtype=np.uint8).reshape(fbo_h, fbo_w, 4)
+        image = np.flipud(image)  # OpenGL Y is bottom-up
+
+        # Save to file
+        Image.fromarray(image).save(filepath)
+        info(f"Screenshot saved to {filepath}")
+
+        # Cleanup FBO resources
+        glDeleteFramebuffers(1, [fbo])
+        glDeleteTextures(1, [color_tex])
+        glDeleteRenderbuffers(1, [rbo])
+
+        self._cleanup()
+        return True
+
+    def _cleanup(self):
+        """Destroy the GLFW window and terminate."""
+        if self.window:
+            glfw.destroy_window(self.window)
+            self.window = None
         glfw.terminate()
 
     def _window_resize_callback(self, window, width, height):
