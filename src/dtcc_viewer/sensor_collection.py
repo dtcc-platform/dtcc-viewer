@@ -29,6 +29,12 @@ def view(sc, field_name=None, size=5.0, sphere_radius=None, screenshot=None):
         opening an interactive window.
     """
     window_w, window_h = 1200, 800
+
+    if screenshot:
+        window = Window(window_w, window_h, visible=False)
+    else:
+        window = Window(window_w, window_h)
+
     scene = Scene()
 
     if sphere_radius == 0:
@@ -46,8 +52,6 @@ def view(sc, field_name=None, size=5.0, sphere_radius=None, screenshot=None):
         scene.add_sensor_collection("Sensors", sc, sphere_radius=radius)
 
     if screenshot:
-        window = Window(window_w, window_h, visible=False)
         window.screenshot(scene, screenshot, window_w, window_h)
     else:
-        window = Window(window_w, window_h)
         window.render(scene)
