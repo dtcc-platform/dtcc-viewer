@@ -14,6 +14,7 @@ from .volume_mesh import view as view_volume_mesh
 from .linestring import view as view_linestring
 from .multilinestring import view as view_multilinestring
 from .roadnetwork import view as view_roadnetwork
+from .sensor_collection import view as view_sensor_collection
 
 
 from dtcc_core.model import (
@@ -32,6 +33,7 @@ from dtcc_core.model import (
     LineString,
     MultiLineString,
     RoadNetwork,
+    SensorCollection,
 )
 
 # Add model extensions
@@ -50,6 +52,7 @@ VolumeMesh.add_methods(view_volume_mesh, "view")
 LineString.add_methods(view_linestring, "view")
 MultiLineString.add_methods(view_multilinestring, "view")
 RoadNetwork.add_methods(view_roadnetwork, "view")
+SensorCollection.add_methods(view_sensor_collection, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [

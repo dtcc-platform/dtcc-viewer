@@ -13,12 +13,13 @@ from dtcc_viewer.opengl.wrp_raster import RasterWrapper, MultiRasterWrapper
 from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
+from dtcc_viewer.opengl.wrp_sensor_collection import SensorCollectionWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.opengl.situation import Situation
 from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
-from dtcc_core.model import RoadNetwork, LineString, MultiLineString
+from dtcc_core.model import RoadNetwork, LineString, MultiLineString, SensorCollection
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning, debug
@@ -377,6 +378,32 @@ class Scene:
         else:
             warning(f"Failed to add road network called '{name}' to scene")
 
+    def add_sensor_collection(
+        self, name: str, sensor_collection: SensorCollection, sphere_radius: float = 2.0
+    ):
+        """Add a sensor collection to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the sensor collection.
+        sensor_collection : SensorCollection
+            SensorCollection object to be added.
+        sphere_radius : float, optional
+            Radius of the station spheres.
+        """
+        if sensor_collection is not None and isinstance(
+            sensor_collection, SensorCollection
+        ):
+            info(f"SensorCollection called '{name}' added to scene")
+            self.wrappers.append(
+                SensorCollectionWrapper(
+                    name, sensor_collection, self.mts, sphere_radius=sphere_radius
+                )
+            )
+        else:
+            warning(f"Failed to add SensorCollection called '{name}' to the scene")
+
     def preprocess_drawing(self):
         """
         Preprocess bounding box calculation for all scene objects.
@@ -467,6 +494,9 @@ class Scene:
                     next_id = self.update_ids(wrp.mesh_vol_wrp, next_id)
                 if wrp.mesh_env_wrp is not None:
                     next_id = self.update_ids(wrp.mesh_env_wrp, next_id)
+            elif isinstance(wrp, SensorCollectionWrapper):
+                if wrp.mesh_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
         """
