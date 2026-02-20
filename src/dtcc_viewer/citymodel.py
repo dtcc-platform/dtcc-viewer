@@ -1,4 +1,3 @@
-import logging
 import tempfile
 from pathlib import Path
 
@@ -6,7 +5,7 @@ import dtcc_core.io as io
 import folium
 from dtcc_core.model import City
 
-from .logging import info
+from .logging import info, warning
 from .notebook_functions import is_notebook
 from .utils import get_random_colors
 
@@ -36,16 +35,16 @@ def create_style_function(cm: City, color_field: str, color_map: str):
             num_unique_attrs = len(unique_attributes)
             info(f"num_unique_attrs: {num_unique_attrs}")
         except KeyError:
-            logging.warning(f"buildings don't have {color_field} attribute")
+            warning(f"buildings don't have {color_field} attribute")
+            return lambda x: {"fillColor": "#aa0000"}
         colors = get_random_colors(num_unique_attrs)
         color_map = {
             attr: _rgb_to_hexstring(colors[i])
             for i, attr in enumerate(unique_attributes)
         }
-        print(color_map)
         return lambda x: {"fillColor": color_map[x["properties"][color_field]]}
     else:
-        lambda x: {"fillColor": "#0000aa"}
+        return lambda x: {"fillColor": "#0000aa"}
 
 
 def view(

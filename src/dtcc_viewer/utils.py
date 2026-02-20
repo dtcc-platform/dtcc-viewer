@@ -9,6 +9,7 @@ from enum import IntEnum
 from colorsys import hsv_to_rgb
 from math import exp, sqrt
 import random
+from .logging import debug, warning
 
 
 class ColorBy(Enum):
@@ -159,7 +160,7 @@ def get_sub_mesh(xdom: list, ydom: list, mesh: Mesh) -> Mesh:
 
         return mesh_dtcc
     else:
-        print(f"Invalid domain.")
+        warning("Invalid domain")
         return mesh
 
 
@@ -243,9 +244,8 @@ def get_sub_volume_mesh_from_mask(cell_mask: np.ndarray, vmesh: VolumeMesh) -> M
 
 
 def get_sub_mesh_from_mask(face_mask: np.ndarray, mesh: Mesh) -> Mesh:
-
-    print("fase_mask")
-    print(face_mask)
+    debug("face_mask")
+    debug(str(face_mask))
     faces = mesh.faces[face_mask, :]
     faces_flat = faces.flatten()
     unique_vertex_indices = np.unique(faces_flat)
