@@ -179,6 +179,7 @@ class GuiParametersModel:
         self.picked_id = -1
         self.picked_uuid = ""
         self.picked_metadata = ""
+        self.picked_attributes = None
         self.picked_cp = np.array([0.0, 0.0, 0.0], dtype=np.float32)
         self.picked_size = 0.0
 

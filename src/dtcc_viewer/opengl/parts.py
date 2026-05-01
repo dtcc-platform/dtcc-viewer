@@ -1,4 +1,5 @@
 import numpy as np
+import numbers
 from dtcc_core.model import Mesh
 from pprint import pp
 from dtcc_viewer.logging import info, warning
@@ -87,6 +88,10 @@ class Parts:
         self.face_start_indices = np.array(face_start_indices)
         self.face_end_indices = np.array(face_end_indices)
         self.ids = np.array(ids)
+        if uuids is not None:
+            self.ids_2_uuids = {key: value for key, value in zip(ids, uuids)}
+        else:
+            self.ids_2_uuids = {}
 
         if attributes is not None:
             self.attributes = {key: value for key, value in zip(ids, attributes)}
@@ -94,7 +99,23 @@ class Parts:
             self.attributes = None
 
     def offset_ids(self, id_offset):
+        old_ids = self.ids.copy()
         self.ids = self.ids + id_offset
+        id_map = {
+            int(old_id): int(new_id) for old_id, new_id in zip(old_ids, self.ids)
+        }
+
+        if self.attributes is not None:
+            self.attributes = {
+                id_map.get(int(key), int(key)): value
+                for key, value in self.attributes.items()
+            }
+
+        if self.ids_2_uuids:
+            self.ids_2_uuids = {
+                id_map.get(int(key), int(key)): value
+                for key, value in self.ids_2_uuids.items()
+            }
 
     def id_exists(self, id):
         return id in self.ids
@@ -129,6 +150,18 @@ class Parts:
                 unique_keys.update(attributes.keys())
 
         return unique_keys
+
+    def get_numeric_attribute_keys(self):
+        if self.attributes is None:
+            return []
+
+        keys = sorted(self.get_unique_attribute_keys())
+        numeric_keys = []
+        for key in keys:
+            values = self.get_attribute_data(key)
+            if all(isinstance(value, numbers.Number) for value in values):
+                numeric_keys.append(key)
+        return numeric_keys
 
     def get_attribute_data(self, key):
         data = []

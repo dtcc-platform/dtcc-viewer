@@ -357,7 +357,13 @@ class Scene:
         else:
             warning(f"Failed to add grid called '{name}' to scene")
 
-    def add_roadnetwork(self, name: str, road_network: Any):
+    def add_roadnetwork(
+        self,
+        name: str,
+        road_network: Any,
+        road_width: float = 6.0,
+        z_offset: float = 0.05,
+    ):
         """
         Add a road network to the scene.
 
@@ -367,6 +373,10 @@ class Scene:
             Name of the road network.
         road_network : Any
             RoadNetwork object to be added.
+        road_width : float, default 6.0
+            Rendered road ribbon width in model units.
+        z_offset : float, default 0.05
+            Small vertical offset for road ribbons to avoid z-fighting.
         """
         if (
             road_network is not None
@@ -374,7 +384,15 @@ class Scene:
             and self.has_geom(road_network, name)
         ):
             info(f"Road network called '{name}' added to scene")
-            self.wrappers.append(RoadNetworkWrapper(name, road_network, self.mts))
+            self.wrappers.append(
+                RoadNetworkWrapper(
+                    name,
+                    road_network,
+                    self.mts,
+                    road_width=road_width,
+                    z_offset=z_offset,
+                )
+            )
         else:
             warning(f"Failed to add road network called '{name}' to scene")
 
@@ -497,6 +515,9 @@ class Scene:
             elif isinstance(wrp, SensorCollectionWrapper):
                 if wrp.mesh_wrp is not None:
                     next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, RoadNetworkWrapper):
+                if wrp.mesh_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
         """
@@ -542,7 +563,8 @@ class Scene:
             VolumeGrid: lambda obj: len(obj.coordinates()) > 2,
             Grid: lambda obj: len(obj.coordinates()) > 2,
             Building: lambda obj: len(obj.children) > 0 or len(obj.geometry) > 0,
-            RoadNetwork: lambda obj: len(obj.vertices) > 0,
+            RoadNetwork: lambda obj: len(obj.linestrings) > 0
+            or (len(obj.vertices) > 0 and len(obj.edges) > 0),
             VolumeMesh: lambda obj: len(obj.vertices) > 3 and len(obj.cells) > 0,
             Bounds: lambda obj: obj.width != 0.0 and obj.height != 0.0,
             Raster: lambda obj: len(obj.data) > 0,

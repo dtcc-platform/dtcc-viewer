@@ -465,6 +465,7 @@ class GlModel:
             self.guip.picked_cp = None
             self.guip.picked_uuid = ""
             self.guip.picked_metadata = ""
+            self.guip.picked_attributes = None
         else:
             action.picked_id = picked_id_new
             self.guip.picked_id = picked_id_new
@@ -674,6 +675,7 @@ class GlModel:
     def _find_object_from_id(self, id):
         """Find the object that has the id and set the picked object."""
         self.guip.picked_uuid = None
+        self.guip.picked_attributes = None
         for obj in self.gl_objects:
             if isinstance(obj, GlMesh):  # Only meshes are pickable atm
                 if obj.parts is not None:

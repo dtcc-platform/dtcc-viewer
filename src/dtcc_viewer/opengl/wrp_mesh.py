@@ -108,7 +108,7 @@ class MeshWrapper(Wrapper):
         # Add data from parts
         if parts is not None:
             if parts.attributes is not None:
-                attribute_keys = parts.get_unique_attribute_keys()
+                attribute_keys = parts.get_numeric_attribute_keys()
                 for key in attribute_keys:
                     attribute = parts.get_attribute_data(key)
                     success = self.data_wrapper.add_parts_data(key, attribute, parts)

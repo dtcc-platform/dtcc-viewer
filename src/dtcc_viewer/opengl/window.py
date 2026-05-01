@@ -241,7 +241,10 @@ class Window:
                 self.gl_objects.append(GlLines(wrapper))
 
             elif isinstance(wrapper, RoadNetworkWrapper):
-                self.gl_objects.append(GlLines(wrapper.mls_wrp))
+                if wrapper.mesh_wrp is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
+                elif wrapper.mls_wrp is not None:
+                    self.gl_objects.append(GlLines(wrapper.mls_wrp))
 
             elif isinstance(wrapper, SensorCollectionWrapper):
                 if wrapper.mesh_wrp is not None:
