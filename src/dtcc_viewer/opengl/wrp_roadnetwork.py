@@ -28,6 +28,7 @@ class RoadNetworkWrapper(Wrapper):
         data: Any = None,  # Dict, np.ndarray
         road_width: float = 6.0,
         z_offset: float = 0.05,
+        color_by: str | None = None,
     ) -> None:
         """Initialize the RoadNetworkWrapper object.
 
@@ -45,6 +46,8 @@ class RoadNetworkWrapper(Wrapper):
             Rendered road ribbon width in model units.
         z_offset : float, default 0.05
             Small vertical offset for road ribbons to avoid z-fighting.
+        color_by : str | None, optional
+            Edge attribute to use as the default road color field.
         """
         self.name = name
         self.data_wrapper = None
@@ -60,7 +63,7 @@ class RoadNetworkWrapper(Wrapper):
                 "Road color": np.full(len(mesh.faces), 0.62, dtype=float),
             }
             self.mesh_wrp = MeshWrapper(name, mesh, mts, data=face_data, parts=parts)
-            self._prioritize_default_road_color(self.mesh_wrp)
+            self._prioritize_road_color(self.mesh_wrp, color_by=color_by)
 
     def preprocess_drawing(self, bb_global: BoundingBox):
         if self.mesh_wrp is not None:
@@ -221,10 +224,12 @@ class RoadNetworkWrapper(Wrapper):
 
         return Mesh(vertices=vertices, faces=faces)
 
-    def _prioritize_default_road_color(self, mesh_wrp: MeshWrapper):
-        key = "Road color"
+    def _prioritize_road_color(
+        self, mesh_wrp: MeshWrapper, color_by: str | None = None
+    ):
         data_wrapper = mesh_wrp.data_wrapper
-        if key not in data_wrapper.data_mat_dict:
+        key = self._default_color_key(data_wrapper.data_mat_dict, color_by)
+        if key is None:
             return
 
         color_data = data_wrapper.data_mat_dict.pop(key)
@@ -232,7 +237,27 @@ class RoadNetworkWrapper(Wrapper):
             key: color_data,
             **data_wrapper.data_mat_dict,
         }
-        data_wrapper.data_min_max[key] = (0.0, 1.0)
+        if key == "Road color":
+            data_wrapper.data_min_max[key] = (0.0, 1.0)
+
+    def _default_color_key(
+        self,
+        data: dict[str, np.ndarray],
+        color_by: str | None,
+    ) -> str | None:
+        if color_by is not None and color_by in data:
+            return color_by
+
+        for key in (
+            "flow",
+            "volume_capacity_ratio",
+            "travel_time",
+            "speed",
+            "Road color",
+        ):
+            if key in data:
+                return key
+        return None
 
     def _as_multilinestring(self, roadnetwork: RoadNetwork) -> MultiLineString:
         mls = roadnetwork.multilinestrings

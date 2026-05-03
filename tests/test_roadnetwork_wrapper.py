@@ -53,6 +53,45 @@ def test_roadnetwork_wrapper_does_not_mutate_geometry_z():
     assert np.allclose(positions[:, 2], 0.05)
 
 
+def test_roadnetwork_wrapper_prioritizes_flow_attribute():
+    roadnetwork = RoadNetwork()
+    roadnetwork.vertices = np.array([(0, 0), (1, 0), (1, 1)], dtype=float)
+    roadnetwork.edges = np.array([(0, 1), (1, 2)], dtype=np.int64)
+    roadnetwork.length = np.array([1.0, 1.0])
+    roadnetwork.attributes = {
+        "flow": [0.0, 10.0],
+        "volume_capacity_ratio": [0.0, 0.5],
+    }
+
+    wrapper = RoadNetworkWrapper("Roads", roadnetwork, mts=1024, road_width=0.2)
+
+    assert wrapper.mesh_wrp.data_wrapper.get_keys()[0] == "flow"
+    attrs = wrapper.mesh_wrp.parts.get_attributes(1)
+    assert attrs["flow"] == 10.0
+    assert attrs["volume_capacity_ratio"] == 0.5
+
+
+def test_roadnetwork_wrapper_accepts_explicit_color_field():
+    roadnetwork = RoadNetwork()
+    roadnetwork.vertices = np.array([(0, 0), (1, 0), (1, 1)], dtype=float)
+    roadnetwork.edges = np.array([(0, 1), (1, 2)], dtype=np.int64)
+    roadnetwork.length = np.array([1.0, 1.0])
+    roadnetwork.attributes = {
+        "flow": [0.0, 10.0],
+        "volume_capacity_ratio": [0.0, 0.5],
+    }
+
+    wrapper = RoadNetworkWrapper(
+        "Roads",
+        roadnetwork,
+        mts=1024,
+        road_width=0.2,
+        color_by="volume_capacity_ratio",
+    )
+
+    assert wrapper.mesh_wrp.data_wrapper.get_keys()[0] == "volume_capacity_ratio"
+
+
 def test_roadnetwork_wrapper_road_width_controls_surface_width():
     roadnetwork = RoadNetwork()
     roadnetwork.vertices = np.array([(0, 0), (1, 0)], dtype=float)

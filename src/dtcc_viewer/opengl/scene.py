@@ -391,6 +391,7 @@ class Scene:
         road_network: Any,
         road_width: float = 6.0,
         z_offset: float = 0.05,
+        color_by: str | None = None,
     ):
         """
         Add a road network to the scene.
@@ -405,6 +406,8 @@ class Scene:
             Rendered road ribbon width in model units.
         z_offset : float, default 0.05
             Small vertical offset for road ribbons to avoid z-fighting.
+        color_by : str | None, optional
+            Edge attribute to use as the default road color field.
         """
         if (
             road_network is not None
@@ -419,6 +422,7 @@ class Scene:
                     self.mts,
                     road_width=road_width,
                     z_offset=z_offset,
+                    color_by=color_by,
                 )
             )
         else:
