@@ -14,12 +14,18 @@ from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_sensor_collection import SensorCollectionWrapper
+from dtcc_viewer.opengl.wrp_deso import DeSOWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
 from dtcc_viewer.opengl.situation import Situation
 from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 from dtcc_core.model import RoadNetwork, LineString, MultiLineString, SensorCollection
+
+try:
+    from dtcc_core.model import DeSO
+except ImportError:  # pragma: no cover - compatibility with older dtcc-core
+    DeSO = None
 
 # from dtcc_model.roadnetwork import RoadNetwork
 from dtcc_viewer.logging import info, warning, debug
@@ -147,6 +153,28 @@ class Scene:
             self.wrappers.append(ObjectWrapper(name, obj, self.mts))
         else:
             warning(f"Failed to add Object called '{name}' to the scene")
+
+    def add_deso(self, name: str, deso):
+        """
+        Add DeSO statistical areas to the scene.
+
+        Parameters
+        ----------
+        name : str
+            Name of the DeSO layer.
+        deso : DeSO
+            DeSO object to be added.
+        """
+        if (
+            DeSO is not None
+            and deso is not None
+            and isinstance(deso, DeSO)
+            and self.has_geom(deso, name)
+        ):
+            info(f"DeSO called '{name}' added to scene")
+            self.wrappers.append(DeSOWrapper(name, deso, self.mts))
+        else:
+            warning(f"Failed to add DeSO called '{name}' to the scene")
 
     def add_pointcloud(
         self, name: str, pc: PointCloud, size: float = 0.2, data: np.ndarray = None
@@ -518,6 +546,9 @@ class Scene:
             elif isinstance(wrp, RoadNetworkWrapper):
                 if wrp.mesh_wrp is not None:
                     next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, DeSOWrapper):
+                if wrp.mesh_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp, next_id)
 
     def update_ids(self, mesh_wrp: MeshWrapper, next_id):
         """
@@ -569,6 +600,8 @@ class Scene:
             Bounds: lambda obj: obj.width != 0.0 and obj.height != 0.0,
             Raster: lambda obj: len(obj.data) > 0,
         }
+        if DeSO is not None:
+            conditions[DeSO] = lambda obj: len(obj.areas) > 0
 
         if obj is not None:
             for obj_type, condition in conditions.items():

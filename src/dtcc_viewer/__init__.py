@@ -16,6 +16,11 @@ from .multilinestring import view as view_multilinestring
 from .roadnetwork import view as view_roadnetwork
 from .sensor_collection import view as view_sensor_collection
 
+try:
+    from .deso import view as view_deso
+except ImportError:  # pragma: no cover - compatibility with older dtcc-core
+    view_deso = None
+
 
 from dtcc_core.model import (
     Mesh,
@@ -36,6 +41,11 @@ from dtcc_core.model import (
     SensorCollection,
 )
 
+try:
+    from dtcc_core.model import DeSO
+except ImportError:  # pragma: no cover - compatibility with older dtcc-core
+    DeSO = None
+
 # Add model extensions
 PointCloud.add_methods(view_pointcloud, "view")
 Mesh.add_methods(view_mesh, "view")
@@ -53,6 +63,8 @@ LineString.add_methods(view_linestring, "view")
 MultiLineString.add_methods(view_multilinestring, "view")
 RoadNetwork.add_methods(view_roadnetwork, "view")
 SensorCollection.add_methods(view_sensor_collection, "view")
+if DeSO is not None and view_deso is not None:
+    DeSO.add_methods(view_deso, "view")
 
 # Classes and methods visible on the Docs page
 __all__ = [
@@ -67,3 +79,5 @@ __all__ = [
     "Shading",
     "Situation",
 ]
+if view_deso is not None:
+    __all__.append("view_deso")

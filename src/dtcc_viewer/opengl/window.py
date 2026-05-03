@@ -35,6 +35,7 @@ from dtcc_viewer.opengl.wrp_building import BuildingWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_sensor_collection import SensorCollectionWrapper
+from dtcc_viewer.opengl.wrp_deso import DeSOWrapper
 
 
 class Window:
@@ -247,6 +248,10 @@ class Window:
                     self.gl_objects.append(GlLines(wrapper.mls_wrp))
 
             elif isinstance(wrapper, SensorCollectionWrapper):
+                if wrapper.mesh_wrp is not None:
+                    self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
+
+            elif isinstance(wrapper, DeSOWrapper):
                 if wrapper.mesh_wrp is not None:
                     self.gl_objects.append(GlMesh(wrapper.mesh_wrp))
 
