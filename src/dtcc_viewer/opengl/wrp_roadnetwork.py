@@ -253,6 +253,11 @@ class RoadNetworkWrapper(Wrapper):
             "volume_capacity_ratio",
             "travel_time",
             "speed",
+            "space_syntax_integration",
+            "space_syntax_choice",
+            "space_syntax_reach",
+            "space_syntax_mean_depth",
+            "space_syntax_connectivity",
             "Road color",
         ):
             if key in data:

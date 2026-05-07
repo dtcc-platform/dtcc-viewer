@@ -92,6 +92,21 @@ def test_roadnetwork_wrapper_accepts_explicit_color_field():
     assert wrapper.mesh_wrp.data_wrapper.get_keys()[0] == "volume_capacity_ratio"
 
 
+def test_roadnetwork_wrapper_prioritizes_space_syntax_integration():
+    roadnetwork = RoadNetwork()
+    roadnetwork.vertices = np.array([(0, 0), (1, 0), (1, 1)], dtype=float)
+    roadnetwork.edges = np.array([(0, 1), (1, 2)], dtype=np.int64)
+    roadnetwork.length = np.array([1.0, 1.0])
+    roadnetwork.attributes = {
+        "space_syntax_integration": [0.25, 1.0],
+        "space_syntax_choice": [0.0, 0.5],
+    }
+
+    wrapper = RoadNetworkWrapper("Roads", roadnetwork, mts=1024, road_width=0.2)
+
+    assert wrapper.mesh_wrp.data_wrapper.get_keys()[0] == "space_syntax_integration"
+
+
 def test_roadnetwork_wrapper_road_width_controls_surface_width():
     roadnetwork = RoadNetwork()
     roadnetwork.vertices = np.array([(0, 0), (1, 0)], dtype=float)
