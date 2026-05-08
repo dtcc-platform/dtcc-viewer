@@ -15,6 +15,7 @@ from .linestring import view as view_linestring
 from .multilinestring import view as view_multilinestring
 from .roadnetwork import view as view_roadnetwork
 from .sensor_collection import view as view_sensor_collection
+from .vehicle_collection import view as view_vehicle_collection
 
 try:
     from .deso import view as view_deso
@@ -42,6 +43,11 @@ from dtcc_core.model import (
 )
 
 try:
+    from dtcc_core.model import VehicleCollection
+except ImportError:  # pragma: no cover - compatibility with older dtcc-core
+    VehicleCollection = None
+
+try:
     from dtcc_core.model import DeSO
 except ImportError:  # pragma: no cover - compatibility with older dtcc-core
     DeSO = None
@@ -63,6 +69,8 @@ LineString.add_methods(view_linestring, "view")
 MultiLineString.add_methods(view_multilinestring, "view")
 RoadNetwork.add_methods(view_roadnetwork, "view")
 SensorCollection.add_methods(view_sensor_collection, "view")
+if VehicleCollection is not None:
+    VehicleCollection.add_methods(view_vehicle_collection, "view")
 if DeSO is not None and view_deso is not None:
     DeSO.add_methods(view_deso, "view")
 
@@ -78,6 +86,7 @@ __all__ = [
     "Scene",
     "Shading",
     "Situation",
+    "view_vehicle_collection",
 ]
 if view_deso is not None:
     __all__.append("view_deso")

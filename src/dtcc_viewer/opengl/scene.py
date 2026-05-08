@@ -14,6 +14,7 @@ from dtcc_viewer.opengl.wrp_surface import SurfaceWrapper, MultiSurfaceWrapper
 from dtcc_viewer.opengl.wrp_volume_mesh import VolumeMeshWrapper
 from dtcc_viewer.opengl.wrp_roadnetwork import RoadNetworkWrapper
 from dtcc_viewer.opengl.wrp_sensor_collection import SensorCollectionWrapper
+from dtcc_viewer.opengl.wrp_vehicle_collection import VehicleCollectionWrapper
 from dtcc_viewer.opengl.wrp_deso import DeSOWrapper
 from dtcc_viewer.opengl.wrapper import Wrapper
 from dtcc_viewer.opengl.utils import BoundingBox, Shading
@@ -21,6 +22,11 @@ from dtcc_viewer.opengl.situation import Situation
 from dtcc_core.model import Mesh, PointCloud, City, Object, Building, Raster, VolumeMesh
 from dtcc_core.model import Geometry, Surface, MultiSurface, Bounds, Grid, VolumeGrid
 from dtcc_core.model import RoadNetwork, LineString, MultiLineString, SensorCollection
+
+try:
+    from dtcc_core.model import VehicleCollection
+except ImportError:  # pragma: no cover - compatibility with older dtcc-core
+    VehicleCollection = None
 
 try:
     from dtcc_core.model import DeSO
@@ -454,6 +460,24 @@ class Scene:
         else:
             warning(f"Failed to add SensorCollection called '{name}' to the scene")
 
+    def add_vehicle_collection(
+        self, name: str, vehicle_collection, sphere_radius: float = 2.5
+    ):
+        """Add a vehicle collection to the scene."""
+        if (
+            vehicle_collection is not None
+            and VehicleCollection is not None
+            and isinstance(vehicle_collection, VehicleCollection)
+        ):
+            info(f"VehicleCollection called '{name}' added to scene")
+            self.wrappers.append(
+                VehicleCollectionWrapper(
+                    name, vehicle_collection, self.mts, sphere_radius=sphere_radius
+                )
+            )
+        else:
+            warning(f"Failed to add VehicleCollection called '{name}' to the scene")
+
     def preprocess_drawing(self):
         """
         Preprocess bounding box calculation for all scene objects.
@@ -545,6 +569,9 @@ class Scene:
                 if wrp.mesh_env_wrp is not None:
                     next_id = self.update_ids(wrp.mesh_env_wrp, next_id)
             elif isinstance(wrp, SensorCollectionWrapper):
+                if wrp.mesh_wrp is not None:
+                    next_id = self.update_ids(wrp.mesh_wrp, next_id)
+            elif isinstance(wrp, VehicleCollectionWrapper):
                 if wrp.mesh_wrp is not None:
                     next_id = self.update_ids(wrp.mesh_wrp, next_id)
             elif isinstance(wrp, RoadNetworkWrapper):
