@@ -4,7 +4,6 @@ import numpy as np
 
 
 class Situation:
-
     lat: float
     lon: float
     start: pd.Timestamp
